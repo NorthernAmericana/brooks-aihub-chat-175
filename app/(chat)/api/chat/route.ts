@@ -15,6 +15,10 @@ import {
   getDefaultAgentConfig,
   type AgentToolId,
 } from "@/lib/ai/agents/registry";
+import {
+  getDefaultSlashRoute,
+  getSlashRouteById,
+} from "@/lib/ai/agents/slash-routes";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
