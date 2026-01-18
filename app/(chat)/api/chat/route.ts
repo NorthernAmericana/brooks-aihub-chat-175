@@ -10,6 +10,11 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import {
+  type SlashRouteTool,
+  getDefaultSlashRoute,
+  getSlashRouteById,
+} from "@/lib/ai/agents/slash-routes";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -61,6 +66,7 @@ export async function POST(request: Request) {
   try {
     const { id, message, messages, selectedChatModel, selectedVisibilityType } =
       requestBody;
+    const selectedAto = requestBody.selectedAto;
 
     const session = await auth();
 
@@ -115,6 +121,9 @@ export async function POST(request: Request) {
       country,
     };
 
+    const selectedSlashRoute =
+      getSlashRouteById(selectedAto) ?? getDefaultSlashRoute();
+
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -139,19 +148,30 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        const allTools = {
+          getWeather,
+          createDocument: createDocument({ session, dataStream }),
+          updateDocument: updateDocument({ session, dataStream }),
+          requestSuggestions: requestSuggestions({ session, dataStream }),
+        };
+        const enabledTools = isReasoningModel
+          ? []
+          : selectedSlashRoute.activeTools;
+        const tools = Object.fromEntries(
+          Object.entries(allTools).filter(([toolName]) =>
+            enabledTools.includes(toolName as SlashRouteTool)
+          )
+        ) as typeof allTools;
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            slashRoute: selectedSlashRoute,
+          }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel
-            ? []
-            : [
-                "getWeather",
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
+          experimental_activeTools: enabledTools,
           providerOptions: isReasoningModel
             ? {
                 anthropic: {
@@ -159,12 +179,7 @@ export async function POST(request: Request) {
                 },
               }
             : undefined,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
-          },
+          tools,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",
