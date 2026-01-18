@@ -11,10 +11,10 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import {
-  type SlashRouteTool,
-  getDefaultSlashRoute,
-  getSlashRouteById,
-} from "@/lib/ai/agents/slash-routes";
+  getAgentConfigBySlash,
+  getDefaultAgentConfig,
+  type AgentToolId,
+} from "@/lib/ai/agents/registry";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -52,6 +52,29 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
+
+function getSlashTriggerFromMessages(
+  messages: ChatMessage[]
+): string | undefined {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((currentMessage) => currentMessage.role === "user");
+
+  if (!lastUserMessage) {
+    return undefined;
+  }
+
+  const textPart = lastUserMessage.parts.find(
+    (part) => part.type === "text"
+  ) as { type: "text"; text: string } | undefined;
+
+  if (!textPart) {
+    return undefined;
+  }
+
+  const match = textPart.text.trim().match(/^\/([^\s]+)/);
+  return match?.[1];
+}
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -144,34 +167,44 @@ export async function POST(request: Request) {
       selectedChatModel.includes("thinking");
 
     const modelMessages = await convertToModelMessages(uiMessages);
+    const slashTrigger = getSlashTriggerFromMessages(uiMessages);
+    const selectedAgent =
+      (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
+      getDefaultAgentConfig();
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        const allTools = {
+        type ToolDefinition =
+          | typeof getWeather
+          | ReturnType<typeof createDocument>
+          | ReturnType<typeof updateDocument>
+          | ReturnType<typeof requestSuggestions>;
+
+        const toolImplementations: Record<AgentToolId, ToolDefinition> = {
           getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
         };
-        const enabledTools = isReasoningModel
-          ? []
-          : selectedSlashRoute.activeTools;
+
         const tools = Object.fromEntries(
-          Object.entries(allTools).filter(([toolName]) =>
-            enabledTools.includes(toolName as SlashRouteTool)
-          )
-        ) as typeof allTools;
+          selectedAgent.tools.map((toolId) => [
+            toolId,
+            toolImplementations[toolId],
+          ])
+        ) as Record<AgentToolId, ToolDefinition>;
+
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({
-            selectedChatModel,
-            requestHints,
-            slashRoute: selectedSlashRoute,
-          }),
+          system:
+            selectedAgent.systemPromptOverride ??
+            systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: enabledTools,
+          experimental_activeTools: isReasoningModel
+            ? []
+            : selectedAgent.tools,
           providerOptions: isReasoningModel
             ? {
                 anthropic: {
