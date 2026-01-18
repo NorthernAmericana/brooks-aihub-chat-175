@@ -22,6 +22,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +72,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   setOpenMobile(false);
                 }}
               >
+                <BrandLogo className="h-8 w-8" size={32} />
                 <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
                   Brooks AI HUB
                 </span>

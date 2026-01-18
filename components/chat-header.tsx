@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon, VercelIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+import { BrandLogo } from "./brand-logo";
 
 function PureChatHeader({
   chatId,
@@ -27,6 +28,12 @@ function PureChatHeader({
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
+      <div className="flex items-center gap-2">
+        <BrandLogo className="h-12 w-12" size={48} />
+        <span className="font-semibold text-sm text-muted-foreground md:text-base">
+          Brooks AI HUB
+        </span>
+      </div>
 
       {(!open || windowWidth < 768) && (
         <Button
