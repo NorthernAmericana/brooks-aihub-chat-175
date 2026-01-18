@@ -171,7 +171,11 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        type ToolDefinition = ReturnType<typeof createDocument> | typeof getWeather;
+        type ToolDefinition =
+          | typeof getWeather
+          | ReturnType<typeof createDocument>
+          | ReturnType<typeof updateDocument>
+          | ReturnType<typeof requestSuggestions>;
 
         const toolImplementations: Record<AgentToolId, ToolDefinition> = {
           getWeather,
