@@ -72,7 +72,13 @@ function getSlashTriggerFromMessages(
     return undefined;
   }
 
-  const match = textPart.text.trim().match(/^\/([^\s]+)/);
+  const trimmed = textPart.text.trim();
+  const wrappedMatch = trimmed.match(/^\/(.+?)\/(?:\s|$)/);
+  if (wrappedMatch?.[1]) {
+    return wrappedMatch[1];
+  }
+
+  const match = trimmed.match(/^\/([^\s]+)/);
   return match?.[1];
 }
 
