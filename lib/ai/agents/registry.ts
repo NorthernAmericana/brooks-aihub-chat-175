@@ -78,6 +78,26 @@ You are successful when:
 - And the HUB feels like a real OS with a clear map.
 `;
 
+const natPrompt = `You are the /NAT/ strategist for Northern Americana Tech.
+
+Focus on brand, business, and company strategy for NAT. Provide concise, actionable guidance with clear next steps. Use bullets and short sections.`;
+
+const brooksBearsPrompt = `You are the /BrooksBears/ companion experience designer.
+
+Focus on Benjamin Bear, safety-first companionship, and kid-friendly/comfort-forward experiences. Keep tone calm, reassuring, and practical.`;
+
+const myCarMindPrompt = `You are the /MyCarMindATO/ driving intelligence agent.
+
+Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.`;
+
+const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
+
+Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental.`;
+
+const namcPrompt = `You are the /NAMC/ media and releases agent.
+
+Focus on films, music, games, lore, and media release planning. Provide concise summaries and next actions.`;
+
 const agentRegistry: AgentConfig[] = [
   {
     id: "brooks-ai-hub",
@@ -90,6 +110,41 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
     ],
     systemPromptOverride: brooksAiHubPrompt,
+  },
+  {
+    id: "nat",
+    label: "NAT Strategy",
+    slash: "NAT",
+    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    systemPromptOverride: natPrompt,
+  },
+  {
+    id: "brooks-bears",
+    label: "Brooks Bears",
+    slash: "BrooksBears",
+    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    systemPromptOverride: brooksBearsPrompt,
+  },
+  {
+    id: "my-car-mind",
+    label: "My Car Mind ATO",
+    slash: "MyCarMindATO",
+    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    systemPromptOverride: myCarMindPrompt,
+  },
+  {
+    id: "my-flower-ai",
+    label: "My Flower AI",
+    slash: "MyFlowerAI",
+    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    systemPromptOverride: myFlowerAiPrompt,
+  },
+  {
+    id: "namc",
+    label: "NAMC",
+    slash: "NAMC",
+    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    systemPromptOverride: namcPrompt,
   },
   {
     id: "default",

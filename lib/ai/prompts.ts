@@ -61,25 +61,28 @@ export const systemPrompt = ({
   selectedChatModel,
   requestHints,
   slashRoute,
+  basePrompt,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
   slashRoute?: SlashRoute;
+  basePrompt?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const slashRoutePrompt = slashRoute?.prompt
     ? `\n\n${slashRoute.prompt}`
     : "";
+  const prompt = basePrompt ?? regularPrompt;
 
   // reasoning models don't need artifacts prompt (they can't use tools)
   if (
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking")
   ) {
-    return `${regularPrompt}\n\n${requestPrompt}${slashRoutePrompt}`;
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}${slashRoutePrompt}\n\n${artifactsPrompt}`;
+  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `
