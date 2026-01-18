@@ -15,6 +15,10 @@ import {
   getDefaultAgentConfig,
   type AgentToolId,
 } from "@/lib/ai/agents/registry";
+import {
+  getDefaultSlashRoute,
+  getSlashRouteById,
+} from "@/lib/ai/agents/slash-routes";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -72,7 +76,13 @@ function getSlashTriggerFromMessages(
     return undefined;
   }
 
-  const match = textPart.text.trim().match(/^\/([^\s]+)/);
+  const trimmed = textPart.text.trim();
+  const wrappedMatch = trimmed.match(/^\/(.+?)\/(?:\s|$)/);
+  if (wrappedMatch?.[1]) {
+    return wrappedMatch[1];
+  }
+
+  const match = trimmed.match(/^\/([^\s]+)/);
   return match?.[1];
 }
 
@@ -197,9 +207,12 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system:
-            selectedAgent.systemPromptOverride ??
-            systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            slashRoute: selectedSlashRoute,
+            basePrompt: selectedAgent.systemPromptOverride,
+          }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
           experimental_activeTools: isReasoningModel
