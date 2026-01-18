@@ -89,6 +89,7 @@ export async function POST(request: Request) {
   try {
     const { id, message, messages, selectedChatModel, selectedVisibilityType } =
       requestBody;
+    const selectedAto = requestBody.selectedAto;
 
     const session = await auth();
 
@@ -142,6 +143,9 @@ export async function POST(request: Request) {
       city,
       country,
     };
+
+    const selectedSlashRoute =
+      getSlashRouteById(selectedAto) ?? getDefaultSlashRoute();
 
     if (message?.role === "user") {
       await saveMessages({

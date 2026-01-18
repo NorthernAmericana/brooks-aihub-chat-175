@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -20,6 +21,7 @@ import {
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { defaultSlashRouteId } from "@/lib/ai/agents/slash-routes";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -72,10 +74,19 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
+  const [selectedAtoId, setSelectedAtoId] = useLocalStorage(
+    "selected-ato",
+    defaultSlashRouteId
+  );
+  const selectedAtoIdRef = useRef(selectedAtoId);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  useEffect(() => {
+    selectedAtoIdRef.current = selectedAtoId;
+  }, [selectedAtoId]);
 
   const {
     messages,
@@ -126,6 +137,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            selectedAto: selectedAtoIdRef.current,
             ...request.body,
           },
         };
@@ -214,8 +226,10 @@ export function Chat({
               chatId={id}
               input={input}
               messages={messages}
+              onAtoChange={setSelectedAtoId}
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
+              selectedAtoId={selectedAtoId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}
               setAttachments={setAttachments}
@@ -235,8 +249,10 @@ export function Chat({
         input={input}
         isReadonly={isReadonly}
         messages={messages}
+        onAtoChange={setSelectedAtoId}
         regenerate={regenerate}
         selectedModelId={currentModelId}
+        selectedAtoId={selectedAtoId}
         selectedVisibilityType={visibilityType}
         sendMessage={sendMessage}
         setAttachments={setAttachments}
