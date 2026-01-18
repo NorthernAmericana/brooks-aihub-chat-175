@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
@@ -71,6 +72,13 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   setOpenMobile(false);
                 }}
               >
+                <Image
+                  alt="Brooks AI HUB logo"
+                  className="h-8 w-8"
+                  height={32}
+                  src="/brand/brooks-ai-hub-logo.png"
+                  width={32}
+                />
                 <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
                   Brooks AI HUB
                 </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
@@ -27,6 +28,18 @@ function PureChatHeader({
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
+      <div className="flex items-center gap-2">
+        <Image
+          alt="Brooks AI HUB logo"
+          className="h-12 w-12"
+          height={48}
+          src="/brand/brooks-ai-hub-logo.png"
+          width={48}
+        />
+        <span className="font-semibold text-sm text-muted-foreground md:text-base">
+          Brooks AI HUB
+        </span>
+      </div>
 
       {(!open || windowWidth < 768) && (
         <Button
