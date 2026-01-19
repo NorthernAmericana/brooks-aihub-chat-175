@@ -19,13 +19,13 @@ export function PwaInstallButton({
 }: PwaInstallButtonProps) {
   const { isStandalone, promptInstall } = usePwaInstall();
 
-  const buttonLabel = label ?? (isStandalone ? "App installed" : "Install app");
+  if (isStandalone) {
+    return null;
+  }
+
+  const buttonLabel = label ?? "Install app";
 
   const handleInstall = async () => {
-    if (isStandalone) {
-      return;
-    }
-
     const result = await promptInstall();
 
     if (!result.available) {
