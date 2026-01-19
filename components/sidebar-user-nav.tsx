@@ -76,7 +76,7 @@ export function SidebarUserNav({ user }: { user: User }) {
   const handleInstallApp = async () => {
     if (!installPrompt) {
       toast({
-        type: "info",
+        type: "error",
         description:
           "Install prompt isn't available yet. In Chrome, use the browser menu to install the app.",
       });
