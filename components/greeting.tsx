@@ -40,23 +40,24 @@ export const Greeting = () => {
 
   return (
     <div
-      className="mx-auto mt-4 flex size-full max-w-2xl flex-col items-center justify-center px-4 text-center md:mt-12 md:px-8"
+      className="woodsy-base soft-vignette neon-outline relative mx-auto mt-4 flex size-full max-w-2xl flex-col items-center justify-center gap-3 rounded-3xl border-2 border-transparent px-6 py-10 text-center md:mt-12 md:px-10 md:py-12"
       key="overview"
     >
+      <div className="retro-rainbow-border pointer-events-none absolute inset-0 rounded-3xl" />
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="font-semibold text-2xl md:text-3xl"
+        className="font-semibold text-2xl leading-tight md:text-3xl"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        <span className="bg-gradient-to-r from-fuchsia-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(255,200,160,0.45)]">
+        <span className="font-pixel retro-rainbow-text pixel-text-shadow drop-shadow-[0_0_12px_rgba(0,0,0,0.45)]">
           /Brooks AI HUB/
         </span>
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="mt-1 text-sm uppercase tracking-[0.2em] text-zinc-500 md:text-base"
+        className="mt-1 text-xs uppercase tracking-[0.2em] text-zinc-200/80 md:text-sm"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
@@ -65,18 +66,18 @@ export const Greeting = () => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6 w-full text-sm text-muted-foreground"
+        className="mt-4 w-full text-sm leading-relaxed text-zinc-100/80 md:mt-6"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+        <div className="text-[0.6rem] uppercase tracking-[0.2em] text-zinc-200/70 md:text-xs">
           Suggested folders
         </div>
         <div className="mt-3 flex flex-wrap justify-center gap-3">
           {suggestedFolders.map((folder) => (
             <button
-              className="rounded-full border border-border px-4 py-2 text-base text-foreground transition hover:border-primary/60 hover:text-primary"
+              className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-base text-white transition hover:border-white/40 hover:text-white"
               key={folder}
               type="button"
             >
