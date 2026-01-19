@@ -41,7 +41,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  const { isStandalone } = usePwaInstall();
+  const { hasInstallPrompt, isStandalone } = usePwaInstall();
   const foundersEditionUrl =
     process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
 
@@ -135,9 +135,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               <div className="rounded-md border border-muted bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
                 Installed
               </div>
-            ) : (
+            ) : hasInstallPrompt ? (
               <PwaInstallButton className="justify-start" />
-            )}
+            ) : null}
             {user && <SidebarUserNav user={user} />}
           </div>
         </SidebarFooter>

@@ -27,7 +27,7 @@ export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
   const { data, status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
-  const { isStandalone, promptInstall } = usePwaInstall();
+  const { hasInstallPrompt, isStandalone, promptInstall } = usePwaInstall();
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
 
@@ -100,7 +100,7 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             </DropdownMenuItem>
-            {!isStandalone && (
+            {!isStandalone && hasInstallPrompt && (
               <DropdownMenuItem
                 className="cursor-pointer"
                 data-testid="user-nav-item-install"

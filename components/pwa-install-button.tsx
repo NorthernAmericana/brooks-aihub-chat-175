@@ -17,9 +17,9 @@ export function PwaInstallButton({
   size = "sm",
   variant = "default",
 }: PwaInstallButtonProps) {
-  const { isStandalone, promptInstall } = usePwaInstall();
+  const { hasInstallPrompt, isStandalone, promptInstall } = usePwaInstall();
 
-  if (isStandalone) {
+  if (isStandalone || !hasInstallPrompt) {
     return null;
   }
 
@@ -48,7 +48,7 @@ export function PwaInstallButton({
   return (
     <Button
       className={className}
-      disabled={isStandalone}
+      disabled={isStandalone || !hasInstallPrompt}
       onClick={handleInstall}
       size={size}
       variant={variant}
