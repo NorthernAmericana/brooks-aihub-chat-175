@@ -33,8 +33,14 @@ export function usePwaInstall() {
       setIsStandalone(isStandaloneDisplay || isIosStandalone);
     };
 
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+      updateStandalone();
+    };
+
     updateStandalone();
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
     const displayModeQuery = window.matchMedia("(display-mode: standalone)");
     displayModeQuery.addEventListener("change", updateStandalone);
 
@@ -43,6 +49,7 @@ export function usePwaInstall() {
         "beforeinstallprompt",
         handleBeforeInstallPrompt,
       );
+      window.removeEventListener("appinstalled", handleAppInstalled);
       displayModeQuery.removeEventListener("change", updateStandalone);
     };
   }, []);
@@ -55,6 +62,9 @@ export function usePwaInstall() {
     await installPrompt.prompt();
     const choiceResult = await installPrompt.userChoice;
     setInstallPrompt(null);
+    if (choiceResult.outcome === "accepted") {
+      setIsStandalone(true);
+    }
 
     return { available: true, outcome: choiceResult.outcome };
   };
