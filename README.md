@@ -20,6 +20,7 @@
 ## Master Docs
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
+Use the [Vercel deployment guide](docs/ops/vercel.md) for production deployment steps.
 
 ## Features
 
