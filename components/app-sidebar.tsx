@@ -129,7 +129,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 Founders Edition • $4.99
               </Link>
             </Button>
-            <PwaInstallButton />
+            <PwaInstallButton className="justify-start" />
             {user && <SidebarUserNav user={user} />}
           </div>
         </SidebarFooter>

@@ -4,14 +4,28 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/toast";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 
-export function PwaInstallButton() {
+type PwaInstallButtonProps = {
+  className?: string;
+  label?: string;
+  size?: "default" | "sm" | "lg" | "icon";
+  variant?: "default" | "outline" | "ghost" | "secondary" | "destructive";
+};
+
+export function PwaInstallButton({
+  className,
+  label,
+  size = "sm",
+  variant = "default",
+}: PwaInstallButtonProps) {
   const { isStandalone, promptInstall } = usePwaInstall();
 
-  if (isStandalone) {
-    return null;
-  }
+  const buttonLabel = label ?? (isStandalone ? "App installed" : "Install app");
 
   const handleInstall = async () => {
+    if (isStandalone) {
+      return;
+    }
+
     const result = await promptInstall();
 
     if (!result.available) {
@@ -32,8 +46,14 @@ export function PwaInstallButton() {
   };
 
   return (
-    <Button className="justify-start" onClick={handleInstall} size="sm">
-      Install app
+    <Button
+      className={className}
+      disabled={isStandalone}
+      onClick={handleInstall}
+      size={size}
+      variant={variant}
+    >
+      {buttonLabel}
     </Button>
   );
 }
