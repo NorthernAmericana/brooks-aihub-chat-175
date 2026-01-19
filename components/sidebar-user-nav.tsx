@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,12 +23,76 @@ import { guestRegex } from "@/lib/constants";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
   const { data, status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    const updateStandalone = () => {
+      const isStandaloneDisplay = window.matchMedia(
+        "(display-mode: standalone)",
+      ).matches;
+      const isIosStandalone =
+        "standalone" in window.navigator &&
+        Boolean((window.navigator as Navigator & { standalone?: boolean })
+          .standalone);
+      setIsStandalone(isStandaloneDisplay || isIosStandalone);
+    };
+
+    updateStandalone();
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    const displayModeQuery = window.matchMedia("(display-mode: standalone)");
+    displayModeQuery.addEventListener("change", updateStandalone);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      displayModeQuery.removeEventListener("change", updateStandalone);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) {
+      toast({
+        type: "info",
+        description:
+          "Install prompt isn't available yet. In Chrome, use the browser menu to install the app.",
+      });
+      return;
+    }
+
+    await installPrompt.prompt();
+    const choiceResult = await installPrompt.userChoice;
+    if (choiceResult.outcome === "accepted") {
+      toast({
+        type: "success",
+        description: "Thanks for installing the app!",
+      });
+    }
+    setInstallPrompt(null);
+  };
 
   return (
     <SidebarMenu>
@@ -79,6 +144,15 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             </DropdownMenuItem>
+            {!isStandalone && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                data-testid="user-nav-item-install"
+                onSelect={handleInstallApp}
+              >
+                Install app
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button

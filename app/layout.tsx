@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import { Toaster } from "sonner";
+import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
@@ -10,6 +11,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
   title: "Next.js Chatbot Template",
   description: "Next.js chatbot template using the AI SDK.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/app-icon.svg",
+  },
 };
 
 export const viewport = {
@@ -85,6 +90,7 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
+          <PwaRegister />
           <Toaster position="top-center" />
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
