@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { listAgentConfigs } from "@/lib/ai/agents/registry";
 
-export const Greeting = () => {
+type GreetingProps = {
+  onSelectFolder?: (folder: string) => void;
+};
+
+export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -79,6 +83,7 @@ export const Greeting = () => {
             <button
               className="rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:border-white/40 hover:text-white sm:px-4 sm:py-2 sm:text-sm md:text-base"
               key={folder}
+              onClick={() => onSelectFolder?.(folder)}
               type="button"
             >
               {folder}
