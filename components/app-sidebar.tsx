@@ -39,6 +39,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const foundersEditionUrl =
+    process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
 
   const handleDeleteAll = () => {
     const deletePromise = fetch("/api/history", {
@@ -119,7 +121,16 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent>
           <SidebarHistory user={user} />
         </SidebarContent>
-        <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+        <SidebarFooter>
+          <div className="flex flex-col gap-2 p-2">
+            <Button asChild className="justify-start" size="sm" variant="outline">
+              <Link href={foundersEditionUrl} rel="noreferrer" target="_blank">
+                Founders Edition • $4.99
+              </Link>
+            </Button>
+            {user && <SidebarUserNav user={user} />}
+          </div>
+        </SidebarFooter>
       </Sidebar>
 
       <AlertDialog
