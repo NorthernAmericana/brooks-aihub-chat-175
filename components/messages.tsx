@@ -49,7 +49,11 @@ function PureMessages({
         className="absolute inset-0 touch-pan-y overscroll-contain overflow-y-auto"
         ref={messagesContainerRef}
       >
-        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
+        <div
+          className={`mx-auto flex min-h-full min-w-0 max-w-4xl flex-col gap-4 px-2 md:gap-6 md:px-4 ${
+            messages.length === 0 ? "justify-center py-2" : "py-4"
+          }`}
+        >
           {messages.length === 0 && <Greeting />}
 
           {messages.map((message, index) => (
