@@ -7,6 +7,7 @@ import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, VercelIcon } from "./icons";
+import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
@@ -50,9 +51,16 @@ function PureChatHeader({
         />
       )}
 
+      <PwaInstallButton
+        className="order-2 ml-auto h-8 px-2 md:order-3 md:ml-0 md:h-fit"
+        label="Install"
+        size="sm"
+        variant="outline"
+      />
+
       <Button
         asChild
-        className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="order-4 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
         <Link
           href={"https://vercel.com/templates/next.js/nextjs-ai-chatbot"}

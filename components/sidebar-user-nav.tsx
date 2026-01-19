@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +27,28 @@ export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
   const { data, status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
+  const { isStandalone, promptInstall } = usePwaInstall();
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
+
+  const handleInstallApp = async () => {
+    const result = await promptInstall();
+    if (!result.available) {
+      toast({
+        type: "error",
+        description:
+          "Install prompt isn't available yet. In Chrome, use the browser menu to install the app.",
+      });
+      return;
+    }
+
+    if (result.outcome === "accepted") {
+      toast({
+        type: "success",
+        description: "Thanks for installing the app!",
+      });
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -79,6 +100,15 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             </DropdownMenuItem>
+            {!isStandalone && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                data-testid="user-nav-item-install"
+                onSelect={handleInstallApp}
+              >
+                Install app
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button
