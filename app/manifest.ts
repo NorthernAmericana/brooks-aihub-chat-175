@@ -12,9 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#ffffff",
     icons: [
       {
-        src: "/icons/app-icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/icons/app-icon.png",
+        sizes: "150x150",
+        type: "image/png",
       },
       {
         src: "/brand/brooks-ai-hub-logo.png",
