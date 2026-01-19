@@ -34,6 +34,7 @@ import {
 } from "@/lib/ai/models";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -146,6 +147,11 @@ function PureMultimodalInput({
 
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
+
+    const parsedAction = parseSlashAction(input);
+    if (parsedAction) {
+      rememberSlashAction(parsedAction);
+    }
 
     sendMessage({
       role: "user",
@@ -302,6 +308,7 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            messages={messages}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
