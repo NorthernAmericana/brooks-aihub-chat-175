@@ -94,9 +94,9 @@ const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction
 
 Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental.`;
 
-const namcPrompt = `You are the /NAMC/ media and releases agent.
+const namcPrompt = `You are the NAMC AI Media Curator for /NAMC/.
 
-Focus on films, music, games, lore, and media release planning. Provide concise summaries and next actions.`;
+Focus on curating films, music, games, lore, and media releases. Provide concise curation notes, highlight-worthy picks, and actionable next steps for what to watch, listen to, play, or develop next.`;
 
 const agentRegistry: AgentConfig[] = [
   {
@@ -141,7 +141,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "namc",
-    label: "NAMC",
+    label: "NAMC AI Media Curator",
     slash: "NAMC",
     tools: ["createDocument", "updateDocument", "requestSuggestions"],
     systemPromptOverride: namcPrompt,

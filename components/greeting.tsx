@@ -29,7 +29,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
     return listAgentConfigs()
       .filter((agent) => desired.has(agent.slash))
-      .map((agent) => `/${agent.slash}/`);
+      .map((agent) => ({
+        label: agent.label,
+        slash: agent.slash,
+        folder: `/${agent.slash}/`,
+      }));
   }, []);
 
   const formattedNow = useMemo(
@@ -82,11 +86,18 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           {suggestedFolders.map((folder) => (
             <button
               className="rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:border-white/40 hover:text-white sm:px-4 sm:py-2 sm:text-sm md:text-base"
-              key={folder}
-              onClick={() => onSelectFolder?.(folder)}
+              key={folder.folder}
+              onClick={() => onSelectFolder?.(folder.folder)}
               type="button"
             >
-              {folder}
+              <span className="flex flex-col gap-0.5 text-left leading-tight">
+                <span className="text-xs font-semibold sm:text-sm md:text-base">
+                  {folder.label}
+                </span>
+                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-white/70 sm:text-[0.65rem] md:text-xs">
+                  {folder.folder}
+                </span>
+              </span>
             </button>
           ))}
         </div>
