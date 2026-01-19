@@ -31,13 +31,18 @@ import {
   getMessagesByChatId,
   saveChat,
   saveMessages,
+  updateChatLastAgentById,
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import {
+  convertToUIMessages,
+  generateUUID,
+  getTextFromMessage,
+} from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -53,6 +58,26 @@ function getStreamContext() {
 
 export { getStreamContext };
 
+const slashRoutePattern = /\/(\w[\w\s-]*)/g;
+
+function getLastRecognizedSlashFromText(text: string): string | undefined {
+  slashRoutePattern.lastIndex = 0;
+  let match = slashRoutePattern.exec(text);
+  let lastRecognized: string | undefined;
+
+  while (match) {
+    const candidate = match[1]?.trim();
+    if (candidate && getAgentConfigBySlash(candidate)) {
+      lastRecognized = candidate;
+    }
+    match = slashRoutePattern.exec(text);
+  }
+
+  slashRoutePattern.lastIndex = 0;
+
+  return lastRecognized;
+}
+
 function getSlashTriggerFromMessages(
   messages: ChatMessage[]
 ): string | undefined {
@@ -64,22 +89,35 @@ function getSlashTriggerFromMessages(
     return undefined;
   }
 
-  const textPart = lastUserMessage.parts.find(
-    (part) => part.type === "text"
-  ) as { type: "text"; text: string } | undefined;
-
-  if (!textPart) {
+  const text = getTextFromMessage(lastUserMessage).trim();
+  if (!text) {
     return undefined;
   }
 
-  const trimmed = textPart.text.trim();
-  const wrappedMatch = trimmed.match(/^\/(.+?)\/(?:\s|$)/);
-  if (wrappedMatch?.[1]) {
-    return wrappedMatch[1];
+  return getLastRecognizedSlashFromText(text);
+}
+
+function getAssistantSlashHintFromMessages(
+  messages: ChatMessage[],
+  maxMessages = 5
+): string | undefined {
+  const recentAssistantMessages = [...messages]
+    .reverse()
+    .filter((currentMessage) => currentMessage.role === "assistant")
+    .slice(0, maxMessages);
+
+  for (const assistantMessage of recentAssistantMessages) {
+    const text = getTextFromMessage(assistantMessage).trim();
+    if (!text) {
+      continue;
+    }
+    const detected = getLastRecognizedSlashFromText(text);
+    if (detected) {
+      return detected;
+    }
   }
 
-  const match = trimmed.match(/^\/([^\s]+)/);
-  return match?.[1];
+  return undefined;
 }
 
 export async function POST(request: Request) {
@@ -170,9 +208,22 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
     const slashTrigger = getSlashTriggerFromMessages(uiMessages);
+    const assistantSlashHint = slashTrigger
+      ? undefined
+      : getAssistantSlashHintFromMessages(uiMessages);
+    const persistedSlash = chat?.lastAgentSlash;
+    const resolvedSlash = slashTrigger ?? assistantSlashHint ?? persistedSlash;
+
     const selectedAgent =
-      (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
+      (resolvedSlash ? getAgentConfigBySlash(resolvedSlash) : undefined) ??
       getDefaultAgentConfig();
+
+    if (resolvedSlash && (slashTrigger || assistantSlashHint)) {
+      await updateChatLastAgentById({
+        chatId: id,
+        lastAgentSlash: resolvedSlash,
+      });
+    }
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,

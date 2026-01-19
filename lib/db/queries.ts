@@ -530,6 +530,24 @@ export async function updateChatTitleById({
   }
 }
 
+export async function updateChatLastAgentById({
+  chatId,
+  lastAgentSlash,
+}: {
+  chatId: string;
+  lastAgentSlash: string;
+}) {
+  try {
+    return await db
+      .update(chat)
+      .set({ lastAgentSlash })
+      .where(eq(chat.id, chatId));
+  } catch (error) {
+    console.warn("Failed to update last agent for chat", chatId, error);
+    return;
+  }
+}
+
 export async function getMessageCountByUserId({
   id,
   differenceInHours,
