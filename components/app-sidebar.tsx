@@ -22,6 +22,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,6 +129,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 Founders Edition • $4.99
               </Link>
             </Button>
+            <PwaInstallButton />
             {user && <SidebarUserNav user={user} />}
           </div>
         </SidebarFooter>
