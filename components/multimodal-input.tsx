@@ -32,7 +32,6 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import { slashRoutes } from "@/lib/ai/agents/slash-routes";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -46,13 +45,6 @@ import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
@@ -76,8 +68,6 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
-  selectedAtoId,
-  onAtoChange,
 }: {
   chatId: string;
   input: string;
@@ -93,8 +83,6 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
-  selectedAtoId: string;
-  onAtoChange?: (atoId: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -396,10 +384,6 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               status={status}
             />
-            <AtoSelectorCompact
-              onChange={onAtoChange}
-              selectedAtoId={selectedAtoId}
-            />
             <ModelSelectorCompact
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
@@ -442,9 +426,6 @@ export const MultimodalInput = memo(
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
       return false;
     }
-    if (prevProps.selectedAtoId !== nextProps.selectedAtoId) {
-      return false;
-    }
 
     return true;
   }
@@ -475,36 +456,6 @@ function PureAttachmentsButton({
     >
       <PaperclipIcon size={14} style={{ width: 14, height: 14 }} />
     </Button>
-  );
-}
-
-function AtoSelectorCompact({
-  selectedAtoId,
-  onChange,
-}: {
-  selectedAtoId: string;
-  onChange?: (atoId: string) => void;
-}) {
-  return (
-    <Select onValueChange={onChange} value={selectedAtoId}>
-      <SelectTrigger className="h-8 w-auto gap-2 rounded-lg border-none bg-transparent px-2 text-xs text-muted-foreground shadow-none transition-colors hover:bg-accent hover:text-foreground">
-        <SelectValue placeholder="Select ATO" />
-      </SelectTrigger>
-      <SelectContent align="start" className="max-w-[280px]">
-        {slashRoutes.map((route) => (
-          <SelectItem key={route.id} value={route.id}>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-foreground">
-                {route.label}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {route.description}
-              </span>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

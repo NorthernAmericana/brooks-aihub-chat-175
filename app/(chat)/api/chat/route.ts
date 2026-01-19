@@ -15,10 +15,6 @@ import {
   getDefaultAgentConfig,
   type AgentToolId,
 } from "@/lib/ai/agents/registry";
-import {
-  getDefaultSlashRoute,
-  getSlashRouteById,
-} from "@/lib/ai/agents/slash-routes";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -99,7 +95,6 @@ export async function POST(request: Request) {
   try {
     const { id, message, messages, selectedChatModel, selectedVisibilityType } =
       requestBody;
-    const selectedAto = requestBody.selectedAto;
 
     const session = await auth();
 
@@ -154,9 +149,6 @@ export async function POST(request: Request) {
       country,
     };
 
-    const selectedSlashRoute =
-      getSlashRouteById(selectedAto) ?? getDefaultSlashRoute();
-
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -210,7 +202,6 @@ export async function POST(request: Request) {
           system: systemPrompt({
             selectedChatModel,
             requestHints,
-            slashRoute: selectedSlashRoute,
             basePrompt: selectedAgent.systemPromptOverride,
           }),
           messages: modelMessages,

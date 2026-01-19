@@ -69,8 +69,6 @@ function PureArtifact({
   isReadonly,
   selectedVisibilityType,
   selectedModelId,
-  selectedAtoId,
-  onAtoChange,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
@@ -88,8 +86,6 @@ function PureArtifact({
   isReadonly: boolean;
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
-  selectedAtoId: string;
-  onAtoChange?: (atoId: string) => void;
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
 
@@ -344,9 +340,7 @@ function PureArtifact({
                     className="bg-background dark:bg-muted"
                     input={input}
                     messages={messages}
-                    onAtoChange={onAtoChange}
                     selectedModelId={selectedModelId}
-                    selectedAtoId={selectedAtoId}
                     selectedVisibilityType={selectedVisibilityType}
                     sendMessage={sendMessage}
                     setAttachments={setAttachments}
