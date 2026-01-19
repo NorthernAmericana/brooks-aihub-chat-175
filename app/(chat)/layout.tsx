@@ -29,7 +29,9 @@ async function SidebarWrapper({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar user={session?.user} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="h-dvh overflow-hidden overscroll-none">
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
