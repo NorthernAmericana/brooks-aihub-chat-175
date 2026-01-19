@@ -125,6 +125,24 @@ function PureSuggestedActions({
     return combined.slice(0, 4).map(formatSlashAction);
   }, [agentConfigs, rememberedActions, storedActions]);
 
+  const displaySuggestedAction = (suggestedAction: string) => {
+    const parsed = parseSlashAction(suggestedAction, agentConfigs);
+    if (!parsed) {
+      return suggestedAction;
+    }
+
+    const agent = agentConfigs.find(
+      (config) =>
+        normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
+    );
+    if (!agent) {
+      return suggestedAction;
+    }
+
+    const suffix = parsed.prompt ? ` ${parsed.prompt}` : "";
+    return `${agent.label} · /${agent.slash}/${suffix}`;
+  };
+
   return (
     <div
       className="grid w-full gap-2 sm:grid-cols-2"
@@ -154,7 +172,7 @@ function PureSuggestedActions({
             }}
             suggestion={suggestedAction}
           >
-            {suggestedAction}
+            {displaySuggestedAction(suggestedAction)}
           </Suggestion>
         </motion.div>
       ))}
