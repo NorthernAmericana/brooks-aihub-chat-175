@@ -14,6 +14,7 @@ import {
 } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +41,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const { isStandalone } = usePwaInstall();
   const foundersEditionUrl =
     process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
 
@@ -129,7 +131,13 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 Founders Edition • $4.99
               </Link>
             </Button>
-            <PwaInstallButton className="justify-start" />
+            {isStandalone ? (
+              <div className="rounded-md border border-muted bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+                Installed
+              </div>
+            ) : (
+              <PwaInstallButton className="justify-start" />
+            )}
             {user && <SidebarUserNav user={user} />}
           </div>
         </SidebarFooter>
