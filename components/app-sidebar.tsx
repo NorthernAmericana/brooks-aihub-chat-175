@@ -40,8 +40,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  const foundersEditionUrl =
-    process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
 
   const handleDeleteAll = () => {
     const deletePromise = fetch("/api/history", {
@@ -59,6 +58,39 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       },
       error: "Failed to delete all chats",
     });
+  };
+
+  const handleFoundersCheckout = async () => {
+    if (isCreatingCheckout) {
+      return;
+    }
+
+    setIsCreatingCheckout(true);
+
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to start checkout.");
+      }
+
+      const data = (await response.json()) as { url?: string };
+
+      if (data.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      throw new Error("Checkout session was missing a URL.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Checkout failed.";
+      toast.error(message);
+    } finally {
+      setIsCreatingCheckout(false);
+    }
   };
 
   return (
@@ -124,10 +156,15 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
-            <Button asChild className="justify-start" size="sm" variant="outline">
-              <Link href={foundersEditionUrl} rel="noreferrer" target="_blank">
-                Founders Edition • $4.99
-              </Link>
+            <Button
+              className="justify-start"
+              disabled={isCreatingCheckout}
+              onClick={handleFoundersCheckout}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Founders Edition • $4.99
             </Button>
             <PwaInstallButton className="justify-start" />
             {user && <SidebarUserNav user={user} />}
