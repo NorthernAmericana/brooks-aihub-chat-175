@@ -6,6 +6,7 @@ import {
   generateId,
   stepCountIs,
   streamText,
+  type UIMessageStreamWriter,
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
@@ -96,7 +97,7 @@ function replaceUserMessageText(
 }
 
 function streamPlainText(
-  dataStream: { write: (value: unknown) => void },
+  dataStream: UIMessageStreamWriter<ChatMessage>,
   text: string
 ) {
   dataStream.write({ type: "start" });
