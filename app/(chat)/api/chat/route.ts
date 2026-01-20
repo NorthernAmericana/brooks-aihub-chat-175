@@ -15,6 +15,7 @@ import {
   getDefaultAgentConfig,
   type AgentToolId,
 } from "@/lib/ai/agents/registry";
+import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -173,10 +174,34 @@ export async function POST(request: Request) {
     const selectedAgent =
       (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
       getDefaultAgentConfig();
+    const isNamcAgent = selectedAgent.id === "namc";
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        if (isNamcAgent) {
+          const namcOutput = await runNamcMediaCurator({ messages: uiMessages });
+
+          dataStream.write({ type: "start" });
+          dataStream.write({ type: "start-step" });
+          dataStream.write({ type: "text-start", id: "text-1" });
+          dataStream.write({
+            type: "text-delta",
+            id: "text-1",
+            delta: namcOutput,
+          });
+          dataStream.write({ type: "text-end", id: "text-1" });
+          dataStream.write({ type: "finish-step" });
+          dataStream.write({ type: "finish", finishReason: "stop" });
+
+          if (titlePromise) {
+            const title = await titlePromise;
+            dataStream.write({ type: "data-chat-title", data: title });
+            updateChatTitleById({ chatId: id, title });
+          }
+          return;
+        }
+
         type ToolDefinition =
           | typeof getWeather
           | ReturnType<typeof createDocument>

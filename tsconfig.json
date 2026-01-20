@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@openai/agents": ["./lib/openai/agents"]
     },
     "strictNullChecks": true
   },
