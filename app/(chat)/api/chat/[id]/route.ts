@@ -1,19 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { normalizeRoute } from "@/lib/ai/routing";
 import { getChatById, updateChatActiveRoute } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session?.user) {
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
-  const chat = await getChatById({ id: params.id });
+  const { id } = await params;
+  const chat = await getChatById({ id });
   if (!chat || chat.userId !== session.user.id) {
     return new ChatSDKError("not_found:chat").toResponse();
   }
@@ -22,15 +23,16 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session?.user) {
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
-  const chat = await getChatById({ id: params.id });
+  const { id } = await params;
+  const chat = await getChatById({ id });
   if (!chat || chat.userId !== session.user.id) {
     return new ChatSDKError("not_found:chat").toResponse();
   }
