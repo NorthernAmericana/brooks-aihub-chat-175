@@ -235,25 +235,63 @@ Overwriting the user’s canon with headcanon
   }
 });
 
-type WorkflowInput = { input_as_text: string };
-type WorkflowOutput = {
-  output_text: string;
+const buildNamcConversationHistory = (
+  messages: ChatMessage[],
+  loreContext?: string
+): AgentInputItem[] => {
+  const conversationHistory = messages
+    .map((message) => {
+      const text = message.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+
+      if (!text.trim()) {
+        return null;
+      }
+
+      return {
+        role: message.role,
+        content: [
+          {
+            type: message.role === "assistant" ? "output_text" : "input_text",
+            text,
+          },
+        ],
+      } satisfies AgentInputItem;
+    })
+    .filter((item): item is AgentInputItem => item !== null);
+
+  if (loreContext) {
+    return [
+      {
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text: loreContext,
+          },
+        ],
+      },
+      ...conversationHistory,
+    ];
+  }
+
+  return conversationHistory;
 };
 
-type GuardrailsOutput = Record<string, unknown>;
-
-
-// Main code entrypoint
-export const runWorkflow = async (
-  workflow: WorkflowInput
-): Promise<WorkflowOutput | GuardrailsOutput> => {
+export const runNamcMediaCurator = async ({
+  messages,
+  loreContext,
+}: {
+  messages: ChatMessage[];
+  loreContext?: string | null;
+}): Promise<string> => {
   return await withTrace("NAMC AI Media Curator", async () => {
-    const state = {
-
-    };
-    const conversationHistory: AgentInputItem[] = [
-      { role: "user", content: [{ type: "input_text", text: workflow.input_as_text }] }
-    ];
+    const conversationHistory = buildNamcConversationHistory(
+      messages,
+      loreContext ?? undefined
+    );
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",

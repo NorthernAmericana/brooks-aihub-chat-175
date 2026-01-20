@@ -17,6 +17,7 @@ import {
 } from "@/lib/ai/agents/registry";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
@@ -81,6 +82,24 @@ function getSlashTriggerFromMessages(
 
   const match = trimmed.match(/^\/([^\s]+)/);
   return match?.[1];
+}
+
+function getLatestUserMessageText(messages: ChatMessage[]): string | null {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((currentMessage) => currentMessage.role === "user");
+
+  if (!lastUserMessage) {
+    return null;
+  }
+
+  const text = lastUserMessage.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("")
+    .trim();
+
+  return text.length > 0 ? text : null;
 }
 
 export async function POST(request: Request) {
@@ -180,7 +199,17 @@ export async function POST(request: Request) {
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         if (isNamcAgent) {
-          const namcOutput = await runNamcMediaCurator({ messages: uiMessages });
+          const latestUserMessage = getLatestUserMessageText(uiMessages);
+          const namcLoreContext = latestUserMessage
+            ? await buildNamcLoreContext(latestUserMessage, {
+                maxSnippets: 4,
+                maxTokens: 1500,
+              })
+            : null;
+          const namcOutput = await runNamcMediaCurator({
+            messages: uiMessages,
+            loreContext: namcLoreContext,
+          });
 
           dataStream.write({ type: "start" });
           dataStream.write({ type: "start-step" });
