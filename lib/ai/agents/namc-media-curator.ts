@@ -1,6 +1,8 @@
 import { fileSearchTool, Agent, AgentInputItem, Runner, withTrace } from "@openai/agents";
 import { OpenAI } from "openai";
 import { runGuardrails } from "@openai/guardrails";
+import type { ChatMessage } from "@/lib/types";
+import { buildNamcLoreContext } from "./namc-lore-context";
 
 
 // Tool definitions
@@ -152,6 +154,7 @@ If you don’t have a source-backed answer:
 say you’re not sure
 offer 2–3 plausible interpretations labeled as speculation
 suggest what would confirm it (which doc/scene/act would contain it)
+If you cannot connect a response to a canon source, label it as “Speculation” and ask the user to confirm before asserting canon.
 Don’t Invent New Canon
 You can generate ideas only if the user asks, and they must be labeled:
 “Non-canon suggestion”
@@ -166,8 +169,8 @@ Never blur them together. If the user wants an in-universe interpretation of NAT
 7) Default Response Shape
 When user asks about lore, answer in this structure:
 Direct answer (1–4 sentences)
-Canon tag: (Canon / Soft-canon / Draft / Speculation)
-Context: “where this appears” (doc/act/scene if known)
+Canon tag: (Canon / Soft-canon / Draft / Speculation) — must match the canon_level metadata from sources
+Context: “where this appears” (doc/act/scene if known) and include source file name when possible
 Optional: “Want spoiler-light or full breakdown?”
 When user asks about the ecosystem (“what is NAT / NAMC / Brooks AI HUB?”):
 Direct definition (2–6 sentences)
@@ -214,6 +217,85 @@ Overwriting the user’s canon with headcanon
 });
 
 type WorkflowInput = { input_as_text: string };
+
+function getTextFromMessage(message: ChatMessage): string {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n")
+    .trim();
+}
+
+function buildConversationHistory(messages: ChatMessage[]): AgentInputItem[] {
+  return messages
+    .map((message) => {
+      if (message.role !== "user" && message.role !== "assistant") {
+        return null;
+      }
+      const text = getTextFromMessage(message);
+      if (!text) return null;
+      return {
+        role: message.role,
+        content: [{ type: "input_text", text }],
+      } satisfies AgentInputItem;
+    })
+    .filter((item): item is AgentInputItem => item !== null);
+}
+
+function getLastUserText(messages: ChatMessage[]): string {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === "user");
+  return lastUserMessage ? getTextFromMessage(lastUserMessage) : "";
+}
+
+export async function runNamcMediaCurator({
+  messages,
+}: {
+  messages: ChatMessage[];
+}): Promise<string> {
+  return await withTrace("NAMC AI Media Curator", async () => {
+    const { contextText: loreContext } = await buildNamcLoreContext();
+    const conversationHistory: AgentInputItem[] = [
+      { role: "system", content: [{ type: "input_text", text: loreContext }] },
+      ...buildConversationHistory(messages),
+    ];
+    const runner = new Runner({
+      traceMetadata: {
+        __trace_source__: "agent-builder",
+        workflow_id: "wf_696e93572ae0819092fa0390d0a681e30cf915f0db672ae2",
+      },
+    });
+    const guardrailsInputText = getLastUserText(messages);
+    const workflowState = { input_as_text: guardrailsInputText };
+    const {
+      hasTripwire: guardrailsHasTripwireResult,
+      failOutput: guardrailsFailOutput,
+    } = await runAndApplyGuardrails(
+      guardrailsInputText,
+      guardrailsConfig,
+      conversationHistory,
+      workflowState
+    );
+    if (guardrailsHasTripwireResult) {
+      return JSON.stringify(guardrailsFailOutput);
+    }
+
+    const namcMediaCuratorResultTemp = await runner.run(
+      namcMediaCurator,
+      conversationHistory
+    );
+    conversationHistory.push(
+      ...namcMediaCuratorResultTemp.newItems.map((item) => item.rawItem)
+    );
+
+    if (!namcMediaCuratorResultTemp.finalOutput) {
+      throw new Error("Agent result is undefined");
+    }
+
+    return namcMediaCuratorResultTemp.finalOutput ?? "";
+  });
+}
 
 
 // Main code entrypoint
@@ -263,4 +345,3 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
     }
   });
 }
-
