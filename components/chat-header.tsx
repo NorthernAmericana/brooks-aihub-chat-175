@@ -5,6 +5,7 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { RouteSwitcher } from "@/components/route-switcher";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -14,10 +15,14 @@ function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
+  activeRoute,
+  onRouteSelect,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  activeRoute: string;
+  onRouteSelect: (route: string) => void;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -25,7 +30,7 @@ function PureChatHeader({
   const { width: windowWidth } = useWindowSize();
 
   return (
-    <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
+    <header className="sticky top-0 flex flex-wrap items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
 
       {(!open || windowWidth < 768) && (
@@ -57,6 +62,13 @@ function PureChatHeader({
         variant="outline"
       />
 
+      <div className="order-4 w-full md:order-2 md:ml-auto md:max-w-xl">
+        <RouteSwitcher
+          activeRoute={activeRoute}
+          isReadonly={isReadonly}
+          onRouteSelect={onRouteSelect}
+        />
+      </div>
     </header>
   );
 }
@@ -65,6 +77,7 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.activeRoute === nextProps.activeRoute
   );
 });

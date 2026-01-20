@@ -1,0 +1,8 @@
+{
+  "id": "my-flower-ai",
+  "route": "/myflowerai",
+  "displayName": "My Flower AI",
+  "description": "Cannabis journaling and harm-reduction tracking.",
+  "capabilities": ["journaling", "wellness", "harm-reduction"],
+  "tools": ["createDocument", "updateDocument", "requestSuggestions"]
+}

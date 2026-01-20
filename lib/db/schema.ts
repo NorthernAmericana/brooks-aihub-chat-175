@@ -29,6 +29,7 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
+  activeRoute: text("activeRoute").notNull().default("/hub"),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -56,6 +57,7 @@ export const message = pgTable("Message_v2", {
   parts: json("parts").notNull(),
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
+  routeUsed: text("routeUsed").notNull().default("/hub"),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;

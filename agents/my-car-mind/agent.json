@@ -1,0 +1,8 @@
+{
+  "id": "my-car-mind",
+  "route": "/mycarmindato",
+  "displayName": "My Car Mind ATO",
+  "description": "Trips, car logs, and driving workflow intelligence.",
+  "capabilities": ["driving", "logs", "location"],
+  "tools": ["createDocument", "updateDocument", "requestSuggestions"]
+}
