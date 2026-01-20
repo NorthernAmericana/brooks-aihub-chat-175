@@ -178,9 +178,15 @@ export function Chat({
     [id, mutateRoute]
   );
 
-  const handleSendMessage = useCallback(
-    (nextMessage: ChatMessage) => {
-      if (nextMessage.role === "user") {
+  const handleSendMessage: typeof sendMessage = useCallback(
+    (nextMessage, options) => {
+      if (
+        nextMessage &&
+        typeof nextMessage === "object" &&
+        "role" in nextMessage &&
+        "parts" in nextMessage &&
+        nextMessage.role === "user"
+      ) {
         const text = nextMessage.parts
           .filter((part) => part.type === "text")
           .map((part) => part.text)
@@ -190,7 +196,7 @@ export function Chat({
           updateActiveRoute(parsed.route);
         }
       }
-      return sendMessage(nextMessage);
+      return sendMessage(nextMessage, options);
     },
     [sendMessage, updateActiveRoute]
   );
