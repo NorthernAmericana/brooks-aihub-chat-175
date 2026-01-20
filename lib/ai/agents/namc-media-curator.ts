@@ -1,6 +1,7 @@
 import { fileSearchTool, Agent, AgentInputItem, Runner, withTrace } from "@openai/agents";
 import { OpenAI } from "openai";
 import { runGuardrails } from "@openai/guardrails";
+import type { ChatMessage } from "@/lib/types";
 
 
 // Tool definitions
@@ -214,10 +215,17 @@ Overwriting the user’s canon with headcanon
 });
 
 type WorkflowInput = { input_as_text: string };
+type WorkflowOutput = {
+  output_text: string;
+};
+
+type GuardrailsOutput = Record<string, unknown>;
 
 
 // Main code entrypoint
-export const runWorkflow = async (workflow: WorkflowInput) => {
+export const runWorkflow = async (
+  workflow: WorkflowInput
+): Promise<WorkflowOutput | GuardrailsOutput> => {
   return await withTrace("NAMC AI Media Curator", async () => {
     const state = {
 
@@ -244,23 +252,49 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
     const guardrailsOutput = (guardrailsHasTripwire ? guardrailsFailOutput : guardrailsPassOutput);
     if (guardrailsHasTripwire) {
       return guardrailsOutput;
-    } else {
-      const namcMediaCuratorResultTemp = await runner.run(
-        namcMediaCurator,
-        [
-          ...conversationHistory
-        ]
-      );
-      conversationHistory.push(...namcMediaCuratorResultTemp.newItems.map((item) => item.rawItem));
-
-      if (!namcMediaCuratorResultTemp.finalOutput) {
-          throw new Error("Agent result is undefined");
-      }
-
-      const namcMediaCuratorResult = {
-        output_text: namcMediaCuratorResultTemp.finalOutput ?? ""
-      };
     }
-  });
-}
 
+    const namcMediaCuratorResultTemp = await runner.run(namcMediaCurator, [
+      ...conversationHistory,
+    ]);
+    conversationHistory.push(
+      ...namcMediaCuratorResultTemp.newItems.map((item) => item.rawItem)
+    );
+
+    if (!namcMediaCuratorResultTemp.finalOutput) {
+      throw new Error("Agent result is undefined");
+    }
+
+    return {
+      output_text: namcMediaCuratorResultTemp.finalOutput ?? "",
+    };
+  });
+};
+
+type RunNamcMediaCuratorInput = {
+  messages: ChatMessage[];
+};
+
+export const runNamcMediaCurator = async (
+  input: RunNamcMediaCuratorInput
+): Promise<string> => {
+  const lastUserMessage = [...(input.messages ?? [])]
+    .reverse()
+    .find((message) => message.role === "user");
+  const inputText =
+    lastUserMessage?.parts
+      ?.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("") ?? "";
+
+  const result = await runWorkflow({ input_as_text: inputText });
+  if (typeof result === "string") {
+    return result;
+  }
+
+  if ("output_text" in result && typeof result.output_text === "string") {
+    return result.output_text;
+  }
+
+  return JSON.stringify(result);
+};

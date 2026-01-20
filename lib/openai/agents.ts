@@ -11,10 +11,16 @@ export type AgentInputItem = {
   content: AgentInputText[];
 };
 
+export type AgentTool = {
+  type: string;
+  [key: string]: unknown;
+};
+
 type AgentConfig = {
   name: string;
   instructions: string;
   model: string;
+  tools?: AgentTool[];
   modelSettings?: {
     reasoning?: {
       effort?: string;
@@ -28,12 +34,14 @@ export class Agent {
   name: string;
   instructions: string;
   model: string;
+  tools?: AgentTool[];
   modelSettings?: AgentConfig["modelSettings"];
 
   constructor(config: AgentConfig) {
     this.name = config.name;
     this.instructions = config.instructions;
     this.model = config.model;
+    this.tools = config.tools;
     this.modelSettings = config.modelSettings;
   }
 }
@@ -81,3 +89,8 @@ export const withTrace = async <T>(
   _name: string,
   fn: () => Promise<T>
 ): Promise<T> => fn();
+
+export const fileSearchTool = (vectorStoreIds: string[]): AgentTool => ({
+  type: "file_search",
+  vectorStoreIds,
+});
