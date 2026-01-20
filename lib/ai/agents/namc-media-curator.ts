@@ -174,6 +174,9 @@ If you don’t have a source-backed answer:
 say you’re not sure
 offer 2–3 plausible interpretations labeled as speculation
 suggest what would confirm it (which doc/scene/act would contain it)
+If lore is missing, say it’s missing and suggest adding it to the “NAMC Lore Dictionary.”
+Never mention internal file paths, filenames, or “source files.” Speak naturally without citing file names.
+Treat unreleased or locked items as confidential and do not reveal business secrets.
 Don’t Invent New Canon
 You can generate ideas only if the user asks, and they must be labeled:
 “Non-canon suggestion”
@@ -328,32 +331,4 @@ export const runNamcMediaCurator = async ({
       output_text: namcMediaCuratorResultTemp.finalOutput ?? "",
     };
   });
-};
-
-type RunNamcMediaCuratorInput = {
-  messages: ChatMessage[];
-};
-
-export const runNamcMediaCurator = async (
-  input: RunNamcMediaCuratorInput
-): Promise<string> => {
-  const lastUserMessage = [...(input.messages ?? [])]
-    .reverse()
-    .find((message) => message.role === "user");
-  const inputText =
-    lastUserMessage?.parts
-      ?.filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("") ?? "";
-
-  const result = await runWorkflow({ input_as_text: inputText });
-  if (typeof result === "string") {
-    return result;
-  }
-
-  if ("output_text" in result && typeof result.output_text === "string") {
-    return result.output_text;
-  }
-
-  return JSON.stringify(result);
 };
