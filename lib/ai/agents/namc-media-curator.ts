@@ -145,9 +145,10 @@ Mood order (“cozy dread”, “hopeful grief”, “paranoia noir”)`,
 });
 
 const buildNamcConversationHistory = (
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  loreContext?: string
 ): AgentInputItem[] => {
-  return messages
+  const conversationHistory = messages
     .map((message) => {
       const text = message.parts
         .filter((part) => part.type === "text")
@@ -169,15 +170,37 @@ const buildNamcConversationHistory = (
       } satisfies AgentInputItem;
     })
     .filter((item): item is AgentInputItem => item !== null);
+
+  if (loreContext) {
+    return [
+      {
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text: loreContext,
+          },
+        ],
+      },
+      ...conversationHistory,
+    ];
+  }
+
+  return conversationHistory;
 };
 
 export const runNamcMediaCurator = async ({
   messages,
+  loreContext,
 }: {
   messages: ChatMessage[];
+  loreContext?: string | null;
 }): Promise<string> => {
   return await withTrace("NAMC AI Media Curator", async () => {
-    const conversationHistory = buildNamcConversationHistory(messages);
+    const conversationHistory = buildNamcConversationHistory(
+      messages,
+      loreContext ?? undefined
+    );
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",
