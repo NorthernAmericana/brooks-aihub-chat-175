@@ -1,0 +1,8 @@
+{
+  "id": "hub",
+  "route": "/hub",
+  "displayName": "Brooks AI HUB",
+  "description": "Route planner and ecosystem guide for the Brooks AI HUB.",
+  "capabilities": ["routing", "ecosystem-map", "receipts"],
+  "tools": ["getWeather", "createDocument", "updateDocument", "requestSuggestions"]
+}

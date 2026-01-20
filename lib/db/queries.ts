@@ -84,11 +84,13 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  activeRoute,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  activeRoute?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -97,6 +99,7 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      activeRoute,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -247,6 +250,26 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
     return await db.insert(message).values(messages);
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save messages");
+  }
+}
+
+export async function updateChatActiveRoute({
+  chatId,
+  activeRoute,
+}: {
+  chatId: string;
+  activeRoute: string;
+}) {
+  try {
+    return await db
+      .update(chat)
+      .set({ activeRoute })
+      .where(eq(chat.id, chatId));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat active route"
+    );
   }
 }
 

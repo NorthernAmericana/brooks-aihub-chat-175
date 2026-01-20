@@ -6,18 +6,21 @@ import {
   generateId,
   stepCountIs,
   streamText,
+  type UIMessageStreamWriter,
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import {
-  getAgentConfigBySlash,
+  getAgentConfigByRoute,
   getDefaultAgentConfig,
+  listAgentConfigs,
   type AgentToolId,
 } from "@/lib/ai/agents/registry";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
+import { parseSlashCommand, resolveActiveRoute } from "@/lib/ai/routing";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
@@ -33,13 +36,14 @@ import {
   getMessagesByChatId,
   saveChat,
   saveMessages,
+  updateChatActiveRoute,
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import { convertToUIMessages, generateUUID, getTextFromMessage } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -54,35 +58,6 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
-
-function getSlashTriggerFromMessages(
-  messages: ChatMessage[]
-): string | undefined {
-  const lastUserMessage = [...messages]
-    .reverse()
-    .find((currentMessage) => currentMessage.role === "user");
-
-  if (!lastUserMessage) {
-    return undefined;
-  }
-
-  const textPart = lastUserMessage.parts.find(
-    (part) => part.type === "text"
-  ) as { type: "text"; text: string } | undefined;
-
-  if (!textPart) {
-    return undefined;
-  }
-
-  const trimmed = textPart.text.trim();
-  const wrappedMatch = trimmed.match(/^\/(.+?)\/(?:\s|$)/);
-  if (wrappedMatch?.[1]) {
-    return wrappedMatch[1];
-  }
-
-  const match = trimmed.match(/^\/([^\s]+)/);
-  return match?.[1];
-}
 
 function getLatestUserMessageText(messages: ChatMessage[]): string | null {
   const lastUserMessage = [...messages]
@@ -100,6 +75,42 @@ function getLatestUserMessageText(messages: ChatMessage[]): string | null {
     .trim();
 
   return text.length > 0 ? text : null;
+}
+
+function replaceUserMessageText(
+  message: ChatMessage,
+  text: string
+): ChatMessage {
+  const nonTextParts = message.parts.filter(
+    (
+      part
+    ): part is Exclude<ChatMessage["parts"][number], { type: "text" }> =>
+      part.type !== "text"
+  );
+  const textPart: ChatMessage["parts"][number] = { type: "text", text };
+  const nextParts: ChatMessage["parts"] = [textPart, ...nonTextParts];
+
+  return {
+    ...message,
+    parts: nextParts,
+  };
+}
+
+function streamPlainText(
+  dataStream: UIMessageStreamWriter<ChatMessage>,
+  text: string
+) {
+  dataStream.write({ type: "start" });
+  dataStream.write({ type: "start-step" });
+  dataStream.write({ type: "text-start", id: "text-1" });
+  dataStream.write({
+    type: "text-delta",
+    id: "text-1",
+    delta: text,
+  });
+  dataStream.write({ type: "text-end", id: "text-1" });
+  dataStream.write({ type: "finish-step" });
+  dataStream.write({ type: "finish", finishReason: "stop" });
 }
 
 export async function POST(request: Request) {
@@ -138,6 +149,18 @@ export async function POST(request: Request) {
     const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
     let titlePromise: Promise<string> | null = null;
+    const defaultAgent = await getDefaultAgentConfig();
+    let activeRoute = chat?.activeRoute ?? defaultAgent.route;
+    const parsedSlash =
+      message?.role === "user"
+        ? parseSlashCommand(getTextFromMessage(message as ChatMessage))
+        : null;
+    let routeForMessage = resolveActiveRoute(
+      activeRoute,
+      parsedSlash?.route ?? null
+    );
+    const shouldUpdateRoute =
+      Boolean(parsedSlash?.route) && parsedSlash?.route !== activeRoute;
 
     if (chat) {
       if (chat.userId !== session.user.id) {
@@ -152,13 +175,30 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
+        activeRoute: routeForMessage,
       });
-      titlePromise = generateTitleFromUserMessage({ message });
+    }
+
+    let outgoingMessage = message as ChatMessage | undefined;
+    if (outgoingMessage && parsedSlash && (parsedSlash.route || parsedSlash.isHelp)) {
+      outgoingMessage = replaceUserMessageText(outgoingMessage, parsedSlash.content);
+    }
+
+    if (shouldUpdateRoute && chat) {
+      await updateChatActiveRoute({ chatId: chat.id, activeRoute: routeForMessage });
+      activeRoute = routeForMessage;
+    }
+
+    if (!chat && outgoingMessage?.role === "user") {
+      titlePromise = generateTitleFromUserMessage({ message: outgoingMessage });
     }
 
     const uiMessages = isToolApprovalFlow
       ? (messages as ChatMessage[])
-      : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
+      : [
+          ...convertToUIMessages(messagesFromDb),
+          ...(outgoingMessage ? [outgoingMessage] : []),
+        ];
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -169,16 +209,17 @@ export async function POST(request: Request) {
       country,
     };
 
-    if (message?.role === "user") {
+    if (outgoingMessage?.role === "user") {
       await saveMessages({
         messages: [
           {
             chatId: id,
-            id: message.id,
+            id: outgoingMessage.id,
             role: "user",
-            parts: message.parts,
+            parts: outgoingMessage.parts,
             attachments: [],
             createdAt: new Date(),
+            routeUsed: routeForMessage,
           },
         ],
       });
@@ -189,15 +230,37 @@ export async function POST(request: Request) {
       selectedChatModel.includes("thinking");
 
     const modelMessages = await convertToModelMessages(uiMessages);
-    const slashTrigger = getSlashTriggerFromMessages(uiMessages);
     const selectedAgent =
-      (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-      getDefaultAgentConfig();
+      (routeForMessage
+        ? await getAgentConfigByRoute(routeForMessage)
+        : undefined) ?? defaultAgent;
     const isNamcAgent = selectedAgent.id === "namc";
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        if (parsedSlash?.isHelp) {
+          const agents = await listAgentConfigs();
+          const helpText = [
+            "Available routes:",
+            "",
+            ...agents.map(
+              (agent) => `- ${agent.route}: ${agent.description}`
+            ),
+            "",
+            "Switch by typing /route or using the route picker above.",
+          ].join("\n");
+
+          streamPlainText(dataStream, helpText);
+
+          if (titlePromise) {
+            const title = await titlePromise;
+            dataStream.write({ type: "data-chat-title", data: title });
+            updateChatTitleById({ chatId: id, title });
+          }
+          return;
+        }
+
         if (isNamcAgent) {
           const latestUserMessage = getLatestUserMessageText(uiMessages);
           const namcLoreContext = latestUserMessage
@@ -211,17 +274,7 @@ export async function POST(request: Request) {
             loreContext: namcLoreContext,
           });
 
-          dataStream.write({ type: "start" });
-          dataStream.write({ type: "start-step" });
-          dataStream.write({ type: "text-start", id: "text-1" });
-          dataStream.write({
-            type: "text-delta",
-            id: "text-1",
-            delta: namcOutput,
-          });
-          dataStream.write({ type: "text-end", id: "text-1" });
-          dataStream.write({ type: "finish-step" });
-          dataStream.write({ type: "finish", finishReason: "stop" });
+          streamPlainText(dataStream, namcOutput);
 
           if (titlePromise) {
             const title = await titlePromise;
@@ -305,6 +358,7 @@ export async function POST(request: Request) {
                     createdAt: new Date(),
                     attachments: [],
                     chatId: id,
+                    routeUsed: routeForMessage,
                   },
                 ],
               });
@@ -319,6 +373,7 @@ export async function POST(request: Request) {
               createdAt: new Date(),
               attachments: [],
               chatId: id,
+              routeUsed: routeForMessage,
             })),
           });
         }
