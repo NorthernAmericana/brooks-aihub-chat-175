@@ -1,0 +1,8 @@
+{
+  "id": "brooks-bears",
+  "route": "/brooksbears",
+  "displayName": "Brooks Bears",
+  "description": "Benjamin Bear companion experience and safety-first guidance.",
+  "capabilities": ["companion", "comfort", "safety"],
+  "tools": ["createDocument", "updateDocument", "requestSuggestions"]
+}

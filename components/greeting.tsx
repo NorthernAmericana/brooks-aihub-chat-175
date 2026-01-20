@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { useAgents } from "@/hooks/use-agents";
 
 type GreetingProps = {
   onSelectFolder?: (folder: string) => void;
@@ -19,22 +19,24 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     return () => window.clearInterval(interval);
   }, []);
 
+  const { data: agents } = useAgents();
+
   const suggestedFolders = useMemo(() => {
     const desired = new Set([
-      "BrooksBears",
-      "MyCarMindATO",
-      "MyFlowerAI",
-      "NAMC",
+      "/brooksbears",
+      "/mycarmindato",
+      "/myflowerai",
+      "/namc",
     ]);
 
-    return listAgentConfigs()
-      .filter((agent) => desired.has(agent.slash))
+    return (agents ?? [])
+      .filter((agent) => desired.has(agent.route))
       .map((agent) => ({
-        label: agent.label,
-        slash: agent.slash,
-        folder: `/${agent.slash}/`,
+        label: agent.displayName,
+        route: agent.route,
+        folder: `${agent.route}/`,
       }));
-  }, []);
+  }, [agents]);
 
   const formattedNow = useMemo(
     () =>

@@ -1,0 +1,2 @@
+ALTER TABLE "Chat" ADD COLUMN IF NOT EXISTS "activeRoute" text DEFAULT '/hub' NOT NULL;
+ALTER TABLE "Message_v2" ADD COLUMN IF NOT EXISTS "routeUsed" text DEFAULT '/hub' NOT NULL;

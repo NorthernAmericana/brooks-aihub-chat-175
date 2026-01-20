@@ -1,14 +1,29 @@
+import "server-only";
+
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { normalizeRoute } from "@/lib/ai/routing";
+
 export type AgentToolId =
   | "getWeather"
   | "createDocument"
   | "updateDocument"
   | "requestSuggestions";
 
-export type AgentConfig = {
+export type AgentManifest = {
   id: string;
-  label: string;
-  slash: string;
+  route: string;
+  displayName: string;
+  description: string;
   tools: AgentToolId[];
+  capabilities?: string[];
+  model?: {
+    id?: string;
+    provider?: string;
+  };
+};
+
+export type AgentConfig = AgentManifest & {
   systemPromptOverride?: string;
 };
 
@@ -98,97 +113,85 @@ const namcPrompt = `You are the NAMC AI Media Curator for /NAMC/.
 
 Focus on curating films, music, games, lore, and media releases. Provide concise curation notes, highlight-worthy picks, and actionable next steps for what to watch, listen to, play, or develop next.`;
 
-const agentRegistry: AgentConfig[] = [
-  {
-    id: "brooks-ai-hub",
-    label: "Brooks AI HUB",
-    slash: "Brooks AI HUB",
-    tools: [
-      "getWeather",
-      "createDocument",
-      "updateDocument",
-      "requestSuggestions",
-    ],
-    systemPromptOverride: brooksAiHubPrompt,
-  },
-  {
-    id: "nat",
-    label: "NAT Strategy",
-    slash: "NAT",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
-    systemPromptOverride: natPrompt,
-  },
-  {
-    id: "brooks-bears",
-    label: "Brooks Bears",
-    slash: "BrooksBears",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
-    systemPromptOverride: brooksBearsPrompt,
-  },
-  {
-    id: "my-car-mind",
-    label: "My Car Mind ATO",
-    slash: "MyCarMindATO",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
-    systemPromptOverride: myCarMindPrompt,
-  },
-  {
-    id: "my-flower-ai",
-    label: "My Flower AI",
-    slash: "MyFlowerAI",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
-    systemPromptOverride: myFlowerAiPrompt,
-  },
-  {
-    id: "namc",
-    label: "NAMC AI Media Curator",
-    slash: "NAMC",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
-    systemPromptOverride: namcPrompt,
-  },
-  {
-    id: "default",
-    label: "Default",
-    slash: "default",
-    tools: [
-      "getWeather",
-      "createDocument",
-      "updateDocument",
-      "requestSuggestions",
-    ],
-  },
-];
+const agentPromptOverrides: Record<string, string> = {
+  hub: brooksAiHubPrompt,
+  namc: namcPrompt,
+  nat: natPrompt,
+  "brooks-bears": brooksBearsPrompt,
+  "my-car-mind": myCarMindPrompt,
+  "my-flower-ai": myFlowerAiPrompt,
+};
 
-export const defaultAgentId = "brooks-ai-hub";
+const agentsDirectory = path.join(process.cwd(), "agents");
+let cachedAgents: AgentConfig[] | null = null;
 
-export function listAgentConfigs(): AgentConfig[] {
-  return agentRegistry;
+const applyDefaults = (manifest: AgentManifest): AgentConfig => {
+  const normalizedRoute = normalizeRoute(manifest.route);
+  return {
+    ...manifest,
+    route: normalizedRoute,
+    systemPromptOverride: agentPromptOverrides[manifest.id],
+  };
+};
+
+const loadAgentManifests = async (): Promise<AgentConfig[]> => {
+  const entries = await fs.readdir(agentsDirectory, { withFileTypes: true });
+  const manifests: AgentConfig[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const manifestPath = path.join(agentsDirectory, entry.name, "agent.json");
+    try {
+      const fileContents = await fs.readFile(manifestPath, "utf8");
+      const manifest = JSON.parse(fileContents) as AgentManifest;
+      manifests.push(applyDefaults(manifest));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return manifests;
+};
+
+export async function listAgentConfigs(): Promise<AgentConfig[]> {
+  if (!cachedAgents) {
+    cachedAgents = await loadAgentManifests();
+  }
+
+  return cachedAgents;
 }
 
-export function getAgentConfigById(id: string): AgentConfig | undefined {
-  return agentRegistry.find((agent) => agent.id === id);
+export async function getAgentConfigById(
+  id: string
+): Promise<AgentConfig | undefined> {
+  const agents = await listAgentConfigs();
+  return agents.find((agent) => agent.id === id);
 }
 
-const normalizeSlash = (slash: string) =>
-  slash
-    .replace(/^\/|\/$/g, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
-
-export function getAgentConfigBySlash(slash: string): AgentConfig | undefined {
-  const normalized = normalizeSlash(slash);
-  return agentRegistry.find(
-    (agent) => normalizeSlash(agent.slash) === normalized
-  );
+export async function getAgentConfigByRoute(
+  route: string
+): Promise<AgentConfig | undefined> {
+  const normalizedRoute = normalizeRoute(route);
+  const agents = await listAgentConfigs();
+  return agents.find((agent) => normalizeRoute(agent.route) === normalizedRoute);
 }
 
-export function getDefaultAgentConfig(): AgentConfig {
+export const defaultAgentRoute = "/hub";
+
+export async function getDefaultAgentConfig(): Promise<AgentConfig> {
   return (
-    getAgentConfigById(defaultAgentId) ??
-    agentRegistry[0] ?? {
-      id: defaultAgentId,
-      label: "Default",
-      slash: "default",
+    (await getAgentConfigByRoute(defaultAgentRoute)) ??
+    (await listAgentConfigs())[0] ?? {
+      id: "hub",
+      route: defaultAgentRoute,
+      displayName: "Brooks AI HUB",
+      description: "Default route",
       tools: [],
     }
   );

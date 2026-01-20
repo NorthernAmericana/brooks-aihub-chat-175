@@ -1,0 +1,8 @@
+{
+  "id": "nat",
+  "route": "/nat",
+  "displayName": "NAT Strategy",
+  "description": "Brand, business, and strategy guidance for Northern Americana Tech.",
+  "capabilities": ["strategy", "brand", "business"],
+  "tools": ["createDocument", "updateDocument", "requestSuggestions"]
+}

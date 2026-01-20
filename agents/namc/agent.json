@@ -1,0 +1,8 @@
+{
+  "id": "namc",
+  "route": "/namc",
+  "displayName": "NAMC Media Curator",
+  "description": "Indie-media archivist for NAMC lore, timelines, and curation.",
+  "capabilities": ["lore", "curation", "knowledgebase"],
+  "tools": ["createDocument", "updateDocument", "requestSuggestions"]
+}

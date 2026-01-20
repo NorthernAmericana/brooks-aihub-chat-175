@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
+import { normalizeRoute, parseSlashCommand } from "@/lib/ai/routing";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export function Chat({
   id,
   initialMessages,
   initialChatModel,
+  initialActiveRoute,
   initialVisibilityType,
   isReadonly,
   autoResume,
@@ -43,6 +45,7 @@ export function Chat({
   id: string;
   initialMessages: ChatMessage[];
   initialChatModel: string;
+  initialActiveRoute: string;
   initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   autoResume: boolean;
@@ -153,6 +156,45 @@ export function Chat({
     },
   });
 
+  const { data: routeData, mutate: mutateRoute } = useSWR<{
+    activeRoute: string;
+  }>(`/api/chat/${id}`, fetcher, {
+    fallbackData: { activeRoute: initialActiveRoute },
+  });
+
+  const activeRoute = routeData?.activeRoute ?? initialActiveRoute;
+
+  const updateActiveRoute = useCallback(
+    async (route: string) => {
+      const normalized = normalizeRoute(route);
+      mutateRoute({ activeRoute: normalized }, false);
+      await fetchWithErrorHandlers(`/api/chat/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activeRoute: normalized }),
+      });
+      mutateRoute();
+    },
+    [id, mutateRoute]
+  );
+
+  const handleSendMessage = useCallback(
+    (nextMessage: ChatMessage) => {
+      if (nextMessage.role === "user") {
+        const text = nextMessage.parts
+          .filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join("");
+        const parsed = parseSlashCommand(text);
+        if (parsed.route) {
+          updateActiveRoute(parsed.route);
+        }
+      }
+      return sendMessage(nextMessage);
+    },
+    [sendMessage, updateActiveRoute]
+  );
+
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
 
@@ -211,7 +253,9 @@ export function Chat({
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
         <ChatHeader
           chatId={id}
+          activeRoute={activeRoute}
           isReadonly={isReadonly}
+          onRouteSelect={updateActiveRoute}
           selectedVisibilityType={initialVisibilityType}
         />
 
@@ -239,7 +283,7 @@ export function Chat({
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
+              sendMessage={handleSendMessage}
               setAttachments={setAttachments}
               setInput={setInput}
               setMessages={setMessages}
@@ -260,7 +304,7 @@ export function Chat({
         regenerate={regenerate}
         selectedModelId={currentModelId}
         selectedVisibilityType={visibilityType}
-        sendMessage={sendMessage}
+        sendMessage={handleSendMessage}
         setAttachments={setAttachments}
         setInput={setInput}
         setMessages={setMessages}
