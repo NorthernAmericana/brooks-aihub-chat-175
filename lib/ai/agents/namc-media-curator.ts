@@ -13,7 +13,21 @@ const fileSearch = fileSearchTool([
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Guardrails definitions
-const guardrailsConfig = {
+type GuardrailDefinition = {
+  name: string;
+  config?: {
+    model?: string;
+    confidence_threshold?: number;
+    knowledge_source?: string;
+    block?: boolean;
+  };
+};
+
+type GuardrailsConfig = {
+  guardrails: GuardrailDefinition[];
+};
+
+const guardrailsConfig: GuardrailsConfig = {
   guardrails: [
     { name: "Jailbreak", config: { model: "gpt-4.1-mini", confidence_threshold: 0.7 } },
     { name: "Hallucination Detection", config: { model: "gpt-4o", knowledge_source: "vs_696eeaf739208191acdb5ec1e14c6b3c", confidence_threshold: 0.7 } },
@@ -57,10 +71,17 @@ async function scrubWorkflowInput(workflow: any, inputKey: string, piiOnly: any)
     workflow[inputKey] = getGuardrailSafeText(res, value);
 }
 
-async function runAndApplyGuardrails(inputText: string, config: any, history: any[], workflow: any) {
-    const guardrails = Array.isArray(config?.guardrails) ? config.guardrails : [];
+async function runAndApplyGuardrails(
+  inputText: string,
+  config: GuardrailsConfig,
+  history: any[],
+  workflow: any
+) {
+    const guardrails = config.guardrails;
     const results = await runGuardrails(inputText, config, context, true);
-    const shouldMaskPII = guardrails.find((g) => (g?.name === "Contains PII") && g?.config && g.config.block === false);
+    const shouldMaskPII = guardrails.find(
+      (g) => g.name === "Contains PII" && g.config?.block === false
+    );
     if (shouldMaskPII) {
         const piiOnly = { guardrails: [shouldMaskPII] };
         await scrubConversationHistory(history, piiOnly);
