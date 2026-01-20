@@ -4,11 +4,11 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { motion } from "framer-motion";
 import { memo, useEffect, useMemo, useState } from "react";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { useAgents } from "@/hooks/use-agents";
 import {
   formatSlashAction,
   getStoredSlashActions,
-  normalizeSlash,
+  normalizeRoute,
   parseSlashAction,
   rememberSlashAction,
   type SlashAction,
@@ -32,17 +32,18 @@ const defaultPromptsByAgentId = new Map([
   ["namc", "brainstorm a scene"],
 ]);
 
-const createActionKey = (action: { slash: string; prompt: string }) =>
-  `${normalizeSlash(action.slash)}::${action.prompt.toLowerCase()}`;
+const createActionKey = (action: { route: string; prompt: string }) =>
+  `${normalizeRoute(action.route)}::${action.prompt.toLowerCase()}`;
 
 function PureSuggestedActions({
   chatId,
   sendMessage,
   messages,
 }: SuggestedActionsProps) {
-  const agentConfigs = useMemo(
-    () => listAgentConfigs().filter((agent) => agent.id !== "default"),
-    []
+  const { data: agentConfigs = [] } = useAgents();
+  const availableAgents = useMemo(
+    () => agentConfigs.filter((agent) => agent.id !== "default"),
+    [agentConfigs]
   );
   const [storedActions, setStoredActions] = useState<SlashAction[]>([]);
 
@@ -64,7 +65,7 @@ function PureSuggestedActions({
         continue;
       }
 
-      const parsed = parseSlashAction(text, agentConfigs);
+      const parsed = parseSlashAction(text, availableAgents);
       if (!parsed) {
         continue;
       }
@@ -86,7 +87,7 @@ function PureSuggestedActions({
     }
 
     return results;
-  }, [agentConfigs, messages]);
+  }, [availableAgents, messages]);
 
   const suggestedActions = useMemo(() => {
     const combined: SlashAction[] = [];
@@ -108,14 +109,14 @@ function PureSuggestedActions({
     rememberedActions.forEach(addAction);
 
     if (combined.length < 4) {
-      agentConfigs.forEach((agent) => {
+      availableAgents.forEach((agent) => {
         const prompt = defaultPromptsByAgentId.get(agent.id);
         if (!prompt) {
           return;
         }
 
         addAction({
-          slash: agent.slash,
+          route: agent.route,
           prompt,
           lastUsedAt: 0,
         });
@@ -123,24 +124,24 @@ function PureSuggestedActions({
     }
 
     return combined.slice(0, 4).map(formatSlashAction);
-  }, [agentConfigs, rememberedActions, storedActions]);
+  }, [availableAgents, rememberedActions, storedActions]);
 
   const displaySuggestedAction = (suggestedAction: string) => {
-    const parsed = parseSlashAction(suggestedAction, agentConfigs);
+    const parsed = parseSlashAction(suggestedAction, availableAgents);
     if (!parsed) {
       return suggestedAction;
     }
 
-    const agent = agentConfigs.find(
+    const agent = availableAgents.find(
       (config) =>
-        normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
+        normalizeRoute(config.route) === normalizeRoute(parsed.route)
     );
     if (!agent) {
       return suggestedAction;
     }
 
     const suffix = parsed.prompt ? ` ${parsed.prompt}` : "";
-    return `${agent.label} · /${agent.slash}/${suffix}`;
+    return `${agent.displayName} · ${agent.route}${suffix}`;
   };
 
   return (
@@ -159,7 +160,7 @@ function PureSuggestedActions({
           <Suggestion
             className="h-auto w-full whitespace-normal p-3 text-left"
             onClick={(suggestion) => {
-              const parsed = parseSlashAction(suggestion, agentConfigs);
+              const parsed = parseSlashAction(suggestion, availableAgents);
               if (parsed) {
                 setStoredActions(rememberSlashAction(parsed));
               }
