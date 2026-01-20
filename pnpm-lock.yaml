@@ -35,6 +35,12 @@ importers:
       '@icons-pack/react-simple-icons':
         specifier: ^13.7.0
         version: 13.8.0(react@19.0.1)
+      '@openai/agents':
+        specifier: ^0.0.12
+        version: 0.0.12
+      '@openai/guardrails':
+        specifier: ^0.0.4
+        version: 0.0.4
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
@@ -161,6 +167,9 @@ importers:
       next-themes:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
+      openai:
+        specifier: ^4.73.1
+        version: 4.73.1
       orderedmap:
         specifier: ^2.1.1
         version: 2.1.1
