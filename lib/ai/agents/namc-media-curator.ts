@@ -1,6 +1,7 @@
 import { fileSearchTool, Agent, AgentInputItem, Runner, withTrace } from "@openai/agents";
 import { OpenAI } from "openai";
 import { runGuardrails } from "@openai/guardrails";
+import type { ChatMessage } from "@/lib/types";
 
 
 // Tool definitions
@@ -12,7 +13,21 @@ const fileSearch = fileSearchTool([
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Guardrails definitions
-const guardrailsConfig = {
+type GuardrailDefinition = {
+  name: string;
+  config?: {
+    model?: string;
+    confidence_threshold?: number;
+    knowledge_source?: string;
+    block?: boolean;
+  };
+};
+
+type GuardrailsConfig = {
+  guardrails: GuardrailDefinition[];
+};
+
+const guardrailsConfig: GuardrailsConfig = {
   guardrails: [
     { name: "Jailbreak", config: { model: "gpt-4.1-mini", confidence_threshold: 0.7 } },
     { name: "Hallucination Detection", config: { model: "gpt-4o", knowledge_source: "vs_696eeaf739208191acdb5ec1e14c6b3c", confidence_threshold: 0.7 } },
@@ -56,10 +71,17 @@ async function scrubWorkflowInput(workflow: any, inputKey: string, piiOnly: any)
     workflow[inputKey] = getGuardrailSafeText(res, value);
 }
 
-async function runAndApplyGuardrails(inputText: string, config: any, history: any[], workflow: any) {
-    const guardrails = Array.isArray(config?.guardrails) ? config.guardrails : [];
+async function runAndApplyGuardrails(
+  inputText: string,
+  config: GuardrailsConfig,
+  history: any[],
+  workflow: any
+) {
+    const guardrails = config.guardrails;
     const results = await runGuardrails(inputText, config, context, true);
-    const shouldMaskPII = guardrails.find((g) => (g?.name === "Contains PII") && g?.config && g.config.block === false);
+    const shouldMaskPII = guardrails.find(
+      (g) => g.name === "Contains PII" && g.config?.block === false
+    );
     if (shouldMaskPII) {
         const piiOnly = { guardrails: [shouldMaskPII] };
         await scrubConversationHistory(history, piiOnly);
@@ -73,7 +95,7 @@ async function runAndApplyGuardrails(inputText: string, config: any, history: an
 
 function buildGuardrailFailOutput(results: any[]) {
     const get = (name: string) => (results ?? []).find((r: any) => ((r?.info?.guardrail_name ?? r?.info?.guardrailName) === name));
-    const pii = get("Contains PII"), mod = get("Moderation"), jb = get("Jailbreak"), hal = get("Hallucination Detection"), nsfw = get("NSFW Text"), url = get("URL Filter"), custom = get("Custom Prompt Check"), pid = get("Prompt Injection Detection"), piiCounts = Object.entries(pii?.info?.detected_entities ?? {}).filter(([, v]) => Array.isArray(v)).map(([k, v]) => k + ":" + v.length), conf = jb?.info?.confidence;
+    const pii = get("Contains PII"), mod = get("Moderation"), jb = get("Jailbreak"), hal = get("Hallucination Detection"), nsfw = get("NSFW Text"), url = get("URL Filter"), custom = get("Custom Prompt Check"), pid = get("Prompt Injection Detection"), detectedEntities = (pii?.info?.detected_entities ?? {}) as Record<string, unknown>, piiCounts = Object.entries(detectedEntities).flatMap(([k, v]) => Array.isArray(v) ? [`${k}:${v.length}`] : []), conf = jb?.info?.confidence;
     return {
         pii: { failed: (piiCounts.length > 0) || pii?.tripwireTriggered === true, detected_counts: piiCounts },
         moderation: { failed: mod?.tripwireTriggered === true || ((mod?.info?.flagged_categories ?? []).length > 0), flagged_categories: mod?.info?.flagged_categories },
@@ -214,10 +236,17 @@ Overwriting the user’s canon with headcanon
 });
 
 type WorkflowInput = { input_as_text: string };
+type WorkflowOutput = {
+  output_text: string;
+};
+
+type GuardrailsOutput = Record<string, unknown>;
 
 
 // Main code entrypoint
-export const runWorkflow = async (workflow: WorkflowInput) => {
+export const runWorkflow = async (
+  workflow: WorkflowInput
+): Promise<WorkflowOutput | GuardrailsOutput> => {
   return await withTrace("NAMC AI Media Curator", async () => {
     const state = {
 
@@ -244,23 +273,49 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
     const guardrailsOutput = (guardrailsHasTripwire ? guardrailsFailOutput : guardrailsPassOutput);
     if (guardrailsHasTripwire) {
       return guardrailsOutput;
-    } else {
-      const namcMediaCuratorResultTemp = await runner.run(
-        namcMediaCurator,
-        [
-          ...conversationHistory
-        ]
-      );
-      conversationHistory.push(...namcMediaCuratorResultTemp.newItems.map((item) => item.rawItem));
-
-      if (!namcMediaCuratorResultTemp.finalOutput) {
-          throw new Error("Agent result is undefined");
-      }
-
-      const namcMediaCuratorResult = {
-        output_text: namcMediaCuratorResultTemp.finalOutput ?? ""
-      };
     }
-  });
-}
 
+    const namcMediaCuratorResultTemp = await runner.run(namcMediaCurator, [
+      ...conversationHistory,
+    ]);
+    conversationHistory.push(
+      ...namcMediaCuratorResultTemp.newItems.map((item) => item.rawItem)
+    );
+
+    if (!namcMediaCuratorResultTemp.finalOutput) {
+      throw new Error("Agent result is undefined");
+    }
+
+    return {
+      output_text: namcMediaCuratorResultTemp.finalOutput ?? "",
+    };
+  });
+};
+
+type RunNamcMediaCuratorInput = {
+  messages: ChatMessage[];
+};
+
+export const runNamcMediaCurator = async (
+  input: RunNamcMediaCuratorInput
+): Promise<string> => {
+  const lastUserMessage = [...(input.messages ?? [])]
+    .reverse()
+    .find((message) => message.role === "user");
+  const inputText =
+    lastUserMessage?.parts
+      ?.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("") ?? "";
+
+  const result = await runWorkflow({ input_as_text: inputText });
+  if (typeof result === "string") {
+    return result;
+  }
+
+  if ("output_text" in result && typeof result.output_text === "string") {
+    return result.output_text;
+  }
+
+  return JSON.stringify(result);
+};
