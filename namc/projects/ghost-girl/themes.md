@@ -1,9 +1,16 @@
 # Ghost Girl — Themes & Motifs
 
-The Ghost Girl thematic canon content was referenced in the request but not included in the provided materials. Please supply the official thematic notes so they can be recorded here without inventing details.
+Spoiler-safe thematic notes for the Ghost Girl project. For canon source-of-truth, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
 
 ## Themes
-- TBD (canon text required)
+- Grief and denial
+- Memory vs. reality
+- Addiction / drug-enabled escapism
+- Unreliable perception
+- Love triangle as psychological conflict
+- Identity fracture
 
 ## Motifs & Symbols
-- TBD (canon text required)
+- “Ghost” as a coping mechanism
+- The remembered past vs. the lived present
+- The pull of comfort against the cost of truth

@@ -1,6 +1,8 @@
 # Ghost Girl — Characters
 
-The Ghost Girl character canon content was referenced in the request but not included in the provided materials. Please supply the official character list and descriptions so they can be recorded here without inventing details.
+Spoiler-safe character roster for the Ghost Girl project. For full canon notes, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
 
 ## Character Index
-- TBD (canon text required)
+- **Ethan White** — First-year college student; grieving and increasingly destabilized as his perceptions fray.
+- **Gretchen Ross** — Ethan’s deceased childhood friend who appears to him as if alive and his age.
+- **Raven Ross** — Gretchen’s cousin; Ethan’s love interest and reality tether who cannot see Gretchen.
