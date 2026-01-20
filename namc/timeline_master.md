@@ -15,7 +15,7 @@ logline: TBD (canon text required)
 
 # NAMC Master Timeline
 
-The Ghost Girl canon content was referenced in the request but not included in the provided materials. Please supply the official master timeline beats so they can be recorded here without inventing details.
+High-level project timeline references. Entries are spoiler-safe and may link to project-specific scaffolding.
 
 ## Timeline
-- TBD (canon text required)
+- **Ghost Girl (Upcoming short film)** — College-era psychological triangle driven by grief and unreliable perception. (Scaffolding: [`namc/projects/ghost-girl/timeline.md`](projects/ghost-girl/timeline.md))

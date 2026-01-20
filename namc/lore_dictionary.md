@@ -15,7 +15,7 @@ logline: TBD (canon text required)
 
 # NAMC Lore Dictionary
 
-The Ghost Girl canon content was referenced in the request but not included in the provided materials. Please supply the official lore dictionary entries so they can be recorded here without inventing details.
+A central index of canonical lore packages. Entries here remain spoiler-safe and link to deeper lore files.
 
 ## Entries
-- TBD (canon text required)
+- **Ghost Girl** — A grieving first-year believes his childhood friend has returned, drawing him into a tender, volatile triangle that tests memory and reality. (See: [`namc/lore/ghost-girl.lore.md`](lore/ghost-girl.lore.md))

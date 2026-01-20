@@ -15,7 +15,9 @@ logline: TBD (canon text required)
 
 # Ghost Girl — Timeline Beats
 
-The Ghost Girl timeline canon content was referenced in the request but not included in the provided materials. Please supply the official timeline beats so they can be recorded here without inventing details.
+Scaffolding only; spoiler-safe until confirmed. For canonical details, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
 
-## Timeline
-- TBD (canon text required)
+## Timeline (Scaffolding, Non-Canon Until Confirmed)
+- **Act I / Opening:** Ethan arrives at college; Gretchen appears to him; he believes she has returned.
+- **Act II / Complication:** Raven grows close to Ethan; the triangle intensifies as Ethan’s perception frays.
+- **Act III / Fallout:** Ethan’s instability peaks; choices between memory and reality culminate.
