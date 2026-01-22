@@ -257,6 +257,7 @@ export function Chat({
         addToolApprovalResponse={addToolApprovalResponse}
         attachments={attachments}
         chatId={id}
+        chatTitle={initialChatTitle}
         input={input}
         isReadonly={isReadonly}
         messages={messages}
