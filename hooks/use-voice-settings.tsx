@@ -1,16 +1,48 @@
 "use client";
 
-import { useCallback } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useCallback, useEffect, useState } from "react";
 
 export type ChatVoiceSettings = Record<string, { voiceId: string }>;
 
 const STORAGE_KEY = "chat-voice-settings";
 
 export const useVoiceSettingsMap = () => {
-  const [settings, setSettings] = useLocalStorage<ChatVoiceSettings>(
-    STORAGE_KEY,
-    {}
+  const [settings, setSettingsState] = useState<ChatVoiceSettings>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setSettingsState(JSON.parse(stored) as ChatVoiceSettings);
+      }
+    } catch {
+      setSettingsState({});
+    }
+  }, []);
+
+  const setSettings = useCallback(
+    (
+      next:
+        | ChatVoiceSettings
+        | ((previous: ChatVoiceSettings) => ChatVoiceSettings)
+    ) => {
+      setSettingsState((previous) => {
+        const resolved = typeof next === "function" ? next(previous) : next;
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(resolved));
+          } catch {
+            // Ignore localStorage write errors.
+          }
+        }
+        return resolved;
+      });
+    },
+    []
   );
 
   return { settings, setSettings };
