@@ -2,7 +2,8 @@ export type AgentToolId =
   | "getWeather"
   | "createDocument"
   | "updateDocument"
-  | "requestSuggestions";
+  | "requestSuggestions"
+  | "saveMemory";
 
 export type AgentConfig = {
   id: string;
@@ -78,25 +79,32 @@ You are successful when:
 - And the HUB feels like a real OS with a clear map.
 `;
 
+const memoryReceiptPrompt = `
+MEMORY & RECEIPTS
+- When a slash-routed interaction produces a receipt-worthy outcome (summary, decision, or clear next step), ask the user if they want to save it as a memory.
+- If the user says yes (or explicitly asks to save), call saveMemory with a short receipt-style summary and optional tags/route.
+- Never call saveMemory without explicit user confirmation.
+`;
+
 const natPrompt = `You are the /NAT/ strategist for Northern Americana Tech.
 
-Focus on brand, business, and company strategy for NAT. Provide concise, actionable guidance with clear next steps. Use bullets and short sections.`;
+Focus on brand, business, and company strategy for NAT. Provide concise, actionable guidance with clear next steps. Use bullets and short sections.${memoryReceiptPrompt}`;
 
 const brooksBearsPrompt = `You are the /BrooksBears/ companion experience designer.
 
-Focus on Benjamin Bear, safety-first companionship, and kid-friendly/comfort-forward experiences. Keep tone calm, reassuring, and practical.`;
+Focus on Benjamin Bear, safety-first companionship, and kid-friendly/comfort-forward experiences. Keep tone calm, reassuring, and practical.${memoryReceiptPrompt}`;
 
 const myCarMindPrompt = `You are the /MyCarMindATO/ driving intelligence agent.
 
-Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.`;
+Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.${memoryReceiptPrompt}`;
 
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 
-Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental.`;
+Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental.${memoryReceiptPrompt}`;
 
 const namcPrompt = `You are the NAMC AI Media Curator for /NAMC/ inside Brooks AI HUB.
 
-Be fully client-facing for Brooks AI HUB users. Help clients explore NAMC lore, media, and general questions with saved memory, clear guidance, and a few “cool stuff” suggestions when helpful. Keep responses concise with highlight-worthy picks and actionable next steps for what to watch, listen to, play, or develop next. If a NAMC project or media item is mentioned with a release date of “TBA,” acknowledge that it is going through ongoing writing changes and will be “coming very soon by NAMC :).” Do not mention internal file names or paths, and never assume the user is the founder—always treat them as a client or app user.`;
+Be fully client-facing for Brooks AI HUB users. Help clients explore NAMC lore, media, and general questions with saved memory, clear guidance, and a few “cool stuff” suggestions when helpful. Keep responses concise with highlight-worthy picks and actionable next steps for what to watch, listen to, play, or develop next. Do not mention internal file names or paths, and never assume the user is the founder—always treat them as a client or app user.${memoryReceiptPrompt}`;
 
 const agentRegistry: AgentConfig[] = [
   {
@@ -108,42 +116,68 @@ const agentRegistry: AgentConfig[] = [
       "createDocument",
       "updateDocument",
       "requestSuggestions",
+      "saveMemory",
     ],
-    systemPromptOverride: brooksAiHubPrompt,
+    systemPromptOverride: `${brooksAiHubPrompt}${memoryReceiptPrompt}`,
   },
   {
     id: "nat",
     label: "NAT Strategy",
     slash: "NAT",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: natPrompt,
   },
   {
     id: "brooks-bears",
     label: "Brooks Bears",
     slash: "BrooksBears",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: brooksBearsPrompt,
   },
   {
     id: "my-car-mind",
     label: "My Car Mind ATO",
     slash: "MyCarMindATO",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: myCarMindPrompt,
   },
   {
     id: "my-flower-ai",
     label: "My Flower AI",
     slash: "MyFlowerAI",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: myFlowerAiPrompt,
   },
   {
     id: "namc",
     label: "NAMC AI Media Curator",
     slash: "NAMC",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: namcPrompt,
   },
   {
@@ -155,6 +189,7 @@ const agentRegistry: AgentConfig[] = [
       "createDocument",
       "updateDocument",
       "requestSuggestions",
+      "saveMemory",
     ],
   },
 ];

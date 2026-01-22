@@ -238,7 +238,8 @@ Overwriting the user’s canon with headcanon
 
 const buildNamcConversationHistory = (
   messages: ChatMessage[],
-  loreContext?: string
+  loreContext?: string,
+  memoryContext?: string
 ): AgentInputItem[] => {
   const conversationHistory = messages
     .map((message) => {
@@ -263,16 +264,18 @@ const buildNamcConversationHistory = (
     })
     .filter((item): item is AgentInputItem => item !== null);
 
-  if (loreContext) {
+  const systemContexts = [loreContext, memoryContext].filter(
+    (context): context is string => Boolean(context)
+  );
+
+  if (systemContexts.length > 0) {
     return [
       {
         role: "system",
-        content: [
-          {
-            type: "input_text",
-            text: loreContext,
-          },
-        ],
+        content: systemContexts.map((context) => ({
+          type: "input_text",
+          text: context,
+        })),
       },
       ...conversationHistory,
     ];
@@ -284,14 +287,17 @@ const buildNamcConversationHistory = (
 export const runNamcMediaCurator = async ({
   messages,
   loreContext,
+  memoryContext,
 }: {
   messages: ChatMessage[];
   loreContext?: string | null;
+  memoryContext?: string | null;
 }): Promise<string> => {
   return await withTrace("NAMC AI Media Curator", async () => {
     const conversationHistory = buildNamcConversationHistory(
       messages,
-      loreContext ?? undefined
+      loreContext ?? undefined,
+      memoryContext ?? undefined
     );
     const lastUserMessage = [...(messages ?? [])]
       .reverse()
