@@ -168,3 +168,31 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const memory = pgTable("Memory", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  sourceType: varchar("sourceType", {
+    enum: ["chat", "document", "file", "web", "integration", "manual"],
+  }).notNull(),
+  sourceUri: text("sourceUri").notNull(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  orgId: varchar("orgId", { length: 64 }).notNull().default("default"),
+  productId: varchar("productId", { length: 64 })
+    .notNull()
+    .default("brooks-aihub"),
+  route: varchar("route", { length: 128 }),
+  agentId: varchar("agentId", { length: 64 }),
+  agentLabel: varchar("agentLabel", { length: 128 }),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  tags: json("tags").$type<string[]>().notNull().default([]),
+  rawText: text("rawText").notNull(),
+  normalizedText: text("normalizedText"),
+  embeddingsRef: text("embeddingsRef"),
+});
+
+export type Memory = InferSelectModel<typeof memory>;

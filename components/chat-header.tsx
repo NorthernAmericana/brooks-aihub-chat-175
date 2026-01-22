@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
@@ -33,10 +34,11 @@ function PureChatHeader({
       <SidebarToggle />
 
       <Button
+        asChild
         className="order-1 h-8 px-2 md:order-1 md:h-fit md:px-2"
         variant="outline"
       >
-        {memoriesLabel}
+        <Link href="/memories">{memoriesLabel}</Link>
       </Button>
 
       {(!open || windowWidth < 768) && (
