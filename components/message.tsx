@@ -26,6 +26,7 @@ import { Weather } from "./weather";
 const PurePreviewMessage = ({
   addToolApprovalResponse,
   chatId,
+  chatTitle,
   message,
   vote,
   isLoading,
@@ -36,6 +37,7 @@ const PurePreviewMessage = ({
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
@@ -348,6 +350,7 @@ const PurePreviewMessage = ({
           {!isReadonly && (
             <MessageActions
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}
               message={message}
