@@ -192,6 +192,105 @@
   }
 }
 
+@keyframes intro-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0);
+  }
+}
+
+@keyframes intro-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@layer utilities {
+  .intro-screen {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 200, 128, 0.35), transparent 45%),
+      radial-gradient(circle at 80% 10%, rgba(125, 211, 252, 0.35), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(196, 181, 253, 0.25), transparent 50%),
+      #0b1020;
+  }
+
+  .intro-sky {
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(88, 28, 135, 0.35) 55%, rgba(15, 23, 42, 0.85) 100%);
+  }
+
+  .intro-stars {
+    background-image:
+      radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.45) 1px, transparent 0),
+      radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.4) 1px, transparent 0),
+      radial-gradient(circle at 75% 35%, rgba(255, 255, 255, 0.35) 1px, transparent 0),
+      radial-gradient(circle at 65% 70%, rgba(255, 255, 255, 0.4) 1px, transparent 0),
+      radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.3) 1px, transparent 0);
+    background-size: 100% 100%;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+  }
+
+  .intro-orb {
+    height: 280px;
+    width: 280px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), rgba(139, 92, 246, 0.25), transparent 70%);
+    filter: blur(0.5px);
+    animation: intro-float 10s ease-in-out infinite;
+  }
+
+  .intro-orb--left {
+    animation-delay: -2s;
+  }
+
+  .intro-orb--right {
+    animation-delay: -5s;
+  }
+
+  .intro-panel {
+    position: relative;
+  }
+
+  .intro-panel-glow {
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.15), transparent 70%);
+    box-shadow: inset 0 0 45px rgba(255, 255, 255, 0.1);
+  }
+
+  .intro-title {
+    background: linear-gradient(100deg, #f8fafc, #bae6fd, #e9d5ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 24px rgba(148, 163, 184, 0.55);
+  }
+
+  .intro-chip {
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.35rem 0.9rem;
+    background: rgba(15, 23, 42, 0.45);
+    letter-spacing: 0.2em;
+  }
+
+  .intro-cta {
+    animation: intro-pulse 2.8s ease-in-out infinite;
+  }
+
+  .intro-cta-dot {
+    animation: intro-pulse 1.8s ease-in-out infinite;
+  }
+}
+
 @layer utilities {
   .woodsy-base {
     background-image:
