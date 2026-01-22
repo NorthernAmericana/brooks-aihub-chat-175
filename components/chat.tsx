@@ -37,6 +37,7 @@ export function Chat({
   initialMessages,
   initialChatModel,
   initialVisibilityType,
+  initialChatTitle,
   isReadonly,
   autoResume,
 }: {
@@ -44,6 +45,7 @@ export function Chat({
   initialMessages: ChatMessage[];
   initialChatModel: string;
   initialVisibilityType: VisibilityType;
+  initialChatTitle: string;
   isReadonly: boolean;
   autoResume: boolean;
 }) {
@@ -218,6 +220,7 @@ export function Chat({
         <Messages
           addToolApprovalResponse={addToolApprovalResponse}
           chatId={id}
+          chatTitle={initialChatTitle}
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}

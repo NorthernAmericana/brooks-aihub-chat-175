@@ -5,17 +5,26 @@ import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { getOfficialVoice, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import {
+  CopyIcon,
+  PencilEditIcon,
+  SpeakerIcon,
+  ThumbDownIcon,
+  ThumbUpIcon,
+} from "./icons";
 
 export function PureMessageActions({
   chatId,
+  chatTitle,
   message,
   vote,
   isLoading,
   setMode,
 }: {
   chatId: string;
+  chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
@@ -33,6 +42,8 @@ export function PureMessageActions({
     .map((part) => part.text)
     .join("\n")
     .trim();
+  const routeKey = getRouteKey(chatTitle);
+  const officialVoice = getOfficialVoice(routeKey);
 
   const handleCopy = async () => {
     if (!textFromParts) {
@@ -69,6 +80,22 @@ export function PureMessageActions({
 
   return (
     <Actions className="-ml-0.5">
+      <Action
+        onClick={() => {
+          if (!textFromParts) {
+            toast.error("There's no response text to read yet.");
+            return;
+          }
+          toast("Voice playback coming soon.", {
+            description: `Route voice: ${officialVoice} • Route: ${
+              routeKey === "default" ? "General" : `/${routeKey}/`
+            }`,
+          });
+        }}
+        tooltip="Speak"
+      >
+        <SpeakerIcon />
+      </Action>
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
       </Action>

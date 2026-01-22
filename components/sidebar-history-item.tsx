@@ -2,6 +2,7 @@ import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
+import { getOfficialVoice, getRouteKey, VOICE_OPTIONS } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -40,27 +41,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-
-const VOICE_OPTIONS = [
-  "Atlas",
-  "Nova",
-  "Echo",
-  "Sable",
-  "Aria",
-  "Lumen",
-];
-
-const getRouteKey = (title: string) => {
-  const match = title.match(/\/([^/]+)\//i);
-  return match?.[1]?.toLowerCase() ?? "default";
-};
-
-const getOfficialVoice = (routeKey: string) => {
-  if (routeKey === "default") {
-    return "Brooks Default";
-  }
-  return `${routeKey.toUpperCase()} Official`;
-};
 
 const PureChatItem = ({
   chat,
