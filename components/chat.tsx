@@ -212,6 +212,7 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
+          newMemoriesCount={0}
           selectedVisibilityType={initialVisibilityType}
         />
 
