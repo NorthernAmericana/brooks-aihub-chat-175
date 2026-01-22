@@ -5,9 +5,17 @@ export default function IntroPage() {
     <main className="intro-screen relative flex min-h-dvh items-center justify-center overflow-hidden bg-slate-950 text-white">
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
+      <div className="intro-scanlines absolute inset-0" />
 
       <div className="intro-orb intro-orb--left absolute -left-24 top-10" />
       <div className="intro-orb intro-orb--right absolute -right-28 bottom-16" />
+
+      <div className="intro-rainbow absolute -left-8 top-16 hidden h-36 w-64 sm:block" />
+      <div className="intro-rainbow intro-rainbow--right absolute -right-12 bottom-24 hidden h-36 w-64 sm:block" />
+
+      <div className="intro-card intro-card--terminal absolute left-8 top-24 hidden sm:block" />
+      <div className="intro-card intro-card--grid absolute left-16 bottom-28 hidden lg:block" />
+      <div className="intro-card intro-card--cabin absolute right-8 top-20 hidden sm:block" />
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-6 py-16 text-center">
         <div className="intro-panel relative w-full max-w-3xl rounded-[2.5rem] border border-white/20 bg-white/10 px-6 py-12 shadow-[0_30px_120px_rgba(15,23,42,0.5)] backdrop-blur-2xl sm:px-10">
@@ -32,7 +40,7 @@ export default function IntroPage() {
       <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-center sm:bottom-12">
         <Link
           className="intro-cta group inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white/60 hover:bg-white/20"
-          href="/Brooks AI HUB/"
+          href="/Brooks%20AI%20HUB/"
         >
           Tap to start
           <span className="intro-cta-dot h-2 w-2 rounded-full bg-white/80" />

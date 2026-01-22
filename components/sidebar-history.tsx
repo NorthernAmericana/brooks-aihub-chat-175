@@ -149,7 +149,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
         });
 
         if (isCurrentChat) {
-          router.replace("/Brooks AI HUB/");
+          router.replace("/Brooks%20AI%20HUB/");
           router.refresh();
         }
 
