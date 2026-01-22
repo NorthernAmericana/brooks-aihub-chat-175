@@ -84,18 +84,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   <span aria-hidden className="sidebar-glitch-base">
                     /Brooks AI HUB/
                   </span>
-                  <span
-                    aria-hidden
-                    className="sidebar-glitch-layer sidebar-glitch-layer-top"
-                  >
-                    /Brooks AI HUB/
-                  </span>
-                  <span
-                    aria-hidden
-                    className="sidebar-glitch-layer sidebar-glitch-layer-bottom"
-                  >
-                    /Brooks AI HUB/
-                  </span>
                   <span className="sr-only">/Brooks AI HUB/</span>
                 </span>
               </Link>
