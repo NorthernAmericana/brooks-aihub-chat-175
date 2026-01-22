@@ -55,7 +55,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       success: () => {
         mutate(unstable_serialize(getChatHistoryPaginationKey));
         setShowDeleteAllDialog(false);
-        router.replace("/");
+        router.replace("/brooks-ai-hub/");
         router.refresh();
         return "All chats deleted successfully";
       },
@@ -71,7 +71,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <div className="flex flex-row items-center justify-between">
               <Link
                 className="flex flex-row items-center gap-3"
-                href="/"
+                href="/brooks-ai-hub/"
                 onClick={() => {
                   setOpenMobile(false);
                 }}
@@ -104,7 +104,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                       className="h-8 p-1 md:h-fit md:p-2"
                       onClick={() => {
                         setOpenMobile(false);
-                        router.push("/");
+                        router.push("/brooks-ai-hub/");
                         router.refresh();
                       }}
                       type="button"
