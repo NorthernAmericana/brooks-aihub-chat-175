@@ -263,6 +263,106 @@ const PurePreviewMessage = ({
               );
             }
 
+            if (type === "tool-saveMemory") {
+              const toolPart = part as typeof part & {
+                output?: unknown;
+                errorText?: string;
+              };
+              const { toolCallId, state } = toolPart;
+              const approvalId = (part as { approval?: { id: string } })
+                .approval?.id;
+              const isDenied =
+                state === "output-denied" ||
+                (state === "approval-responded" &&
+                  (part as { approval?: { approved?: boolean } }).approval
+                    ?.approved === false);
+              const widthClass = "w-[min(100%,450px)]";
+              const outputErrorText = toolPart.errorText;
+
+              const outputContent = toolPart.output
+                ? typeof toolPart.output === "string"
+                  ? toolPart.output
+                  : JSON.stringify(toolPart.output, null, 2)
+                : null;
+
+              if (isDenied) {
+                return (
+                  <div className={widthClass} key={toolCallId}>
+                    <Tool className="w-full" defaultOpen={true}>
+                      <ToolHeader
+                        state="output-denied"
+                        type="tool-saveMemory"
+                      />
+                      <ToolContent>
+                        <div className="px-4 py-3 text-muted-foreground text-sm">
+                          Memory save was denied.
+                        </div>
+                      </ToolContent>
+                    </Tool>
+                  </div>
+                );
+              }
+
+              return (
+                <div className={widthClass} key={toolCallId}>
+                  <Tool className="w-full" defaultOpen={true}>
+                    <ToolHeader state={state} type="tool-saveMemory" />
+                    <ToolContent>
+                      {(state === "input-available" ||
+                        state === "approval-requested" ||
+                        state === "approval-responded" ||
+                        state === "output-available" ||
+                        state === "output-error") && (
+                        <ToolInput input={part.input} />
+                      )}
+                      {(state === "output-available" ||
+                        state === "output-error") && (
+                        <ToolOutput
+                          errorText={outputErrorText}
+                          output={
+                            outputContent ? (
+                              <pre className="whitespace-pre-wrap p-3 font-mono text-xs">
+                                {outputContent}
+                              </pre>
+                            ) : null
+                          }
+                        />
+                      )}
+                      {state === "approval-requested" && approvalId && (
+                        <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                          <button
+                            className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: false,
+                                reason: "User denied memory save",
+                              });
+                            }}
+                            type="button"
+                          >
+                            Deny
+                          </button>
+                          <button
+                            className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: true,
+                              });
+                            }}
+                            type="button"
+                          >
+                            Allow
+                          </button>
+                        </div>
+                      )}
+                    </ToolContent>
+                  </Tool>
+                </div>
+              );
+            }
+
             if (type === "tool-createDocument") {
               const { toolCallId } = part;
 
