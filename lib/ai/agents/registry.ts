@@ -2,7 +2,8 @@ export type AgentToolId =
   | "getWeather"
   | "createDocument"
   | "updateDocument"
-  | "requestSuggestions";
+  | "requestSuggestions"
+  | "saveMemory";
 
 export type AgentConfig = {
   id: string;
@@ -108,6 +109,7 @@ const agentRegistry: AgentConfig[] = [
       "createDocument",
       "updateDocument",
       "requestSuggestions",
+      "saveMemory",
     ],
     systemPromptOverride: brooksAiHubPrompt,
   },
@@ -115,35 +117,60 @@ const agentRegistry: AgentConfig[] = [
     id: "nat",
     label: "NAT Strategy",
     slash: "NAT",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: natPrompt,
   },
   {
     id: "brooks-bears",
     label: "Brooks Bears",
     slash: "BrooksBears",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: brooksBearsPrompt,
   },
   {
     id: "my-car-mind",
     label: "My Car Mind ATO",
     slash: "MyCarMindATO",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: myCarMindPrompt,
   },
   {
     id: "my-flower-ai",
     label: "My Flower AI",
     slash: "MyFlowerAI",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: myFlowerAiPrompt,
   },
   {
     id: "namc",
     label: "NAMC AI Media Curator",
     slash: "NAMC",
-    tools: ["createDocument", "updateDocument", "requestSuggestions"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: namcPrompt,
   },
   {
@@ -155,6 +182,7 @@ const agentRegistry: AgentConfig[] = [
       "createDocument",
       "updateDocument",
       "requestSuggestions",
+      "saveMemory",
     ],
   },
 ];
