@@ -300,18 +300,22 @@ export const runNamcMediaCurator = async ({
       messages,
       loreContext ?? undefined
     );
+    const lastUserMessage = [...(messages ?? [])]
+      .reverse()
+      .find((message) => message.role === "user");
+    const inputText =
+      lastUserMessage?.parts
+        ?.filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("") ?? "";
+    const workflow = {
+      input_as_text: inputText,
+      input_text: inputText,
+    };
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",
         workflow_id: "wf_696e93572ae0819092fa0390d0a681e30cf915f0db672ae2"
-      }
-    });
-    const filesearchResult = (await client.vectorStores.search("vs_696eeaf739208191acdb5ec1e14c6b3c", {query: `" {{workflow.input_as_text}} "`,
-    max_num_results: 10})).data.map((result) => {
-      return {
-        id: result.file_id,
-        filename: result.filename,
-        score: result.score,
       }
     });
     const guardrailsInputText = workflow.input_as_text;
