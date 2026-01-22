@@ -23,6 +23,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { saveMemory } from "@/lib/ai/tools/save-memory";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -235,13 +236,15 @@ export async function POST(request: Request) {
           | typeof getWeather
           | ReturnType<typeof createDocument>
           | ReturnType<typeof updateDocument>
-          | ReturnType<typeof requestSuggestions>;
+          | ReturnType<typeof requestSuggestions>
+          | ReturnType<typeof saveMemory>;
 
         const toolImplementations: Record<AgentToolId, ToolDefinition> = {
           getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
+          saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
         };
 
         const tools = Object.fromEntries(
