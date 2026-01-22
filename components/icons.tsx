@@ -179,6 +179,37 @@ export const InvoiceIcon = ({ size = 16 }: { size: number }) => {
   );
 };
 
+export const SpeakerIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        d="M2.5 6.25H5.25L8.25 3.75V12.25L5.25 9.75H2.5V6.25Z"
+        fill="currentColor"
+      />
+      <path
+        d="M11 5.5C11.8284 6.32843 11.8284 9.67157 11 10.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M12.75 4C14.25 5.5 14.25 10.5 12.75 12"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.2"
+      />
+    </svg>
+  );
+};
+
 export const LogoOpenAI = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
