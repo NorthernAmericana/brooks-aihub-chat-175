@@ -36,7 +36,11 @@ export const fetchElevenLabsSpeech = async ({
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_multilingual_v2",
+        model_id: "eleven_turbo_v2_5",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        },
       }),
       signal,
     }
@@ -45,16 +49,16 @@ export const fetchElevenLabsSpeech = async ({
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `ElevenLabs TTS failed (${response.status}): ${errorText}`
+      `ElevenLabs API error: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
-  if (!response.body) {
-    throw new Error("ElevenLabs response did not include a stream.");
+  const stream = response.body;
+  if (!stream) {
+    throw new Error("No response body from ElevenLabs.");
   }
 
-  return {
-    stream: response.body,
-    mimeType: response.headers.get("content-type") ?? "audio/mpeg",
-  };
+  const mimeType = response.headers.get("Content-Type") ?? "audio/mpeg";
+
+  return { stream, mimeType };
 };

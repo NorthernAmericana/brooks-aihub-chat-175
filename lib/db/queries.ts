@@ -714,3 +714,36 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     );
   }
 }
+
+export async function updateChatTtsSettings({
+  chatId,
+  userId,
+  ttsEnabled,
+  ttsVoiceId,
+  ttsVoiceLabel,
+}: {
+  chatId: string;
+  userId: string;
+  ttsEnabled?: boolean;
+  ttsVoiceId?: string;
+  ttsVoiceLabel?: string;
+}) {
+  try {
+    const [updatedChat] = await db
+      .update(chat)
+      .set({
+        ttsEnabled,
+        ttsVoiceId,
+        ttsVoiceLabel,
+      })
+      .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
+      .returning();
+
+    return updatedChat;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat TTS settings"
+    );
+  }
+}

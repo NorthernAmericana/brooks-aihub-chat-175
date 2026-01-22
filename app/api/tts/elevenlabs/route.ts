@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchElevenLabsSpeech } from "@/lib/tts/elevenlabs";
 
-const REQUEST_TIMEOUT_MS = 20000;
+const REQUEST_TIMEOUT_MS = 30000;
 
 export async function POST(request: Request) {
   let payload: { text?: string; voiceId?: string };
@@ -43,8 +43,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to generate speech.";
-    return NextResponse.json({ error: message }, { status: 500 });
+      error instanceof Error ? error.message : "Unknown error occurred.";
+
+    return NextResponse.json(
+      { error: `Text-to-speech failed: ${message}` },
+      { status: 500 }
+    );
   } finally {
     clearTimeout(timeoutId);
   }

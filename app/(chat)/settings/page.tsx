@@ -20,20 +20,20 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
       <div>
-        <h1 className="font-semibold text-2xl">Settings</h1>
+        <h1 className="font-semibold text-2xl">Voice Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Configure voice playback per chat route and assistant.
+          Configure voice playback for your NAMC chats.
         </p>
       </div>
 
       <section className="flex flex-col gap-3">
         <div>
-          <h2 className="font-semibold text-lg">Voice Options</h2>
+          <h2 className="font-semibold text-lg">NAMC Voice Options</h2>
           <p className="text-sm text-muted-foreground">
-            Each chat keeps its own official route voice, and you can switch to
-            any custom AI voice as needed.
+            Bruce NAMC is the default voice for NAMC chats. You can switch to Selena NAMC using the settings below or the three-dot menu in any NAMC chat.
           </p>
         </div>
+
         <VoiceSettingsPanel chats={chats} />
       </section>
     </div>

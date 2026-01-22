@@ -3,20 +3,16 @@ export type VoiceOption = {
   label: string;
 };
 
-const DEFAULT_VOICE_OPTIONS: VoiceOption[] = [
-  "Atlas",
-  "Nova",
-  "Echo",
-  "Sable",
-  "Aria",
-  "Lumen",
-].map((label) => ({ id: label, label }));
+// Voice options for NAMC chats only
+const NAMC_VOICE_OPTIONS: VoiceOption[] = [
+  { id: "By89qnNqll35EKDmc3Hm", label: "Bruce NAMC" },
+  { id: "7fJYplvotvPf1yl7PLLP", label: "Selena NAMC" },
+];
 
-const ROUTE_VOICE_OPTIONS: Record<string, VoiceOption[]> = {
-  namc: [
-    { id: "By89qnNqll35EKDmc3Hm", label: "Bruce NAMC (Male)" },
-    { id: "7fJYplvotvPf1yl7PLLP", label: "Selena NAMC (Female)" },
-  ],
+// Brooks AI HUB placeholder voice (not yet implemented)
+const BROOKS_AI_HUB_VOICE: VoiceOption = {
+  id: "brooks-ai-hub-placeholder",
+  label: "Brooks AI HUB",
 };
 
 export const getRouteKey = (title: string) => {
@@ -24,16 +20,31 @@ export const getRouteKey = (title: string) => {
   return match?.[1]?.toLowerCase() ?? "default";
 };
 
-export const getOfficialVoice = (routeKey: string) => {
-  if (routeKey === "default") {
-    return "Brooks Default";
-  }
-  return `${routeKey.toUpperCase()} Official`;
+export const isNamcRoute = (title: string) => {
+  return getRouteKey(title) === "namc";
 };
 
-export const getVoiceOptions = (routeKey: string) => {
+// Get the default voice for a route
+export const getDefaultVoice = (routeKey: string): VoiceOption => {
   if (routeKey === "namc") {
-    return ROUTE_VOICE_OPTIONS.namc;
+    return NAMC_VOICE_OPTIONS[0]; // Bruce NAMC as default
   }
-  return DEFAULT_VOICE_OPTIONS;
+  return BROOKS_AI_HUB_VOICE; // Placeholder for non-NAMC chats
+};
+
+// Only used for backward compatibility
+export const getOfficialVoice = (routeKey: string) => {
+  if (routeKey === "namc") {
+    return "Bruce NAMC";
+  }
+  return "Brooks AI HUB";
+};
+
+// Get available voice options for a route
+export const getVoiceOptions = (routeKey: string): VoiceOption[] => {
+  if (routeKey === "namc") {
+    return NAMC_VOICE_OPTIONS;
+  }
+  // No voice options for non-NAMC chats (voice disabled)
+  return [];
 };

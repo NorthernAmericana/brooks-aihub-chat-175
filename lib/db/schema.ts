@@ -29,9 +29,9 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
-  ttsVoiceId: varchar("ttsVoiceId", { length: 128 }),
-  ttsVoiceLabel: varchar("ttsVoiceLabel", { length: 128 }),
-  ttsEnabled: boolean("ttsEnabled").notNull().default(true),
+  ttsEnabled: boolean("ttsEnabled").default(true),
+  ttsVoiceId: text("ttsVoiceId"),
+  ttsVoiceLabel: text("ttsVoiceLabel"),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
