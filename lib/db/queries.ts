@@ -23,6 +23,7 @@ import {
   chat,
   type DBMessage,
   document,
+  memory,
   message,
   type Suggestion,
   stream,
@@ -149,6 +150,31 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete all chats by user id"
+    );
+  }
+}
+
+export async function getApprovedMemoriesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories"
     );
   }
 }
