@@ -1,23 +1,32 @@
----
-project: Ghost Girl
-format: TBD (canon text required)
-status: TBD (canon text required)
-spoiler_policy: TBD (canon text required)
-last_updated: 2026-01-20
-related:
-  - NAMC
-  - Ghost Girl
-  - Raven Ross
-  - Gretchen Ross
-  - Ethan White
-logline: TBD (canon text required)
----
+# Ghost Girl — Timeline (Spoiler-Safe)
 
-# Ghost Girl — Timeline Beats
+## Metadata
+- **Status:** Coming soon
+- **Release date:** TBA
+- **Format:** Short film
 
-Scaffolding only; spoiler-safe until confirmed. For canonical details, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
+## What this doc contains
+High-level beats without resolving the “real vs. not real” question.
 
-## Timeline (Scaffolding, Non-Canon Until Confirmed)
-- **Act I / Opening:** Ethan arrives at college; Gretchen appears to him; he believes she has returned.
-- **Act II / Complication:** Raven grows close to Ethan; the triangle intensifies as Ethan’s perception frays.
-- **Act III / Fallout:** Ethan’s instability peaks; choices between memory and reality culminate.
+## Links
+- Lore entry: [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md)
+- Project hub: [`namc/projects/ghost-girl/index.md`](index.md)
+
+## High-Level Beats (Index-Safe)
+- **Arrival:** Ethan begins his first year of college while still grieving.
+- **Inciting tension:** Ethan sees Gretchen as an adult, and the sightings repeat.
+- **Connection:** Raven and Ethan grow closer as he confides in her.
+- **Escalation:** Ethan’s perception becomes more unstable as the triangle deepens.
+- **Pressure point:** Ethan must choose how to live with memory vs. the present.
+
+## Glossary snippets
+- **Unreliable perception:** The story’s central tension; reality remains ambiguous.
+
+**Tags:** college-era, grief, unstable-reality, psychological-drama
+
+## What we know so far
+- The timeline is intimate and character-focused.
+- The ending maintains ambiguity at the index level.
+
+## TBD
+- Specific scene order and time gaps.
