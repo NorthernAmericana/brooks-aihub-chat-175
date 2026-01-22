@@ -307,10 +307,15 @@ export const runNamcMediaCurator = async ({
       }
     });
     const guardrailsInputText = workflow.input_as_text;
-    const { hasTripwire: guardrailsHasTripwire, safeText: guardrailsAnonymizedText, failOutput: guardrailsFailOutput, passOutput: guardrailsPassOutput } = await runAndApplyGuardrails(guardrailsInputText, guardrailsConfig, conversationHistory, workflow);
-    const guardrailsOutput = (guardrailsHasTripwire ? guardrailsFailOutput : guardrailsPassOutput);
+    const { hasTripwire: guardrailsHasTripwire, failOutput: guardrailsFailOutput } =
+      await runAndApplyGuardrails(
+        guardrailsInputText,
+        guardrailsConfig,
+        conversationHistory,
+        workflow
+      );
     if (guardrailsHasTripwire) {
-      return guardrailsOutput;
+      return JSON.stringify(guardrailsFailOutput);
     }
 
     const namcMediaCuratorResultTemp = await runner.run(namcMediaCurator, [
@@ -324,8 +329,6 @@ export const runNamcMediaCurator = async ({
       throw new Error("Agent result is undefined");
     }
 
-    return {
-      output_text: namcMediaCuratorResultTemp.finalOutput ?? "",
-    };
+    return namcMediaCuratorResultTemp.finalOutput ?? "";
   });
 };
