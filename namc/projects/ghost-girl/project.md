@@ -1,33 +1,25 @@
----
-project: Ghost Girl
-format: TBD (canon text required)
-status: TBD (canon text required)
-spoiler_policy: TBD (canon text required)
-last_updated: 2026-01-20
-related:
-  - NAMC
-  - Ghost Girl
-  - Raven Ross
-  - Gretchen Ross
-  - Ethan White
-logline: TBD (canon text required)
----
+# Ghost Girl — Project Summary (Legacy)
 
-# Ghost Girl — Project Summary
+## Metadata
+- **Status:** Coming soon
+- **Release date:** TBA
+- **Format:** Short film
 
 ## Canon Summary (Spoiler-Safe)
-A grieving first-year college student, Ethan White, believes his childhood friend Gretchen Ross has returned just as he is now. As he grows close to Gretchen’s cousin, Raven Ross, a tender love triangle forms that tracks Ethan’s faltering grip on reality without revealing its root cause. (See canon source: [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md))
+A first-year college student believes his childhood friend has returned as an adult, pulling him into a tender, unstable triangle where memory and reality keep slipping out of sync. (See canon source: [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md))
 
 ## Project Snapshot
 - **Title:** Ghost Girl
-- **Format:** Upcoming short film
-- **Status:** Upcoming
+- **Format:** Short film
+- **Status:** Coming soon
+- **Release date:** TBA
 - **Logline:** A grieving first-year believes his childhood friend has returned, drawing him into a tender, volatile triangle that tests memory and reality.
-- **Acts / Episodes:** Scaffolding only (see [`namc/projects/ghost-girl/timeline.md`](timeline.md))
-- **Timeline Position:** College-era, contemporary setting (exact placement TBD)
+- **Timeline position:** College-era, contemporary setting (exact placement TBD)
 
 ## Key Motifs
-- Memory vs. reality
-- Grief as a “ghost”
+- Memory as a haunting
 - Unreliable perception
-- Love triangle as psychological conflict
+- Intimacy vs. isolation
+- Reflections and doubled scenes
+
+**Tags:** grief, memory, unreliable-perception, indie-psych

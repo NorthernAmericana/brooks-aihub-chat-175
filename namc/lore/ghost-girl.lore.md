@@ -1,68 +1,51 @@
 ---
 title: Ghost Girl Lore Dictionary
-spoilers: true
+spoilers: false
 ---
 
 # Ghost Girl — Canon Lore Dictionary
 
-## Canon Status
-- **Status:** Canon (current as provided)
-- **Last Updated:** 2026-01-20
-- **Uncertainty Flags:**
-  - Exact timeline beats beyond high-level scaffolding
-  - Production status details beyond “upcoming short film”
-  - Expanded cast or setting specifics
+## Logline
+A first-year college student believes his childhood friend has returned as an adult, pulling him into a tender, unstable triangle where memory and reality keep slipping out of sync.
 
-## Logline (Spoiler-Free)
-A grieving first-year college student believes his childhood friend has returned as they were, pulling him into a tender, volatile triangle that tests memory, reality, and love.
+## Metadata
+- **Status:** Coming soon
+- **Release date:** TBA
+- **Format:** Short film
 
-## Spoiler-Safe Synopsis
-Ethan White, new to college and still tender from loss, begins encountering Gretchen Ross—his childhood friend who died years ago—appearing to him as if she never left. As Ethan clings to her presence, he grows close to Gretchen’s cousin, Raven Ross, who cannot see Gretchen and becomes his grounded counterweight. Their bond forms a psychological love triangle that tracks Ethan’s increasingly unstable perception, where grief and longing blur the border between comfort and harm.
+## Overview (Spoiler-Safe)
+**Ghost Girl** is an upcoming short film set during the first year of college. It follows **Ethan White**, a 19-year-old who begins seeing a blonde girl in a white dress—an adult version of **Gretchen Ross**, his childhood friend and first love who died when they were kids. Ethan becomes convinced Gretchen has somehow returned, but the story keeps a tense ambiguity: what he’s seeing feels emotionally real while reality stays unstable.
 
-## Spoilers (Reveal-Allowed)
-> [SPOILERS_ALLOWED]
+Ethan’s present-day connection is **Raven Ross** (Gretchen’s cousin), also 19, who becomes his love interest and emotional anchor—grounded, human, and unable to see what Ethan sees. This creates an indie psychological love triangle driven by grief, longing, and unreliable perception: Ethan is pulled between the comfort of the “ghost girl” presence and the living relationship forming with Raven. The tone is intimate and eerie rather than supernatural-action—more “memory as a haunting” than jump-scares—where the central question is whether Ethan is being visited, hallucinating, or self-medicating his way into a story he needs to believe.
 
-- **Reveal:** Ethan’s visions of Gretchen are tied to psychosis and drug use; he is using substances to see her again.
-
-## Character Dossiers
-
-### Ethan White
-- **Role:** Protagonist; first-year college student
-- **Core Drive:** Grief, attachment, and the need to keep Gretchen close
-- **Current State:** Experiencing psychosis; increasingly destabilized
-- **Spoiler-Safe Note:** His perceptions are unreliable, and his yearning shapes the story’s emotional gravity.
-
-### Gretchen Ross
-- **Role:** Deceased childhood friend; central apparition/vision
-- **Presence:** Appears to Ethan as the same age he is now
-- **Function:** Embodies memory, longing, and the “ghost” that Ethan cannot release
-
-### Raven Ross
-- **Role:** Gretchen’s cousin; love interest; reality tether
-- **Trait:** Cannot see Gretchen
-- **Function:** Grounds Ethan in the present and challenges his retreat into the past
-
-## Relationship Map (Text-Based)
-- **Ethan ↔ Gretchen:** Attachment and grief; Ethan believes “she’s back,” deepening his dependence
-- **Ethan ↔ Raven:** Romantic tension; reality vs. escapism conflict
-- **Raven ↔ Gretchen:** Family bond and absence; memory contrasts with Ethan’s hallucination
-
-## Timeline Scaffolding (Non-Canon Until Confirmed)
-- **Act I / Opening:** Ethan arrives at college; Gretchen appears; Ethan believes she has returned.
-- **Act II / Complication:** Raven enters and grows close to Ethan; the triangle intensifies as Ethan’s perception frays.
-- **Act III / Fallout:** Ethan’s instability peaks; choices between memory and reality culminate.
-
-## Themes & Motifs
+## Themes
 - Grief and denial
-- Memory vs. reality
-- Addiction / drug-enabled escapism
+- Memory as a haunting
 - Unreliable perception
-- Love triangle as psychological conflict
-- Identity fracture
-- “Ghost” as a coping mechanism
+- Intimacy vs. isolation
+- The ethics of clinging to the past
 
-## How to Update
-When new canon arrives, append a dated entry under **Canon Updates** noting what changed and why.
+## Motifs (Spoiler-Safe)
+- White dress imagery
+- Reflections and doubled scenes
+- Quiet hallways and liminal spaces
+- Memory loops and repeated moments
 
-### Canon Updates
-- **2026-01-20:** Initial canon entry recorded from provided source-of-truth notes.
+## Primary Characters (Spoiler-Safe)
+- **Ethan White:** 19-year-old college freshman; grieving, searching for meaning.
+- **Raven Ross:** Gretchen’s cousin; love interest and emotional anchor.
+- **Gretchen Ross (the “ghost girl” figure):** Ethan’s childhood friend and first love; appears as an adult version of the girl he lost.
+
+## Setting + Tone Notes
+- **Setting:** First-year college environment; everyday spaces turned uncanny.
+- **Tone:** Indie psychological drama with eerie, intimate tension.
+
+## Spoiler Policy
+Top-level lore remains spoiler-safe. Do **not** resolve the “is it real vs. not real” question here. If later material reveals answers, place it in clearly labeled spoiler sections or files.
+
+## Project Scaffolding Links
+- Project hub: [`namc/projects/ghost-girl/index.md`](../projects/ghost-girl/index.md)
+- Timeline: [`namc/projects/ghost-girl/timeline.md`](../projects/ghost-girl/timeline.md)
+- Characters: [`namc/projects/ghost-girl/characters.md`](../projects/ghost-girl/characters.md)
+- Locations: [`namc/projects/ghost-girl/locations.md`](../projects/ghost-girl/locations.md)
+- Motifs: [`namc/projects/ghost-girl/motifs.md`](../projects/ghost-girl/motifs.md)
