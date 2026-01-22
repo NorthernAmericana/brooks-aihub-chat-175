@@ -55,7 +55,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       success: () => {
         mutate(unstable_serialize(getChatHistoryPaginationKey));
         setShowDeleteAllDialog(false);
-        router.replace("/");
+        router.replace("/Brooks AI HUB/");
         router.refresh();
         return "All chats deleted successfully";
       },
@@ -68,37 +68,20 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <Sidebar className="group-data-[side=left]:border-r-0">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-row items-center justify-between">
-                <Link
-                  className="flex flex-row items-center gap-3"
-                  href="/"
-                  onClick={() => {
-                    setOpenMobile(false);
-                  }}
-                >
-                  <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                    Brooks AI HUB
-                  </span>
-                </Link>
-                <div className="flex flex-row gap-1">
-                  {user && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          className="h-8 p-1 md:h-fit md:p-2"
-                          onClick={() => setShowDeleteAllDialog(true)}
-                          type="button"
-                          variant="ghost"
-                        >
-                          <TrashIcon />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent align="end" className="hidden md:block">
-                        Delete All Chats
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+            <div className="flex flex-row items-center justify-between">
+              <Link
+                className="flex flex-row items-center gap-3"
+                href="/Brooks AI HUB/"
+                onClick={() => {
+                  setOpenMobile(false);
+                }}
+              >
+                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
+                  Brooks AI HUB
+                </span>
+              </Link>
+              <div className="flex flex-row gap-1">
+                {user && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -118,7 +101,26 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                       New Chat
                     </TooltipContent>
                   </Tooltip>
-                </div>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="h-8 p-1 md:h-fit md:p-2"
+                      onClick={() => {
+                        setOpenMobile(false);
+                        router.push("/Brooks AI HUB/");
+                        router.refresh();
+                      }}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <PlusIcon />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent align="end" className="hidden md:block">
+                    New Chat
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <div className="h-px w-full bg-border" />
               <Button
