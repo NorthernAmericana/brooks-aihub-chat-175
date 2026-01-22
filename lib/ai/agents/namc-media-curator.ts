@@ -292,25 +292,36 @@ export const runNamcMediaCurator = async ({
       messages,
       loreContext ?? undefined
     );
+    const lastUserMessage = [...(messages ?? [])]
+      .reverse()
+      .find((message) => message.role === "user");
+    const inputText =
+      lastUserMessage?.parts
+        ?.filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("") ?? "";
+    const workflow = {
+      input_as_text: inputText,
+      input_text: inputText,
+    };
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",
         workflow_id: "wf_696e93572ae0819092fa0390d0a681e30cf915f0db672ae2"
       }
     });
-    const filesearchResult = (await client.vectorStores.search("vs_696eeaf739208191acdb5ec1e14c6b3c", {query: `" {{workflow.input_as_text}} "`,
-    max_num_results: 10})).data.map((result) => {
-      return {
-        id: result.file_id,
-        filename: result.filename,
-        score: result.score,
-      }
-    });
     const guardrailsInputText = workflow.input_as_text;
-    const { hasTripwire: guardrailsHasTripwire, safeText: guardrailsAnonymizedText, failOutput: guardrailsFailOutput, passOutput: guardrailsPassOutput } = await runAndApplyGuardrails(guardrailsInputText, guardrailsConfig, conversationHistory, workflow);
-    const guardrailsOutput = (guardrailsHasTripwire ? guardrailsFailOutput : guardrailsPassOutput);
+    const {
+      hasTripwire: guardrailsHasTripwire,
+      failOutput: guardrailsFailOutput,
+    } = await runAndApplyGuardrails(
+      guardrailsInputText,
+      guardrailsConfig,
+      conversationHistory,
+      workflow
+    );
     if (guardrailsHasTripwire) {
-      return guardrailsOutput;
+      return JSON.stringify(guardrailsFailOutput);
     }
 
     const namcMediaCuratorResultTemp = await runner.run(namcMediaCurator, [
@@ -324,36 +335,6 @@ export const runNamcMediaCurator = async ({
       throw new Error("Agent result is undefined");
     }
 
-    return {
-      output_text: namcMediaCuratorResultTemp.finalOutput ?? "",
-    };
+    return namcMediaCuratorResultTemp.finalOutput ?? "";
   });
-};
-
-type RunNamcMediaCuratorInput = {
-  messages: ChatMessage[];
-};
-
-export const runNamcMediaCurator = async (
-  input: RunNamcMediaCuratorInput
-): Promise<string> => {
-  const lastUserMessage = [...(input.messages ?? [])]
-    .reverse()
-    .find((message) => message.role === "user");
-  const inputText =
-    lastUserMessage?.parts
-      ?.filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("") ?? "";
-
-  const result = await runWorkflow({ input_as_text: inputText });
-  if (typeof result === "string") {
-    return result;
-  }
-
-  if ("output_text" in result && typeof result.output_text === "string") {
-    return result.output_text;
-  }
-
-  return JSON.stringify(result);
 };
