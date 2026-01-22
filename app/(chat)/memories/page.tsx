@@ -20,7 +20,7 @@ const formatDate = (date: Date | null) => {
     return "Unknown date";
   }
 
-  return format(date, "MMM d, yyyy 'at' h:mm a");
+  return format(date, "MMM d");
 };
 
 export default async function MemoriesPage() {
