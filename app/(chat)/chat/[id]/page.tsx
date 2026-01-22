@@ -22,7 +22,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const chat = await getChatById({ id });
 
   if (!chat) {
-    redirect("/");
+    redirect("/brooks-ai-hub/");
   }
 
   const session = await auth();
