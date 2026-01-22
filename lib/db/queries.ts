@@ -23,6 +23,7 @@ import {
   chat,
   type DBMessage,
   document,
+  memory,
   message,
   type Suggestion,
   stream,
@@ -597,6 +598,70 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function createMemory({
+  userId,
+  content,
+}: {
+  userId: string;
+  content: string;
+}) {
+  try {
+    return await db
+      .insert(memory)
+      .values({ userId, content, createdAt: new Date(), isRead: false })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to create memory");
+  }
+}
+
+export async function getUnreadMemoriesCountByUserId({
+  id,
+}: {
+  id: string;
+}) {
+  try {
+    const [stats] = await db
+      .select({ count: count(memory.id) })
+      .from(memory)
+      .where(and(eq(memory.userId, id), eq(memory.isRead, false)))
+      .execute();
+
+    return stats?.count ?? 0;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unread memories count by user id"
+    );
+  }
+}
+
+export async function markMemoriesReadByUserId({
+  userId,
+  memoryIds,
+}: {
+  userId: string;
+  memoryIds?: string[];
+}) {
+  try {
+    const conditions = [eq(memory.userId, userId)];
+
+    if (memoryIds && memoryIds.length > 0) {
+      conditions.push(inArray(memory.id, memoryIds));
+    }
+
+    return await db
+      .update(memory)
+      .set({ isRead: true })
+      .where(and(...conditions));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to mark memories read"
     );
   }
 }

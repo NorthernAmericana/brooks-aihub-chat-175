@@ -5,6 +5,7 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { useMemoriesCount } from "@/hooks/use-memories-count";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -21,8 +22,10 @@ function PureChatHeader({
 }) {
   const router = useRouter();
   const { open } = useSidebar();
+  const { count } = useMemoriesCount();
 
   const { width: windowWidth } = useWindowSize();
+  const memoriesLabel = count > 0 ? `${count} new memories` : "Memories";
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
@@ -50,12 +53,17 @@ function PureChatHeader({
         />
       )}
 
-      <PwaInstallButton
-        className="order-2 ml-auto h-8 px-2 md:order-3 md:ml-0 md:h-fit"
-        label="Install"
-        size="sm"
-        variant="outline"
-      />
+      <div className="order-2 ml-auto flex items-center gap-2 md:order-3 md:ml-0">
+        <span className="text-xs font-medium text-muted-foreground">
+          {memoriesLabel}
+        </span>
+        <PwaInstallButton
+          className="h-8 px-2 md:h-fit"
+          label="Install"
+          size="sm"
+          variant="outline"
+        />
+      </div>
 
     </header>
   );
