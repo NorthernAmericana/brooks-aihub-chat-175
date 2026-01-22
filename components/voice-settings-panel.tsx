@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { Chat } from "@/lib/db/schema";
-import { getOfficialVoice, getRouteKey, VOICE_OPTIONS } from "@/lib/voice";
+import {
+  getOfficialVoice,
+  getRouteKey,
+  getVoiceOptions,
+  type VoiceOption,
+} from "@/lib/voice";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,19 +25,25 @@ type VoiceSettingsPanelProps = {
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   const defaultSelections = useMemo(
     () =>
-      chats.reduce<Record<string, string>>((accumulator, chat) => {
+      chats.reduce<Record<string, VoiceOption>>((accumulator, chat) => {
         const routeKey = getRouteKey(chat.title);
-        accumulator[chat.id] = getOfficialVoice(routeKey);
+        const fallbackVoice = getOfficialVoice(routeKey);
+        const savedVoiceId = chat.ttsVoiceId ?? fallbackVoice;
+        const savedVoiceLabel = chat.ttsVoiceLabel ?? savedVoiceId;
+        accumulator[chat.id] = {
+          id: savedVoiceId,
+          label: savedVoiceLabel,
+        };
         return accumulator;
       }, {}),
     [chats]
   );
   const [selectedVoices, setSelectedVoices] =
-    useState<Record<string, string>>(defaultSelections);
+    useState<Record<string, VoiceOption>>(defaultSelections);
   const [speakerEnabled, setSpeakerEnabled] = useState<Record<string, boolean>>(
     () =>
       chats.reduce<Record<string, boolean>>((accumulator, chat) => {
-        accumulator[chat.id] = true;
+        accumulator[chat.id] = chat.ttsEnabled ?? true;
         return accumulator;
       }, {})
   );
@@ -45,12 +57,44 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
       const next = { ...previous };
       chats.forEach((chat) => {
         if (typeof next[chat.id] !== "boolean") {
-          next[chat.id] = true;
+          next[chat.id] = chat.ttsEnabled ?? true;
         }
       });
       return next;
     });
   }, [chats]);
+
+  const persistSettings = async ({
+    chatId,
+    ttsEnabled,
+    ttsVoiceId,
+    ttsVoiceLabel,
+  }: {
+    chatId: string;
+    ttsEnabled: boolean;
+    ttsVoiceId: string;
+    ttsVoiceLabel: string;
+  }) => {
+    try {
+      const response = await fetch("/api/chat-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId,
+          ttsEnabled,
+          ttsVoiceId,
+          ttsVoiceLabel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update chat voice settings.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to save voice settings.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -62,8 +106,21 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
         chats.map((chat) => {
           const routeKey = getRouteKey(chat.title);
           const officialVoice = getOfficialVoice(routeKey);
+          const routeVoiceOptions = getVoiceOptions(routeKey);
+          const voiceOptions = [
+            { id: officialVoice, label: officialVoice },
+            ...routeVoiceOptions,
+          ];
+          const voiceLookup = new Map(
+            voiceOptions.map((option) => [option.id, option])
+          );
           const routeLabel =
             routeKey === "default" ? "General" : `/${routeKey}/`;
+          const currentVoice =
+            selectedVoices[chat.id] ?? voiceOptions[0] ?? {
+              id: officialVoice,
+              label: officialVoice,
+            };
 
           return (
             <div
@@ -81,12 +138,23 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                   <input
                     checked={speakerEnabled[chat.id] ?? true}
                     className="h-4 w-4 accent-foreground"
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const nextEnabled = event.target.checked;
                       setSpeakerEnabled((previous) => ({
                         ...previous,
-                        [chat.id]: event.target.checked,
-                      }))
-                    }
+                        [chat.id]: nextEnabled,
+                      }));
+                      const voice = selectedVoices[chat.id] ?? {
+                        id: officialVoice,
+                        label: officialVoice,
+                      };
+                      void persistSettings({
+                        chatId: chat.id,
+                        ttsEnabled: nextEnabled,
+                        ttsVoiceId: voice.id,
+                        ttsVoiceLabel: voice.label,
+                      });
+                    }}
                     type="checkbox"
                   />
                   Speaker enabled
@@ -98,13 +166,25 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                   Voice selection (per chat)
                 </Label>
                 <Select
-                  onValueChange={(value) =>
+                  onValueChange={(value) => {
+                    const option =
+                      voiceLookup.get(value) ??
+                      ({
+                        id: value,
+                        label: value,
+                      } satisfies VoiceOption);
                     setSelectedVoices((previous) => ({
                       ...previous,
-                      [chat.id]: value,
-                    }))
-                  }
-                  value={selectedVoices[chat.id] ?? officialVoice}
+                      [chat.id]: option,
+                    }));
+                    void persistSettings({
+                      chatId: chat.id,
+                      ttsEnabled: speakerEnabled[chat.id] ?? true,
+                      ttsVoiceId: option.id,
+                      ttsVoiceLabel: option.label,
+                    });
+                  }}
+                  value={currentVoice.id}
                 >
                   <SelectTrigger id={`voice-select-${chat.id}`}>
                     <SelectValue placeholder="Select a voice" />
@@ -113,9 +193,9 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                     <SelectItem value={officialVoice}>
                       {officialVoice} (Route official)
                     </SelectItem>
-                    {VOICE_OPTIONS.map((voice) => (
-                      <SelectItem key={voice} value={voice}>
-                        {voice}
+                    {routeVoiceOptions.map((voice) => (
+                      <SelectItem key={voice.id} value={voice.id}>
+                        {voice.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

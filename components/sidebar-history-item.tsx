@@ -2,7 +2,7 @@ import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
-import { getOfficialVoice, getRouteKey, VOICE_OPTIONS } from "@/lib/voice";
+import { getOfficialVoice, getRouteKey, getVoiceOptions } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -59,6 +59,7 @@ const PureChatItem = ({
   });
   const routeKey = useMemo(() => getRouteKey(chat.title), [chat.title]);
   const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
+  const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState(officialVoice);
@@ -200,9 +201,9 @@ const PureChatItem = ({
                   <SelectItem value={officialVoice}>
                     {officialVoice} (Route official)
                   </SelectItem>
-                  {VOICE_OPTIONS.map((voice) => (
-                    <SelectItem key={voice} value={voice}>
-                      {voice}
+                  {voiceOptions.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>
+                      {voice.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
