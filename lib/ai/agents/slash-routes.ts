@@ -2,7 +2,8 @@ export type SlashRouteTool =
   | "getWeather"
   | "createDocument"
   | "updateDocument"
-  | "requestSuggestions";
+  | "requestSuggestions"
+  | "saveMemory";
 
 export type SlashRoute = {
   id: string;

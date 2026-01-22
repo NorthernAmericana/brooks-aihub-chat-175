@@ -36,6 +36,11 @@ Do not update document right after creating it. Wait for user feedback or reques
 - ONLY use when the user explicitly asks for suggestions on an existing document
 - Requires a valid document ID from a previously created document
 - Never use for general questions or information requests
+
+**Using \`saveMemory\`:**
+- Use only when the user explicitly asks to save a receipt-worthy outcome
+- Store a concise, receipt-style summary with the relevant route and tags when possible
+- Never save memories without user confirmation
 `;
 
 export const regularPrompt = `You are a friendly assistant! Keep your responses concise and helpful.
