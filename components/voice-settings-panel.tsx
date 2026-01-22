@@ -64,23 +64,51 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   useEffect(() => {
     setSpeakerEnabled((previous) => {
       const next = { ...previous };
-<<<<<<< HEAD
-      chats.forEach((chat) => {
+      namcChats.forEach((chat) => {
         if (typeof next[chat.id] !== "boolean") {
+          next[chat.id] = chat.ttsEnabled ?? true;
         }
       });
       return next;
     });
-<<<<<<< HEAD
-  }, [chats]);
   }, [namcChats]);
-      )}
-=======
+
+  const persistSettings = async ({
+    chatId,
+    ttsEnabled,
+    ttsVoiceId,
+    ttsVoiceLabel,
+  }: {
+    chatId: string;
+    ttsEnabled: boolean;
+    ttsVoiceId: string;
+    ttsVoiceLabel: string;
+  }) => {
+    try {
+      const response = await fetch("/api/chat-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId,
+          ttsEnabled,
+          ttsVoiceId,
+          ttsVoiceLabel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update chat voice settings.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to save voice settings.");
+    }
+  };
+
   if (namcChats.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        No NAMC chats yet. Voice settings are only available for /NAMC/ chats.
-        Start a NAMC chat to configure voice options.
+        No NAMC chats yet. Voice settings are only available for /NAMC/ chats. Start a NAMC chat to configure voice options.
       </div>
     );
   }
@@ -91,13 +119,12 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
         const routeKey = getRouteKey(chat.title);
         const defaultVoice = getDefaultVoice(routeKey);
         const voiceOptions = getVoiceOptions(routeKey);
-        
+
         const voiceLookup = new Map(
           voiceOptions.map((option) => [option.id, option])
         );
-        
-        const currentVoice =
-          selectedVoices[chat.id] ?? defaultVoice;
+
+        const currentVoice = selectedVoices[chat.id] ?? defaultVoice;
 
         return (
           <div
