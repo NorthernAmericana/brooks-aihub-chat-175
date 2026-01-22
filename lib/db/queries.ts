@@ -599,6 +599,51 @@ export async function updateChatTitleById({
   }
 }
 
+export async function updateChatTtsSettings({
+  chatId,
+  userId,
+  ttsEnabled,
+  ttsVoiceId,
+  ttsVoiceLabel,
+}: {
+  chatId: string;
+  userId: string;
+  ttsEnabled?: boolean;
+  ttsVoiceId?: string;
+  ttsVoiceLabel?: string;
+}) {
+  try {
+    const updates: Partial<Chat> = {};
+
+    if (typeof ttsEnabled === "boolean") {
+      updates.ttsEnabled = ttsEnabled;
+    }
+    if (typeof ttsVoiceId === "string") {
+      updates.ttsVoiceId = ttsVoiceId;
+    }
+    if (typeof ttsVoiceLabel === "string") {
+      updates.ttsVoiceLabel = ttsVoiceLabel;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return null;
+    }
+
+    const [updatedChat] = await db
+      .update(chat)
+      .set(updates)
+      .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
+      .returning();
+
+    return updatedChat ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat TTS settings"
+    );
+  }
+}
+
 export async function getMessageCountByUserId({
   id,
   differenceInHours,
