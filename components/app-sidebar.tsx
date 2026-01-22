@@ -76,32 +76,27 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   setOpenMobile(false);
                 }}
               >
-                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Brooks AI HUB
+                <span className="sidebar-glitch group relative flex cursor-pointer items-center rounded-md px-2 py-1 font-semibold text-lg hover:bg-muted">
+                  <span
+                    aria-hidden
+                    className="sidebar-rainbow-symbol absolute -left-4 top-1/2 h-6 w-6 -translate-y-1/2"
+                  />
+                  <span
+                    aria-hidden
+                    className="sidebar-glitch-layer sidebar-glitch-layer-top"
+                  >
+                    /Brooks AI HUB/
+                  </span>
+                  <span
+                    aria-hidden
+                    className="sidebar-glitch-layer sidebar-glitch-layer-bottom"
+                  >
+                    /Brooks AI HUB/
+                  </span>
+                  <span className="relative z-10">/Brooks AI HUB/</span>
                 </span>
               </Link>
               <div className="flex flex-row gap-1">
-                {user && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
-                        onClick={() => {
-                          setOpenMobile(false);
-                          router.push("/");
-                          router.refresh();
-                        }}
-                        type="button"
-                        variant="ghost"
-                      >
-                        <PlusIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent align="end" className="hidden md:block">
-                      New Chat
-                    </TooltipContent>
-                  </Tooltip>
-                )}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
