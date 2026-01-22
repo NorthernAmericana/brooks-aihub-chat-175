@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchElevenLabsSpeech } from "@/lib/tts/elevenlabs";
 
-export const runtime = "nodejs";
-
 const REQUEST_TIMEOUT_MS = 20000;
 
 export async function POST(request: Request) {
