@@ -12,10 +12,12 @@ import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
   chatId,
+  newMemoriesCount = 0,
   selectedVisibilityType,
   isReadonly,
 }: {
   chatId: string;
+  newMemoriesCount?: number;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
 }) {
@@ -23,7 +25,6 @@ function PureChatHeader({
   const { open } = useSidebar();
 
   const { width: windowWidth } = useWindowSize();
-  const newMemoriesCount = 0;
   const memoriesLabel =
     newMemoriesCount > 0 ? `${newMemoriesCount} new memories` : "Memories";
 
@@ -74,6 +75,7 @@ function PureChatHeader({
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
+    prevProps.newMemoriesCount === nextProps.newMemoriesCount &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
     prevProps.isReadonly === nextProps.isReadonly
   );
