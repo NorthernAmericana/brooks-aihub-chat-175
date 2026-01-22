@@ -1,23 +1,40 @@
----
-project: Ghost Girl
-format: TBD (canon text required)
-status: TBD (canon text required)
-spoiler_policy: TBD (canon text required)
-last_updated: 2026-01-20
-related:
-  - NAMC
-  - Ghost Girl
-  - Raven Ross
-  - Gretchen Ross
-  - Ethan White
-logline: TBD (canon text required)
----
-
 # Ghost Girl — Characters
 
-Spoiler-safe character roster for the Ghost Girl project. For full canon notes, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
+## Metadata
+- **Status:** Coming soon
+- **Release date:** TBA
+- **Format:** Short film
 
-## Character Index
-- **Ethan White** — First-year college student; grieving and increasingly destabilized as his perceptions fray.
-- **Gretchen Ross** — Ethan’s deceased childhood friend who appears to him as if alive and his age.
-- **Raven Ross** — Gretchen’s cousin; Ethan’s love interest and reality tether who cannot see Gretchen.
+## What this doc contains
+Spoiler-safe character profiles and roles in the story.
+
+## Links
+- Lore entry: [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md)
+- Project hub: [`namc/projects/ghost-girl/index.md`](index.md)
+
+## Character Profiles (Spoiler-Safe)
+### Ethan White
+- **Role in story:** Protagonist; first-year college student.
+- **Profile:** Grieving and vulnerable, Ethan is pulled between memory and the present as he believes Gretchen has returned.
+
+### Raven Ross
+- **Role in story:** Love interest; emotional anchor.
+- **Profile:** Grounded and empathetic, Raven cannot see what Ethan sees and becomes his tether to the real world.
+
+### Gretchen Ross (the “ghost girl” figure)
+- **Role in story:** Apparition-like presence tied to memory and loss.
+- **Profile:** Ethan’s childhood friend and first love, appearing as an adult in a white dress.
+
+## Glossary snippets
+- **Ghost girl:** The apparition-like presence of Gretchen that Ethan sees.
+- **Anchor:** A character who grounds the protagonist in reality (Raven).
+
+**Tags:** grief, memory, unreliable-perception, romantic-triangle
+
+## What we know so far
+- The triangle is emotional and psychological, not action-driven.
+- The tension centers on whether Ethan’s experience is real.
+
+## TBD
+- Extended supporting cast.
+- Any additional familial or campus relationships.

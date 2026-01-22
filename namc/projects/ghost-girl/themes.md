@@ -1,31 +1,30 @@
----
-project: Ghost Girl
-format: TBD (canon text required)
-status: TBD (canon text required)
-spoiler_policy: TBD (canon text required)
-last_updated: 2026-01-20
-related:
-  - NAMC
-  - Ghost Girl
-  - Raven Ross
-  - Gretchen Ross
-  - Ethan White
-logline: TBD (canon text required)
----
+# Ghost Girl — Themes & Motifs (Legacy)
 
-# Ghost Girl — Themes & Motifs
+## Metadata
+- **Status:** Coming soon
+- **Release date:** TBA
+- **Format:** Short film
 
-Spoiler-safe thematic notes for the Ghost Girl project. For canon source-of-truth, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
+## What this doc contains
+Spoiler-safe thematic notes and motifs. For the primary canon overview, see [`namc/lore/ghost-girl.lore.md`](../../lore/ghost-girl.lore.md).
 
 ## Themes
 - Grief and denial
-- Memory vs. reality
-- Addiction / drug-enabled escapism
+- Memory as a haunting
 - Unreliable perception
-- Love triangle as psychological conflict
-- Identity fracture
+- Intimacy vs. isolation
+- The ethics of clinging to the past
 
 ## Motifs & Symbols
-- “Ghost” as a coping mechanism
-- The remembered past vs. the lived present
-- The pull of comfort against the cost of truth
+- White dress imagery
+- Reflections and doubled scenes
+- Quiet hallways and liminal spaces
+- Memory loops and repeated moments
+
+**Tags:** grief, memory, unreliable-perception, motifs
+
+## What we know so far
+- The tone is intimate and eerie rather than action-horror.
+
+## TBD
+- Additional symbols or recurring objects.
