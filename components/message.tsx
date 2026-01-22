@@ -264,7 +264,11 @@ const PurePreviewMessage = ({
             }
 
             if (type === "tool-saveMemory") {
-              const { toolCallId, state } = part;
+              const toolPart = part as typeof part & {
+                output?: unknown;
+                errorText?: string;
+              };
+              const { toolCallId, state } = toolPart;
               const approvalId = (part as { approval?: { id: string } })
                 .approval?.id;
               const isDenied =
@@ -273,12 +277,12 @@ const PurePreviewMessage = ({
                   (part as { approval?: { approved?: boolean } }).approval
                     ?.approved === false);
               const widthClass = "w-[min(100%,450px)]";
-              const outputErrorText = part.errorText;
+              const outputErrorText = toolPart.errorText;
 
-              const outputContent = part.output
-                ? typeof part.output === "string"
-                  ? part.output
-                  : JSON.stringify(part.output, null, 2)
+              const outputContent = toolPart.output
+                ? typeof toolPart.output === "string"
+                  ? toolPart.output
+                  : JSON.stringify(toolPart.output, null, 2)
                 : null;
 
               if (isDenied) {
