@@ -288,14 +288,6 @@ export const runNamcMediaCurator = async ({
   loreContext?: string | null;
 }): Promise<string> => {
   return await withTrace("NAMC AI Media Curator", async () => {
-    const latestUserMessageText = [...messages]
-      .reverse()
-      .find((currentMessage) => currentMessage.role === "user")
-      ?.parts.filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("")
-      .trim();
-    const workflow = { input_as_text: latestUserMessageText ?? "" };
     const conversationHistory = buildNamcConversationHistory(
       messages,
       loreContext ?? undefined
@@ -319,13 +311,15 @@ export const runNamcMediaCurator = async ({
       }
     });
     const guardrailsInputText = workflow.input_as_text;
-    const { hasTripwire: guardrailsHasTripwire, failOutput: guardrailsFailOutput } =
-      await runAndApplyGuardrails(
-        guardrailsInputText,
-        guardrailsConfig,
-        conversationHistory,
-        workflow
-      );
+    const {
+      hasTripwire: guardrailsHasTripwire,
+      failOutput: guardrailsFailOutput,
+    } = await runAndApplyGuardrails(
+      guardrailsInputText,
+      guardrailsConfig,
+      conversationHistory,
+      workflow
+    );
     if (guardrailsHasTripwire) {
       return JSON.stringify(guardrailsFailOutput);
     }
