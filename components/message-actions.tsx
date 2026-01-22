@@ -1,19 +1,34 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { getOfficialVoice, getRouteKey } from "@/lib/voice";
+import { useChatVoiceSettings } from "@/hooks/use-voice-settings";
+import {
+  getDefaultVoiceId,
+  getOfficialVoice,
+  getRouteKey,
+  getRouteVoiceOptions,
+  getVoiceLabel,
+} from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
 import {
+  CheckCircleFillIcon,
   CopyIcon,
+  MoreHorizontalIcon,
   PencilEditIcon,
   SpeakerIcon,
   ThumbDownIcon,
   ThumbUpIcon,
 } from "./icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function PureMessageActions({
   chatId,
@@ -32,6 +47,8 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   if (isLoading) {
     return null;
@@ -44,6 +61,15 @@ export function PureMessageActions({
     .trim();
   const routeKey = getRouteKey(chatTitle);
   const officialVoice = getOfficialVoice(routeKey);
+  const voiceOptions = getRouteVoiceOptions(routeKey);
+  const defaultVoiceId = getDefaultVoiceId(routeKey);
+  const { selectedVoiceId, setVoiceId } = useChatVoiceSettings(
+    chatId,
+    defaultVoiceId
+  );
+  const selectedVoiceLabel = selectedVoiceId
+    ? getVoiceLabel(selectedVoiceId, routeKey)
+    : officialVoice;
 
   const handleCopy = async () => {
     if (!textFromParts) {
@@ -78,24 +104,103 @@ export function PureMessageActions({
     );
   }
 
+  const handleSpeak = async () => {
+    if (!textFromParts) {
+      toast.error("There's no response text to read yet.");
+      return;
+    }
+
+    if (voiceOptions.length === 0 || !selectedVoiceId) {
+      toast("Voice playback is only available for /NAMC/ chats right now.", {
+        description: `Route voice: ${officialVoice} • Route: ${
+          routeKey === "default" ? "General" : `/${routeKey}/`
+        }`,
+      });
+      return;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    try {
+      setIsSpeaking(true);
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: textFromParts,
+          voiceId: selectedVoiceId,
+        }),
+      });
+
+      if (!response.ok) {
+        setIsSpeaking(false);
+        toast.error("Failed to start ElevenLabs playback.");
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsSpeaking(false);
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsSpeaking(false);
+        toast.error("Playback failed.");
+      };
+
+      await audio.play();
+    } catch (error) {
+      setIsSpeaking(false);
+      toast.error("Unable to start playback.");
+    }
+  };
+
   return (
     <Actions className="-ml-0.5">
       <Action
-        onClick={() => {
-          if (!textFromParts) {
-            toast.error("There's no response text to read yet.");
-            return;
-          }
-          toast("Voice playback coming soon.", {
-            description: `Route voice: ${officialVoice} • Route: ${
-              routeKey === "default" ? "General" : `/${routeKey}/`
-            }`,
-          });
-        }}
-        tooltip="Speak"
+        disabled={isSpeaking}
+        onClick={handleSpeak}
+        tooltip={`Speak (${selectedVoiceLabel})`}
       >
         <SpeakerIcon />
       </Action>
+      {voiceOptions.length > 0 ? (
+        <DropdownMenu modal={true}>
+          <DropdownMenuTrigger asChild>
+            <Action tooltip="Choose voice">
+              <MoreHorizontalIcon />
+            </Action>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="bottom">
+            {voiceOptions.map((voice) => (
+              <DropdownMenuItem
+                className="cursor-pointer flex-row justify-between"
+                key={voice.id}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setVoiceId(voice.id);
+                }}
+              >
+                <span>{voice.label}</span>
+                {voice.id === selectedVoiceId ? (
+                  <CheckCircleFillIcon />
+                ) : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
       </Action>

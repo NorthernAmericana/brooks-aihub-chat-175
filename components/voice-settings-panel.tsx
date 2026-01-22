@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Chat } from "@/lib/db/schema";
-import { getOfficialVoice, getRouteKey, VOICE_OPTIONS } from "@/lib/voice";
+import {
+  getDefaultVoiceId,
+  getOfficialVoice,
+  getRouteKey,
+  getRouteVoiceOptions,
+} from "@/lib/voice";
+import { useVoiceSettingsMap } from "@/hooks/use-voice-settings";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,17 +23,7 @@ type VoiceSettingsPanelProps = {
 };
 
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
-  const defaultSelections = useMemo(
-    () =>
-      chats.reduce<Record<string, string>>((accumulator, chat) => {
-        const routeKey = getRouteKey(chat.title);
-        accumulator[chat.id] = getOfficialVoice(routeKey);
-        return accumulator;
-      }, {}),
-    [chats]
-  );
-  const [selectedVoices, setSelectedVoices] =
-    useState<Record<string, string>>(defaultSelections);
+  const { settings, setSettings } = useVoiceSettingsMap();
   const [speakerEnabled, setSpeakerEnabled] = useState<Record<string, boolean>>(
     () =>
       chats.reduce<Record<string, boolean>>((accumulator, chat) => {
@@ -37,8 +33,21 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   );
 
   useEffect(() => {
-    setSelectedVoices(defaultSelections);
-  }, [defaultSelections]);
+    setSettings((previous) => {
+      const next = { ...previous };
+      chats.forEach((chat) => {
+        const routeKey = getRouteKey(chat.title);
+        const defaultVoiceId = getDefaultVoiceId(routeKey);
+        if (!defaultVoiceId) {
+          return;
+        }
+        if (!next[chat.id]?.voiceId) {
+          next[chat.id] = { voiceId: defaultVoiceId };
+        }
+      });
+      return next;
+    });
+  }, [chats, setSettings]);
 
   useEffect(() => {
     setSpeakerEnabled((previous) => {
@@ -64,6 +73,10 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
           const officialVoice = getOfficialVoice(routeKey);
           const routeLabel =
             routeKey === "default" ? "General" : `/${routeKey}/`;
+          const voiceOptions = getRouteVoiceOptions(routeKey);
+          const defaultVoiceId = getDefaultVoiceId(routeKey);
+          const selectedVoiceId =
+            settings[chat.id]?.voiceId ?? defaultVoiceId;
 
           return (
             <div
@@ -94,35 +107,41 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor={`voice-select-${chat.id}`}>
-                  Voice selection (per chat)
-                </Label>
-                <Select
-                  onValueChange={(value) =>
-                    setSelectedVoices((previous) => ({
-                      ...previous,
-                      [chat.id]: value,
-                    }))
-                  }
-                  value={selectedVoices[chat.id] ?? officialVoice}
-                >
-                  <SelectTrigger id={`voice-select-${chat.id}`}>
-                    <SelectValue placeholder="Select a voice" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={officialVoice}>
-                      {officialVoice} (Route official)
-                    </SelectItem>
-                    {VOICE_OPTIONS.map((voice) => (
-                      <SelectItem key={voice} value={voice}>
-                        {voice}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  This is a placeholder. Playback wiring will follow later.
-                </p>
+                {voiceOptions.length > 0 ? (
+                  <>
+                    <Label htmlFor={`voice-select-${chat.id}`}>
+                      NAMC voice selection (per chat)
+                    </Label>
+                    <Select
+                      onValueChange={(value) =>
+                        setSettings((previous) => ({
+                          ...previous,
+                          [chat.id]: { voiceId: value },
+                        }))
+                      }
+                      value={selectedVoiceId}
+                    >
+                      <SelectTrigger id={`voice-select-${chat.id}`}>
+                        <SelectValue placeholder="Select a voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {voiceOptions.map((voice) => (
+                          <SelectItem key={voice.id} value={voice.id}>
+                            {voice.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Used for ElevenLabs playback on /NAMC/ chats.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Voice selection is only available for /NAMC/ chats right
+                    now.
+                  </p>
+                )}
               </div>
             </div>
           );

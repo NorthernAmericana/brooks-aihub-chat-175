@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
-import { getOfficialVoice, getRouteKey, VOICE_OPTIONS } from "@/lib/voice";
+import { useChatVoiceSettings } from "@/hooks/use-voice-settings";
+import {
+  getDefaultVoiceId,
+  getOfficialVoice,
+  getRouteKey,
+  getRouteVoiceOptions,
+} from "@/lib/voice";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -61,11 +67,12 @@ const PureChatItem = ({
   const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState(officialVoice);
-
-  useEffect(() => {
-    setSelectedVoice(officialVoice);
-  }, [officialVoice]);
+  const voiceOptions = getRouteVoiceOptions(routeKey);
+  const defaultVoiceId = getDefaultVoiceId(routeKey);
+  const { selectedVoiceId, setVoiceId } = useChatVoiceSettings(
+    chat.id,
+    defaultVoiceId
+  );
 
   return (
     <SidebarMenuItem>
@@ -186,31 +193,35 @@ const PureChatItem = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor={`voice-select-${chat.id}`}>
-                Custom AI voices
-              </Label>
-              <Select
-                onValueChange={setSelectedVoice}
-                value={selectedVoice}
-              >
-                <SelectTrigger id={`voice-select-${chat.id}`}>
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={officialVoice}>
-                    {officialVoice} (Route official)
-                  </SelectItem>
-                  {VOICE_OPTIONS.map((voice) => (
-                    <SelectItem key={voice} value={voice}>
-                      {voice}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Selected voice is a placeholder and will be wired to playback
-                later.
-              </p>
+              {voiceOptions.length > 0 ? (
+                <>
+                  <Label htmlFor={`voice-select-${chat.id}`}>
+                    NAMC voice selection
+                  </Label>
+                  <Select
+                    onValueChange={setVoiceId}
+                    value={selectedVoiceId}
+                  >
+                    <SelectTrigger id={`voice-select-${chat.id}`}>
+                      <SelectValue placeholder="Select a voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {voiceOptions.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>
+                          {voice.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Used for ElevenLabs playback on /NAMC/ chats.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Voice selection is only available for /NAMC/ chats right now.
+                </p>
+              )}
             </div>
           </div>
         </DialogContent>
