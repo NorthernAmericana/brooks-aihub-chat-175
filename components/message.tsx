@@ -344,6 +344,93 @@ const PurePreviewMessage = ({
               );
             }
 
+            if (type === "tool-saveMemory") {
+              const { toolCallId, state } = part;
+              const approvalId = (part as { approval?: { id: string } })
+                .approval?.id;
+              const isDenied =
+                state === "output-denied" ||
+                (state === "approval-responded" &&
+                  (part as { approval?: { approved?: boolean } }).approval
+                    ?.approved === false);
+
+              if (isDenied) {
+                return (
+                  <Tool defaultOpen={true} key={toolCallId}>
+                    <ToolHeader state="output-denied" type="tool-saveMemory" />
+                    <ToolContent>
+                      <div className="px-4 py-3 text-muted-foreground text-sm">
+                        Memory save was denied.
+                      </div>
+                    </ToolContent>
+                  </Tool>
+                );
+              }
+
+              return (
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-saveMemory" />
+                  <ToolContent>
+                    {(state === "input-available" ||
+                      state === "approval-requested") && (
+                      <ToolInput input={part.input} />
+                    )}
+                    {state === "approval-requested" && approvalId && (
+                      <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                        <button
+                          className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                          onClick={() => {
+                            addToolApprovalResponse({
+                              id: approvalId,
+                              approved: false,
+                              reason: "User denied memory save",
+                            });
+                          }}
+                          type="button"
+                        >
+                          Deny
+                        </button>
+                        <button
+                          className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                          onClick={() => {
+                            addToolApprovalResponse({
+                              id: approvalId,
+                              approved: true,
+                            });
+                          }}
+                          type="button"
+                        >
+                          Allow
+                        </button>
+                      </div>
+                    )}
+                    {state === "output-available" && (
+                      <ToolOutput
+                        errorText={part.errorText}
+                        output={
+                          "error" in part.output ? (
+                            <div className="rounded border p-2 text-red-500">
+                              Error: {String(part.output.error)}
+                            </div>
+                          ) : (
+                            <div className="p-2 text-sm">
+                              {part.output?.message ?? "Memory saved."}
+                            </div>
+                          )
+                        }
+                      />
+                    )}
+                    {state === "output-error" && (
+                      <ToolOutput
+                        errorText={part.errorText ?? "Failed to save memory."}
+                        output={null}
+                      />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
             return null;
           })}
 
