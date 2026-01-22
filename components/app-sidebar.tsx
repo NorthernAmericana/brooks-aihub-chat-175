@@ -81,6 +81,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     aria-hidden
                     className="sidebar-rainbow-symbol absolute -left-4 top-1/2 h-6 w-6 -translate-y-1/2"
                   />
+                  <span aria-hidden className="sidebar-glitch-base">
+                    /Brooks AI HUB/
+                  </span>
                   <span
                     aria-hidden
                     className="sidebar-glitch-layer sidebar-glitch-layer-top"
@@ -93,7 +96,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   >
                     /Brooks AI HUB/
                   </span>
-                  <span className="relative z-10">/Brooks AI HUB/</span>
+                  <span className="sr-only">/Brooks AI HUB/</span>
                 </span>
               </Link>
               <div className="flex flex-row gap-1">
