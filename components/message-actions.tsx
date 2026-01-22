@@ -55,6 +55,56 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
+  const handleSpeak = async () => {
+    if (!textFromParts) {
+      toast.error("There's no response text to read yet.");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const loadingToast = toast.loading("Generating speech...");
+
+    try {
+      const response = await fetch("/api/tts/elevenlabs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textFromParts, voiceId: officialVoice }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const message =
+          errorPayload?.error ?? "Unable to generate speech right now.";
+        toast.error(message);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
+      audio.addEventListener("error", () => {
+        URL.revokeObjectURL(audioUrl);
+        toast.error("Audio playback failed.");
+      });
+
+      await audio.play();
+      toast.success("Playing response.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.error("Speech request timed out.");
+      } else {
+        toast.error("Unable to generate speech right now.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      toast.dismiss(loadingToast);
+    }
+  };
+
   // User messages get edit (on hover) and copy actions
   if (message.role === "user") {
     return (
@@ -80,20 +130,7 @@ export function PureMessageActions({
 
   return (
     <Actions className="-ml-0.5">
-      <Action
-        onClick={() => {
-          if (!textFromParts) {
-            toast.error("There's no response text to read yet.");
-            return;
-          }
-          toast("Voice playback coming soon.", {
-            description: `Route voice: ${officialVoice} • Route: ${
-              routeKey === "default" ? "General" : `/${routeKey}/`
-            }`,
-          });
-        }}
-        tooltip="Speak"
-      >
+      <Action onClick={handleSpeak} tooltip="Speak">
         <SpeakerIcon />
       </Action>
       <Action onClick={handleCopy} tooltip="Copy">

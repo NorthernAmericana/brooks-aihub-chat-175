@@ -29,6 +29,7 @@ The following environment keys in `.env.example` define storage/auth connections
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob read/write token for file persistence.
 - `AUTH_SECRET` — Secret used by the auth layer for signing or verifying sessions.
 - `AI_GATEWAY_API_KEY` — API key for the AI Gateway in non-Vercel deployments.
+- `ELEVENLABS_API_KEY` — API key used to generate text-to-speech audio via ElevenLabs.
 
 Database schema and migration configuration is defined in `drizzle.config.ts`, which points to the schema in `./lib/db/schema.ts` and uses `POSTGRES_URL` as the database credential for the Drizzle CLI.
 
