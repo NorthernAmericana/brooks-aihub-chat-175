@@ -86,15 +86,19 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     <TooltipTrigger asChild>
                       <Button
                         className="h-8 p-1 md:h-fit md:p-2"
-                        onClick={() => setShowDeleteAllDialog(true)}
+                        onClick={() => {
+                          setOpenMobile(false);
+                          router.push("/");
+                          router.refresh();
+                        }}
                         type="button"
                         variant="ghost"
                       >
-                        <TrashIcon />
+                        <PlusIcon />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent align="end" className="hidden md:block">
-                      Delete All Chats
+                      New Chat
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -118,6 +122,22 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   </TooltipContent>
                 </Tooltip>
               </div>
+              <div className="h-px w-full bg-border" />
+              <Button
+                asChild
+                className="justify-start px-2 text-sm"
+                size="sm"
+                variant="ghost"
+              >
+                <Link
+                  href="/settings"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  Settings
+                </Link>
+              </Button>
             </div>
           </SidebarMenu>
         </SidebarHeader>
