@@ -179,6 +179,49 @@ export async function getApprovedMemoriesByUserId({
   }
 }
 
+export async function createMemoryRecord({
+  ownerId,
+  sourceUri,
+  rawText,
+  route,
+  agentId,
+  agentLabel,
+  tags,
+}: {
+  ownerId: string;
+  sourceUri: string;
+  rawText: string;
+  route?: string | null;
+  agentId?: string | null;
+  agentLabel?: string | null;
+  tags?: string[];
+}) {
+  try {
+    const [record] = await db
+      .insert(memory)
+      .values({
+        ownerId,
+        sourceType: "chat",
+        sourceUri,
+        route: route ?? null,
+        agentId: agentId ?? null,
+        agentLabel: agentLabel ?? null,
+        rawText,
+        tags: tags ?? [],
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create memory record"
+    );
+  }
+}
+
 export async function getChatsByUserId({
   id,
   limit,
