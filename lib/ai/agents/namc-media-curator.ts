@@ -329,31 +329,3 @@ export const runNamcMediaCurator = async ({
     };
   });
 };
-
-type RunNamcMediaCuratorInput = {
-  messages: ChatMessage[];
-};
-
-export const runNamcMediaCurator = async (
-  input: RunNamcMediaCuratorInput
-): Promise<string> => {
-  const lastUserMessage = [...(input.messages ?? [])]
-    .reverse()
-    .find((message) => message.role === "user");
-  const inputText =
-    lastUserMessage?.parts
-      ?.filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("") ?? "";
-
-  const result = await runWorkflow({ input_as_text: inputText });
-  if (typeof result === "string") {
-    return result;
-  }
-
-  if ("output_text" in result && typeof result.output_text === "string") {
-    return result.output_text;
-  }
-
-  return JSON.stringify(result);
-};
