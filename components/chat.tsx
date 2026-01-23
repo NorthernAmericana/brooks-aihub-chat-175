@@ -226,7 +226,7 @@ export function Chat({
         // Check for the secret command: /NAMC/ let me watch a movie
         if (text === "/NAMC/ let me watch a movie") {
           setShowVideoPlayer(true);
-          return; // Don't send the message to the chat
+          return undefined; // Don't send the message to the chat
         }
       }
 
