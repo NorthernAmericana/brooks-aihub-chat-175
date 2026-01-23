@@ -42,90 +42,49 @@ export async function playTextToSpeech(
       throw new Error("Received empty audio data.");
     }
     
+    // Create object URL - this will stay valid until explicitly revoked
     const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio();
-
-    // Critical: Set the source AFTER setting up event listeners
-    // This ensures we don't miss any events
     
-    // Wait for audio to be fully loaded and ready to play
-    // Using loadeddata instead of canplaythrough for more reliability
-    await new Promise<void>((resolve, reject) => {
-      const onLoadedData = () => {
-        // Audio data is loaded, check if we can play through
-        // HAVE_FUTURE_DATA (3) means enough data is available to start playing
-        if (audio.readyState >= 3) {
-          resolve();
-        } else {
-          // Wait for more data
-          audio.addEventListener("canplay", () => resolve(), { once: true });
+    // Create audio element with source directly
+    const audio = new Audio(audioUrl);
+    
+    // Return a promise that resolves when audio finishes playing
+    return new Promise<void>((resolve, reject) => {
+      let isFinished = false;
+      
+      const cleanup = () => {
+        if (!isFinished) {
+          isFinished = true;
+          // Delay URL revocation to ensure audio has fully completed
+          setTimeout(() => {
+            URL.revokeObjectURL(audioUrl);
+          }, 100);
         }
       };
       
-      const onError = () => {
-        URL.revokeObjectURL(audioUrl);
-        // Get detailed error information from audio.error if available
+      audio.addEventListener("ended", () => {
+        cleanup();
+        resolve();
+      });
+      
+      audio.addEventListener("error", () => {
+        cleanup();
         const errorMsg = audio.error 
           ? `${audio.error.message} (code: ${audio.error.code})`
-          : "Audio failed to load.";
+          : "Audio playback failed";
         reject(new Error(errorMsg));
-      };
-
-      audio.addEventListener("loadeddata", onLoadedData, { once: true });
-      audio.addEventListener("error", onError, { once: true });
-      
-      // Now set the source to start loading
-      audio.src = audioUrl;
-      audio.preload = "auto";
-      audio.load();
-    });
-
-    // Ensure we keep a reference to prevent garbage collection during playback
-    // This simple interval maintains the reference without doing any work
-    let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
-    const clearKeepAlive = () => {
-      if (keepAliveTimer !== null) {
-        clearInterval(keepAliveTimer);
-        keepAliveTimer = null;
-      }
-    };
-
-    // Simple keep-alive - just maintains reference
-    // Using 5s interval to minimize CPU wake-ups while preventing GC
-    keepAliveTimer = setInterval(() => {
-      // No-op, just keeps reference alive
-    }, 5000);
-
-    try {
-      await audio.play();
-      
-      // Wait for playback to complete or error
-      await new Promise<void>((resolve, reject) => {
-        audio.addEventListener("ended", () => {
-          clearKeepAlive();
-          URL.revokeObjectURL(audioUrl);
-          resolve();
-        }, { once: true });
-        
-        audio.addEventListener("error", () => {
-          clearKeepAlive();
-          URL.revokeObjectURL(audioUrl);
-          // Provide more detailed error information if available
-          const errorDetail = audio.error 
-            ? `${audio.error.message} (code: ${audio.error.code})`
-            : "Unknown audio error";
-          reject(new Error(`Audio playback error: ${errorDetail}`));
-        }, { once: true });
       });
-    } catch (playError) {
-      clearKeepAlive();
-      URL.revokeObjectURL(audioUrl);
-      // Handle autoplay policy errors specifically
-      if (playError instanceof DOMException && playError.name === "NotAllowedError") {
-        throw new Error("Audio playback blocked by browser. Please interact with the page first.");
-      }
-      throw playError;
-    }
+      
+      // Start playback
+      audio.play().catch((playError) => {
+        cleanup();
+        if (playError instanceof DOMException && playError.name === "NotAllowedError") {
+          reject(new Error("Audio playback blocked by browser. Please interact with the page first."));
+        } else {
+          reject(playError);
+        }
+      });
+    });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Speech request timed out.");
