@@ -58,7 +58,8 @@ export async function playTextToSpeech(
     await new Promise<void>((resolve, reject) => {
       const onLoadedData = () => {
         // Audio data is loaded, check if we can play through
-        if (audio.readyState >= 3) { // HAVE_FUTURE_DATA or better
+        // HAVE_FUTURE_DATA (3) means enough data is available to start playing
+        if (audio.readyState >= 3) {
           resolve();
         } else {
           // Wait for more data
@@ -66,9 +67,12 @@ export async function playTextToSpeech(
         }
       };
       
-      const onError = (e: Event) => {
+      const onError = () => {
         cleanupAudio();
-        const errorMsg = e instanceof ErrorEvent ? e.message : "Audio failed to load.";
+        // Get detailed error information from audio.error if available
+        const errorMsg = audio.error 
+          ? `${audio.error.message} (code: ${audio.error.code})`
+          : "Audio failed to load.";
         reject(new Error(errorMsg));
       };
 
