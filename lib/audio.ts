@@ -1,17 +1,22 @@
 import { toast } from "sonner";
 
+// Timeout should be less than the API timeout (30s) to ensure client detects timeouts first
+const DEFAULT_TTS_TIMEOUT_MS = 25_000;
+
 /**
  * Plays text-to-speech audio using the ElevenLabs API
  * @param text - The text to speak
  * @param voiceId - The ElevenLabs voice ID to use
+ * @param timeoutMs - Timeout in milliseconds (default: 25000ms)
  * @returns Promise that resolves when audio playback completes or rejects on error
  */
 export async function playTextToSpeech(
   text: string,
-  voiceId: string
+  voiceId: string,
+  timeoutMs: number = DEFAULT_TTS_TIMEOUT_MS
 ): Promise<void> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch("/api/tts/elevenlabs", {
@@ -43,20 +48,26 @@ export async function playTextToSpeech(
       URL.revokeObjectURL(audioUrl);
     };
 
-    audio.addEventListener("ended", cleanupAudio);
-    audio.addEventListener("error", () => {
-      cleanupAudio();
-      throw new Error("Audio playback failed.");
-    });
-
     // Wait for audio to be ready before playing to prevent glitches
     await new Promise<void>((resolve, reject) => {
-      audio.addEventListener("canplaythrough", () => resolve(), {
-        once: true,
-      });
-      audio.addEventListener("error", reject, { once: true });
+      const onCanPlayThrough = () => {
+        audio.removeEventListener("error", onError);
+        resolve();
+      };
+      
+      const onError = () => {
+        audio.removeEventListener("canplaythrough", onCanPlayThrough);
+        cleanupAudio();
+        reject(new Error("Audio playback failed."));
+      };
+
+      audio.addEventListener("canplaythrough", onCanPlayThrough, { once: true });
+      audio.addEventListener("error", onError, { once: true });
       audio.load();
     });
+
+    audio.addEventListener("ended", cleanupAudio);
+    audio.addEventListener("error", cleanupAudio);
 
     await audio.play();
   } catch (error) {
