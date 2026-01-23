@@ -43,42 +43,76 @@ export async function playTextToSpeech(
     }
     
     const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
+    const audio = new Audio();
 
-    // Ensure audio is preloaded to prevent glitching
-    audio.preload = "auto";
-    audio.autoplay = false;
-
+    // Critical: Set the source AFTER setting up event listeners
+    // This ensures we don't miss any events
+    
     // Handle audio cleanup
     const cleanupAudio = () => {
       URL.revokeObjectURL(audioUrl);
     };
 
-    // Wait for audio to be ready before playing to prevent glitches
+    // Wait for audio to be fully loaded and ready to play
+    // Using loadeddata instead of canplaythrough for more reliability
     await new Promise<void>((resolve, reject) => {
-      const onCanPlayThrough = () => {
-        resolve();
+      const onLoadedData = () => {
+        // Audio data is loaded, check if we can play through
+        if (audio.readyState >= 3) { // HAVE_FUTURE_DATA or better
+          resolve();
+        } else {
+          // Wait for more data
+          audio.addEventListener("canplay", () => resolve(), { once: true });
+        }
       };
       
-      const onError = () => {
+      const onError = (e: Event) => {
         cleanupAudio();
-        reject(new Error("Audio failed to load."));
+        const errorMsg = e instanceof ErrorEvent ? e.message : "Audio failed to load.";
+        reject(new Error(errorMsg));
       };
 
-      audio.addEventListener("canplaythrough", onCanPlayThrough, { once: true });
+      audio.addEventListener("loadeddata", onLoadedData, { once: true });
       audio.addEventListener("error", onError, { once: true });
       
-      // Start loading the audio
+      // Now set the source to start loading
+      audio.src = audioUrl;
+      audio.preload = "auto";
       audio.load();
     });
 
-    audio.addEventListener("ended", cleanupAudio);
-    audio.addEventListener("error", cleanupAudio);
+    // Set up cleanup handlers for playback phase
+    let hasCleanedUp = false;
+    const safeCleanup = () => {
+      if (!hasCleanedUp) {
+        hasCleanedUp = true;
+        cleanupAudio();
+      }
+    };
+
+    audio.addEventListener("ended", safeCleanup);
+    audio.addEventListener("error", safeCleanup);
+    
+    // Ensure we keep a reference to prevent garbage collection during playback
+    const keepAlive = setInterval(() => {
+      if (audio.paused && audio.currentTime === 0) {
+        clearInterval(keepAlive);
+      }
+    }, 100);
 
     try {
       await audio.play();
+      
+      // Wait for playback to complete
+      await new Promise<void>((resolve) => {
+        audio.addEventListener("ended", () => {
+          clearInterval(keepAlive);
+          resolve();
+        }, { once: true });
+      });
     } catch (playError) {
-      cleanupAudio();
+      clearInterval(keepAlive);
+      safeCleanup();
       // Handle autoplay policy errors specifically
       if (playError instanceof DOMException && playError.name === "NotAllowedError") {
         throw new Error("Audio playback blocked by browser. Please interact with the page first.");
