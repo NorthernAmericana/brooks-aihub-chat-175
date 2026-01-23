@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
+import { ChatVoiceSettings } from "@/components/chat-voice-settings";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -179,6 +180,13 @@ export function Chat({
     fetcher
   );
 
+  // Fetch voice settings for this chat
+  const { data: voiceSettings } = useSWR<{
+    ttsEnabled: boolean;
+    ttsVoiceId?: string | null;
+    ttsVoiceLabel?: string | null;
+  }>(`/api/chat-settings?chatId=${id}`, fetcher);
+
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
@@ -234,25 +242,36 @@ export function Chat({
           votes={votes}
         />
 
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl flex-col border-t-0 bg-background">
           {!isReadonly && (
-            <MultimodalInput
-              attachments={attachments}
+            <ChatVoiceSettings
               chatId={id}
-              chatRouteKey={initialRouteKey}
-              input={input}
-              messages={messages}
-              onModelChange={setCurrentModelId}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
+              routeKey={initialRouteKey ?? null}
+              initialVoiceId={voiceSettings?.ttsVoiceId}
+              initialVoiceLabel={voiceSettings?.ttsVoiceLabel}
             />
           )}
+          
+          <div className="flex gap-2 px-2 pb-3 md:px-4 md:pb-4">
+            {!isReadonly && (
+              <MultimodalInput
+                attachments={attachments}
+                chatId={id}
+                chatRouteKey={initialRouteKey}
+                input={input}
+                messages={messages}
+                onModelChange={setCurrentModelId}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+              />
+            )}
+          </div>
         </div>
       </div>
 
