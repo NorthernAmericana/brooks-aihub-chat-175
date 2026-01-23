@@ -55,28 +55,14 @@ export async function playTextToSpeech(
     };
 
     // Wait for audio to be ready before playing to prevent glitches
-    // Using a more robust approach with multiple event listeners
     await new Promise<void>((resolve, reject) => {
-      let resolved = false;
-      
       const onCanPlayThrough = () => {
-        if (resolved) return;
-        resolved = true;
-        cleanup();
         resolve();
       };
       
       const onError = () => {
-        if (resolved) return;
-        resolved = true;
-        cleanup();
         cleanupAudio();
         reject(new Error("Audio failed to load."));
-      };
-
-      const cleanup = () => {
-        audio.removeEventListener("canplaythrough", onCanPlayThrough);
-        audio.removeEventListener("error", onError);
       };
 
       audio.addEventListener("canplaythrough", onCanPlayThrough, { once: true });
