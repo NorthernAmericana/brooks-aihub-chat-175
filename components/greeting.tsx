@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import { listAgentConfigs } from "@/lib/ai/agents/registry";
 
 type GreetingProps = {

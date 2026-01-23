@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchElevenLabsSpeech } from "@/lib/tts/elevenlabs";
 
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export async function POST(request: Request) {
   let payload: { text?: string; voiceId?: string };

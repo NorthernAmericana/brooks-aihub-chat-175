@@ -20,7 +20,7 @@ export type MemoryIngestionInput = {
 };
 
 export function buildMemoryIngestionRecord(
-  input: MemoryIngestionInput,
+  input: MemoryIngestionInput
 ): MemoryIngestionRecord {
   return {
     id: input.id,
@@ -39,7 +39,7 @@ export function buildMemoryIngestionRecord(
 }
 
 export function buildMemoryIngestionPayload(
-  records: MemoryIngestionRecord[],
+  records: MemoryIngestionRecord[]
 ): MemoryIngestionPayload {
   return { records };
 }

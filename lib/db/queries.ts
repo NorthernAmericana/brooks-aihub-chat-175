@@ -85,11 +85,13 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  routeKey,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  routeKey?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -98,6 +100,7 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      routeKey: routeKey ?? null,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -715,35 +718,17 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
   }
 }
 
-export async function updateChatTtsSettings({
+export async function updateChatRouteKey({
   chatId,
-  userId,
-  ttsEnabled,
-  ttsVoiceId,
-  ttsVoiceLabel,
+  routeKey,
 }: {
   chatId: string;
-  userId: string;
-  ttsEnabled?: boolean;
-  ttsVoiceId?: string;
-  ttsVoiceLabel?: string;
+  routeKey: string;
 }) {
   try {
-    const [updatedChat] = await db
-      .update(chat)
-      .set({
-        ttsEnabled,
-        ttsVoiceId,
-        ttsVoiceLabel,
-      })
-      .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
-      .returning();
-
-    return updatedChat;
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to update chat TTS settings"
-    );
+    return await db.update(chat).set({ routeKey }).where(eq(chat.id, chatId));
+  } catch (error) {
+    console.warn("Failed to update routeKey for chat", chatId, error);
+    return;
   }
 }

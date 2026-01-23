@@ -132,8 +132,7 @@ function PureSuggestedActions({
     }
 
     const agent = agentConfigs.find(
-      (config) =>
-        normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
+      (config) => normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
     );
     if (!agent) {
       return suggestedAction;

@@ -1,10 +1,10 @@
 import { format } from "date-fns";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { getAgentConfigById } from "@/lib/ai/agents/registry";
-import { getApprovedMemoriesByUserId } from "@/lib/db/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { getAgentConfigById } from "@/lib/ai/agents/registry";
+import { getApprovedMemoriesByUserId } from "@/lib/db/queries";
 
 const formatRoute = (route: string | null) => {
   if (!route) {

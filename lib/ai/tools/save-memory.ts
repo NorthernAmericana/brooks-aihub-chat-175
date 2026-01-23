@@ -15,9 +15,7 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
     description:
       "Save a receipt-worthy memory from the current chat. Use this only after the user explicitly asks to save.",
     inputSchema: z.object({
-      rawText: z
-        .string()
-        .describe("The receipt-style memory text to save."),
+      rawText: z.string().describe("The receipt-style memory text to save."),
       tags: z.array(z.string()).optional(),
       route: z
         .string()

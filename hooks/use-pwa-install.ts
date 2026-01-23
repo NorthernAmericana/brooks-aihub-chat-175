@@ -24,12 +24,13 @@ export function usePwaInstall() {
 
     const updateStandalone = () => {
       const isStandaloneDisplay = window.matchMedia(
-        "(display-mode: standalone)",
+        "(display-mode: standalone)"
       ).matches;
       const isIosStandalone =
         "standalone" in window.navigator &&
-        Boolean((window.navigator as Navigator & { standalone?: boolean })
-          .standalone);
+        Boolean(
+          (window.navigator as Navigator & { standalone?: boolean }).standalone
+        );
       setIsStandalone(isStandaloneDisplay || isIosStandalone);
     };
 
@@ -47,7 +48,7 @@ export function usePwaInstall() {
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
-        handleBeforeInstallPrompt,
+        handleBeforeInstallPrompt
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
       displayModeQuery.removeEventListener("change", updateStandalone);

@@ -7,14 +7,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { PlusIcon, TrashIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +22,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
@@ -147,7 +147,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
-            <Button asChild className="justify-start" size="sm" variant="outline">
+            <Button
+              asChild
+              className="justify-start"
+              size="sm"
+              variant="outline"
+            >
               <Link href={foundersEditionUrl} rel="noreferrer" target="_blank">
                 Founders Edition • $4.99
               </Link>

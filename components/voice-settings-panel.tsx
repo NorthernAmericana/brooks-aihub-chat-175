@@ -2,14 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { Chat } from "@/lib/db/schema";
-import {
-  getDefaultVoice,
-  getRouteKey,
-  getVoiceOptions,
-  isNamcRoute,
-  type VoiceOption,
-} from "@/lib/voice";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -18,6 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { Chat } from "@/lib/db/schema";
+import {
+  getChatRouteKey,
+  getDefaultVoice,
+  getVoiceOptions,
+  isChatNamcRoute,
+  type VoiceOption,
+} from "@/lib/voice";
 
 type VoiceSettingsPanelProps = {
   chats: Chat[];
@@ -26,14 +26,14 @@ type VoiceSettingsPanelProps = {
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   // Filter to only show NAMC chats (voice is disabled for non-NAMC)
   const namcChats = useMemo(
-    () => chats.filter((chat) => isNamcRoute(chat.title)),
+    () => chats.filter((chat) => isChatNamcRoute(chat)),
     [chats]
   );
 
   const defaultSelections = useMemo(
     () =>
       namcChats.reduce<Record<string, VoiceOption>>((accumulator, chat) => {
-        const routeKey = getRouteKey(chat.title);
+        const routeKey = getChatRouteKey(chat);
         const defaultVoice = getDefaultVoice(routeKey);
         const savedVoiceId = chat.ttsVoiceId ?? defaultVoice.id;
         const savedVoiceLabel = chat.ttsVoiceLabel ?? defaultVoice.label;
@@ -108,7 +108,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   if (namcChats.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        No NAMC chats yet. Voice settings are only available for /NAMC/ chats. Start a NAMC chat to configure voice options.
+        No NAMC chats yet. Voice settings are only available for /NAMC/ chats.
+        Start a NAMC chat to configure voice options.
       </div>
     );
   }
@@ -116,7 +117,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   return (
     <div className="flex flex-col gap-4">
       {namcChats.map((chat) => {
-        const routeKey = getRouteKey(chat.title);
+        const routeKey = getChatRouteKey(chat);
         const defaultVoice = getDefaultVoice(routeKey);
         const voiceOptions = getVoiceOptions(routeKey);
 
@@ -162,9 +163,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor={`voice-select-${chat.id}`}>
-                Voice selection
-              </Label>
+              <Label htmlFor={`voice-select-${chat.id}`}>Voice selection</Label>
               <Select
                 onValueChange={(value) => {
                   const option =
@@ -199,7 +198,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Bruce NAMC is the default voice for NAMC chats. Use the three-dot menu in chat to switch voices.
+                Bruce NAMC is the default voice for NAMC chats. Use the
+                three-dot menu in chat to switch voices.
               </p>
             </div>
           </div>

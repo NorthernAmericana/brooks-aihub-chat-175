@@ -49,7 +49,9 @@ export class Agent {
 export class Runner {
   traceMetadata?: Record<string, string>;
 
-  constructor({ traceMetadata }: { traceMetadata?: Record<string, string> } = {}) {
+  constructor({
+    traceMetadata,
+  }: { traceMetadata?: Record<string, string> } = {}) {
     this.traceMetadata = traceMetadata;
   }
 

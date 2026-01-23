@@ -38,6 +38,7 @@ export function Chat({
   initialChatModel,
   initialVisibilityType,
   initialChatTitle,
+  initialRouteKey,
   isReadonly,
   autoResume,
 }: {
@@ -46,6 +47,7 @@ export function Chat({
   initialChatModel: string;
   initialVisibilityType: VisibilityType;
   initialChatTitle: string;
+  initialRouteKey?: string | null;
   isReadonly: boolean;
   autoResume: boolean;
 }) {
@@ -237,6 +239,7 @@ export function Chat({
             <MultimodalInput
               attachments={attachments}
               chatId={id}
+              chatRouteKey={initialRouteKey}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}

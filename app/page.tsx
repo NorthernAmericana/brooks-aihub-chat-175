@@ -20,7 +20,7 @@ export default function IntroPage() {
             Northern Americana Tech
           </div>
           <div className="relative mt-6 flex items-center justify-center">
-            <div className="intro-rainbow-glow absolute inset-0" aria-hidden />
+            <div aria-hidden className="intro-rainbow-glow absolute inset-0" />
             <h1 className="relative font-pixel text-2xl text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] sm:text-3xl md:text-4xl">
               /Brooks AI HUB/
             </h1>

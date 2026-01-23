@@ -9,7 +9,10 @@ export type SlashAction = {
 const STORAGE_KEY = "recent-slash-actions";
 
 export const normalizeSlash = (slash: string) =>
-  slash.replace(/^\/+|\/+$/g, "").replace(/\s+/g, "").toLowerCase();
+  slash
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\s+/g, "")
+    .toLowerCase();
 
 export function parseSlashAction(
   text: string,
