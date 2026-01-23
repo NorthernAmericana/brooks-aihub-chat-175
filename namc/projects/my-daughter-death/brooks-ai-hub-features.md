@@ -36,7 +36,7 @@ These features represent a new generation of interactive media analysis tools th
 
 ### 3. Cloud Progress Tracking
 - **Game Save Sync:** Early release game saves automatically backed up to cloud
-- **Reading Progress:** Track where you are in the novel (if using digital version)
+- **Reading Progress:** Track where you are in the novel (compatible e-reader apps to be announced)
 - **Cross-Media Progress:** See how your progress in one medium relates to the other
 - **Progress Dashboard:** Visual timeline of your journey through both experiences
 - **Achievement Tracking:** Milestones in story discovery and lore exploration

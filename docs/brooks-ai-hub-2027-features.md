@@ -299,8 +299,8 @@ This is just the beginning. As Brooks AI HUB evolves, expect more sophisticated 
 ---
 
 **For more information:**
-- Visit Brooks AI HUB website (URL TBD)
-- Follow Northern Americana Tech on social media
+- Visit Brooks AI HUB website (to be announced)
+- Follow Northern Americana Tech on social media (handles to be announced)
 - Explore the NAMC library at `/NAMC/` agent
 - Read detailed project documentation in the NAMC repository
 
