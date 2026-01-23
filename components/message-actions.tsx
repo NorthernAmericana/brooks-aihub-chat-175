@@ -126,12 +126,16 @@ export function PureMessageActions({
 
       // Wait for audio to be fully buffered before playing to prevent stuttering
       await new Promise<void>((resolve, reject) => {
-        audio.addEventListener("canplaythrough", () => resolve(), {
-          once: true,
-        });
-        audio.addEventListener("error", () => {
-          reject(new Error("Audio load failed"));
-        });
+        audio.addEventListener(
+          "canplaythrough",
+          () => resolve(),
+          { once: true }
+        );
+        audio.addEventListener(
+          "error",
+          () => reject(new Error("Audio load failed")),
+          { once: true }
+        );
         audio.load();
       });
 

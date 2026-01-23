@@ -68,8 +68,8 @@ export function VoiceSelector({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[--radix-popover-trigger-width] p-0">
-        <Command shouldFilter={false}>
+      <PopoverContent align="start" className="w-full min-w-[200px] p-0">
+        <Command shouldFilter={false}> {/* Manual filtering for better control over search behavior */}
           {showSearch && (
             <CommandInput
               onValueChange={setSearchQuery}
