@@ -48,6 +48,34 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
 
+// Keywords for detecting NAMC-relevant queries
+const NAMC_KEYWORDS = [
+  "namc",
+  "film",
+  "movie",
+  "music",
+  "game",
+  "album",
+  "song",
+  "artist",
+  "director",
+  "soundtrack",
+  "media",
+  "release",
+  "lore",
+  "story",
+  "character",
+  "plot",
+  "scene",
+  "genre",
+];
+
+// Create regex for word boundary matching of NAMC keywords
+const NAMC_KEYWORD_REGEX = new RegExp(
+  `\\b(${NAMC_KEYWORDS.join("|")})\\b`,
+  "i"
+);
+
 const formatMemoryContext = (
   memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
 ) => {
@@ -309,24 +337,11 @@ export async function POST(request: Request) {
         let lightNamcContext: string | null = null;
         if (isBrooksAiHub) {
           const latestUserMessage = getLatestUserMessageText(uiMessages);
-          if (latestUserMessage) {
-            // Heuristic to detect NAMC-relevant queries
-            const namcKeywords = [
-              "namc", "film", "movie", "music", "game", "album", "song",
-              "artist", "director", "soundtrack", "media", "release", "lore",
-              "story", "character", "plot", "scene", "genre"
-            ];
-            const lowerMessage = latestUserMessage.toLowerCase();
-            const hasNamcKeyword = namcKeywords.some(keyword => 
-              lowerMessage.includes(keyword)
-            );
-            
-            if (hasNamcKeyword) {
-              lightNamcContext = await buildNamcLoreContext(latestUserMessage, {
-                maxSnippets: 2,
-                maxTokens: 500,
-              });
-            }
+          if (latestUserMessage && NAMC_KEYWORD_REGEX.test(latestUserMessage)) {
+            lightNamcContext = await buildNamcLoreContext(latestUserMessage, {
+              maxSnippets: 2,
+              maxTokens: 500,
+            });
           }
         }
 
