@@ -106,6 +106,17 @@ export function PureMessageActions({
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
+      // Wait for audio to be fully buffered before playing to prevent stuttering
+      await new Promise<void>((resolve, reject) => {
+        audio.addEventListener("canplaythrough", () => resolve(), {
+          once: true,
+        });
+        audio.addEventListener("error", () => {
+          reject(new Error("Audio load failed"));
+        });
+        audio.load();
+      });
+
       audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
       audio.addEventListener("error", () => {
         URL.revokeObjectURL(audioUrl);

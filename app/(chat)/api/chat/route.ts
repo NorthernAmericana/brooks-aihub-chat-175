@@ -43,6 +43,7 @@ import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import { getDefaultVoice } from "@/lib/voice";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -175,12 +176,17 @@ export async function POST(request: Request) {
         ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
         : null;
 
+      // Get default voice for this route
+      const defaultVoice = getDefaultVoice(initialRouteKey ?? "default");
+
       await saveChat({
         id,
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
         routeKey: initialRouteKey,
+        ttsVoiceId: defaultVoice.id,
+        ttsVoiceLabel: defaultVoice.label,
       });
       titlePromise = generateTitleFromUserMessage({
         message,

@@ -86,12 +86,16 @@ export async function saveChat({
   title,
   visibility,
   routeKey,
+  ttsVoiceId,
+  ttsVoiceLabel,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
   routeKey?: string | null;
+  ttsVoiceId?: string | null;
+  ttsVoiceLabel?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -101,6 +105,8 @@ export async function saveChat({
       title,
       visibility,
       routeKey: routeKey ?? null,
+      ttsVoiceId: ttsVoiceId ?? null,
+      ttsVoiceLabel: ttsVoiceLabel ?? null,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
