@@ -1,0 +1,12 @@
+# Placeholder for fresh-milk.mp4
+# 
+# This is a placeholder file. Replace this file with the actual "Fresh Milk" short film in MP4 format.
+# 
+# The actual video file should:
+# - Be named: fresh-milk.mp4
+# - Be in MP4 format with H.264 codec
+# - Have dimensions suitable for web viewing (e.g., 1920x1080 or 1280x720)
+# - Be optimized for web streaming
+#
+# Once the actual video is placed here, users will be able to watch it by typing
+# the secret command: /NAMC/ let me watch a movie

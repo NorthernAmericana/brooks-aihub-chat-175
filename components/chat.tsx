@@ -28,6 +28,7 @@ import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
+import { SecretVideoPlayer } from "./secret-video-player";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
@@ -74,6 +75,7 @@ export function Chat({
 
   const [input, setInput] = useState<string>("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
 
@@ -210,6 +212,29 @@ export function Chat({
     [setInput]
   );
 
+  // Wrapper to detect secret commands
+  const handleSendMessage = useCallback(
+    (message: ChatMessage) => {
+      // Check for secret movie command
+      const textPart = message.parts.find((part) => part.type === "text") as
+        | { type: "text"; text: string }
+        | undefined;
+
+      if (textPart) {
+        const text = textPart.text.trim();
+        // Check for the secret command: /NAMC/ let me watch a movie
+        if (text === "/NAMC/ let me watch a movie") {
+          setShowVideoPlayer(true);
+          return; // Don't send the message to the chat
+        }
+      }
+
+      // Otherwise, send the message normally
+      sendMessage(message);
+    },
+    [sendMessage]
+  );
+
   return (
     <>
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
@@ -245,7 +270,7 @@ export function Chat({
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
+              sendMessage={handleSendMessage}
               setAttachments={setAttachments}
               setInput={setInput}
               setMessages={setMessages}
@@ -305,6 +330,14 @@ export function Chat({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Secret video player */}
+      {showVideoPlayer && (
+        <SecretVideoPlayer
+          videoUrl="/videos/fresh-milk.mp4"
+          onClose={() => setShowVideoPlayer(false)}
+        />
+      )}
     </>
   );
 }
