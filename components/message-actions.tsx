@@ -5,7 +5,7 @@ import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { getOfficialVoice, getRouteKey } from "@/lib/voice";
+import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
@@ -42,8 +42,6 @@ export function PureMessageActions({
     .map((part) => part.text)
     .join("\n")
     .trim();
-  const routeKey = getRouteKey(chatTitle);
-  const officialVoice = getOfficialVoice(routeKey);
 
   const handleCopy = async () => {
     if (!textFromParts) {
@@ -61,15 +59,38 @@ export function PureMessageActions({
       return;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000);
     const loadingToast = toast.loading("Generating speech...");
+    let timeoutId: NodeJS.Timeout | undefined;
 
     try {
+      // Fetch chat settings to get persisted voice and enabled state
+      const chatResponse = await fetch(`/api/chat-settings?chatId=${chatId}`);
+      if (!chatResponse.ok) {
+        toast.error("Failed to load chat settings.");
+        return;
+      }
+
+      const chatData = await chatResponse.json();
+
+      // Check if TTS is disabled for this chat
+      if (chatData.ttsEnabled === false) {
+        toast.error(
+          "Text-to-speech is disabled for this chat. Enable it in voice settings."
+        );
+        return;
+      }
+
+      // Determine voice ID: use persisted setting or route default
+      const routeKey = getRouteKey(chatTitle);
+      const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
+
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 15_000);
+
       const response = await fetch("/api/tts/elevenlabs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textFromParts, voiceId: officialVoice }),
+        body: JSON.stringify({ text: textFromParts, voiceId }),
         signal: controller.signal,
       });
 
@@ -100,7 +121,9 @@ export function PureMessageActions({
         toast.error("Unable to generate speech right now.");
       }
     } finally {
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       toast.dismiss(loadingToast);
     }
   };
