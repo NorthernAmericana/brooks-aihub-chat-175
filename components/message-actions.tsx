@@ -60,6 +60,7 @@ export function PureMessageActions({
     }
 
     const loadingToast = toast.loading("Generating speech...");
+    let timeoutId: NodeJS.Timeout | undefined;
 
     try {
       // Fetch chat settings to get persisted voice and enabled state
@@ -84,39 +85,35 @@ export function PureMessageActions({
       const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+      timeoutId = setTimeout(() => controller.abort(), 15_000);
 
-      try {
-        const response = await fetch("/api/tts/elevenlabs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: textFromParts, voiceId }),
-          signal: controller.signal,
-        });
+      const response = await fetch("/api/tts/elevenlabs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textFromParts, voiceId }),
+        signal: controller.signal,
+      });
 
-        if (!response.ok) {
-          const errorPayload = await response.json().catch(() => null);
-          const message =
-            errorPayload?.error ?? "Unable to generate speech right now.";
-          toast.error(message);
-          return;
-        }
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-
-        audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
-        audio.addEventListener("error", () => {
-          URL.revokeObjectURL(audioUrl);
-          toast.error("Audio playback failed.");
-        });
-
-        await audio.play();
-        toast.success("Playing response.");
-      } finally {
-        clearTimeout(timeoutId);
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const message =
+          errorPayload?.error ?? "Unable to generate speech right now.";
+        toast.error(message);
+        return;
       }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
+      audio.addEventListener("error", () => {
+        URL.revokeObjectURL(audioUrl);
+        toast.error("Audio playback failed.");
+      });
+
+      await audio.play();
+      toast.success("Playing response.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         toast.error("Speech request timed out.");
@@ -124,6 +121,9 @@ export function PureMessageActions({
         toast.error("Unable to generate speech right now.");
       }
     } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       toast.dismiss(loadingToast);
     }
   };
