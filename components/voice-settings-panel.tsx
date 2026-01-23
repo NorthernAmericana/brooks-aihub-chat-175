@@ -3,13 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Chat } from "@/lib/db/schema";
 import {
   getChatRouteKey,
@@ -18,6 +11,7 @@ import {
   isChatNamcRoute,
   type VoiceOption,
 } from "@/lib/voice";
+import { VoiceSelector } from "./voice-selector";
 
 type VoiceSettingsPanelProps = {
   chats: Chat[];
@@ -161,7 +155,9 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
 
             <div className="grid gap-2">
               <Label htmlFor={`voice-select-${chat.id}`}>Voice selection</Label>
-              <Select
+              <VoiceSelector
+                defaultVoiceId={defaultVoice.id}
+                id={`voice-select-${chat.id}`}
                 onValueChange={(value) => {
                   const option =
                     voiceLookup.get(value) ??
@@ -181,22 +177,11 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                   });
                 }}
                 value={currentVoice.id}
-              >
-                <SelectTrigger id={`voice-select-${chat.id}`}>
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voiceOptions.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.label}
-                      {voice.id === defaultVoice.id ? " (Default)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                voices={voiceOptions}
+              />
               <p className="text-xs text-muted-foreground">
                 {isChatNamcRoute(chat)
-                  ? "Bruce NAMC is the default voice for NAMC chats. Use the three-dot menu in chat to switch voices."
+                  ? "Bruce NAMC is the default voice for NAMC chats. You can switch between Bruce and Selena."
                   : "Daniel - Brooks AI HUB is the default voice for this chat."}
               </p>
             </div>

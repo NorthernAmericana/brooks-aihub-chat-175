@@ -1,5 +1,5 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -32,6 +32,12 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  
+  // Track currently playing audio to prevent overlapping playback
+  const currentAudioRef = useRef<{
+    audio: HTMLAudioElement;
+    url: string;
+  } | null>(null);
 
   if (isLoading) {
     return null;
@@ -57,6 +63,15 @@ export function PureMessageActions({
     if (!textFromParts) {
       toast.error("There's no response text to read yet.");
       return;
+    }
+
+    // Stop any currently playing audio from this message
+    if (currentAudioRef.current) {
+      const { audio, url } = currentAudioRef.current;
+      audio.pause();
+      audio.currentTime = 0;
+      URL.revokeObjectURL(url);
+      currentAudioRef.current = null;
     }
 
     const loadingToast = toast.loading("Generating speech...");
@@ -106,6 +121,9 @@ export function PureMessageActions({
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
+      // Store reference to current audio
+      currentAudioRef.current = { audio, url: audioUrl };
+
       // Wait for audio to be fully buffered before playing to prevent stuttering
       await new Promise<void>((resolve, reject) => {
         audio.addEventListener("canplaythrough", () => resolve(), {
@@ -117,9 +135,17 @@ export function PureMessageActions({
         audio.load();
       });
 
-      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
+      audio.addEventListener("ended", () => {
+        URL.revokeObjectURL(audioUrl);
+        if (currentAudioRef.current?.url === audioUrl) {
+          currentAudioRef.current = null;
+        }
+      });
       audio.addEventListener("error", () => {
         URL.revokeObjectURL(audioUrl);
+        if (currentAudioRef.current?.url === audioUrl) {
+          currentAudioRef.current = null;
+        }
         toast.error("Audio playback failed.");
       });
 
@@ -130,6 +156,13 @@ export function PureMessageActions({
         toast.error("Speech request timed out.");
       } else {
         toast.error("Unable to generate speech right now.");
+      }
+      // Clean up on error
+      if (currentAudioRef.current) {
+        const { audio, url } = currentAudioRef.current;
+        audio.pause();
+        URL.revokeObjectURL(url);
+        currentAudioRef.current = null;
       }
     } finally {
       if (timeoutId) {
