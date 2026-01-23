@@ -5,6 +5,12 @@
 - Project scaffolding lives in `namc/projects/<slug>/`.
 - Use lowercase slugs with hyphens (e.g., `my-daughter-death`).
 
+## Secret Commands
+
+NAMC content is integrated into Brooks AI HUB through special "secret commands" - hidden, discoverable features that provide unique experiences. See [docs/secret-commands.md](../docs/secret-commands.md) for more information.
+
+Example: `/NAMC/ let me watch a movie` opens a video player for NAMC content.
+
 ## Project structure (recommended)
 Each project should include:
 - `index.md` (spoiler-safe hub)

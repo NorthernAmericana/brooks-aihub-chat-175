@@ -19,7 +19,7 @@ test.describe("Secret Commands", () => {
     await expect(video).toBeVisible();
 
     // Check that close button exists
-    const closeButton = page.locator('button:has-text(""), button:has(svg)').first();
+    const closeButton = page.getByTestId("close-video-button");
     await expect(closeButton).toBeVisible();
   });
 
@@ -36,10 +36,8 @@ test.describe("Secret Commands", () => {
     // Wait for video player to appear
     await page.waitForTimeout(500);
 
-    // Find and click the close button (button with X icon in top-right corner)
-    const closeButton = page.locator("button").filter({ 
-      has: page.locator("svg") 
-    }).first();
+    // Find and click the close button using test ID
+    const closeButton = page.getByTestId("close-video-button");
     await closeButton.click();
 
     // Wait a moment for the player to disappear

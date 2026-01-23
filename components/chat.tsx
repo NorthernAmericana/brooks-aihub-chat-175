@@ -216,9 +216,9 @@ export function Chat({
   const handleSendMessage = useCallback(
     (message: ChatMessage) => {
       // Check for secret movie command
-      const textPart = message.parts.find((part) => part.type === "text") as
-        | { type: "text"; text: string }
-        | undefined;
+      const textPart = message.parts.find(
+        (part): part is { type: "text"; text: string } => part.type === "text"
+      );
 
       if (textPart) {
         const text = textPart.text.trim();

@@ -17,7 +17,11 @@ export function SecretVideoPlayer({
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.play().catch((error) => {
-        console.error("Error playing video:", error);
+        // Video autoplay may fail due to browser policies
+        // User can manually start playback via controls
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Video autoplay failed:", error);
+        }
       });
     }
   }, []);
@@ -38,7 +42,9 @@ export function SecretVideoPlayer({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
       {/* Close button */}
       <Button
+        aria-label="Close video player"
         className="absolute right-4 top-4 z-10 size-10 rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+        data-testid="close-video-button"
         onClick={onClose}
         variant="ghost"
       >
