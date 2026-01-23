@@ -90,44 +90,49 @@ export async function playTextToSpeech(
       }
     };
 
-    audio.addEventListener("ended", safeCleanup);
-    audio.addEventListener("error", safeCleanup);
-    
     // Ensure we keep a reference to prevent garbage collection during playback
-    let keepAliveTimer: NodeJS.Timeout | null = null;
+    // This simple interval maintains the reference without doing any work
+    let keepAliveTimer: number | null = null;
     const clearKeepAlive = () => {
-      if (keepAliveTimer) {
+      if (keepAliveTimer !== null) {
         clearInterval(keepAliveTimer);
         keepAliveTimer = null;
       }
     };
 
+    // Simple keep-alive - just maintains reference
     keepAliveTimer = setInterval(() => {
-      // Clear if audio has ended or errored
-      if (audio.ended || audio.error) {
-        clearKeepAlive();
-      }
-    }, 100);
+      // No-op, just keeps reference alive
+    }, 1000);
+
+    // Set up event handlers that will also clear keep-alive
+    const onEndedHandler = () => {
+      clearKeepAlive();
+      safeCleanup();
+    };
+    
+    const onErrorHandler = () => {
+      clearKeepAlive();
+      safeCleanup();
+    };
+
+    audio.addEventListener("ended", onEndedHandler, { once: true });
+    audio.addEventListener("error", onErrorHandler, { once: true });
 
     try {
       await audio.play();
       
       // Wait for playback to complete or error
       await new Promise<void>((resolve, reject) => {
-        const onEnded = () => {
-          audio.removeEventListener("error", onPlaybackError);
+        audio.addEventListener("ended", () => {
           clearKeepAlive();
           resolve();
-        };
+        }, { once: true });
         
-        const onPlaybackError = () => {
-          audio.removeEventListener("ended", onEnded);
+        audio.addEventListener("error", () => {
           clearKeepAlive();
           reject(new Error("Audio playback error during play."));
-        };
-
-        audio.addEventListener("ended", onEnded, { once: true });
-        audio.addEventListener("error", onPlaybackError, { once: true });
+        }, { once: true });
       });
     } catch (playError) {
       clearKeepAlive();
