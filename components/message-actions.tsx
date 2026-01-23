@@ -153,6 +153,12 @@ export function PureMessageActions({
         toast.error("Audio playback failed.");
       });
 
+      // Dismiss loading toast before starting playback
+      toast.dismiss(loadingToast);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
       await audio.play();
       toast.success("Playing response.");
     } catch (error) {
@@ -168,7 +174,7 @@ export function PureMessageActions({
         URL.revokeObjectURL(url);
         currentAudioRef.current = null;
       }
-    } finally {
+      // Clean up toast and timeout on error
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
