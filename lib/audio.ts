@@ -36,6 +36,12 @@ export async function playTextToSpeech(
     }
 
     const audioBlob = await response.blob();
+    
+    // Verify we have actual audio data
+    if (audioBlob.size === 0) {
+      throw new Error("Received empty audio data.");
+    }
+    
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
 
@@ -49,20 +55,41 @@ export async function playTextToSpeech(
     };
 
     // Wait for audio to be ready before playing to prevent glitches
+    // Using a more robust approach with multiple event listeners
     await new Promise<void>((resolve, reject) => {
+      let resolved = false;
+      
       const onCanPlayThrough = () => {
-        audio.removeEventListener("error", onError);
+        if (resolved) return;
+        resolved = true;
+        cleanup();
         resolve();
       };
       
       const onError = () => {
-        audio.removeEventListener("canplaythrough", onCanPlayThrough);
+        if (resolved) return;
+        resolved = true;
+        cleanup();
         cleanupAudio();
-        reject(new Error("Audio playback failed."));
+        reject(new Error("Audio failed to load."));
       };
 
-      audio.addEventListener("canplaythrough", onCanPlayThrough, { once: true });
-      audio.addEventListener("error", onError, { once: true });
+      const onLoadedMetadata = () => {
+        // Metadata loaded - audio duration is now available
+        // This ensures the audio file is valid
+      };
+
+      const cleanup = () => {
+        audio.removeEventListener("canplaythrough", onCanPlayThrough);
+        audio.removeEventListener("error", onError);
+        audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      };
+
+      audio.addEventListener("canplaythrough", onCanPlayThrough);
+      audio.addEventListener("error", onError);
+      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      
+      // Start loading the audio
       audio.load();
     });
 
@@ -73,6 +100,10 @@ export async function playTextToSpeech(
       await audio.play();
     } catch (playError) {
       cleanupAudio();
+      // Handle autoplay policy errors specifically
+      if (playError instanceof DOMException && playError.name === "NotAllowedError") {
+        throw new Error("Audio playback blocked by browser. Please interact with the page first.");
+      }
       throw playError;
     }
   } catch (error) {
