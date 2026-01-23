@@ -105,20 +105,6 @@ export async function playTextToSpeech(
       // No-op, just keeps reference alive
     }, 1000);
 
-    // Set up event handlers that will also clear keep-alive
-    const onEndedHandler = () => {
-      clearKeepAlive();
-      safeCleanup();
-    };
-    
-    const onErrorHandler = () => {
-      clearKeepAlive();
-      safeCleanup();
-    };
-
-    audio.addEventListener("ended", onEndedHandler, { once: true });
-    audio.addEventListener("error", onErrorHandler, { once: true });
-
     try {
       await audio.play();
       
@@ -126,11 +112,13 @@ export async function playTextToSpeech(
       await new Promise<void>((resolve, reject) => {
         audio.addEventListener("ended", () => {
           clearKeepAlive();
+          safeCleanup();
           resolve();
         }, { once: true });
         
         audio.addEventListener("error", () => {
           clearKeepAlive();
+          safeCleanup();
           reject(new Error("Audio playback error during play."));
         }, { once: true });
       });
