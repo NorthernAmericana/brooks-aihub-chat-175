@@ -213,10 +213,10 @@ export function Chat({
   );
 
   // Wrapper to detect secret commands
-  const handleSendMessage = useCallback(
-    (message: ChatMessage) => {
+  const handleSendMessage: typeof sendMessage = useCallback(
+    (message) => {
       // Check for secret movie command
-      const textPart = message.parts.find(
+      const textPart = message?.parts?.find(
         (part): part is { type: "text"; text: string } => part.type === "text"
       );
 
@@ -230,7 +230,7 @@ export function Chat({
       }
 
       // Otherwise, send the message normally
-      sendMessage(message);
+      return sendMessage(message);
     },
     [sendMessage]
   );
