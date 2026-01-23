@@ -59,6 +59,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
           initialChatModel={DEFAULT_CHAT_MODEL}
           initialChatTitle={chat.title}
           initialMessages={uiMessages}
+          initialRouteKey={chat.routeKey}
           initialVisibilityType={chat.visibility}
           isReadonly={session?.user?.id !== chat.userId}
         />
@@ -75,6 +76,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
         initialChatModel={chatModelFromCookie.value}
         initialChatTitle={chat.title}
         initialMessages={uiMessages}
+        initialRouteKey={chat.routeKey}
         initialVisibilityType={chat.visibility}
         isReadonly={session?.user?.id !== chat.userId}
       />

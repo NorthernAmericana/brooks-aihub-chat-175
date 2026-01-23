@@ -28,6 +28,10 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import {
+  getAgentConfigById,
+  getAgentConfigBySlash,
+} from "@/lib/ai/agents/registry";
+import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
@@ -44,6 +48,8 @@ import {
 } from "./elements/prompt-input";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
+import { RouteChangeModal } from "./route-change-modal";
+import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
@@ -56,6 +62,7 @@ function setCookie(name: string, value: string) {
 
 function PureMultimodalInput({
   chatId,
+  chatRouteKey,
   input,
   setInput,
   status,
@@ -71,6 +78,7 @@ function PureMultimodalInput({
   onModelChange,
 }: {
   chatId: string;
+  chatRouteKey?: string | null;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -144,11 +152,73 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const [routeChangeModal, setRouteChangeModal] = useState<{
+    open: boolean;
+    currentRoute: string;
+    newRoute: string;
+    draftMessage: string;
+  }>({
+    open: false,
+    currentRoute: "",
+    newRoute: "",
+    draftMessage: "",
+  });
+
+  // Detect when user types "/" at the start to show suggestions
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (trimmed === "/" || trimmed.startsWith("/")) {
+      const match = trimmed.match(/^\/([^\s/]*)$/);
+      if (match) {
+        setShowSlashSuggestions(true);
+      } else {
+        setShowSlashSuggestions(false);
+      }
+    } else {
+      setShowSlashSuggestions(false);
+    }
+  }, [input]);
+
+  const handleSlashSelect = useCallback(
+    (slash: string) => {
+      setInput(`/${slash}/ `);
+      setShowSlashSuggestions(false);
+      // Focus the textarea
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    },
+    [setInput]
+  );
 
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
 
     const parsedAction = parseSlashAction(input);
+
+    // Check for route change if chat has existing messages and routeKey
+    if (parsedAction && messages.length > 0 && chatRouteKey) {
+      const currentAgent = getAgentConfigById(chatRouteKey);
+      const newAgent = getAgentConfigBySlash(parsedAction.slash);
+
+      if (
+        currentAgent &&
+        newAgent &&
+        currentAgent.id !== newAgent.id &&
+        newAgent.id !== "default"
+      ) {
+        // User is trying to change routes - show modal
+        setRouteChangeModal({
+          open: true,
+          currentRoute: currentAgent.slash,
+          newRoute: newAgent.slash,
+          draftMessage: input,
+        });
+        return; // Don't send the message
+      }
+    }
+
     if (parsedAction) {
       rememberSlashAction(parsedAction);
     }
@@ -187,6 +257,8 @@ function PureMultimodalInput({
     width,
     chatId,
     resetHeight,
+    messages.length,
+    chatRouteKey,
   ]);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -411,6 +483,25 @@ function PureMultimodalInput({
           )}
         </PromptInputToolbar>
       </PromptInput>
+
+      {/* Slash suggestions dropdown */}
+      {showSlashSuggestions && (
+        <SlashSuggestions
+          onClose={() => setShowSlashSuggestions(false)}
+          onSelect={handleSlashSelect}
+        />
+      )}
+
+      {/* Route change modal */}
+      <RouteChangeModal
+        currentRoute={routeChangeModal.currentRoute}
+        draftMessage={routeChangeModal.draftMessage}
+        newRoute={routeChangeModal.newRoute}
+        onOpenChange={(open) =>
+          setRouteChangeModal((prev) => ({ ...prev, open }))
+        }
+        open={routeChangeModal.open}
+      />
     </div>
   );
 }
@@ -431,6 +522,9 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    if (prevProps.chatRouteKey !== nextProps.chatRouteKey) {
       return false;
     }
 
