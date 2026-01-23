@@ -1,8 +1,9 @@
 # My Daughter, Death — Project Hub
 
 ## Metadata
-- **Status:** Coming soon
-- **Release date:** TBA
+- **Status:** In Development - Early Beta & Co-Release Planned
+- **Release date:** Early 2027 (Novel + Video Game Co-Release)
+- **Beta Release:** Early 2027 (Video Game Early Access)
 - **Formats:** Novel (_My Daughter, Death: Frostbitten_) + Video game (_My Daughter, Death_)
 
 ## Spoiler-Safe Summary
@@ -21,6 +22,8 @@ A hardened bounty hunter protects a child-linked embodiment of Death in the froz
 - Locations: [`namc/projects/my-daughter-death/locations.md`](locations.md)
 - Motifs: [`namc/projects/my-daughter-death/motifs.md`](motifs.md)
 - Continuity: [`namc/projects/my-daughter-death/continuity.md`](continuity.md)
+- **Brooks AI HUB Features:** [`namc/projects/my-daughter-death/brooks-ai-hub-features.md`](brooks-ai-hub-features.md)
+- **Game Details:** [`namc/projects/my-daughter-death/game-details.md`](game-details.md)
 
 ## Glossary snippets
 - **New Bethlehem:** Frozen pocket-reality with an unnatural relationship to death.
@@ -32,7 +35,11 @@ A hardened bounty hunter protects a child-linked embodiment of Death in the froz
 ## What we know so far
 - The novel and game share a common canon spine.
 - The tone is bleak but not hopeless, with tender flashes.
+- **Early 2027 co-release** of both the novel (_My Daughter, Death: Frostbitten_) and the video game (_My Daughter, Death_).
+- **Early Beta** for the game launching in early 2027 with cloud save tracking.
+- Special **Brooks AI HUB integration** features for purchasers (see Brooks AI HUB Features link above).
+- Game features **up to 60 NPCAI characters** with deep LLM-driven personalities.
 
 ## TBD
-- Release scheduling details beyond TBA.
+- Exact release date within early 2027 window.
 - Additional supporting characters and locations.
