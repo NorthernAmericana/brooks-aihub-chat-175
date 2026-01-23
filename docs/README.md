@@ -10,6 +10,7 @@ Brooks AI HUB is a Next.js-based conversational AI application that combines a m
 - [Core docs](#core-docs)
   - [Master scope](./master-scope.md)
   - [Memory OS](./memory-os.md)
+  - [Secret Commands](./secret-commands.md)
 - [Ops docs](#ops-docs)
   - [Vercel deployment](./ops/vercel.md)
 - [Project README](#project-readme)
@@ -32,6 +33,7 @@ New contributors can use this path to build context in order:
 
 - [Master scope](./master-scope.md)
 - [Memory OS](./memory-os.md)
+- [Secret Commands](./secret-commands.md) - Hidden discoverable features for enhanced user experience
 
 ## Ops docs
 
