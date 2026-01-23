@@ -74,20 +74,13 @@ export async function playTextToSpeech(
         reject(new Error("Audio failed to load."));
       };
 
-      const onLoadedMetadata = () => {
-        // Metadata loaded - audio duration is now available
-        // This ensures the audio file is valid
-      };
-
       const cleanup = () => {
         audio.removeEventListener("canplaythrough", onCanPlayThrough);
         audio.removeEventListener("error", onError);
-        audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       };
 
-      audio.addEventListener("canplaythrough", onCanPlayThrough);
-      audio.addEventListener("error", onError);
-      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      audio.addEventListener("canplaythrough", onCanPlayThrough, { once: true });
+      audio.addEventListener("error", onError, { once: true });
       
       // Start loading the audio
       audio.load();
