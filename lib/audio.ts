@@ -96,7 +96,7 @@ export async function playTextToSpeech(
 
     // Ensure we keep a reference to prevent garbage collection during playback
     // This simple interval maintains the reference without doing any work
-    let keepAliveTimer: number | null = null;
+    let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
     const clearKeepAlive = () => {
       if (keepAliveTimer !== null) {
         clearInterval(keepAliveTimer);
