@@ -144,7 +144,7 @@ const PureChatItem = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={voiceSettingsOpen} onOpenChange={setVoiceSettingsOpen}>
+      <Dialog onOpenChange={setVoiceSettingsOpen} open={voiceSettingsOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Voice Settings</DialogTitle>
@@ -172,7 +172,8 @@ const PureChatItem = ({
               <div>
                 <p className="font-medium">Speaker (read aloud)</p>
                 <p className="text-xs text-muted-foreground">
-                  Will read chats using the route voice and adaptive personality.
+                  Will read chats using the route voice and adaptive
+                  personality.
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -190,10 +191,7 @@ const PureChatItem = ({
               <Label htmlFor={`voice-select-${chat.id}`}>
                 Custom AI voices
               </Label>
-              <Select
-                onValueChange={setSelectedVoice}
-                value={selectedVoice}
-              >
+              <Select onValueChange={setSelectedVoice} value={selectedVoice}>
                 <SelectTrigger id={`voice-select-${chat.id}`}>
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>

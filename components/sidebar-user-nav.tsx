@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { guestRegex } from "@/lib/constants";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";

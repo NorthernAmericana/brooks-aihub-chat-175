@@ -1,6 +1,6 @@
 {
-  "id": "cbd228a9-2714-4351-882d-915f61ed4930",
-  "prevId": "31934f42-f6af-42a3-9320-b2e86fb67e81",
+  "id": "2afba78b-91f3-4304-8ef3-fa3295c5c644",
+  "prevId": "15b585b8-1fda-4c2d-bfb9-b62bcbb71332",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -39,6 +39,31 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'private'"
+        },
+        "routeKey": {
+          "name": "routeKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ttsEnabled": {
+          "name": "ttsEnabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "ttsVoiceId": {
+          "name": "ttsVoiceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ttsVoiceLabel": {
+          "name": "ttsVoiceLabel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -117,6 +142,135 @@
           "columns": ["id", "createdAt"]
         }
       },
+      "uniqueConstraints": {}
+    },
+    "public.Memory": {
+      "name": "Memory",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceUri": {
+          "name": "sourceUri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "productId": {
+          "name": "productId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'brooks-aihub'"
+        },
+        "route": {
+          "name": "route",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentLabel": {
+          "name": "agentLabel",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isApproved": {
+          "name": "isApproved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "approvedAt": {
+          "name": "approvedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::json"
+        },
+        "rawText": {
+          "name": "rawText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalizedText": {
+          "name": "normalizedText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embeddingsRef": {
+          "name": "embeddingsRef",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Memory_ownerId_User_id_fk": {
+          "name": "Memory_ownerId_User_id_fk",
+          "tableFrom": "Memory",
+          "tableTo": "User",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.Message_v2": {
@@ -492,135 +646,6 @@
           "columns": ["chatId", "messageId"]
         }
       },
-      "uniqueConstraints": {}
-    },
-    "public.Memory": {
-      "name": "Memory",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "sourceType": {
-          "name": "sourceType",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sourceUri": {
-          "name": "sourceUri",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "orgId": {
-          "name": "orgId",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'default'"
-        },
-        "productId": {
-          "name": "productId",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'brooks-aihub'"
-        },
-        "route": {
-          "name": "route",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "agentId": {
-          "name": "agentId",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "agentLabel": {
-          "name": "agentLabel",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isApproved": {
-          "name": "isApproved",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "false"
-        },
-        "approvedAt": {
-          "name": "approvedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tags": {
-          "name": "tags",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::json"
-        },
-        "rawText": {
-          "name": "rawText",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalizedText": {
-          "name": "normalizedText",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embeddingsRef": {
-          "name": "embeddingsRef",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Memory_ownerId_User_id_fk": {
-          "name": "Memory_ownerId_User_id_fk",
-          "tableFrom": "Memory",
-          "tableTo": "User",
-          "columnsFrom": ["ownerId"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }
   },

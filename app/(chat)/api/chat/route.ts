@@ -10,12 +10,13 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
+  type AgentToolId,
+  getAgentConfigById,
   getAgentConfigBySlash,
   getDefaultAgentConfig,
-  type AgentToolId,
 } from "@/lib/ai/agents/registry";
-import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
@@ -29,8 +30,8 @@ import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
-  getChatById,
   getApprovedMemoriesByUserId,
+  getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
@@ -86,9 +87,9 @@ function getSlashTriggerFromMessages(
     return undefined;
   }
 
-  const textPart = lastUserMessage.parts.find(
-    (part) => part.type === "text"
-  ) as { type: "text"; text: string } | undefined;
+  const textPart = lastUserMessage.parts.find((part) => part.type === "text") as
+    | { type: "text"; text: string }
+    | undefined;
 
   if (!textPart) {
     return undefined;
@@ -158,6 +159,7 @@ export async function POST(request: Request) {
     const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
     let titlePromise: Promise<string> | null = null;
+    let initialRouteKey: string | null = null;
 
     if (chat) {
       if (chat.userId !== session.user.id) {
@@ -167,13 +169,23 @@ export async function POST(request: Request) {
         messagesFromDb = await getMessagesByChatId({ id });
       }
     } else if (message?.role === "user") {
+      // Determine initial route key from the first message
+      const firstMessageSlash = getSlashTriggerFromMessages([message]);
+      initialRouteKey = firstMessageSlash
+        ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
+        : null;
+
       await saveChat({
         id,
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
+        routeKey: initialRouteKey,
       });
-      titlePromise = generateTitleFromUserMessage({ message });
+      titlePromise = generateTitleFromUserMessage({
+        message,
+        routeKey: initialRouteKey,
+      });
     }
 
     const uiMessages = isToolApprovalFlow
@@ -209,10 +221,24 @@ export async function POST(request: Request) {
       selectedChatModel.includes("thinking");
 
     const modelMessages = await convertToModelMessages(uiMessages);
-    const slashTrigger = getSlashTriggerFromMessages(uiMessages);
-    const selectedAgent =
-      (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-      getDefaultAgentConfig();
+
+    // Determine agent selection
+    let selectedAgent: ReturnType<
+      typeof getAgentConfigBySlash | typeof getDefaultAgentConfig
+    >;
+
+    if (chat?.routeKey) {
+      // Use persisted routeKey for existing chats
+      selectedAgent =
+        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+    } else {
+      // For new chats or chats without routeKey, use slash trigger from message
+      const slashTrigger = getSlashTriggerFromMessages(uiMessages);
+      selectedAgent =
+        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
+        getDefaultAgentConfig();
+    }
+
     const isNamcAgent = selectedAgent.id === "namc";
     const approvedMemories = await getApprovedMemoriesByUserId({
       userId: session.user.id,
@@ -288,9 +314,7 @@ export async function POST(request: Request) {
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel
-            ? []
-            : selectedAgent.tools,
+          experimental_activeTools: isReasoningModel ? [] : selectedAgent.tools,
           providerOptions: isReasoningModel
             ? {
                 anthropic: {

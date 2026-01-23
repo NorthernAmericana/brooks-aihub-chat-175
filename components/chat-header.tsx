@@ -69,7 +69,6 @@ function PureChatHeader({
         size="sm"
         variant="outline"
       />
-
     </header>
   );
 }

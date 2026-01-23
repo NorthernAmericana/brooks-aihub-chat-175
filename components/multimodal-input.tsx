@@ -32,9 +32,9 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
+import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import {
   PromptInput,
   PromptInputSubmit,

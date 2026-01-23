@@ -76,9 +76,7 @@ export const systemPrompt = ({
   memoryContext?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  const slashRoutePrompt = slashRoute?.prompt
-    ? `\n\n${slashRoute.prompt}`
-    : "";
+  const slashRoutePrompt = slashRoute?.prompt ? `\n\n${slashRoute.prompt}` : "";
   const memoryPrompt = memoryContext ? `\n\n${memoryContext}` : "";
   const prompt = basePrompt ?? regularPrompt;
 

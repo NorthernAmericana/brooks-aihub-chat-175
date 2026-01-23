@@ -29,6 +29,7 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
+  routeKey: text("routeKey"),
   ttsEnabled: boolean("ttsEnabled").default(true),
   ttsVoiceId: text("ttsVoiceId"),
   ttsVoiceLabel: text("ttsVoiceLabel"),

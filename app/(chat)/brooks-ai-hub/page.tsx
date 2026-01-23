@@ -25,8 +25,8 @@ async function NewChatPage() {
           autoResume={false}
           id={id}
           initialChatModel={DEFAULT_CHAT_MODEL}
-          initialMessages={[]}
           initialChatTitle="New Chat"
+          initialMessages={[]}
           initialVisibilityType="private"
           isReadonly={false}
           key={id}
@@ -42,8 +42,8 @@ async function NewChatPage() {
         autoResume={false}
         id={id}
         initialChatModel={modelIdFromCookie.value}
-        initialMessages={[]}
         initialChatTitle="New Chat"
+        initialMessages={[]}
         initialVisibilityType="private"
         isReadonly={false}
         key={id}

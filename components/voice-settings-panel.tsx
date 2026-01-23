@@ -2,14 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { Chat } from "@/lib/db/schema";
-import {
-  getDefaultVoice,
-  getRouteKey,
-  getVoiceOptions,
-  isNamcRoute,
-  type VoiceOption,
-} from "@/lib/voice";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -18,6 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { Chat } from "@/lib/db/schema";
+import {
+  getDefaultVoice,
+  getRouteKey,
+  getVoiceOptions,
+  isNamcRoute,
+  type VoiceOption,
+} from "@/lib/voice";
 
 type VoiceSettingsPanelProps = {
   chats: Chat[];
@@ -108,7 +108,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   if (namcChats.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        No NAMC chats yet. Voice settings are only available for /NAMC/ chats. Start a NAMC chat to configure voice options.
+        No NAMC chats yet. Voice settings are only available for /NAMC/ chats.
+        Start a NAMC chat to configure voice options.
       </div>
     );
   }
@@ -162,9 +163,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor={`voice-select-${chat.id}`}>
-                Voice selection
-              </Label>
+              <Label htmlFor={`voice-select-${chat.id}`}>Voice selection</Label>
               <Select
                 onValueChange={(value) => {
                   const option =
@@ -199,7 +198,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Bruce NAMC is the default voice for NAMC chats. Use the three-dot menu in chat to switch voices.
+                Bruce NAMC is the default voice for NAMC chats. Use the
+                three-dot menu in chat to switch voices.
               </p>
             </div>
           </div>

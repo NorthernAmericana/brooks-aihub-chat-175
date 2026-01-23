@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/toast";
+import { Button } from "@/components/ui/button";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 type PwaInstallButtonProps = {

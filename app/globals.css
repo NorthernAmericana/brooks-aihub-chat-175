@@ -203,7 +203,10 @@
       linear-gradient(135deg, #2b1a12 0%, #3a2317 45%, #5a3a24 100%),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
     background-blend-mode: screen, normal, soft-light;
-    background-size: cover, cover, 200px 200px;
+    background-size:
+      cover,
+      cover,
+      200px 200px;
   }
 
   .soft-vignette {
@@ -301,9 +304,23 @@
 
   .intro-sky {
     background:
-      radial-gradient(circle at 10% 20%, rgba(255, 158, 108, 0.45), transparent 45%),
-      radial-gradient(circle at 85% 25%, rgba(120, 198, 255, 0.45), transparent 40%),
-      linear-gradient(140deg, #28130d 0%, #402116 40%, #1a141f 70%, #120c16 100%);
+      radial-gradient(
+        circle at 10% 20%,
+        rgba(255, 158, 108, 0.45),
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 85% 25%,
+        rgba(120, 198, 255, 0.45),
+        transparent 40%
+      ),
+      linear-gradient(
+        140deg,
+        #28130d 0%,
+        #402116 40%,
+        #1a141f 70%,
+        #120c16 100%
+      );
   }
 
   .intro-stars {

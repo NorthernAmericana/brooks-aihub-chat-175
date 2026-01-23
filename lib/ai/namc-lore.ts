@@ -81,8 +81,7 @@ const extractQueryTerms = (message: string): string[] => {
   return [...new Set(matches)];
 };
 
-const estimateTokenCount = (text: string): number =>
-  Math.ceil(text.length / 4);
+const estimateTokenCount = (text: string): number => Math.ceil(text.length / 4);
 
 const truncateToTokenBudget = (text: string, tokenBudget: number): string => {
   const maxChars = Math.max(0, tokenBudget * 4);

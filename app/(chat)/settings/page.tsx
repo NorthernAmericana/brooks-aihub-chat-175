@@ -30,7 +30,9 @@ export default async function SettingsPage() {
         <div>
           <h2 className="font-semibold text-lg">NAMC Voice Options</h2>
           <p className="text-sm text-muted-foreground">
-            Bruce NAMC is the default voice for NAMC chats. You can switch to Selena NAMC using the settings below or the three-dot menu in any NAMC chat.
+            Bruce NAMC is the default voice for NAMC chats. You can switch to
+            Selena NAMC using the settings below or the three-dot menu in any
+            NAMC chat.
           </p>
         </div>
 

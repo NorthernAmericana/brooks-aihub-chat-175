@@ -19,7 +19,10 @@ export async function PATCH(request: Request) {
   try {
     payload = await request.json();
   } catch (_error) {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 }
+    );
   }
 
   const { chatId, ttsEnabled, ttsVoiceId, ttsVoiceLabel } = payload;
