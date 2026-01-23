@@ -48,11 +48,6 @@ export async function playTextToSpeech(
     // Critical: Set the source AFTER setting up event listeners
     // This ensures we don't miss any events
     
-    // Handle audio cleanup
-    const cleanupAudio = () => {
-      URL.revokeObjectURL(audioUrl);
-    };
-
     // Wait for audio to be fully loaded and ready to play
     // Using loadeddata instead of canplaythrough for more reliability
     await new Promise<void>((resolve, reject) => {
@@ -68,7 +63,7 @@ export async function playTextToSpeech(
       };
       
       const onError = () => {
-        cleanupAudio();
+        URL.revokeObjectURL(audioUrl);
         // Get detailed error information from audio.error if available
         const errorMsg = audio.error 
           ? `${audio.error.message} (code: ${audio.error.code})`
@@ -84,15 +79,6 @@ export async function playTextToSpeech(
       audio.preload = "auto";
       audio.load();
     });
-
-    // Set up cleanup handlers for playback phase
-    let hasCleanedUp = false;
-    const safeCleanup = () => {
-      if (!hasCleanedUp) {
-        hasCleanedUp = true;
-        cleanupAudio();
-      }
-    };
 
     // Ensure we keep a reference to prevent garbage collection during playback
     // This simple interval maintains the reference without doing any work
@@ -117,13 +103,13 @@ export async function playTextToSpeech(
       await new Promise<void>((resolve, reject) => {
         audio.addEventListener("ended", () => {
           clearKeepAlive();
-          safeCleanup();
+          URL.revokeObjectURL(audioUrl);
           resolve();
         }, { once: true });
         
         audio.addEventListener("error", () => {
           clearKeepAlive();
-          safeCleanup();
+          URL.revokeObjectURL(audioUrl);
           // Provide more detailed error information if available
           const errorDetail = audio.error 
             ? `${audio.error.message} (code: ${audio.error.code})`
@@ -133,7 +119,7 @@ export async function playTextToSpeech(
       });
     } catch (playError) {
       clearKeepAlive();
-      safeCleanup();
+      URL.revokeObjectURL(audioUrl);
       // Handle autoplay policy errors specifically
       if (playError instanceof DOMException && playError.name === "NotAllowedError") {
         throw new Error("Audio playback blocked by browser. Please interact with the page first.");
