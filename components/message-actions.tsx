@@ -6,6 +6,7 @@ import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
+import { playTextToSpeech } from "@/lib/audio";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
@@ -60,7 +61,6 @@ export function PureMessageActions({
     }
 
     const loadingToast = toast.loading("Generating speech...");
-    let timeoutId: NodeJS.Timeout | undefined;
 
     try {
       // Fetch chat settings to get persisted voice and enabled state
@@ -84,64 +84,13 @@ export function PureMessageActions({
       const routeKey = getRouteKey(chatTitle);
       const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
 
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 15_000);
-
-      const response = await fetch("/api/tts/elevenlabs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textFromParts, voiceId }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => null);
-        const message =
-          errorPayload?.error ?? "Unable to generate speech right now.";
-        toast.error(message);
-        return;
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      // Ensure audio is preloaded to prevent glitching
-      audio.preload = "auto";
-      audio.autoplay = false;
-
-      // Handle audio cleanup
-      const cleanupAudio = () => {
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.addEventListener("ended", cleanupAudio);
-      audio.addEventListener("error", () => {
-        cleanupAudio();
-        toast.error("Audio playback failed.");
-      });
-
-      // Wait for audio to be ready before playing to prevent glitches
-      await new Promise<void>((resolve, reject) => {
-        audio.addEventListener("canplaythrough", () => resolve(), {
-          once: true,
-        });
-        audio.addEventListener("error", reject, { once: true });
-        audio.load();
-      });
-
-      await audio.play();
+      await playTextToSpeech(textFromParts, voiceId);
       toast.success("Playing response.");
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        toast.error("Speech request timed out.");
-      } else {
-        toast.error("Unable to generate speech right now.");
-      }
+      const message =
+        error instanceof Error ? error.message : "Unable to generate speech right now.";
+      toast.error(message);
     } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
       toast.dismiss(loadingToast);
     }
   };

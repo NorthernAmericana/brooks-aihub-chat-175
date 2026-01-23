@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SpeakerIcon } from "@/components/icons";
+import { playTextToSpeech } from "@/lib/audio";
 
 type MemoryCardProps = {
   id: string;
@@ -38,63 +39,12 @@ export function MemoryCard({
     const loadingToast = toast.loading("Generating speech...");
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15_000);
-
-      const response = await fetch("/api/tts/elevenlabs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: rawText, voiceId }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => null);
-        const message =
-          errorPayload?.error ?? "Unable to generate speech right now.";
-        toast.error(message);
-        return;
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      // Ensure audio is preloaded to prevent glitching
-      audio.preload = "auto";
-      audio.autoplay = false;
-
-      // Handle audio cleanup
-      const cleanupAudio = () => {
-        URL.revokeObjectURL(audioUrl);
-        setIsSpeaking(false);
-      };
-
-      audio.addEventListener("ended", cleanupAudio);
-      audio.addEventListener("error", () => {
-        cleanupAudio();
-        toast.error("Audio playback failed.");
-      });
-
-      // Wait for audio to be ready before playing to prevent glitches
-      await new Promise<void>((resolve, reject) => {
-        audio.addEventListener("canplaythrough", () => resolve(), {
-          once: true,
-        });
-        audio.addEventListener("error", reject, { once: true });
-        audio.load();
-      });
-
-      await audio.play();
+      await playTextToSpeech(rawText, voiceId);
       toast.success("Playing memory.");
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        toast.error("Speech request timed out.");
-      } else {
-        toast.error("Unable to generate speech right now.");
-      }
+      const message =
+        error instanceof Error ? error.message : "Unable to generate speech right now.";
+      toast.error(message);
     } finally {
       setIsSpeaking(false);
       toast.dismiss(loadingToast);

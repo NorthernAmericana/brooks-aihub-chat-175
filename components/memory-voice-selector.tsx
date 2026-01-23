@@ -9,12 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDefaultVoice, getVoiceOptions } from "@/lib/voice";
-
-type VoiceOption = {
-  id: string;
-  label: string;
-};
+import { getDefaultVoice, getVoiceOptions, type VoiceOption } from "@/lib/voice";
 
 type MemoryVoiceSelectorProps = {
   onVoiceChange: (voiceId: string) => void;
