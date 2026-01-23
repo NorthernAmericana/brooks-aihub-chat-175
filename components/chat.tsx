@@ -1,5 +1,6 @@
 "use client";
 
+import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -213,27 +214,28 @@ export function Chat({
   );
 
   // Wrapper to detect secret commands
-  const handleSendMessage: typeof sendMessage = useCallback(
-    (message) => {
-      // Check for secret movie command
-      const textPart = message?.parts?.find(
-        (part): part is { type: "text"; text: string } => part.type === "text"
-      );
+  const handleSendMessage: UseChatHelpers<ChatMessage>["sendMessage"] =
+    useCallback(
+      (message) => {
+        // Check for secret movie command
+        const textPart = message?.parts?.find(
+          (part): part is { type: "text"; text: string } => part.type === "text"
+        );
 
-      if (textPart) {
-        const text = textPart.text.trim();
-        // Check for the secret command: /NAMC/ let me watch a movie
-        if (text === "/NAMC/ let me watch a movie") {
-          setShowVideoPlayer(true);
-          return; // Don't send the message to the chat
+        if (textPart) {
+          const text = textPart.text.trim();
+          // Check for the secret command: /NAMC/ let me watch a movie
+          if (text === "/NAMC/ let me watch a movie") {
+            setShowVideoPlayer(true);
+            return; // Don't send the message to the chat
+          }
         }
-      }
 
-      // Otherwise, send the message normally
-      return sendMessage(message);
-    },
-    [sendMessage]
-  );
+        // Otherwise, send the message normally
+        return sendMessage(message);
+      },
+      [sendMessage]
+    );
 
   return (
     <>
