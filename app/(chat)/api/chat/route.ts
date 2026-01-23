@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
       initialRouteKey = firstMessageSlash
         ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
-        : null;
+        : getDefaultAgentConfig().id; // Default to Brooks AI HUB if no slash
 
       await saveChat({
         id,
@@ -304,6 +304,32 @@ export async function POST(request: Request) {
           ])
         ) as Record<AgentToolId, ToolDefinition>;
 
+        // Add light NAMC retrieval for Brooks AI HUB
+        const isBrooksAiHub = selectedAgent.id === "brooks-ai-hub";
+        let lightNamcContext: string | null = null;
+        if (isBrooksAiHub) {
+          const latestUserMessage = getLatestUserMessageText(uiMessages);
+          if (latestUserMessage) {
+            // Heuristic to detect NAMC-relevant queries
+            const namcKeywords = [
+              "namc", "film", "movie", "music", "game", "album", "song",
+              "artist", "director", "soundtrack", "media", "release", "lore",
+              "story", "character", "plot", "scene", "genre"
+            ];
+            const lowerMessage = latestUserMessage.toLowerCase();
+            const hasNamcKeyword = namcKeywords.some(keyword => 
+              lowerMessage.includes(keyword)
+            );
+            
+            if (hasNamcKeyword) {
+              lightNamcContext = await buildNamcLoreContext(latestUserMessage, {
+                maxSnippets: 2,
+                maxTokens: 500,
+              });
+            }
+          }
+        }
+
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({
@@ -311,6 +337,7 @@ export async function POST(request: Request) {
             requestHints,
             basePrompt: selectedAgent.systemPromptOverride,
             memoryContext: memoryContext ?? undefined,
+            namcLoreContext: lightNamcContext ?? undefined,
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),

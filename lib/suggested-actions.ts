@@ -23,6 +23,23 @@ export function parseSlashAction(
     return null;
   }
 
+  // Try matching wrapped slash first: /Brooks AI HUB/ prompt
+  const wrappedMatch = trimmed.match(/^\/(.+?)\/\s*(.*)$/);
+  if (wrappedMatch) {
+    const rawSlash = wrappedMatch[1];
+    const prompt = wrappedMatch[2]?.trim() ?? "";
+    const normalized = normalizeSlash(rawSlash);
+    const resolvedSlash =
+      agentConfigs.find((agent) => normalizeSlash(agent.slash) === normalized)
+        ?.slash ?? rawSlash;
+
+    return {
+      slash: resolvedSlash,
+      prompt,
+    };
+  }
+
+  // Fallback to non-wrapped slash: /BrooksBears prompt
   const match = trimmed.match(/^\/([^/\s]+)(?:\/)?\s*(.*)$/);
   if (!match) {
     return null;

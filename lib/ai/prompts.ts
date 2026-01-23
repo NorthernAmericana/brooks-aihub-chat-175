@@ -68,16 +68,19 @@ export const systemPrompt = ({
   slashRoute,
   basePrompt,
   memoryContext,
+  namcLoreContext,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
   slashRoute?: SlashRoute;
   basePrompt?: string;
   memoryContext?: string;
+  namcLoreContext?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const slashRoutePrompt = slashRoute?.prompt ? `\n\n${slashRoute.prompt}` : "";
   const memoryPrompt = memoryContext ? `\n\n${memoryContext}` : "";
+  const namcPrompt = namcLoreContext ? `\n\n${namcLoreContext}\n\nNote: For deep NAMC exploration, suggest users switch to /NAMC/ route.` : "";
   const prompt = basePrompt ?? regularPrompt;
 
   // reasoning models don't need artifacts prompt (they can't use tools)
@@ -85,10 +88,10 @@ export const systemPrompt = ({
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking")
   ) {
-    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}${namcPrompt}`;
   }
 
-  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}\n\n${artifactsPrompt}`;
+  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}${namcPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `

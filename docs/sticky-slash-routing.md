@@ -121,12 +121,20 @@ This document describes the implementation of sticky slash routing per conversat
 - Default agent is "brooks-ai-hub"
 
 ### Supported Routes
-- `/Brooks AI HUB/` - Main curator and router
-- `/NAMC/` - Media curator for NAMC content
+- `/Brooks AI HUB/` - Main curator and router with light NAMC knowledge
+- `/NAMC/` - Media curator for NAMC content (deep lore exploration)
 - `/NAT/` - NAT strategy and business
 - `/BrooksBears/` - Companion experience
 - `/MyCarMindATO/` - Driving intelligence
 - `/MyFlowerAI/` - Cannabis journaling
+
+### Brooks AI HUB Light NAMC Retrieval
+When the Brooks AI HUB agent is active (the default route), the system provides light NAMC context:
+- **Heuristic Detection**: Queries containing NAMC-relevant keywords (film, music, game, etc.) trigger light retrieval
+- **Limited Context**: Maximum 2 snippets, ~500 tokens (vs. 4 snippets, ~1500 tokens for full NAMC agent)
+- **Quick Answers**: Provides surface-level NAMC information before routing
+- **Routing Guidance**: Encourages switching to `/NAMC/` for deep dives
+- **Preserved Deep Experience**: Full NAMC agent remains unchanged with rich media curation flow
 
 ## Testing Checklist
 
@@ -174,7 +182,7 @@ This document describes the implementation of sticky slash routing per conversat
 
 3. **Route Suggestions**: Recent usage tracking is client-side only (localStorage). Could be enhanced with server-side tracking for better cross-device experience.
 
-4. **Default Route**: Chats without explicit slash default to "brooks-ai-hub". This behavior could be made configurable.
+4. **Default Route**: Chats without explicit slash default to "Brooks AI HUB" (`brooks-ai-hub`). This ensures all new conversations without a slash route get the curator experience by default. The default is set when creating a new chat and persisted in the `routeKey` field.
 
 ## Future Enhancements
 
