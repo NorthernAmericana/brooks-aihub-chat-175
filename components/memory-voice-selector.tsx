@@ -16,9 +16,9 @@ type MemoryVoiceSelectorProps = {
 };
 
 export function MemoryVoiceSelector({ onVoiceChange }: MemoryVoiceSelectorProps) {
-  // Per requirements: memories always use Daniel voice (non-NAMC route)
-  // The problem statement specifies: "Allow a speaker option on the memories 
-  // paragraphs on the page with Daniel's voice"
+  // Per requirements: memories always use Daniel voice (non-NAMC route).
+  // The problem statement specifies: "Allow a speaker option on the
+  // memories paragraphs on the page with Daniel's voice"
   const defaultVoice = getDefaultVoice("default");
   const voiceOptions = getVoiceOptions("default");
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(defaultVoice);

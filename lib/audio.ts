@@ -69,7 +69,12 @@ export async function playTextToSpeech(
     audio.addEventListener("ended", cleanupAudio);
     audio.addEventListener("error", cleanupAudio);
 
-    await audio.play();
+    try {
+      await audio.play();
+    } catch (playError) {
+      cleanupAudio();
+      throw playError;
+    }
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Speech request timed out.");

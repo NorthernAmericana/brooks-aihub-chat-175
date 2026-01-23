@@ -52,7 +52,7 @@ export function MemoryCard({
   };
 
   return (
-    <Card key={id}>
+    <Card>
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{route}</Badge>
