@@ -24,11 +24,8 @@ type VoiceSettingsPanelProps = {
 };
 
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
-  // Filter to only show NAMC chats (voice is disabled for non-NAMC)
-  const namcChats = useMemo(
-    () => chats.filter((chat) => isChatNamcRoute(chat)),
-    [chats]
-  );
+  // Show all chats since Brooks AI HUB voice is now available for non-NAMC routes
+  const namcChats = useMemo(() => chats, [chats]);
 
   const defaultSelections = useMemo(
     () =>
@@ -108,8 +105,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   if (namcChats.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        No NAMC chats yet. Voice settings are only available for /NAMC/ chats.
-        Start a NAMC chat to configure voice options.
+        No chats yet. Start a conversation to configure voice options.
       </div>
     );
   }
@@ -136,7 +132,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
               <div>
                 <p className="font-medium">{chat.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  Route: /NAMC/ • Default: {defaultVoice.label}
+                  Route: {isChatNamcRoute(chat) ? "/NAMC/" : "Brooks AI HUB"} •
+                  Default: {defaultVoice.label}
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -198,8 +195,9 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Bruce NAMC is the default voice for NAMC chats. Use the
-                three-dot menu in chat to switch voices.
+                {isChatNamcRoute(chat)
+                  ? "Bruce NAMC is the default voice for NAMC chats. Use the three-dot menu in chat to switch voices."
+                  : "Daniel - Brooks AI HUB is the default voice for this chat."}
               </p>
             </div>
           </div>

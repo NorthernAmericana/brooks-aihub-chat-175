@@ -9,10 +9,10 @@ const NAMC_VOICE_OPTIONS: VoiceOption[] = [
   { id: "7fJYplvotvPf1yl7PLLP", label: "Selena NAMC" },
 ];
 
-// Brooks AI HUB placeholder voice (not yet implemented)
+// Brooks AI HUB official voice
 const BROOKS_AI_HUB_VOICE: VoiceOption = {
-  id: "brooks-ai-hub-placeholder",
-  label: "Brooks AI HUB",
+  id: "QOXGBQZ2d1ykGdEdFlgp",
+  label: "Daniel - Brooks AI HUB",
 };
 
 export const getRouteKey = (title: string) => {
@@ -52,12 +52,14 @@ export const getDefaultVoice = (routeKey: string): VoiceOption => {
   return BROOKS_AI_HUB_VOICE; // Placeholder for non-NAMC chats
 };
 
-// Only used for backward compatibility
-export const getOfficialVoice = (routeKey: string) => {
-  if (routeKey === "namc") {
-    return "Bruce NAMC";
-  }
-  return "Brooks AI HUB";
+// Get the official voice ID for a route (returns actual ElevenLabs voice ID)
+export const getOfficialVoiceId = (routeKey: string): string => {
+  return getDefaultVoice(routeKey).id;
+};
+
+// DEPRECATED: Only used for backward compatibility - returns label strings
+export const getOfficialVoice = (routeKey: string): string => {
+  return getDefaultVoice(routeKey).label;
 };
 
 // Get available voice options for a route
@@ -65,6 +67,6 @@ export const getVoiceOptions = (routeKey: string): VoiceOption[] => {
   if (routeKey === "namc") {
     return NAMC_VOICE_OPTIONS;
   }
-  // No voice options for non-NAMC chats (voice disabled)
-  return [];
+  // Brooks AI HUB voice for non-NAMC chats
+  return [BROOKS_AI_HUB_VOICE];
 };

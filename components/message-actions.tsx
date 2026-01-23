@@ -5,7 +5,7 @@ import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { getOfficialVoice, getRouteKey } from "@/lib/voice";
+import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
@@ -42,8 +42,6 @@ export function PureMessageActions({
     .map((part) => part.text)
     .join("\n")
     .trim();
-  const routeKey = getRouteKey(chatTitle);
-  const officialVoice = getOfficialVoice(routeKey);
 
   const handleCopy = async () => {
     if (!textFromParts) {
@@ -61,38 +59,64 @@ export function PureMessageActions({
       return;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000);
     const loadingToast = toast.loading("Generating speech...");
 
     try {
-      const response = await fetch("/api/tts/elevenlabs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textFromParts, voiceId: officialVoice }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => null);
-        const message =
-          errorPayload?.error ?? "Unable to generate speech right now.";
-        toast.error(message);
+      // Fetch chat settings to get persisted voice and enabled state
+      const chatResponse = await fetch(`/api/chat-settings?chatId=${chatId}`);
+      if (!chatResponse.ok) {
+        toast.error("Failed to load chat settings.");
         return;
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
+      const chatData = await chatResponse.json();
 
-      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
-      audio.addEventListener("error", () => {
-        URL.revokeObjectURL(audioUrl);
-        toast.error("Audio playback failed.");
-      });
+      // Check if TTS is disabled for this chat
+      if (chatData.ttsEnabled === false) {
+        toast.error(
+          "Text-to-speech is disabled for this chat. Enable it in voice settings."
+        );
+        return;
+      }
 
-      await audio.play();
-      toast.success("Playing response.");
+      // Determine voice ID: use persisted setting or route default
+      const routeKey = getRouteKey(chatTitle);
+      const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+      try {
+        const response = await fetch("/api/tts/elevenlabs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textFromParts, voiceId }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          const message =
+            errorPayload?.error ?? "Unable to generate speech right now.";
+          toast.error(message);
+          return;
+        }
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+
+        audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
+        audio.addEventListener("error", () => {
+          URL.revokeObjectURL(audioUrl);
+          toast.error("Audio playback failed.");
+        });
+
+        await audio.play();
+        toast.success("Playing response.");
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         toast.error("Speech request timed out.");
@@ -100,7 +124,6 @@ export function PureMessageActions({
         toast.error("Unable to generate speech right now.");
       }
     } finally {
-      clearTimeout(timeoutId);
       toast.dismiss(loadingToast);
     }
   };
