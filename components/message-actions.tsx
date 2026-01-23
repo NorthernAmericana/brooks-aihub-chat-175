@@ -106,10 +106,28 @@ export function PureMessageActions({
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
-      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
-      audio.addEventListener("error", () => {
+      // Ensure audio is preloaded to prevent glitching
+      audio.preload = "auto";
+      audio.autoplay = false;
+
+      // Handle audio cleanup
+      const cleanupAudio = () => {
         URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.addEventListener("ended", cleanupAudio);
+      audio.addEventListener("error", () => {
+        cleanupAudio();
         toast.error("Audio playback failed.");
+      });
+
+      // Wait for audio to be ready before playing to prevent glitches
+      await new Promise<void>((resolve, reject) => {
+        audio.addEventListener("canplaythrough", () => resolve(), {
+          once: true,
+        });
+        audio.addEventListener("error", reject, { once: true });
+        audio.load();
       });
 
       await audio.play();

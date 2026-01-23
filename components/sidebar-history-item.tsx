@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
 import {
   getChatRouteKey,
-  getOfficialVoice,
+  getDefaultVoice,
   getVoiceOptions,
+  type VoiceOption,
 } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
@@ -15,10 +17,12 @@ import {
   ShareIcon,
   TrashIcon,
 } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
@@ -65,15 +69,52 @@ const PureChatItem = ({
     () => getChatRouteKey(chat),
     [chat.routeKey, chat.title]
   );
-  const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
+  const defaultVoice = useMemo(() => getDefaultVoice(routeKey), [routeKey]);
   const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
-  const [speakerEnabled, setSpeakerEnabled] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState(officialVoice);
+  
+  // Get saved voice from chat or use default
+  const savedVoice = useMemo<VoiceOption>(() => {
+    if (chat.ttsVoiceId && chat.ttsVoiceLabel) {
+      return { id: chat.ttsVoiceId, label: chat.ttsVoiceLabel };
+    }
+    return defaultVoice;
+  }, [chat.ttsVoiceId, chat.ttsVoiceLabel, defaultVoice]);
+
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(savedVoice);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
-    setSelectedVoice(officialVoice);
-  }, [officialVoice]);
+    setSelectedVoice(savedVoice);
+  }, [savedVoice]);
+
+  const handleApplyVoice = async () => {
+    setIsApplying(true);
+    try {
+      const response = await fetch("/api/chat-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: chat.id,
+          ttsEnabled: true,
+          ttsVoiceId: selectedVoice.id,
+          ttsVoiceLabel: selectedVoice.label,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update voice settings.");
+      }
+
+      toast.success("Voice settings applied successfully.");
+      setVoiceSettingsOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to save voice settings.");
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   return (
     <SidebarMenuItem>
@@ -156,69 +197,67 @@ const PureChatItem = ({
           <DialogHeader>
             <DialogTitle>Voice Settings</DialogTitle>
             <DialogDescription>
-              Voice controls are placeholders for now. Each route keeps its own
-              official voice, and you can preview custom AI voices here.
+              Select the voice for this chat. {routeKey === "namc" 
+                ? "NAMC chats use Bruce or Selena voices only." 
+                : "This chat uses Daniel voice."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 text-sm">
             <div className="rounded-md border border-border bg-muted/40 p-3">
               <div className="text-xs uppercase text-muted-foreground">
-                Route Voice
+                Route
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <span className="font-medium">
-                  {routeKey === "default" ? "General" : `/${routeKey}/`}
+                  {routeKey === "default" ? "General" : `/${routeKey.toUpperCase()}/`}
                 </span>
                 <span className="text-muted-foreground">
-                  Official voice: {officialVoice}
+                  Default: {defaultVoice.label}
                 </span>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-md border border-border p-3">
-              <div>
-                <p className="font-medium">Speaker (read aloud)</p>
-                <p className="text-xs text-muted-foreground">
-                  Will read chats using the route voice and adaptive
-                  personality.
-                </p>
-              </div>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  checked={speakerEnabled}
-                  className="h-4 w-4 accent-foreground"
-                  onChange={(event) => setSpeakerEnabled(event.target.checked)}
-                  type="checkbox"
-                />
-                Enabled
-              </label>
             </div>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor={`voice-select-${chat.id}`}>
-                Custom AI voices
+                Voice selection
               </Label>
-              <Select onValueChange={setSelectedVoice} value={selectedVoice}>
+              <Select 
+                onValueChange={(value) => {
+                  const selected = voiceOptions.find((v) => v.id === value);
+                  if (selected) {
+                    setSelectedVoice(selected);
+                  }
+                }} 
+                value={selectedVoice.id}
+              >
                 <SelectTrigger id={`voice-select-${chat.id}`}>
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={officialVoice}>
-                    {officialVoice} (Route official)
-                  </SelectItem>
                   {voiceOptions.map((voice) => (
                     <SelectItem key={voice.id} value={voice.id}>
                       {voice.label}
+                      {voice.id === defaultVoice.id ? " (Default)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Selected voice is a placeholder and will be wired to playback
-                later.
-              </p>
             </div>
           </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setVoiceSettingsOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApplyVoice}
+              disabled={isApplying}
+            >
+              {isApplying ? "Applying..." : "Apply"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </SidebarMenuItem>
