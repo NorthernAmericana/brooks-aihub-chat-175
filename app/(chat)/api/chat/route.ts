@@ -70,9 +70,10 @@ const NAMC_KEYWORDS = [
   "genre",
 ];
 
-// Create regex for word boundary matching of NAMC keywords
+// Escape regex special characters and create regex for word boundary matching
+const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const NAMC_KEYWORD_REGEX = new RegExp(
-  `\\b(${NAMC_KEYWORDS.join("|")})\\b`,
+  `\\b(${NAMC_KEYWORDS.map(escapeRegex).join("|")})\\b`,
   "i"
 );
 

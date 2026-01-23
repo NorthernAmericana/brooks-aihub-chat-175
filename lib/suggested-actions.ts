@@ -29,9 +29,10 @@ export function parseSlashAction(
     const rawSlash = wrappedMatch[1];
     const prompt = wrappedMatch[2]?.trim() ?? "";
     const normalized = normalizeSlash(rawSlash);
-    const resolvedSlash =
-      agentConfigs.find((agent) => normalizeSlash(agent.slash) === normalized)
-        ?.slash ?? rawSlash;
+    const matchedAgent = agentConfigs.find(
+      (agent) => normalizeSlash(agent.slash) === normalized
+    );
+    const resolvedSlash = matchedAgent?.slash ?? rawSlash;
 
     return {
       slash: resolvedSlash,
@@ -48,9 +49,10 @@ export function parseSlashAction(
   const rawSlash = match[1];
   const prompt = match[2]?.trim() ?? "";
   const normalized = normalizeSlash(rawSlash);
-  const resolvedSlash =
-    agentConfigs.find((agent) => normalizeSlash(agent.slash) === normalized)
-      ?.slash ?? rawSlash;
+  const matchedAgent = agentConfigs.find(
+    (agent) => normalizeSlash(agent.slash) === normalized
+  );
+  const resolvedSlash = matchedAgent?.slash ?? rawSlash;
 
   return {
     slash: resolvedSlash,
