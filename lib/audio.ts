@@ -101,9 +101,10 @@ export async function playTextToSpeech(
     };
 
     // Simple keep-alive - just maintains reference
+    // Using 5s interval to minimize CPU wake-ups while preventing GC
     keepAliveTimer = setInterval(() => {
       // No-op, just keeps reference alive
-    }, 1000);
+    }, 5000);
 
     try {
       await audio.play();
@@ -119,7 +120,11 @@ export async function playTextToSpeech(
         audio.addEventListener("error", () => {
           clearKeepAlive();
           safeCleanup();
-          reject(new Error("Audio playback error during play."));
+          // Provide more detailed error information if available
+          const errorDetail = audio.error 
+            ? `${audio.error.message} (code: ${audio.error.code})`
+            : "Unknown audio error";
+          reject(new Error(`Audio playback error: ${errorDetail}`));
         }, { once: true });
       });
     } catch (playError) {
