@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/select";
 import type { Chat } from "@/lib/db/schema";
 import {
+  getChatRouteKey,
   getDefaultVoice,
-  getRouteKey,
   getVoiceOptions,
-  isNamcRoute,
+  isChatNamcRoute,
   type VoiceOption,
 } from "@/lib/voice";
 
@@ -26,14 +26,14 @@ type VoiceSettingsPanelProps = {
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   // Filter to only show NAMC chats (voice is disabled for non-NAMC)
   const namcChats = useMemo(
-    () => chats.filter((chat) => isNamcRoute(chat.title)),
+    () => chats.filter((chat) => isChatNamcRoute(chat)),
     [chats]
   );
 
   const defaultSelections = useMemo(
     () =>
       namcChats.reduce<Record<string, VoiceOption>>((accumulator, chat) => {
-        const routeKey = getRouteKey(chat.title);
+        const routeKey = getChatRouteKey(chat);
         const defaultVoice = getDefaultVoice(routeKey);
         const savedVoiceId = chat.ttsVoiceId ?? defaultVoice.id;
         const savedVoiceLabel = chat.ttsVoiceLabel ?? defaultVoice.label;
@@ -117,7 +117,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   return (
     <div className="flex flex-col gap-4">
       {namcChats.map((chat) => {
-        const routeKey = getRouteKey(chat.title);
+        const routeKey = getChatRouteKey(chat);
         const defaultVoice = getDefaultVoice(routeKey);
         const voiceOptions = getVoiceOptions(routeKey);
 

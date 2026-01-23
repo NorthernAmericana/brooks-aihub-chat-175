@@ -20,8 +20,28 @@ export const getRouteKey = (title: string) => {
   return match?.[1]?.toLowerCase() ?? "default";
 };
 
+// Get route key from chat, preferring the persisted routeKey field
+export const getChatRouteKey = (chat: {
+  routeKey?: string | null;
+  title: string;
+}) => {
+  if (chat.routeKey) {
+    return chat.routeKey.toLowerCase();
+  }
+  // Fallback to parsing from title for backward compatibility
+  return getRouteKey(chat.title);
+};
+
 export const isNamcRoute = (title: string) => {
   return getRouteKey(title) === "namc";
+};
+
+// Check if chat is NAMC route using persisted routeKey or title
+export const isChatNamcRoute = (chat: {
+  routeKey?: string | null;
+  title: string;
+}) => {
+  return getChatRouteKey(chat) === "namc";
 };
 
 // Get the default voice for a route
