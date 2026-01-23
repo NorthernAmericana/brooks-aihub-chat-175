@@ -94,24 +94,43 @@ export async function playTextToSpeech(
     audio.addEventListener("error", safeCleanup);
     
     // Ensure we keep a reference to prevent garbage collection during playback
-    const keepAlive = setInterval(() => {
-      if (audio.paused && audio.currentTime === 0) {
-        clearInterval(keepAlive);
+    let keepAliveTimer: NodeJS.Timeout | null = null;
+    const clearKeepAlive = () => {
+      if (keepAliveTimer) {
+        clearInterval(keepAliveTimer);
+        keepAliveTimer = null;
+      }
+    };
+
+    keepAliveTimer = setInterval(() => {
+      // Clear if audio has ended or errored
+      if (audio.ended || audio.error) {
+        clearKeepAlive();
       }
     }, 100);
 
     try {
       await audio.play();
       
-      // Wait for playback to complete
-      await new Promise<void>((resolve) => {
-        audio.addEventListener("ended", () => {
-          clearInterval(keepAlive);
+      // Wait for playback to complete or error
+      await new Promise<void>((resolve, reject) => {
+        const onEnded = () => {
+          audio.removeEventListener("error", onPlaybackError);
+          clearKeepAlive();
           resolve();
-        }, { once: true });
+        };
+        
+        const onPlaybackError = () => {
+          audio.removeEventListener("ended", onEnded);
+          clearKeepAlive();
+          reject(new Error("Audio playback error during play."));
+        };
+
+        audio.addEventListener("ended", onEnded, { once: true });
+        audio.addEventListener("error", onPlaybackError, { once: true });
       });
     } catch (playError) {
-      clearInterval(keepAlive);
+      clearKeepAlive();
       safeCleanup();
       // Handle autoplay policy errors specifically
       if (playError instanceof DOMException && playError.name === "NotAllowedError") {
