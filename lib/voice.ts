@@ -15,6 +15,12 @@ const BROOKS_AI_HUB_VOICE: VoiceOption = {
   label: "Daniel - Brooks AI HUB",
 };
 
+// Benjamin Bear voice
+const BENJAMIN_BEAR_VOICE: VoiceOption = {
+  id: "SMar3QtpKPfkPZ6oG9pg",
+  label: "Benjamin Bear",
+};
+
 export const getRouteKey = (title: string) => {
   const match = title.match(/\/([^/]+)\//i);
   return match?.[1]?.toLowerCase() ?? "default";
@@ -49,6 +55,9 @@ export const getDefaultVoice = (routeKey: string): VoiceOption => {
   if (routeKey === "namc") {
     return NAMC_VOICE_OPTIONS[0]; // Bruce NAMC as default
   }
+  if (routeKey === "brooks-bears") {
+    return BENJAMIN_BEAR_VOICE; // Benjamin Bear voice for BrooksBears route
+  }
   return BROOKS_AI_HUB_VOICE; // Placeholder for non-NAMC chats
 };
 
@@ -66,6 +75,9 @@ export const getOfficialVoice = (routeKey: string): string => {
 export const getVoiceOptions = (routeKey: string): VoiceOption[] => {
   if (routeKey === "namc") {
     return NAMC_VOICE_OPTIONS;
+  }
+  if (routeKey === "brooks-bears") {
+    return [BENJAMIN_BEAR_VOICE];
   }
   // Brooks AI HUB voice for non-NAMC chats
   return [BROOKS_AI_HUB_VOICE];
