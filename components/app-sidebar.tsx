@@ -14,6 +14,7 @@ import {
 } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
+import { CreateATODialog } from "@/components/custom-ato/create-ato-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -147,6 +148,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
+            <CreateATODialog />
             <Button
               asChild
               className="justify-start"

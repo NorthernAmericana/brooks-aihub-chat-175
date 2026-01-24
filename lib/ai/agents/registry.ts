@@ -11,6 +11,10 @@ export type AgentConfig = {
   slash: string;
   tools: AgentToolId[];
   systemPromptOverride?: string;
+  isCustom?: boolean;
+  voiceId?: string;
+  voiceLabel?: string;
+  memoryScope?: "ato-only" | "hub-wide";
 };
 
 const brooksAiHubPrompt = `You are the Brooks AI HUB Curator for Northern Americana Tech (NAT).
