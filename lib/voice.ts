@@ -15,6 +15,12 @@ const BROOKS_AI_HUB_VOICE: VoiceOption = {
   label: "Daniel - Brooks AI HUB",
 };
 
+// MyCarMindATO voice (Daniel)
+const MYCARMINDATO_VOICE: VoiceOption = {
+  id: "QOXGBQZ2d1ykGdEdFlgp",
+  label: "Daniel - Brooks AI HUB",
+};
+
 export const getRouteKey = (title: string) => {
   const match = title.match(/\/([^/]+)\//i);
   return match?.[1]?.toLowerCase() ?? "default";
@@ -49,7 +55,10 @@ export const getDefaultVoice = (routeKey: string): VoiceOption => {
   if (routeKey === "namc") {
     return NAMC_VOICE_OPTIONS[0]; // Bruce NAMC as default
   }
-  return BROOKS_AI_HUB_VOICE; // Placeholder for non-NAMC chats
+  if (routeKey === "my-car-mind" || routeKey === "mycarmindato") {
+    return MYCARMINDATO_VOICE; // Daniel for MyCarMindATO
+  }
+  return BROOKS_AI_HUB_VOICE; // Default for other routes
 };
 
 // Get the official voice ID for a route (returns actual ElevenLabs voice ID)
@@ -66,6 +75,9 @@ export const getOfficialVoice = (routeKey: string): string => {
 export const getVoiceOptions = (routeKey: string): VoiceOption[] => {
   if (routeKey === "namc") {
     return NAMC_VOICE_OPTIONS;
+  }
+  if (routeKey === "my-car-mind" || routeKey === "mycarmindato") {
+    return [MYCARMINDATO_VOICE]; // Daniel for MyCarMindATO
   }
   // Brooks AI HUB voice for non-NAMC chats
   return [BROOKS_AI_HUB_VOICE];

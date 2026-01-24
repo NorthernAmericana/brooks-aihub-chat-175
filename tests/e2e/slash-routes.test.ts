@@ -7,7 +7,7 @@ test.describe("Slash Route Parsing", () => {
     // Type a slash to trigger slash suggestions
     const input = page.getByTestId("multimodal-input");
     await input.fill("/");
-    
+
     // Wait for slash suggestions to appear
     const slashSuggestions = page.locator("text=/Brooks AI HUB/");
     await expect(slashSuggestions).toBeVisible({ timeout: 5000 });
@@ -27,7 +27,7 @@ test.describe("Slash Route Parsing", () => {
 
     // URL should change to chat and message should be sent
     await expect(page).toHaveURL(/\/chat\/[\w-]+/, { timeout: 10_000 });
-    
+
     // User message should be visible
     const userMessage = page.locator("[data-role='user']").first();
     await expect(userMessage).toBeVisible({ timeout: 5000 });
