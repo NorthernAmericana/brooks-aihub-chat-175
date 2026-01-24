@@ -6,7 +6,7 @@ import { DUMMY_PASSWORD } from "@/lib/constants";
 import { createGuestUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
-export type UserType = "guest" | "regular";
+export type UserType = "guest" | "regular" | "founder";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -61,7 +61,9 @@ export const {
           return null;
         }
 
-        return { ...user, type: "regular" };
+        // Check if user is a founder
+        const userType: UserType = user.isFounder ? "founder" : "regular";
+        return { ...user, type: userType };
       },
     }),
     Credentials({
