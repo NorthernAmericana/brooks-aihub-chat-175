@@ -15,6 +15,7 @@ import {
   type AgentToolId,
   getAgentConfigById,
   getAgentConfigBySlash,
+  getAgentConfigBySlashWithCustom,
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
@@ -32,6 +33,7 @@ import {
   deleteChatById,
   getApprovedMemoriesByUserId,
   getChatById,
+  getCustomATOById,
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
@@ -171,9 +173,15 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
-      initialRouteKey = firstMessageSlash
-        ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
-        : null;
+      if (firstMessageSlash) {
+        const agentConfig = await getAgentConfigBySlashWithCustom(
+          firstMessageSlash,
+          session.user.id
+        );
+        initialRouteKey = agentConfig?.id ?? null;
+      } else {
+        initialRouteKey = null;
+      }
 
       await saveChat({
         id,
@@ -229,14 +237,58 @@ export async function POST(request: Request) {
 
     if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
-      selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+      const agentById = getAgentConfigById(chat.routeKey);
+      if (agentById) {
+        selectedAgent = agentById;
+      } else {
+        // Check if it's a custom ATO ID (starts with "custom-")
+        if (chat.routeKey.startsWith("custom-")) {
+          const customATOId = chat.routeKey.replace("custom-", "");
+          try {
+            const customATO = await getCustomATOById({
+              id: customATOId,
+              userId: session.user.id,
+            });
+            if (customATO) {
+              selectedAgent = {
+                id: chat.routeKey,
+                label: customATO.name,
+                slash: customATO.slash,
+                tools: [
+                  "createDocument",
+                  "updateDocument",
+                  "requestSuggestions",
+                  "saveMemory",
+                ],
+                systemPromptOverride: customATO.instructions,
+                isCustom: true,
+                voiceId: customATO.voiceId,
+                voiceLabel: customATO.voiceLabel,
+                memoryScope: customATO.memoryScope,
+              };
+            } else {
+              selectedAgent = getDefaultAgentConfig();
+            }
+          } catch (error) {
+            console.error("Failed to fetch custom ATO:", error);
+            selectedAgent = getDefaultAgentConfig();
+          }
+        } else {
+          selectedAgent = getDefaultAgentConfig();
+        }
+      }
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
-      selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+      if (slashTrigger) {
+        const agentWithCustom = await getAgentConfigBySlashWithCustom(
+          slashTrigger,
+          session.user.id
+        );
+        selectedAgent = agentWithCustom ?? getDefaultAgentConfig();
+      } else {
+        selectedAgent = getDefaultAgentConfig();
+      }
     }
 
     const isNamcAgent = selectedAgent.id === "namc";
