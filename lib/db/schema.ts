@@ -15,6 +15,10 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  isFounder: boolean("isFounder").default(false),
+  customAtoCount: json("customAtoCount")
+    .$type<{ month: string; count: number }>()
+    .default({ month: "", count: 0 }),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -200,3 +204,25 @@ export const memory = pgTable("Memory", {
 });
 
 export type Memory = InferSelectModel<typeof memory>;
+
+export const customAgent = pgTable("CustomAgent", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: varchar("name", { length: 128 }).notNull(),
+  slash: varchar("slash", { length: 128 }).notNull(),
+  systemPrompt: text("systemPrompt"),
+  defaultVoiceId: text("defaultVoiceId"),
+  defaultVoiceLabel: text("defaultVoiceLabel"),
+  memoryScope: varchar("memoryScope", { enum: ["ato-only", "hub-wide"] })
+    .notNull()
+    .default("ato-only"),
+  tools: json("tools").$type<string[]>().notNull().default([]),
+  isActive: boolean("isActive").notNull().default(true),
+  lastUsedAt: timestamp("lastUsedAt"),
+});
+
+export type CustomAgent = InferSelectModel<typeof customAgent>;

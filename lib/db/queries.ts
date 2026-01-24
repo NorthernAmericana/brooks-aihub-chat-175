@@ -21,6 +21,8 @@ import { generateUUID } from "../utils";
 import {
   type Chat,
   chat,
+  customAgent,
+  type CustomAgent,
   type DBMessage,
   document,
   memory,
@@ -730,5 +732,262 @@ export async function updateChatRouteKey({
   } catch (error) {
     console.warn("Failed to update routeKey for chat", chatId, error);
     return;
+  }
+}
+
+// Custom Agent queries
+
+export async function getUserById({ id }: { id: string }) {
+  try {
+    const [foundUser] = await db.select().from(user).where(eq(user.id, id));
+    return foundUser ?? null;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function updateUserFounderStatus({
+  userId,
+  isFounder,
+}: {
+  userId: string;
+  isFounder: boolean;
+}) {
+  try {
+    return await db
+      .update(user)
+      .set({ isFounder })
+      .where(eq(user.id, userId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user founder status"
+    );
+  }
+}
+
+export async function updateUserCustomAtoCount({
+  userId,
+  customAtoCount,
+}: {
+  userId: string;
+  customAtoCount: { month: string; count: number };
+}) {
+  try {
+    return await db
+      .update(user)
+      .set({ customAtoCount })
+      .where(eq(user.id, userId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user custom ATO count"
+    );
+  }
+}
+
+export async function createCustomAgent({
+  userId,
+  name,
+  slash,
+  systemPrompt,
+  defaultVoiceId,
+  defaultVoiceLabel,
+  memoryScope,
+  tools,
+}: {
+  userId: string;
+  name: string;
+  slash: string;
+  systemPrompt?: string;
+  defaultVoiceId?: string;
+  defaultVoiceLabel?: string;
+  memoryScope: "ato-only" | "hub-wide";
+  tools?: string[];
+}) {
+  try {
+    const [newAgent] = await db
+      .insert(customAgent)
+      .values({
+        userId,
+        name,
+        slash,
+        systemPrompt,
+        defaultVoiceId,
+        defaultVoiceLabel,
+        memoryScope,
+        tools: tools ?? [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newAgent;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create custom agent"
+    );
+  }
+}
+
+export async function getCustomAgentsByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(customAgent)
+      .where(and(eq(customAgent.userId, userId), eq(customAgent.isActive, true)))
+      .orderBy(desc(customAgent.lastUsedAt), desc(customAgent.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom agents by user id"
+    );
+  }
+}
+
+export async function getAllCustomAgents() {
+  try {
+    return await db
+      .select()
+      .from(customAgent)
+      .where(eq(customAgent.isActive, true))
+      .orderBy(desc(customAgent.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get all custom agents"
+    );
+  }
+}
+
+export async function getCustomAgentById({ id }: { id: string }) {
+  try {
+    const [agent] = await db
+      .select()
+      .from(customAgent)
+      .where(eq(customAgent.id, id));
+    return agent ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom agent by id"
+    );
+  }
+}
+
+export async function getCustomAgentBySlash({
+  slash,
+  userId,
+}: {
+  slash: string;
+  userId: string;
+}) {
+  try {
+    const [agent] = await db
+      .select()
+      .from(customAgent)
+      .where(
+        and(
+          eq(customAgent.slash, slash),
+          eq(customAgent.userId, userId),
+          eq(customAgent.isActive, true)
+        )
+      );
+    return agent ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom agent by slash"
+    );
+  }
+}
+
+export async function updateCustomAgent({
+  id,
+  userId,
+  name,
+  systemPrompt,
+  defaultVoiceId,
+  defaultVoiceLabel,
+  memoryScope,
+  tools,
+}: {
+  id: string;
+  userId: string;
+  name?: string;
+  systemPrompt?: string;
+  defaultVoiceId?: string;
+  defaultVoiceLabel?: string;
+  memoryScope?: "ato-only" | "hub-wide";
+  tools?: string[];
+}) {
+  try {
+    const updates: Partial<CustomAgent> = {
+      updatedAt: new Date(),
+    };
+
+    if (name) updates.name = name;
+    if (systemPrompt !== undefined) updates.systemPrompt = systemPrompt;
+    if (defaultVoiceId) updates.defaultVoiceId = defaultVoiceId;
+    if (defaultVoiceLabel) updates.defaultVoiceLabel = defaultVoiceLabel;
+    if (memoryScope) updates.memoryScope = memoryScope;
+    if (tools) updates.tools = tools;
+
+    const [updated] = await db
+      .update(customAgent)
+      .set(updates)
+      .where(and(eq(customAgent.id, id), eq(customAgent.userId, userId)))
+      .returning();
+
+    return updated ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update custom agent"
+    );
+  }
+}
+
+export async function updateCustomAgentLastUsed({
+  id,
+  lastUsedAt,
+}: {
+  id: string;
+  lastUsedAt: Date;
+}) {
+  try {
+    return await db
+      .update(customAgent)
+      .set({ lastUsedAt })
+      .where(eq(customAgent.id, id));
+  } catch (error) {
+    console.warn("Failed to update lastUsedAt for custom agent", id, error);
+    return;
+  }
+}
+
+export async function deleteCustomAgent({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}) {
+  try {
+    // Soft delete by setting isActive to false
+    const [deleted] = await db
+      .update(customAgent)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(customAgent.id, id), eq(customAgent.userId, userId)))
+      .returning();
+
+    return deleted ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete custom agent"
+    );
   }
 }

@@ -11,6 +11,8 @@ export type AgentConfig = {
   slash: string;
   tools: AgentToolId[];
   systemPromptOverride?: string;
+  isCustom?: boolean;
+  userId?: string;
 };
 
 const brooksAiHubPrompt = `You are the Brooks AI HUB Curator for Northern Americana Tech (NAT).
@@ -196,12 +198,51 @@ const agentRegistry: AgentConfig[] = [
 
 export const defaultAgentId = "brooks-ai-hub";
 
-export function listAgentConfigs(): AgentConfig[] {
-  return agentRegistry;
+let customAgentsCache: AgentConfig[] = [];
+let customAgentsCacheTime = 0;
+const CACHE_TTL = 60000; // 1 minute
+
+// Load custom agents from database (server-side only)
+async function loadCustomAgents(): Promise<AgentConfig[]> {
+  // Check cache
+  const now = Date.now();
+  if (customAgentsCache.length > 0 && now - customAgentsCacheTime < CACHE_TTL) {
+    return customAgentsCache;
+  }
+
+  try {
+    // Dynamic import to avoid issues with server-only code
+    const { getAllCustomAgents } = await import("@/lib/db/queries");
+    const customAgents = await getAllCustomAgents();
+
+    customAgentsCache = customAgents.map((agent) => ({
+      id: agent.id,
+      label: agent.name,
+      slash: agent.slash,
+      tools: (agent.tools as AgentToolId[]) ?? [],
+      systemPromptOverride: agent.systemPrompt ?? undefined,
+      isCustom: true,
+      userId: agent.userId,
+    }));
+    customAgentsCacheTime = now;
+
+    return customAgentsCache;
+  } catch (error) {
+    console.warn("Failed to load custom agents:", error);
+    return [];
+  }
 }
 
-export function getAgentConfigById(id: string): AgentConfig | undefined {
-  return agentRegistry.find((agent) => agent.id === id);
+export async function listAgentConfigs(): Promise<AgentConfig[]> {
+  const customAgents = await loadCustomAgents();
+  return [...agentRegistry, ...customAgents];
+}
+
+export async function getAgentConfigById(
+  id: string
+): Promise<AgentConfig | undefined> {
+  const allAgents = await listAgentConfigs();
+  return allAgents.find((agent) => agent.id === id);
 }
 
 const normalizeSlash = (slash: string) =>
@@ -210,16 +251,20 @@ const normalizeSlash = (slash: string) =>
     .replace(/\s+/g, "")
     .toLowerCase();
 
-export function getAgentConfigBySlash(slash: string): AgentConfig | undefined {
+export async function getAgentConfigBySlash(
+  slash: string
+): Promise<AgentConfig | undefined> {
   const normalized = normalizeSlash(slash);
-  return agentRegistry.find(
+  const allAgents = await listAgentConfigs();
+  return allAgents.find(
     (agent) => normalizeSlash(agent.slash) === normalized
   );
 }
 
-export function getDefaultAgentConfig(): AgentConfig {
+export async function getDefaultAgentConfig(): Promise<AgentConfig> {
+  const defaultAgent = await getAgentConfigById(defaultAgentId);
   return (
-    getAgentConfigById(defaultAgentId) ??
+    defaultAgent ??
     agentRegistry[0] ?? {
       id: defaultAgentId,
       label: "Default",

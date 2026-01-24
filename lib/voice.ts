@@ -15,6 +15,22 @@ const BROOKS_AI_HUB_VOICE: VoiceOption = {
   label: "Daniel - Brooks AI HUB",
 };
 
+// Full voice list for custom ATOs
+export const ALL_VOICE_OPTIONS: VoiceOption[] = [
+  BROOKS_AI_HUB_VOICE,
+  ...NAMC_VOICE_OPTIONS,
+  // Add more voices as needed
+  { id: "21m00Tcm4TlvDq8ikWAM", label: "Rachel" },
+  { id: "AZnzlk1XvdvUeBnXmlld", label: "Domi" },
+  { id: "EXAVITQu4vr4xnSDxMaL", label: "Bella" },
+  { id: "ErXwobaYiN019PkySvjV", label: "Antoni" },
+  { id: "MF3mGyEYCl7XYWbV9V6O", label: "Elli" },
+  { id: "TxGEqnHWrfWFTfGW9XjX", label: "Josh" },
+  { id: "VR6AewLTigWG4xSOukaG", label: "Arnold" },
+  { id: "pNInz6obpgDQGcFmaJgB", label: "Adam" },
+  { id: "yoZ06aMxZJJ28mfd3POQ", label: "Sam" },
+];
+
 export const getRouteKey = (title: string) => {
   const match = title.match(/\/([^/]+)\//i);
   return match?.[1]?.toLowerCase() ?? "default";
