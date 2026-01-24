@@ -11,6 +11,8 @@ const VOICES = {
   SELENA: { id: "7fJYplvotvPf1yl7PLLP", label: "Selena" },
 } as const;
 
+export const ALL_VOICES: VoiceOption[] = Object.values(VOICES);
+
 // Route-specific voice configuration
 type RouteVoiceConfig = {
   voices: VoiceOption[];
@@ -21,6 +23,10 @@ type RouteVoiceConfig = {
 const VOICE_ROUTING_MAP: Record<string, RouteVoiceConfig> = {
   "brooks-ai-hub": {
     voices: [VOICES.DANIEL, VOICES.BENJAMIN_BEAR, VOICES.BRUCE, VOICES.SELENA],
+    defaultVoiceId: VOICES.DANIEL.id,
+  },
+  "unofficial-ato": {
+    voices: ALL_VOICES,
     defaultVoiceId: VOICES.DANIEL.id,
   },
   namc: {

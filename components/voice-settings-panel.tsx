@@ -15,7 +15,6 @@ import {
   getChatRouteKey,
   getDefaultVoice,
   getVoiceOptions,
-  isChatNamcRoute,
   type VoiceOption,
 } from "@/lib/voice";
 
@@ -35,6 +34,7 @@ const getRouteDisplayName = (routeKey: string): string => {
     "my-flower-ai": "/MyFlowerAI/",
     myflowerai: "/MyFlowerAI/",
     nat: "/NAT/",
+    "unofficial-ato": "/Unofficial ATO/",
     default: "Default",
   };
   return routeNames[routeKey] ?? `/${routeKey}/`;
