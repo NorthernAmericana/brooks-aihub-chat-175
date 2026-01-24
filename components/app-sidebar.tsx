@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { CreateCustomAtoModal } from "./create-custom-ato-modal";
 import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
@@ -41,6 +42,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [showCreateAtoModal, setShowCreateAtoModal] = useState(false);
   const { hasInstallPrompt, isStandalone } = usePwaInstall();
   const foundersEditionUrl =
     process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
@@ -61,6 +63,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       },
       error: "Failed to delete all chats",
     });
+  };
+
+  const handleCreateAtoSuccess = () => {
+    toast.success("Custom ATO created! Use it by typing /yourslash/ in chat.");
+    router.refresh();
   };
 
   return (
@@ -148,6 +155,15 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
             <Button
+              className="justify-start"
+              onClick={() => setShowCreateAtoModal(true)}
+              size="sm"
+              variant="outline"
+            >
+              <PlusIcon />
+              Make your own ATO /../
+            </Button>
+            <Button
               asChild
               className="justify-start"
               size="sm"
@@ -168,6 +184,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           </div>
         </SidebarFooter>
       </Sidebar>
+
+      <CreateCustomAtoModal
+        onOpenChange={setShowCreateAtoModal}
+        onSuccess={handleCreateAtoSuccess}
+        open={showCreateAtoModal}
+      />
 
       <AlertDialog
         onOpenChange={setShowDeleteAllDialog}

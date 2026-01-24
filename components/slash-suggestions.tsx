@@ -1,9 +1,9 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { listAgentConfigs, type AgentConfig } from "@/lib/ai/agents/registry";
 import { getStoredSlashActions, normalizeSlash } from "@/lib/suggested-actions";
 
 export function SlashSuggestions({
@@ -14,8 +14,26 @@ export function SlashSuggestions({
   onClose: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const agentConfigs = useMemo(() => listAgentConfigs(), []);
+  const [agentConfigs, setAgentConfigs] = useState<AgentConfig[]>([]);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
+
+  useEffect(() => {
+    // Load official agents immediately
+    const officialAgents = listAgentConfigs();
+    setAgentConfigs(officialAgents);
+
+    // Fetch all agents (including custom ones) from API
+    fetch("/api/agents-list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.agents) {
+          setAgentConfigs(data.agents);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load agents:", err);
+      });
+  }, []);
 
   const filteredSuggestions = useMemo(() => {
     const query = normalizeSlash(searchQuery);
@@ -91,6 +109,11 @@ export function SlashSuggestions({
             >
               <span className="font-mono text-primary">/{agent.slash}/</span>
               <span className="ml-2 text-muted-foreground">{agent.label}</span>
+              {agent.isCustom && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                  (custom)
+                </span>
+              )}
             </Button>
           ))
         ) : (

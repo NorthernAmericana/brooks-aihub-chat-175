@@ -223,20 +223,22 @@ export async function POST(request: Request) {
     const modelMessages = await convertToModelMessages(uiMessages);
 
     // Determine agent selection
-    let selectedAgent: ReturnType<
-      typeof getAgentConfigBySlash | typeof getDefaultAgentConfig
+    let selectedAgent: Awaited<
+      ReturnType<typeof getAgentConfigBySlash | typeof getDefaultAgentConfig>
     >;
 
     if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
       selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+        (await getAgentConfigById(chat.routeKey)) ??
+        (await getDefaultAgentConfig());
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
       selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+        (slashTrigger
+          ? await getAgentConfigBySlash(slashTrigger)
+          : undefined) ?? (await getDefaultAgentConfig());
     }
 
     const isNamcAgent = selectedAgent.id === "namc";

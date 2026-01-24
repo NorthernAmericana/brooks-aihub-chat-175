@@ -48,7 +48,7 @@ function PureSuggestedActions({
 
   useEffect(() => {
     setStoredActions(getStoredSlashActions());
-  }, [messages]);
+  }, []);
 
   const rememberedActions = useMemo(() => {
     const results: SlashAction[] = [];

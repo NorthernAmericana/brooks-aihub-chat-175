@@ -189,26 +189,23 @@ export function Chat({
     setMessages,
   });
 
-  const handleSuggestedFolderSelect = useCallback(
-    (folder: string) => {
-      const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
-      setInput(`${normalizedFolder} `);
+  const handleSuggestedFolderSelect = useCallback((folder: string) => {
+    const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
+    setInput(`${normalizedFolder} `);
 
-      requestAnimationFrame(() => {
-        const textarea = document.querySelector<HTMLTextAreaElement>(
-          '[data-testid="multimodal-input"]'
-        );
-        if (!textarea) {
-          return;
-        }
+    requestAnimationFrame(() => {
+      const textarea = document.querySelector<HTMLTextAreaElement>(
+        '[data-testid="multimodal-input"]'
+      );
+      if (!textarea) {
+        return;
+      }
 
-        textarea.focus();
-        const endPosition = textarea.value.length;
-        textarea.setSelectionRange(endPosition, endPosition);
-      });
-    },
-    [setInput]
-  );
+      textarea.focus();
+      const endPosition = textarea.value.length;
+      textarea.setSelectionRange(endPosition, endPosition);
+    });
+  }, []);
 
   return (
     <>

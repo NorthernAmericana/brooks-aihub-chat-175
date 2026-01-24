@@ -6,6 +6,7 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { AtoBrowser } from "./ato-browser";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -40,6 +41,8 @@ function PureChatHeader({
       >
         <Link href="/memories">{memoriesLabel}</Link>
       </Button>
+
+      <AtoBrowser currentChatId={chatId} />
 
       {(!open || windowWidth < 768) && (
         <Button
