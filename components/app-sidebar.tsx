@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
@@ -42,8 +43,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const { hasInstallPrompt, isStandalone } = usePwaInstall();
-  const foundersEditionUrl =
-    process.env.NEXT_PUBLIC_STRIPE_FOUNDERS_EDITION_URL ?? "#";
+  const { data: session } = useSession();
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   const handleDeleteAll = () => {
     const deletePromise = fetch("/api/history", {
@@ -61,6 +62,38 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       },
       error: "Failed to delete all chats",
     });
+  };
+
+  const handleFoundersAccess = async () => {
+    if (!session?.user) {
+      toast.error("Please sign in to purchase Founders Access");
+      router.push("/login");
+      return;
+    }
+
+    setLoadingCheckout(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priceId: "price_1SpBht050iAre6ZtPyv42z6s",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to start checkout. Please try again.");
+      setLoadingCheckout(false);
+    }
   };
 
   return (
@@ -133,14 +166,13 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
             <Button
-              asChild
               className="justify-start"
               size="sm"
               variant="outline"
+              onClick={handleFoundersAccess}
+              disabled={loadingCheckout}
             >
-              <Link href={foundersEditionUrl} rel="noreferrer" target="_blank">
-                Founders Edition • $4.99
-              </Link>
+              {loadingCheckout ? "Loading..." : "Founders Edition • $4.99"}
             </Button>
             {isStandalone ? (
               <div className="rounded-md border border-muted bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
