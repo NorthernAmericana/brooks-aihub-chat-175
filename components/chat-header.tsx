@@ -10,6 +10,7 @@ import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+import { AtoBrowser } from "./ato-browser";
 
 function PureChatHeader({
   chatId,
@@ -40,6 +41,8 @@ function PureChatHeader({
       >
         <Link href="/memories">{memoriesLabel}</Link>
       </Button>
+
+      <AtoBrowser currentChatId={chatId} />
 
       {(!open || windowWidth < 768) && (
         <Button
