@@ -12,12 +12,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ALL_VOICES } from "@/lib/voice";
 
 export default function CreateAtoPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedVoiceId, setSelectedVoiceId] = useState(
+    ALL_VOICES[0]?.id ?? ""
+  );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,6 +46,9 @@ export default function CreateAtoPage() {
     const tools = String(formData.get("ato-tools") ?? "").trim();
     const memory = String(formData.get("ato-memory") ?? "").trim();
     const audience = String(formData.get("ato-audience") ?? "").trim();
+    const selectedVoice =
+      ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ??
+      ALL_VOICES[0];
 
     const instructionsParts = [
       route ? `Slash route: ${route}` : null,
@@ -58,6 +72,8 @@ export default function CreateAtoPage() {
           description: description || null,
           personalityName: tone || null,
           instructions,
+          defaultVoiceId: selectedVoice?.id ?? null,
+          defaultVoiceLabel: selectedVoice?.label ?? null,
         }),
       });
 
@@ -74,6 +90,7 @@ export default function CreateAtoPage() {
 
       setSuccessMessage("ATO request submitted successfully.");
       event.currentTarget.reset();
+      setSelectedVoiceId(ALL_VOICES[0]?.id ?? "");
     } catch (_error) {
       setErrorMessage("Unable to submit your ATO request. Please try again.");
     } finally {
@@ -164,6 +181,27 @@ export default function CreateAtoPage() {
                 placeholder="Supportive, energetic, and concise."
                 type="text"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ato-voice">Default voice</Label>
+              <Select
+                onValueChange={(value) => setSelectedVoiceId(value)}
+                value={selectedVoiceId}
+              >
+                <SelectTrigger id="ato-voice">
+                  <SelectValue placeholder="Select a default voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_VOICES.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>
+                      {voice.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                This voice will be the starting default for your unofficial ATO.
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-boundaries">Safety boundaries</Label>
