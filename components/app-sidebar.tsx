@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { CreateCustomAtoModal } from "./create-custom-ato-modal";
 import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
@@ -35,7 +36,6 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { CreateCustomAtoModal } from "./create-custom-ato-modal";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();

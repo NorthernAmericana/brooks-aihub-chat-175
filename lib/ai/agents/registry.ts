@@ -200,7 +200,7 @@ export const defaultAgentId = "brooks-ai-hub";
 
 let customAgentsCache: AgentConfig[] = [];
 let customAgentsCacheTime = 0;
-const CACHE_TTL = 60000; // 1 minute
+const CACHE_TTL = 60_000; // 1 minute
 
 // Load custom agents from database (server-side only)
 async function loadCustomAgents(): Promise<AgentConfig[]> {
@@ -256,9 +256,7 @@ export async function getAgentConfigBySlash(
 ): Promise<AgentConfig | undefined> {
   const normalized = normalizeSlash(slash);
   const allAgents = await listAgentConfigs();
-  return allAgents.find(
-    (agent) => normalizeSlash(agent.slash) === normalized
-  );
+  return allAgents.find((agent) => normalizeSlash(agent.slash) === normalized);
 }
 
 export async function getDefaultAgentConfig(): Promise<AgentConfig> {

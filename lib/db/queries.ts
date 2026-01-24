@@ -20,9 +20,9 @@ import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
 import {
   type Chat,
+  type CustomAgent,
   chat,
   customAgent,
-  type CustomAgent,
   type DBMessage,
   document,
   memory,
@@ -837,7 +837,9 @@ export async function getCustomAgentsByUserId({ userId }: { userId: string }) {
     return await db
       .select()
       .from(customAgent)
-      .where(and(eq(customAgent.userId, userId), eq(customAgent.isActive, true)))
+      .where(
+        and(eq(customAgent.userId, userId), eq(customAgent.isActive, true))
+      )
       .orderBy(desc(customAgent.lastUsedAt), desc(customAgent.createdAt));
   } catch (_error) {
     throw new ChatSDKError(
@@ -928,12 +930,24 @@ export async function updateCustomAgent({
       updatedAt: new Date(),
     };
 
-    if (name) updates.name = name;
-    if (systemPrompt !== undefined) updates.systemPrompt = systemPrompt;
-    if (defaultVoiceId) updates.defaultVoiceId = defaultVoiceId;
-    if (defaultVoiceLabel) updates.defaultVoiceLabel = defaultVoiceLabel;
-    if (memoryScope) updates.memoryScope = memoryScope;
-    if (tools) updates.tools = tools;
+    if (name) {
+      updates.name = name;
+    }
+    if (systemPrompt !== undefined) {
+      updates.systemPrompt = systemPrompt;
+    }
+    if (defaultVoiceId) {
+      updates.defaultVoiceId = defaultVoiceId;
+    }
+    if (defaultVoiceLabel) {
+      updates.defaultVoiceLabel = defaultVoiceLabel;
+    }
+    if (memoryScope) {
+      updates.memoryScope = memoryScope;
+    }
+    if (tools) {
+      updates.tools = tools;
+    }
 
     const [updated] = await db
       .update(customAgent)

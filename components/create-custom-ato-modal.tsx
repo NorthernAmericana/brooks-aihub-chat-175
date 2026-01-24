@@ -1,6 +1,5 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -38,9 +37,7 @@ export function CreateCustomAtoModal({
   const [name, setName] = useState("");
   const [slash, setSlash] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [defaultVoiceId, setDefaultVoiceId] = useState(
-    ALL_VOICE_OPTIONS[0].id
-  );
+  const [defaultVoiceId, setDefaultVoiceId] = useState(ALL_VOICE_OPTIONS[0].id);
   const [memoryScope, setMemoryScope] = useState<"ato-only" | "hub-wide">(
     "ato-only"
   );
@@ -59,7 +56,9 @@ export function CreateCustomAtoModal({
     setIsSubmitting(true);
 
     try {
-      const selectedVoice = ALL_VOICE_OPTIONS.find((v) => v.id === defaultVoiceId);
+      const selectedVoice = ALL_VOICE_OPTIONS.find(
+        (v) => v.id === defaultVoiceId
+      );
 
       const response = await fetch("/api/custom-agents", {
         method: "POST",
@@ -71,7 +70,12 @@ export function CreateCustomAtoModal({
           defaultVoiceId,
           defaultVoiceLabel: selectedVoice?.label,
           memoryScope,
-          tools: ["createDocument", "updateDocument", "requestSuggestions", "saveMemory"],
+          tools: [
+            "createDocument",
+            "updateDocument",
+            "requestSuggestions",
+            "saveMemory",
+          ],
         }),
       });
 
@@ -174,10 +178,7 @@ export function CreateCustomAtoModal({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="voice">Default Voice</Label>
-              <Select
-                onValueChange={setDefaultVoiceId}
-                value={defaultVoiceId}
-              >
+              <Select onValueChange={setDefaultVoiceId} value={defaultVoiceId}>
                 <SelectTrigger id="voice">
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
@@ -227,8 +228,8 @@ export function CreateCustomAtoModal({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Choose whether memories are specific to this ATO or shared across
-                the hub
+                Choose whether memories are specific to this ATO or shared
+                across the hub
               </p>
             </div>
           </div>

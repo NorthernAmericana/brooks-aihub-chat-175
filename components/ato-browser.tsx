@@ -4,6 +4,7 @@ import { FolderIcon, SearchIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -12,14 +13,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
 import type { AgentConfig } from "@/lib/ai/agents/registry";
 
 interface AtoBrowserProps {
   currentChatId?: string;
 }
 
-export function AtoBrowser({ currentChatId }: AtoBrowserProps) {
+export function AtoBrowser({ currentChatId: _currentChatId }: AtoBrowserProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,7 +71,9 @@ export function AtoBrowser({ currentChatId }: AtoBrowserProps) {
   }, [open]);
 
   const filteredAgents = agents.filter((agent) => {
-    if (!searchQuery) return true;
+    if (!searchQuery) {
+      return true;
+    }
     const query = searchQuery.toLowerCase();
     return (
       agent.label.toLowerCase().includes(query) ||
@@ -80,7 +82,9 @@ export function AtoBrowser({ currentChatId }: AtoBrowserProps) {
   });
 
   const filteredCustomAgents = customAgents.filter((agent) => {
-    if (!searchQuery) return true;
+    if (!searchQuery) {
+      return true;
+    }
     const query = searchQuery.toLowerCase();
     return (
       agent.label.toLowerCase().includes(query) ||

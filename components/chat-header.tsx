@@ -6,11 +6,11 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { AtoBrowser } from "./ato-browser";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
-import { AtoBrowser } from "./ato-browser";
 
 function PureChatHeader({
   chatId,
