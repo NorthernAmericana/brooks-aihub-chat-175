@@ -9,13 +9,13 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
-const ALLOWED_MIME_TYPES = [
+const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "application/pdf",
   "text/plain",
   "text/markdown",
-] as const;
+]);
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -25,7 +25,7 @@ const FileSchema = z.object({
       message: "File size should be less than 5MB",
     })
     // Update the file type based on the kind of files you want to accept
-    .refine((file) => ALLOWED_MIME_TYPES.includes(file.type), {
+    .refine((file) => ALLOWED_MIME_TYPES.has(file.type), {
       message: "File type should be JPEG, PNG, PDF, or plain text",
     }),
 });
