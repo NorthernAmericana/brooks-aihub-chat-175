@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +15,72 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function CreateAtoPage() {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const name = String(formData.get("ato-name") ?? "").trim();
+    const route = String(formData.get("ato-route") ?? "").trim();
+    const description = String(formData.get("ato-tagline") ?? "").trim();
+    const tone = String(formData.get("ato-tone") ?? "").trim();
+    const boundaries = String(formData.get("ato-boundaries") ?? "").trim();
+    const intro = String(formData.get("ato-intro") ?? "").trim();
+    const tools = String(formData.get("ato-tools") ?? "").trim();
+    const memory = String(formData.get("ato-memory") ?? "").trim();
+    const audience = String(formData.get("ato-audience") ?? "").trim();
+
+    const instructionsParts = [
+      route ? `Slash route: ${route}` : null,
+      tone ? `Tone & voice: ${tone}` : null,
+      boundaries ? `Safety boundaries: ${boundaries}` : null,
+      intro ? `Welcome message: ${intro}` : null,
+      tools ? `Preferred tools: ${tools}` : null,
+      memory ? `Memory preference: ${memory}` : null,
+      audience ? `Target audience: ${audience}` : null,
+    ].filter((part): part is string => Boolean(part));
+
+    const instructions =
+      instructionsParts.length > 0 ? instructionsParts.join("\n") : null;
+
+    try {
+      const response = await fetch("/api/ato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          description: description || null,
+          personalityName: tone || null,
+          instructions,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrorMessage(
+          typeof data?.error === "string"
+            ? data.error
+            : "Something went wrong while submitting your ATO."
+        );
+        return;
+      }
+
+      setSuccessMessage("ATO request submitted successfully.");
+      event.currentTarget.reset();
+    } catch (_error) {
+      setErrorMessage("Unable to submit your ATO request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-6 px-4 py-8">
       <header className="space-y-3">
@@ -24,10 +93,20 @@ export default function CreateAtoPage() {
             Create your own ATO by defining the slash route, personality, and
             capabilities you want to launch inside Brooks AI HUB.
           </p>
+          <div className="rounded-lg border border-muted bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Submission limits</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              <li>Free: up to 3 total unofficial ATOs, instructions ≤ 500.</li>
+              <li>
+                Founders: up to 10 unofficial ATOs per month, instructions ≤
+                999.
+              </li>
+            </ul>
+          </div>
         </div>
       </header>
 
-      <form className="grid gap-6">
+      <form className="grid gap-6" onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
             <CardTitle>ATO basics</CardTitle>
@@ -204,13 +283,31 @@ export default function CreateAtoPage() {
         </Card>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            Submissions are reviewed by the Brooks AI HUB team before launch.
-          </p>
-          <Button type="submit" variant="outline">
-            Submit ATO request
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p>
+              Submissions are reviewed by the Brooks AI HUB team before launch.
+            </p>
+            <p>
+              Need more capacity? Founders access raises your monthly quota and
+              instruction limits.
+            </p>
+          </div>
+          <Button disabled={isSubmitting} type="submit" variant="outline">
+            {isSubmitting ? "Submitting..." : "Submit ATO request"}
           </Button>
         </div>
+        {(errorMessage || successMessage) && (
+          <div
+            aria-live="polite"
+            className={`rounded-md border px-3 py-2 text-sm ${
+              errorMessage
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+            }`}
+          >
+            {errorMessage ?? successMessage}
+          </div>
+        )}
       </form>
     </div>
   );

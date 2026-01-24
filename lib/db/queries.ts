@@ -257,6 +257,33 @@ export async function getUnofficialAtosByOwner({
   }
 }
 
+export async function getUnofficialAtoCountByOwner({
+  ownerUserId,
+  createdAfter,
+}: {
+  ownerUserId: string;
+  createdAfter?: Date;
+}) {
+  try {
+    const conditions = [eq(unofficialAto.ownerUserId, ownerUserId)];
+    if (createdAfter) {
+      conditions.push(gte(unofficialAto.createdAt, createdAfter));
+    }
+
+    const [record] = await db
+      .select({ value: count() })
+      .from(unofficialAto)
+      .where(and(...conditions));
+
+    return Number(record?.value ?? 0);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO usage count"
+    );
+  }
+}
+
 export async function getUnofficialAtoById({
   id,
   ownerUserId,
