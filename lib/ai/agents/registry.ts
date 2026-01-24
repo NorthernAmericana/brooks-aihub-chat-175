@@ -221,6 +221,51 @@ export function getAgentConfigBySlash(slash: string): AgentConfig | undefined {
   );
 }
 
+// Server-side only: Get agent config by slash, including custom ATOs
+export async function getAgentConfigBySlashWithCustom(
+  slash: string,
+  userId: string
+): Promise<AgentConfig | undefined> {
+  // First check official agents
+  const officialAgent = getAgentConfigBySlash(slash);
+  if (officialAgent) {
+    return officialAgent;
+  }
+
+  // Then check custom ATOs
+  try {
+    const { getCustomATOsByUserId } = await import("@/lib/db/queries");
+    const customATOs = await getCustomATOsByUserId(userId);
+    const normalized = normalizeSlash(slash);
+    const customATO = customATOs.find(
+      (ato) => normalizeSlash(ato.slash) === normalized
+    );
+
+    if (customATO) {
+      return {
+        id: `custom-${customATO.id}`,
+        label: customATO.name,
+        slash: customATO.slash,
+        tools: [
+          "createDocument",
+          "updateDocument",
+          "requestSuggestions",
+          "saveMemory",
+        ],
+        systemPromptOverride: customATO.instructions,
+        isCustom: true,
+        voiceId: customATO.voiceId,
+        voiceLabel: customATO.voiceLabel,
+        memoryScope: customATO.memoryScope,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch custom ATOs:", error);
+  }
+
+  return undefined;
+}
+
 export function getDefaultAgentConfig(): AgentConfig {
   return (
     getAgentConfigById(defaultAgentId) ??
