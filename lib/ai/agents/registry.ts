@@ -1,7 +1,3 @@
-import "server-only";
-
-import { getCustomATOsByUserId } from "@/lib/db/queries";
-
 export type AgentToolId =
   | "getWeather"
   | "createDocument"
@@ -236,8 +232,9 @@ export async function getAgentConfigBySlashWithCustom(
     return officialAgent;
   }
 
-  // Then check custom ATOs
+  // Then check custom ATOs (dynamic import to avoid client bundle)
   try {
+    const { getCustomATOsByUserId } = await import("@/lib/db/queries");
     const customATOs = await getCustomATOsByUserId(userId);
     const normalized = normalizeSlash(slash);
     const customATO = customATOs.find(
