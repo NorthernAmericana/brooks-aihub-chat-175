@@ -7,6 +7,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -219,7 +220,7 @@ export const customATO = pgTable("CustomATO", {
   lastUsedAt: timestamp("lastUsedAt"),
 }, (table) => ({
   // Unique constraint: each user can only have one ATO with a given slash
-  uniqueUserSlash: primaryKey({ columns: [table.userId, table.slash] }),
+  uniqueUserSlash: unique().on(table.userId, table.slash),
 }));
 
 export type CustomATO = InferSelectModel<typeof customATO>;
