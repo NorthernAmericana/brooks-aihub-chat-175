@@ -145,7 +145,7 @@ export function CustomAtoDialog({
             <div className="grid gap-2">
               <Label htmlFor="voice">Default Voice</Label>
               <Select value={voiceId} onValueChange={setVoiceId}>
-                <SelectTrigger id="voice">
+                <SelectTrigger id="voice" aria-labelledby="voice-label">
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,7 +181,7 @@ export function CustomAtoDialog({
                   setMemoryScope(value)
                 }
               >
-                <SelectTrigger id="memoryScope">
+                <SelectTrigger id="memoryScope" aria-labelledby="memoryScope-label">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

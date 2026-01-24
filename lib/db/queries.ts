@@ -831,37 +831,30 @@ export async function updateCustomAto({
   promptInstructions?: string;
   memoryScope?: "ato-only" | "hub-wide";
 }): Promise<CustomAto> {
-  try {
-    const updateData: Partial<CustomAto> = {
-      updatedAt: new Date(),
-    };
-    if (name !== undefined) updateData.name = name;
-    if (voiceId !== undefined) updateData.voiceId = voiceId;
-    if (voiceLabel !== undefined) updateData.voiceLabel = voiceLabel;
-    if (promptInstructions !== undefined)
-      updateData.promptInstructions = promptInstructions;
-    if (memoryScope !== undefined) updateData.memoryScope = memoryScope;
+  const updateData: Partial<CustomAto> = {
+    updatedAt: new Date(),
+  };
+  if (name !== undefined) updateData.name = name;
+  if (voiceId !== undefined) updateData.voiceId = voiceId;
+  if (voiceLabel !== undefined) updateData.voiceLabel = voiceLabel;
+  if (promptInstructions !== undefined)
+    updateData.promptInstructions = promptInstructions;
+  if (memoryScope !== undefined) updateData.memoryScope = memoryScope;
 
-    const [updated] = await db
-      .update(customAto)
-      .set(updateData)
-      .where(and(eq(customAto.id, id), eq(customAto.userId, userId)))
-      .returning();
+  const [updated] = await db
+    .update(customAto)
+    .set(updateData)
+    .where(and(eq(customAto.id, id), eq(customAto.userId, userId)))
+    .returning();
 
-    if (!updated) {
-      throw new ChatSDKError(
-        "not_found:database",
-        "Custom ATO not found or unauthorized"
-      );
-    }
-
-    return updated;
-  } catch (_error) {
+  if (!updated) {
     throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to update custom ATO"
+      "not_found:database",
+      "Custom ATO not found or unauthorized"
     );
   }
+
+  return updated;
 }
 
 export async function updateCustomAtoLastUsed(
