@@ -17,6 +17,26 @@
 </p>
 <br/>
 
+## Brooks AI HUB Editions (Two Repos, One Product)
+
+<p align="center">
+  Brooks AI HUB is one product ecosystem available in <strong>two separate repositories</strong> for different deployment scenarios.
+</p>
+
+### Mobile Edition (Primary)
+
+This repository (`NorthernAmericana/brooks-aihub-chat-175`) is the **primary Mobile Edition** – a Next.js-based conversational AI application designed for web and mobile deployments with modern chat UI, multi-provider model access, and cloud infrastructure.
+
+### Console Edition
+
+The **[Console Edition](https://github.com/NorthernAmericana/brooks-ai-hub-console175)** (`NorthernAmericana/brooks-ai-hub-console175`) is optimized for **Raspberry Pi and handheld kiosk** deployments. It features a fullscreen launcher interface with cloud sync capabilities, perfect for physical installations and embedded devices.
+
+<p align="center">
+  <strong>→</strong> Both editions share the same Brooks AI HUB vision and product goals <strong>←</strong>
+</p>
+
+<br/>
+
 ## Master Docs
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
