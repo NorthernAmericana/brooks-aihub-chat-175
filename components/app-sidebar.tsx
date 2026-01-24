@@ -124,21 +124,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   Memories
                 </Link>
               </Button>
-              <Button
-                asChild
-                className="justify-start px-2 text-sm"
-                size="sm"
-                variant="ghost"
-              >
-                <Link
-                  href="/settings"
-                  onClick={() => {
-                    setOpenMobile(false);
-                  }}
-                >
-                  Settings
-                </Link>
-              </Button>
             </div>
           </SidebarMenu>
         </SidebarHeader>

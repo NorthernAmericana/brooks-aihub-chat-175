@@ -153,9 +153,6 @@ export function PureMessageActions({
 
   return (
     <Actions className="-ml-0.5">
-      <Action onClick={handleSpeak} tooltip="Speak">
-        <SpeakerIcon />
-      </Action>
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
       </Action>
