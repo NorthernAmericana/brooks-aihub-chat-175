@@ -205,6 +205,31 @@ export const memory = pgTable("Memory", {
 
 export type Memory = InferSelectModel<typeof memory>;
 
+export const unofficialAto = pgTable("UnofficialAto", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  personalityName: text("personalityName"),
+  instructions: text("instructions"),
+  intelligenceMode: varchar("intelligenceMode", {
+    enum: ["Hive", "ATO-Limited"],
+  })
+    .notNull()
+    .default("ATO-Limited"),
+  defaultVoiceId: text("defaultVoiceId"),
+  defaultVoiceLabel: text("defaultVoiceLabel"),
+  webSearchEnabled: boolean("webSearchEnabled").notNull().default(false),
+  fileSearchEnabled: boolean("fileSearchEnabled").notNull().default(false),
+  ownerUserId: uuid("ownerUserId")
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  planMetadata: json("planMetadata").$type<Record<string, unknown>>(),
+});
+
+export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
+
 // Entitlements table for product ownership
 export const entitlement = pgTable("Entitlement", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
