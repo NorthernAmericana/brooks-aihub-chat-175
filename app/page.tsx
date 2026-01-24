@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "@/components/toast";
 
@@ -54,6 +54,18 @@ export default function IntroPage() {
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_55%)]" />
+
+      {session?.user ? (
+        <div className="absolute right-6 top-6 z-20">
+          <button
+            className="rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/80 transition hover:border-white/40 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+            onClick={() => signOut()}
+            type="button"
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
 
       <div className="intro-card intro-float absolute left-[8%] top-[18%] hidden h-28 w-48 rounded-2xl border border-white/20 sm:block" />
       <div className="intro-card intro-float-slow absolute right-[10%] top-[14%] hidden h-32 w-56 rounded-2xl border border-white/20 sm:block" />
