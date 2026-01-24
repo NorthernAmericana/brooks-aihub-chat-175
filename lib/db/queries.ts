@@ -28,6 +28,7 @@ import {
   message,
   redemption,
   redemptionCode,
+  unofficialAto,
   type Suggestion,
   stream,
   suggestion,
@@ -181,6 +182,101 @@ export async function getApprovedMemoriesByUserId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories"
+    );
+  }
+}
+
+export async function createUnofficialAto({
+  ownerUserId,
+  name,
+  description,
+  personalityName,
+  instructions,
+  intelligenceMode,
+  defaultVoiceId,
+  defaultVoiceLabel,
+  webSearchEnabled,
+  fileSearchEnabled,
+  planMetadata,
+}: {
+  ownerUserId: string;
+  name: string;
+  description?: string | null;
+  personalityName?: string | null;
+  instructions?: string | null;
+  intelligenceMode?: "Hive" | "ATO-Limited";
+  defaultVoiceId?: string | null;
+  defaultVoiceLabel?: string | null;
+  webSearchEnabled?: boolean;
+  fileSearchEnabled?: boolean;
+  planMetadata?: Record<string, unknown> | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(unofficialAto)
+      .values({
+        ownerUserId,
+        name,
+        description: description ?? null,
+        personalityName: personalityName ?? null,
+        instructions: instructions ?? null,
+        intelligenceMode: intelligenceMode ?? "ATO-Limited",
+        defaultVoiceId: defaultVoiceId ?? null,
+        defaultVoiceLabel: defaultVoiceLabel ?? null,
+        webSearchEnabled: webSearchEnabled ?? false,
+        fileSearchEnabled: fileSearchEnabled ?? false,
+        planMetadata: planMetadata ?? null,
+      })
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create unofficial ATO"
+    );
+  }
+}
+
+export async function getUnofficialAtosByOwner({
+  ownerUserId,
+}: {
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(unofficialAto)
+      .where(eq(unofficialAto.ownerUserId, ownerUserId))
+      .orderBy(desc(unofficialAto.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATOs"
+    );
+  }
+}
+
+export async function getUnofficialAtoById({
+  id,
+  ownerUserId,
+}: {
+  id: string;
+  ownerUserId: string;
+}) {
+  try {
+    const [record] = await db
+      .select()
+      .from(unofficialAto)
+      .where(
+        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+      );
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO"
     );
   }
 }
