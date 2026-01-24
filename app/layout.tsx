@@ -8,7 +8,7 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
+  metadataBase: new URL("https://brooksaihub.com"),
   title: "Brooks AI HUB",
   description: "Brooks AI HUB assistant experience.",
   manifest: "/manifest.webmanifest",

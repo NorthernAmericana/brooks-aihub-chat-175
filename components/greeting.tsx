@@ -21,6 +21,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
   const suggestedFolders = useMemo(() => {
     const desired = new Set([
+      "Brooks AI HUB",
       "BrooksBears",
       "MyCarMindATO",
       "MyFlowerAI",
