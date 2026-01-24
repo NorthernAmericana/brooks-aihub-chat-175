@@ -26,7 +26,10 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar user={session?.user} />
-      <SidebarInset className="min-h-0 overflow-y-auto overscroll-contain">
+      <SidebarInset
+        className="min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         {children}
       </SidebarInset>
     </SidebarProvider>
