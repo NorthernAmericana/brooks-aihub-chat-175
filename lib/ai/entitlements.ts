@@ -2,6 +2,8 @@ import type { UserType } from "@/app/(auth)/auth";
 
 type Entitlements = {
   maxMessagesPerDay: number;
+  maxCustomAtosPerMonth: number;
+  maxPromptInstructionsLength: number;
 };
 
 export const entitlementsByUserType: Record<UserType, Entitlements> = {
@@ -10,6 +12,8 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    */
   guest: {
     maxMessagesPerDay: 20,
+    maxCustomAtosPerMonth: 3,
+    maxPromptInstructionsLength: 500,
   },
 
   /*
@@ -17,9 +21,16 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    */
   regular: {
     maxMessagesPerDay: 50,
+    maxCustomAtosPerMonth: 3,
+    maxPromptInstructionsLength: 500,
   },
 
   /*
-   * TODO: For users with an account and a paid membership
+   * For users with Founders Edition
    */
+  founder: {
+    maxMessagesPerDay: 200,
+    maxCustomAtosPerMonth: 10,
+    maxPromptInstructionsLength: 999,
+  },
 };

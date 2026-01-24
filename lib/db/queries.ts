@@ -21,6 +21,8 @@ import { generateUUID } from "../utils";
 import {
   type Chat,
   chat,
+  type CustomAto,
+  customAto,
   type DBMessage,
   document,
   memory,
@@ -730,5 +732,191 @@ export async function updateChatRouteKey({
   } catch (error) {
     console.warn("Failed to update routeKey for chat", chatId, error);
     return;
+  }
+}
+
+// Custom ATO queries
+export async function createCustomAto({
+  userId,
+  name,
+  slashRoute,
+  voiceId,
+  voiceLabel,
+  promptInstructions,
+  memoryScope = "ato-only",
+  isOfficial = false,
+}: {
+  userId: string;
+  name: string;
+  slashRoute: string;
+  voiceId?: string;
+  voiceLabel?: string;
+  promptInstructions?: string;
+  memoryScope?: "ato-only" | "hub-wide";
+  isOfficial?: boolean;
+}): Promise<CustomAto> {
+  try {
+    const [newAto] = await db
+      .insert(customAto)
+      .values({
+        userId,
+        name,
+        slashRoute,
+        voiceId,
+        voiceLabel,
+        promptInstructions,
+        memoryScope,
+        isOfficial,
+      })
+      .returning();
+    return newAto;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create custom ATO"
+    );
+  }
+}
+
+export async function getCustomAtosByUserId(
+  userId: string
+): Promise<CustomAto[]> {
+  try {
+    return await db
+      .select()
+      .from(customAto)
+      .where(eq(customAto.userId, userId))
+      .orderBy(desc(customAto.lastUsedAt), desc(customAto.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom ATOs by user id"
+    );
+  }
+}
+
+export async function getCustomAtoById(
+  id: string,
+  userId: string
+): Promise<CustomAto | null> {
+  try {
+    const [ato] = await db
+      .select()
+      .from(customAto)
+      .where(and(eq(customAto.id, id), eq(customAto.userId, userId)))
+      .limit(1);
+    return ato || null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom ATO by id"
+    );
+  }
+}
+
+export async function updateCustomAto({
+  id,
+  userId,
+  name,
+  voiceId,
+  voiceLabel,
+  promptInstructions,
+  memoryScope,
+}: {
+  id: string;
+  userId: string;
+  name?: string;
+  voiceId?: string;
+  voiceLabel?: string;
+  promptInstructions?: string;
+  memoryScope?: "ato-only" | "hub-wide";
+}): Promise<CustomAto> {
+  try {
+    const updateData: Partial<CustomAto> = {
+      updatedAt: new Date(),
+    };
+    if (name !== undefined) updateData.name = name;
+    if (voiceId !== undefined) updateData.voiceId = voiceId;
+    if (voiceLabel !== undefined) updateData.voiceLabel = voiceLabel;
+    if (promptInstructions !== undefined)
+      updateData.promptInstructions = promptInstructions;
+    if (memoryScope !== undefined) updateData.memoryScope = memoryScope;
+
+    const [updated] = await db
+      .update(customAto)
+      .set(updateData)
+      .where(and(eq(customAto.id, id), eq(customAto.userId, userId)))
+      .returning();
+
+    if (!updated) {
+      throw new ChatSDKError(
+        "not_found:database",
+        "Custom ATO not found or unauthorized"
+      );
+    }
+
+    return updated;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update custom ATO"
+    );
+  }
+}
+
+export async function updateCustomAtoLastUsed(
+  id: string,
+  userId: string
+): Promise<void> {
+  try {
+    await db
+      .update(customAto)
+      .set({ lastUsedAt: new Date() })
+      .where(and(eq(customAto.id, id), eq(customAto.userId, userId)));
+  } catch (error) {
+    console.warn("Failed to update lastUsedAt for custom ATO", id, error);
+  }
+}
+
+export async function deleteCustomAto(
+  id: string,
+  userId: string
+): Promise<void> {
+  try {
+    await db
+      .delete(customAto)
+      .where(and(eq(customAto.id, id), eq(customAto.userId, userId)));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete custom ATO"
+    );
+  }
+}
+
+export async function getCustomAtoUsageThisMonth(
+  userId: string
+): Promise<number> {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const result = await db
+      .select({ count: count() })
+      .from(customAto)
+      .where(
+        and(
+          eq(customAto.userId, userId),
+          gte(customAto.createdAt, startOfMonth),
+          eq(customAto.isOfficial, false)
+        )
+      );
+
+    return result[0]?.count || 0;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get custom ATO usage for this month"
+    );
   }
 }
