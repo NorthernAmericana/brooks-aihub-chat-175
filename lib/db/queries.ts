@@ -308,6 +308,58 @@ export async function getUnofficialAtoById({
   }
 }
 
+export async function updateUnofficialAtoSettings({
+  id,
+  ownerUserId,
+  webSearchEnabled,
+  fileSearchEnabled,
+  planMetadata,
+}: {
+  id: string;
+  ownerUserId: string;
+  webSearchEnabled?: boolean;
+  fileSearchEnabled?: boolean;
+  planMetadata?: Record<string, unknown> | null;
+}) {
+  try {
+    const updateValues: {
+      webSearchEnabled?: boolean;
+      fileSearchEnabled?: boolean;
+      planMetadata?: Record<string, unknown> | null;
+      updatedAt: Date;
+    } = {
+      updatedAt: new Date(),
+    };
+
+    if (typeof webSearchEnabled === "boolean") {
+      updateValues.webSearchEnabled = webSearchEnabled;
+    }
+
+    if (typeof fileSearchEnabled === "boolean") {
+      updateValues.fileSearchEnabled = fileSearchEnabled;
+    }
+
+    if (typeof planMetadata !== "undefined") {
+      updateValues.planMetadata = planMetadata;
+    }
+
+    const [record] = await db
+      .update(unofficialAto)
+      .set(updateValues)
+      .where(
+        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update unofficial ATO"
+    );
+  }
+}
+
 export async function createMemoryRecord({
   ownerId,
   sourceUri,

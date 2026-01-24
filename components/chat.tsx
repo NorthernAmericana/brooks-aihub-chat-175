@@ -159,6 +159,7 @@ export function Chat({
 
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
+  const atoId = searchParams.get("atoId");
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
@@ -170,9 +171,16 @@ export function Chat({
       });
 
       setHasAppendedQuery(true);
-      window.history.replaceState({}, "", `/chat/${id}`);
+      const params = new URLSearchParams();
+      if (atoId) {
+        params.set("atoId", atoId);
+      }
+      const nextUrl = params.toString()
+        ? `/chat/${id}?${params.toString()}`
+        : `/chat/${id}`;
+      window.history.replaceState({}, "", nextUrl);
     }
-  }, [query, sendMessage, hasAppendedQuery, id]);
+  }, [query, sendMessage, hasAppendedQuery, id, atoId]);
 
   const { data: votes } = useSWR<Vote[]>(
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
@@ -240,6 +248,7 @@ export function Chat({
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
+              atoId={atoId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}

@@ -15,6 +15,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
@@ -38,7 +39,7 @@ import {
 } from "@/lib/ai/models";
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, fetcher } from "@/lib/utils";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -76,6 +77,7 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  atoId,
 }: {
   chatId: string;
   chatRouteKey?: string | null;
@@ -92,6 +94,7 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  atoId?: string | null;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -167,6 +170,11 @@ function PureMultimodalInput({
     newRoute: "",
     draftMessage: "",
   });
+  const { data: atoData } = useSWR<{ ato: { fileSearchEnabled: boolean } }>(
+    atoId ? `/api/ato/${atoId}` : null,
+    fetcher
+  );
+  const canUploadFiles = atoId ? Boolean(atoData?.ato?.fileSearchEnabled) : true;
 
   // Detect when user types "/" at the start to show suggestions
   useEffect(() => {
@@ -355,35 +363,51 @@ function PureMultimodalInput({
     chatRouteKey,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType,
-        };
+  const uploadFile = useCallback(
+    async (file: File) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
       }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      if (atoId) {
+        formData.append("atoId", atoId);
+      }
+
+      try {
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const { url, pathname, contentType } = data;
+
+          return {
+            url,
+            name: pathname,
+            contentType,
+          };
+        }
+        const { error } = await response.json();
+        toast.error(error);
+      } catch (_error) {
+        toast.error("Failed to upload file, please try again!");
+      }
+    },
+    [atoId, canUploadFiles]
+  );
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
+      }
+
       const files = Array.from(event.target.files || []);
 
       setUploadQueue(files.map((file) => file.name));
@@ -405,11 +429,16 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile]
+    [canUploadFiles, setAttachments, uploadFile]
   );
 
   const handlePaste = useCallback(
     async (event: ClipboardEvent) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
+      }
+
       const items = event.clipboardData?.items;
       if (!items) {
         return;
@@ -453,7 +482,7 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile]
+    [canUploadFiles, setAttachments, uploadFile]
   );
 
   // Add paste event listener to textarea
@@ -481,7 +510,9 @@ function PureMultimodalInput({
         )}
 
       <input
+        accept="image/jpeg,image/png,application/pdf,text/plain,text/markdown"
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+        disabled={!canUploadFiles}
         multiple
         onChange={handleFileChange}
         ref={fileInputRef}
@@ -554,6 +585,7 @@ function PureMultimodalInput({
           <PromptInputTools className="gap-0 sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
+              isUploadEnabled={canUploadFiles}
               selectedModelId={selectedModelId}
               status={status}
             />
@@ -639,6 +671,9 @@ export const MultimodalInput = memo(
     if (prevProps.chatRouteKey !== nextProps.chatRouteKey) {
       return false;
     }
+    if (prevProps.atoId !== nextProps.atoId) {
+      return false;
+    }
 
     return true;
   }
@@ -648,10 +683,12 @@ function PureAttachmentsButton({
   fileInputRef,
   status,
   selectedModelId,
+  isUploadEnabled,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
   selectedModelId: string;
+  isUploadEnabled: boolean;
 }) {
   const isReasoningModel =
     selectedModelId.includes("reasoning") || selectedModelId.includes("think");
@@ -660,7 +697,7 @@ function PureAttachmentsButton({
     <Button
       className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
-      disabled={status !== "ready" || isReasoningModel}
+      disabled={status !== "ready" || isReasoningModel || !isUploadEnabled}
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
