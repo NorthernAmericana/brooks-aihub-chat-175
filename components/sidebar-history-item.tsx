@@ -74,7 +74,7 @@ const PureChatItem = ({
   const [speakerEnabled, setSpeakerEnabled] = useState(
     chat.ttsEnabled ?? true
   );
-  const [selectedVoice, setSelectedVoice] = useState<string>(
+  const [selectedVoice, setSelectedVoice] = useState(
     chat.ttsVoiceId ?? officialVoice
   );
 

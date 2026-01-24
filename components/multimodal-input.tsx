@@ -196,8 +196,9 @@ function PureMultimodalInput({
   );
 
   const handleStartRecording = useCallback(async () => {
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       const audioChunks: Blob[] = [];
 
@@ -229,10 +230,12 @@ function PureMultimodalInput({
         } catch (error) {
           console.error("STT error:", error);
           toast.error("Speech-to-text failed");
+        } finally {
+          // Stop all tracks
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
         }
-
-        // Stop all tracks
-        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -242,6 +245,10 @@ function PureMultimodalInput({
     } catch (error) {
       console.error("Microphone access error:", error);
       toast.error("Microphone access denied");
+      // Clean up stream if it was created but MediaRecorder failed
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
     }
   }, [setInput]);
 
