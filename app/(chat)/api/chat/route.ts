@@ -171,9 +171,33 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
-      initialRouteKey = firstMessageSlash
-        ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
-        : null;
+      if (firstMessageSlash) {
+        // Try official agents first
+        const officialAgent = getAgentConfigBySlash(firstMessageSlash);
+        if (officialAgent) {
+          initialRouteKey = officialAgent.id;
+        } else {
+          // Try custom ATOs
+          const { getCustomAtosByUserId } = await import("@/lib/db/queries");
+          const customAtos = await getCustomAtosByUserId(session.user.id);
+          const normalizeSlash = (slash: string) =>
+            slash.replace(/^\/|\/$/g, "").replace(/\s+/g, "").toLowerCase();
+          const normalized = normalizeSlash(firstMessageSlash);
+          const matchingAto = customAtos.find(
+            (ato) => normalizeSlash(ato.slash) === normalized
+          );
+          if (matchingAto) {
+            initialRouteKey = `custom-${matchingAto.id}`;
+            // Update ATO usage
+            const { updateCustomAtoUsage } = await import("@/lib/db/queries");
+            await updateCustomAtoUsage(matchingAto.id, session.user.id);
+          } else {
+            initialRouteKey = null;
+          }
+        }
+      } else {
+        initialRouteKey = null;
+      }
 
       await saveChat({
         id,
@@ -229,14 +253,49 @@ export async function POST(request: Request) {
 
     if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
-      selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+      if (chat.routeKey.startsWith("custom-")) {
+        // Handle custom ATO
+        const customAtoId = chat.routeKey.replace("custom-", "");
+        const { getCustomAtoById } = await import("@/lib/db/queries");
+        const customAto = await getCustomAtoById(customAtoId, session.user.id);
+        if (customAto) {
+          const { customAtoToAgentConfig } = await import("@/lib/ai/agents/registry");
+          selectedAgent = customAtoToAgentConfig(customAto);
+        } else {
+          selectedAgent = getDefaultAgentConfig();
+        }
+      } else {
+        selectedAgent =
+          getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+      }
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
-      selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+      if (slashTrigger) {
+        // Try official agents first
+        const officialAgent = getAgentConfigBySlash(slashTrigger);
+        if (officialAgent) {
+          selectedAgent = officialAgent;
+        } else {
+          // Try custom ATOs
+          const { getCustomAtosByUserId } = await import("@/lib/db/queries");
+          const customAtos = await getCustomAtosByUserId(session.user.id);
+          const normalizeSlash = (slash: string) =>
+            slash.replace(/^\/|\/$/g, "").replace(/\s+/g, "").toLowerCase();
+          const normalized = normalizeSlash(slashTrigger);
+          const matchingAto = customAtos.find(
+            (ato) => normalizeSlash(ato.slash) === normalized
+          );
+          if (matchingAto) {
+            const { customAtoToAgentConfig } = await import("@/lib/ai/agents/registry");
+            selectedAgent = customAtoToAgentConfig(matchingAto);
+          } else {
+            selectedAgent = getDefaultAgentConfig();
+          }
+        }
+      } else {
+        selectedAgent = getDefaultAgentConfig();
+      }
     }
 
     const isNamcAgent = selectedAgent.id === "namc";
