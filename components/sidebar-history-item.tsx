@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
 import {
   getChatRouteKey,
   getOfficialVoice,
   getVoiceOptions,
+  type VoiceOption,
 } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
@@ -15,6 +17,7 @@ import {
   ShareIcon,
   TrashIcon,
 } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
@@ -68,12 +71,47 @@ const PureChatItem = ({
   const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
   const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
-  const [speakerEnabled, setSpeakerEnabled] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState(officialVoice);
+  const [speakerEnabled, setSpeakerEnabled] = useState(
+    chat.ttsEnabled ?? true
+  );
+  const [selectedVoice, setSelectedVoice] = useState<string>(
+    chat.ttsVoiceId ?? officialVoice
+  );
 
   useEffect(() => {
-    setSelectedVoice(officialVoice);
-  }, [officialVoice]);
+    setSpeakerEnabled(chat.ttsEnabled ?? true);
+    setSelectedVoice(chat.ttsVoiceId ?? officialVoice);
+  }, [chat.ttsEnabled, chat.ttsVoiceId, officialVoice]);
+
+  const handleApplySettings = async () => {
+    try {
+      // Find the voice label
+      const voiceLabel =
+        voiceOptions.find((v) => v.id === selectedVoice)?.label ??
+        selectedVoice;
+
+      const response = await fetch("/api/chat-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: chat.id,
+          ttsEnabled: speakerEnabled,
+          ttsVoiceId: selectedVoice,
+          ttsVoiceLabel: voiceLabel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update voice settings.");
+      }
+
+      toast.success("Voice settings applied successfully!");
+      setVoiceSettingsOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to save voice settings.");
+    }
+  };
 
   return (
     <SidebarMenuItem>
@@ -214,9 +252,15 @@ const PureChatItem = ({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Selected voice is a placeholder and will be wired to playback
-                later.
+                Select your preferred voice and click Apply to save.
               </p>
+              <Button
+                className="mt-2"
+                onClick={handleApplySettings}
+                type="button"
+              >
+                Apply
+              </Button>
             </div>
           </div>
         </DialogContent>

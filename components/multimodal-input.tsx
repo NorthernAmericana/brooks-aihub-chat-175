@@ -46,7 +46,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
@@ -152,6 +152,9 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedText, setRecordedText] = useState("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
@@ -191,6 +194,65 @@ function PureMultimodalInput({
     },
     [setInput]
   );
+
+  const handleStartRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        
+        // Send to speech-to-text API
+        const formData = new FormData();
+        formData.append("audio", audioBlob);
+
+        try {
+          const response = await fetch("/api/stt", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const transcribedText = data.text || "";
+            setRecordedText(transcribedText);
+            setInput((prev) => prev + (prev ? " " : "") + transcribedText);
+          } else {
+            toast.error("Failed to transcribe audio");
+          }
+        } catch (error) {
+          console.error("STT error:", error);
+          toast.error("Speech-to-text failed");
+        }
+
+        // Stop all tracks
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      toast.success("Recording started");
+    } catch (error) {
+      console.error("Microphone access error:", error);
+      toast.error("Microphone access denied");
+    }
+  }, [setInput]);
+
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+      toast.success("Recording stopped");
+    }
+  }, [isRecording]);
 
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
@@ -467,6 +529,24 @@ function PureMultimodalInput({
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
             />
+            <Button
+              className={cn(
+                "aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent",
+                isRecording && "bg-red-500 text-white hover:bg-red-600"
+              )}
+              data-testid="mic-button"
+              onClick={isRecording ? handleStopRecording : handleStartRecording}
+              type="button"
+              variant="ghost"
+            >
+              {isRecording ? (
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                </div>
+              ) : (
+                <MicIcon />
+              )}
+            </Button>
           </PromptInputTools>
 
           {status === "submitted" ? (
