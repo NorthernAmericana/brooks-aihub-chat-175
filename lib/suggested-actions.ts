@@ -24,10 +24,13 @@ export function parseSlashAction(
   }
 
   // Updated regex to handle multi-word slashes like "/Brooks AI HUB/"
-  // Three patterns:
-  // 1. /slash/ prompt or /slash/ (matches everything between / and /)
-  // 2. /word prompt (single-word slash without trailing /, followed by space and prompt)
-  // 3. /word (single-word slash without trailing / and no prompt)
+  // Pattern uses alternation to handle three cases in order:
+  // 1. /slash/ prompt or /slash/ (e.g., "/Brooks AI HUB/ help" or "/NAMC/")
+  //    - Captures everything between first / and second / as slash (supports spaces)
+  // 2. /slash prompt (e.g., "/NAMC brainstorm")
+  //    - Captures non-space chars as slash, then space-separated prompt
+  // 3. /slash (e.g., "/NAT")
+  //    - Captures non-space chars as slash with no prompt
   const match = trimmed.match(
     /^\/([^/]+)\/\s*(.*)$|^\/([^\s]+)\s+(.+)$|^\/([^/\s]+)$/
   );
@@ -35,9 +38,8 @@ export function parseSlashAction(
     return null;
   }
 
-  // match[1] and match[2] for /slash/ pattern (supports multi-word)
-  // match[3] and match[4] for /slash prompt pattern (single-word only)
-  // match[5] for /slash pattern (single-word only, no prompt)
+  // Extract slash and prompt from the matched groups
+  // Groups [1, 2] are from pattern 1, [3, 4] from pattern 2, [5] from pattern 3
   const rawSlash = (match[1] || match[3] || match[5] || "").trim();
   const prompt = (match[2] || match[4] || "").trim();
   const normalized = normalizeSlash(rawSlash);
