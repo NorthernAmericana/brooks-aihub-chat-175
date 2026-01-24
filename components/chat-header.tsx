@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
+import { AtoBrowser } from "@/components/ato-browser";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "./icons";
@@ -40,6 +41,8 @@ function PureChatHeader({
       >
         <Link href="/memories">{memoriesLabel}</Link>
       </Button>
+
+      <AtoBrowser />
 
       {(!open || windowWidth < 768) && (
         <Button

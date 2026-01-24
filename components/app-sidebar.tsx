@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { CustomAtoDialog } from "@/components/custom-ato-dialog";
 import { PlusIcon } from "@/components/icons";
 import {
   getChatHistoryPaginationKey,
@@ -147,6 +148,20 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
+            <CustomAtoDialog
+              trigger={
+                <Button
+                  className="justify-start"
+                  size="sm"
+                  variant="outline"
+                >
+                  Make your own ATO /../
+                </Button>
+              }
+              onSuccess={() => {
+                router.refresh();
+              }}
+            />
             <Button
               asChild
               className="justify-start"

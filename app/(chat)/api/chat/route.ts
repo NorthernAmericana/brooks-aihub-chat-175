@@ -10,6 +10,10 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import {
+  getAgentConfigByIdWithCustom,
+  getAgentConfigBySlashWithCustom,
+} from "@/lib/ai/agents/custom-ato-registry";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
   type AgentToolId,
@@ -229,14 +233,26 @@ export async function POST(request: Request) {
 
     if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
+      // First try to get as custom ATO, then fall back to official agents
+      const customAgent = await getAgentConfigByIdWithCustom(
+        chat.routeKey,
+        session.user.id
+      );
       selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+        customAgent ?? getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
-      selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+      if (slashTrigger) {
+        const customAgent = await getAgentConfigBySlashWithCustom(
+          slashTrigger,
+          session.user.id
+        );
+        selectedAgent =
+          customAgent ?? getAgentConfigBySlash(slashTrigger) ?? getDefaultAgentConfig();
+      } else {
+        selectedAgent = getDefaultAgentConfig();
+      }
     }
 
     const isNamcAgent = selectedAgent.id === "namc";
