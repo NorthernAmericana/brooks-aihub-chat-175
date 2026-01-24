@@ -29,6 +29,17 @@ const VOICE_OPTIONS = [
   { id: "QOXGBQZ2d1ykGdEdFlgp", label: "Daniel - Brooks AI HUB" },
 ];
 
+const OFFICIAL_ATO_SLASHES = [
+  "Brooks AI HUB",
+  "BrooksAIHUB",
+  "NAMC",
+  "BrooksBears",
+  "MyCarMindATO",
+  "MyFlowerAI",
+  "NAT",
+  "default",
+].map((s) => s.toLowerCase().replace(/\s+/g, ""));
+
 interface CreateATODialogProps {
   onSuccess?: () => void;
 }
@@ -88,11 +99,19 @@ export function CreateATODialog({ onSuccess }: CreateATODialogProps) {
       return;
     }
 
+    const slash = name.replace(/\s+/g, "");
+    const normalizedSlash = slash.toLowerCase();
+
+    // Check against official ATOs
+    if (OFFICIAL_ATO_SLASHES.includes(normalizedSlash)) {
+      toast.error(`"${slash}" conflicts with an official ATO. Please choose a different name.`);
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
       const selectedVoice = VOICE_OPTIONS.find((v) => v.id === voiceId);
-      const slash = name.replace(/\s+/g, "");
       
       const response = await fetch("/api/custom-atos", {
         method: "POST",
@@ -208,7 +227,7 @@ export function CreateATODialog({ onSuccess }: CreateATODialogProps) {
             <Label>
               Memory Scope <span className="text-destructive">*</span>
             </Label>
-            <RadioGroup value={memoryScope} onValueChange={(value: any) => setMemoryScope(value)}>
+            <RadioGroup value={memoryScope} onValueChange={(value: "ato-only" | "hub-wide") => setMemoryScope(value)}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ato-only" id="ato-only" />
                 <Label htmlFor="ato-only" className="font-normal">

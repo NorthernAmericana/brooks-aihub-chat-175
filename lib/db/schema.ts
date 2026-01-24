@@ -217,6 +217,9 @@ export const customATO = pgTable("CustomATO", {
     .notNull()
     .default("ato-only"),
   lastUsedAt: timestamp("lastUsedAt"),
-});
+}, (table) => ({
+  // Unique constraint: each user can only have one ATO with a given slash
+  uniqueUserSlash: primaryKey({ columns: [table.userId, table.slash] }),
+}));
 
 export type CustomATO = InferSelectModel<typeof customATO>;

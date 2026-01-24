@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS "CustomATO" (
 	"voiceLabel" text NOT NULL,
 	"instructions" text NOT NULL,
 	"memoryScope" varchar DEFAULT 'ato-only' NOT NULL,
-	"lastUsedAt" timestamp
+	"lastUsedAt" timestamp,
+	CONSTRAINT "CustomATO_userId_slash_unique" UNIQUE("userId", "slash")
 );
 --> statement-breakpoint
 DO $$ BEGIN

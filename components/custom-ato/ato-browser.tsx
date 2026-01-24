@@ -94,9 +94,9 @@ export function ATOBrowser({ onSelectATO }: ATOBrowserProps) {
           <Button
             className="h-8 px-2 md:h-fit md:px-2"
             variant="outline"
-            style={{ opacity: hasCustomATOs ? 1 : 0.5 }}
+            aria-label="Browse ATOs"
           >
-            <FolderIcon className="h-4 w-4" />
+            <FolderIcon className={`h-4 w-4 ${!hasCustomATOs ? "opacity-50" : ""}`} />
             <span className="sr-only">Browse ATOs</span>
           </Button>
         </DialogTrigger>

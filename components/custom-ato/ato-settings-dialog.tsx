@@ -227,7 +227,7 @@ export function ATOSettingsDialog({
               </Label>
               <RadioGroup
                 value={memoryScope}
-                onValueChange={(value: any) => setMemoryScope(value)}
+                onValueChange={(value: "ato-only" | "hub-wide") => setMemoryScope(value)}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="ato-only" id="edit-ato-only" />

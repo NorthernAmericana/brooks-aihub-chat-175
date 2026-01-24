@@ -33,6 +33,7 @@ import {
   deleteChatById,
   getApprovedMemoriesByUserId,
   getChatById,
+  getCustomATOById,
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
@@ -244,7 +245,6 @@ export async function POST(request: Request) {
         if (chat.routeKey.startsWith("custom-")) {
           const customATOId = chat.routeKey.replace("custom-", "");
           try {
-            const { getCustomATOById } = await import("@/lib/db/queries");
             const customATO = await getCustomATOById({
               id: customATOId,
               userId: session.user.id,
