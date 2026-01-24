@@ -6,6 +6,8 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { AtoListPanel } from "./ato-list-panel";
+import { CustomAtoSettingsDialog } from "./custom-ato-settings-dialog";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -13,11 +15,13 @@ import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
   chatId,
+  chatRouteKey,
   newMemoriesCount = 0,
   selectedVisibilityType,
   isReadonly,
 }: {
   chatId: string;
+  chatRouteKey?: string | null;
   newMemoriesCount?: number;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
@@ -28,6 +32,12 @@ function PureChatHeader({
   const { width: windowWidth } = useWindowSize();
   const memoriesLabel =
     newMemoriesCount > 0 ? `${newMemoriesCount} new memories` : "Memories";
+
+  // Check if this is a custom ATO by checking if routeKey starts with "custom-"
+  const isCustomAto = chatRouteKey?.startsWith("custom-");
+  const customAtoId = isCustomAto
+    ? chatRouteKey?.replace("custom-", "")
+    : undefined;
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
@@ -40,6 +50,21 @@ function PureChatHeader({
       >
         <Link href="/memories">{memoriesLabel}</Link>
       </Button>
+
+      <AtoListPanel
+        onSelectAto={(slash) => {
+          router.push(`/brooks-ai-hub/?slash=${slash}`);
+        }}
+      />
+
+      {isCustomAto && customAtoId && (
+        <CustomAtoSettingsDialog
+          atoId={customAtoId}
+          onSuccess={() => {
+            router.refresh();
+          }}
+        />
+      )}
 
       {(!open || windowWidth < 768) && (
         <Button
@@ -76,6 +101,7 @@ function PureChatHeader({
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
+    prevProps.chatRouteKey === nextProps.chatRouteKey &&
     prevProps.newMemoriesCount === nextProps.newMemoriesCount &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
     prevProps.isReadonly === nextProps.isReadonly

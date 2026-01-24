@@ -256,3 +256,26 @@ export function getDefaultAgentConfig(): AgentConfig {
     }
   );
 }
+
+// Helper to convert CustomAto to AgentConfig
+export function customAtoToAgentConfig(
+  customAto: {
+    id: string;
+    name: string;
+    slash: string;
+    promptInstructions?: string | null;
+  }
+): AgentConfig {
+  return {
+    id: `custom-${customAto.id}`,
+    label: customAto.name,
+    slash: customAto.slash,
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+    systemPromptOverride: customAto.promptInstructions || undefined,
+  };
+}

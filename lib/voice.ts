@@ -3,6 +3,22 @@ export type VoiceOption = {
   label: string;
 };
 
+// Extended voice options for all ATOs
+export const ALL_VOICE_OPTIONS: VoiceOption[] = [
+  { id: "By89qnNqll35EKDmc3Hm", label: "Bruce NAMC" },
+  { id: "7fJYplvotvPf1yl7PLLP", label: "Selena NAMC" },
+  { id: "QOXGBQZ2d1ykGdEdFlgp", label: "Daniel - Brooks AI HUB" },
+  { id: "21m00Tcm4TlvDq8ikWAM", label: "Rachel" },
+  { id: "AZnzlk1XvdvUeBnXmlld", label: "Domi" },
+  { id: "EXAVITQu4vr4xnSDxMaL", label: "Bella" },
+  { id: "ErXwobaYiN019PkySvjV", label: "Antoni" },
+  { id: "MF3mGyEYCl7XYWbV9V6O", label: "Elli" },
+  { id: "TxGEqnHWrfWFTfGW9XjX", label: "Josh" },
+  { id: "VR6AewLTigWG4xSOukaG", label: "Arnold" },
+  { id: "pNInz6obpgDQGcFmaJgB", label: "Adam" },
+  { id: "yoZ06aMxZJJ28mfd3POQ", label: "Sam" },
+];
+
 // Voice options for NAMC chats only
 const NAMC_VOICE_OPTIONS: VoiceOption[] = [
   { id: "By89qnNqll35EKDmc3Hm", label: "Bruce NAMC" },

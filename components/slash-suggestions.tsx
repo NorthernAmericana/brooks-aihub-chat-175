@@ -3,7 +3,11 @@
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { useCustomAtos } from "@/hooks/use-custom-atos";
+import {
+  customAtoToAgentConfig,
+  listAgentConfigs,
+} from "@/lib/ai/agents/registry";
 import { getStoredSlashActions, normalizeSlash } from "@/lib/suggested-actions";
 
 export function SlashSuggestions({
@@ -14,7 +18,14 @@ export function SlashSuggestions({
   onClose: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const agentConfigs = useMemo(() => listAgentConfigs(), []);
+  const { customAtos } = useCustomAtos();
+
+  const agentConfigs = useMemo(() => {
+    const official = listAgentConfigs();
+    const custom = customAtos.map(customAtoToAgentConfig);
+    return [...official, ...custom];
+  }, [customAtos]);
+
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
   const filteredSuggestions = useMemo(() => {

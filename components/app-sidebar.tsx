@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { CreateCustomAtoDialog } from "./create-custom-ato-dialog";
 import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
@@ -147,6 +148,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
+            <CreateCustomAtoDialog
+              onSuccess={() => {
+                // Refresh the page to update the custom ATOs list
+                router.refresh();
+              }}
+            />
             <Button
               asChild
               className="justify-start"
