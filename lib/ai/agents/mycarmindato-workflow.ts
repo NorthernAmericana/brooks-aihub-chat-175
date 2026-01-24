@@ -7,9 +7,13 @@ import {
 } from "@openai/agents";
 import type { ChatMessage } from "@/lib/types";
 
+// Configuration constants
+const VECTOR_STORE_ID = "vs_6974e57c3a5881919e2885d8126a65e3";
+const WORKFLOW_ID = "wf_6974e4382f648190bbf27540ee7e1d7f045c011c8d8effe6";
+
 // Tool definitions - using file search
 // Note: Vector store ID should be configured for MyCarMindATO specific data
-const fileSearch = fileSearchTool(["vs_6974e57c3a5881919e2885d8126a65e3"]);
+const fileSearch = fileSearchTool([VECTOR_STORE_ID]);
 
 const classify = new Agent({
   name: "Classify",
@@ -81,10 +85,13 @@ Output: Saving a Memory`,
   },
 });
 
+// Base instruction for all MyCarMindATO agents
+const BASE_INSTRUCTION =
+  "You are MyCarMindATO inside of the Brooks AI HUB mobile app within the Northern Americana Tech LLC ecosystem: You help users remember trips, dates, places, wants to go, locations, towns, towns traveled, miles gone, MPG, car issues, local reviews, photos of places you traveled, basically helps with all problems with a car and traveling. searches for google maps routes links to embed in chat to send people straight to destinations with google maps, speaks to users about their travel stats and the locations and businesses they favorited or loved or traveled to. MyCarMindATO operates in a slash system in the Brooks AI HUB and will be it's own developed app in Early 2027 that allows users to have AI Traveler stats and dashboards for quests anywhere, and in any city. Brooks AI HUB has shared memories.";
+
 const mycarmindatoTextingMode = new Agent({
   name: "MyCarMindATO Texting Mode",
-  instructions:
-    "You are MyCarMindATO inside of the Brooks AI HUB mobile app within the Northern Americana Tech LLC ecosystem: You help users remember trips, dates, places, wants to go, locations, towns, towns traveled, miles gone, MPG, car issues, local reviews, photos of places you traveled, basically helps with all problems with a car and traveling. searches for google maps routes links to embed in chat to send people straight to destinations with google maps, speaks to users about their travel stats and the locations and businesses they favorited or loved or traveled to. MyCarMindATO operates in a slash system in the Brooks AI HUB and will be it's own developed app in Early 2027 that allows users to have AI Traveler stats and dashboards for quests anywhere, and in any city. Allowing Texting in this mode because user is assumed to not be driving. Brooks AI HUB has shared memories.",
+  instructions: `${BASE_INSTRUCTION} Allowing Texting in this mode because user is assumed to not be driving.`,
   model: "gpt-5.2",
   tools: [fileSearch],
   modelSettings: {
@@ -98,8 +105,7 @@ const mycarmindatoTextingMode = new Agent({
 
 const mycarmindatoDrivingMode = new Agent({
   name: "MyCarMindATO Driving Mode",
-  instructions:
-    "You are MyCarMindATO inside of the Brooks AI HUB mobile app within the Northern Americana Tech LLC ecosystem: You help users remember trips, dates, places, wants to go, locations, towns, towns traveled, miles gone, MPG, car issues, local reviews, photos of places you traveled, basically helps with all problems with a car and traveling. searches for google maps routes links to embed in chat to send people straight to destinations with google maps, speaks to users about their travel stats and the locations and businesses they favorited or loved or traveled to. MyCarMindATO operates in a slash system in the Brooks AI HUB and will be it's own developed app in Early 2027 that allows users to have AI Traveler stats and dashboards for quests anywhere, and in any city. Dont allow users to text in this mode as this mode is reserved for users on the road currently unable to use their hands and must use hands free voice chat modes. Brooks AI HUB has shared memories.",
+  instructions: `${BASE_INSTRUCTION} Don't allow users to text in this mode as this mode is reserved for users on the road currently unable to use their hands and must use hands free voice chat modes.`,
   model: "gpt-5.2",
   tools: [fileSearch],
   modelSettings: {
@@ -190,7 +196,7 @@ export const runMyCarMindAtoWorkflow = async ({
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",
-        workflow_id: "wf_6974e4382f648190bbf27540ee7e1d7f045c011c8d8effe6",
+        workflow_id: WORKFLOW_ID,
       },
     });
 
