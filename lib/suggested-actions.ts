@@ -23,13 +23,23 @@ export function parseSlashAction(
     return null;
   }
 
-  const match = trimmed.match(/^\/([^/\s]+)(?:\/)?\s*(.*)$/);
+  // Updated regex to handle multi-word slashes like "/Brooks AI HUB/"
+  // Three patterns:
+  // 1. /slash/ prompt or /slash/ (matches everything between / and /)
+  // 2. /word prompt (single-word slash without trailing /, followed by space and prompt)
+  // 3. /word (single-word slash without trailing / and no prompt)
+  const match = trimmed.match(
+    /^\/([^/]+)\/\s*(.*)$|^\/([^\s]+)\s+(.+)$|^\/([^/\s]+)$/
+  );
   if (!match) {
     return null;
   }
 
-  const rawSlash = match[1];
-  const prompt = match[2]?.trim() ?? "";
+  // match[1] and match[2] for /slash/ pattern (supports multi-word)
+  // match[3] and match[4] for /slash prompt pattern (single-word only)
+  // match[5] for /slash pattern (single-word only, no prompt)
+  const rawSlash = (match[1] || match[3] || match[5] || "").trim();
+  const prompt = (match[2] || match[4] || "").trim();
   const normalized = normalizeSlash(rawSlash);
   const resolvedSlash =
     agentConfigs.find((agent) => normalizeSlash(agent.slash) === normalized)
