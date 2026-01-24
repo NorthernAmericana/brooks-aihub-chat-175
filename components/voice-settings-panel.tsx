@@ -23,6 +23,23 @@ type VoiceSettingsPanelProps = {
   chats: Chat[];
 };
 
+// Helper function to get display name for route
+const getRouteDisplayName = (routeKey: string): string => {
+  const routeNames: Record<string, string> = {
+    "brooks-ai-hub": "/Brooks AI HUB/",
+    namc: "/NAMC/",
+    "brooks-bears": "/BrooksBears/",
+    brooksbears: "/BrooksBears/",
+    "my-car-mind": "/MyCarMindATO/",
+    mycarmindato: "/MyCarMindATO/",
+    "my-flower-ai": "/MyFlowerAI/",
+    myflowerai: "/MyFlowerAI/",
+    nat: "/NAT/",
+    default: "Default",
+  };
+  return routeNames[routeKey] ?? `/${routeKey}/`;
+};
+
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   // Show all chats since Brooks AI HUB voice is now available for non-NAMC routes
   const namcChats = useMemo(() => chats, [chats]);
@@ -132,7 +149,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
               <div>
                 <p className="font-medium">{chat.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  Route: {isChatNamcRoute(chat) ? "/NAMC/" : "Brooks AI HUB"} •
+                  Route: {getRouteDisplayName(routeKey)} •
                   Default: {defaultVoice.label}
                 </p>
               </div>
@@ -195,9 +212,9 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {isChatNamcRoute(chat)
-                  ? "Bruce NAMC is the default voice for NAMC chats. Use the three-dot menu in chat to switch voices."
-                  : "Daniel - Brooks AI HUB is the default voice for this chat."}
+                {voiceOptions.length > 1
+                  ? `Choose from ${voiceOptions.length} available voices for this route. Use the three-dot menu in chat to switch voices quickly.`
+                  : `${defaultVoice.label} is the only voice available for this route.`}
               </p>
             </div>
           </div>

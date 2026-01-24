@@ -5,7 +5,7 @@ import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
 import {
   getChatRouteKey,
-  getOfficialVoice,
+  getDefaultVoice,
   getVoiceOptions,
 } from "@/lib/voice";
 import {
@@ -67,18 +67,18 @@ const PureChatItem = ({
     () => getChatRouteKey(chat),
     [chat.routeKey, chat.title, chat]
   );
-  const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
+  const defaultVoice = useMemo(() => getDefaultVoice(routeKey), [routeKey]);
   const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(chat.ttsEnabled ?? true);
   const [selectedVoice, setSelectedVoice] = useState(
-    chat.ttsVoiceId ?? officialVoice
+    chat.ttsVoiceId ?? defaultVoice.id
   );
 
   useEffect(() => {
     setSpeakerEnabled(chat.ttsEnabled ?? true);
-    setSelectedVoice(chat.ttsVoiceId ?? officialVoice);
-  }, [chat.ttsEnabled, chat.ttsVoiceId, officialVoice]);
+    setSelectedVoice(chat.ttsVoiceId ?? defaultVoice.id);
+  }, [chat.ttsEnabled, chat.ttsVoiceId, defaultVoice.id]);
 
   const handleApplySettings = async () => {
     try {
@@ -205,7 +205,7 @@ const PureChatItem = ({
                   {routeKey === "default" ? "General" : `/${routeKey}/`}
                 </span>
                 <span className="text-muted-foreground">
-                  Official voice: {officialVoice}
+                  Official voice: {defaultVoice.label}
                 </span>
               </div>
             </div>
@@ -238,10 +238,10 @@ const PureChatItem = ({
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={officialVoice}>
-                    {officialVoice} (Route official)
+                  <SelectItem value={defaultVoice.id}>
+                    {defaultVoice.label} (Route official)
                   </SelectItem>
-                  {voiceOptions.map((voice) => (
+                  {voiceOptions.filter(v => v.id !== defaultVoice.id).map((voice) => (
                     <SelectItem key={voice.id} value={voice.id}>
                       {voice.label}
                     </SelectItem>
