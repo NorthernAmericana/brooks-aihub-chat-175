@@ -256,3 +256,57 @@ export function getDefaultAgentConfig(): AgentConfig {
     }
   );
 }
+
+// Helper to convert CustomAto to AgentConfig
+export function customAtoToAgentConfig(
+  customAto: {
+    id: string;
+    name: string;
+    slash: string;
+    promptInstructions?: string | null;
+  }
+): AgentConfig {
+  return {
+    id: `custom-${customAto.id}`,
+    label: customAto.name,
+    slash: customAto.slash,
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+    systemPromptOverride: customAto.promptInstructions || undefined,
+  };
+}
+
+// Get agent config including custom ATOs
+export async function getAgentConfigBySlashWithCustom(
+  slash: string,
+  userId?: string
+): Promise<AgentConfig | undefined> {
+  // First check official agents
+  const officialAgent = getAgentConfigBySlash(slash);
+  if (officialAgent) {
+    return officialAgent;
+  }
+
+  // If not found and userId provided, check custom ATOs
+  if (userId) {
+    try {
+      const { getCustomAtosByUserId } = await import("@/lib/db/queries");
+      const customAtos = await getCustomAtosByUserId(userId);
+      const normalized = normalizeSlash(slash);
+      const matchingAto = customAtos.find(
+        (ato) => normalizeSlash(ato.slash) === normalized
+      );
+      if (matchingAto) {
+        return customAtoToAgentConfig(matchingAto);
+      }
+    } catch (error) {
+      console.error("Failed to fetch custom ATOs:", error);
+    }
+  }
+
+  return undefined;
+}
