@@ -15,6 +15,11 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  subscriptionTier: varchar("subscriptionTier", {
+    enum: ["free", "founders", "dev"],
+  })
+    .notNull()
+    .default("free"),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -200,3 +205,30 @@ export const memory = pgTable("Memory", {
 });
 
 export type Memory = InferSelectModel<typeof memory>;
+
+export const customAto = pgTable("CustomAto", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: varchar("name", { length: 128 }).notNull(),
+  slash: varchar("slash", { length: 128 }).notNull(),
+  voiceId: text("voiceId"),
+  voiceLabel: text("voiceLabel"),
+  promptInstructions: text("promptInstructions"),
+  memoryScope: varchar("memoryScope", {
+    enum: ["ato-only", "hub-wide"],
+  })
+    .notNull()
+    .default("ato-only"),
+  isOfficial: boolean("isOfficial").notNull().default(false),
+  usageCount: json("usageCount")
+    .$type<{ month: string; count: number }[]>()
+    .notNull()
+    .default([]),
+  lastUsedAt: timestamp("lastUsedAt"),
+});
+
+export type CustomAto = InferSelectModel<typeof customAto>;

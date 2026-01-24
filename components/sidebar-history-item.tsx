@@ -63,7 +63,7 @@ const PureChatItem = ({
   });
   const routeKey = useMemo(
     () => getChatRouteKey(chat),
-    [chat.routeKey, chat.title]
+    [chat.routeKey, chat.title, chat]
   );
   const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
   const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);

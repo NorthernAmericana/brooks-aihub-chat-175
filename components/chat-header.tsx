@@ -6,6 +6,7 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
+import { AtoListPanel } from "./ato-list-panel";
 import { PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -40,6 +41,12 @@ function PureChatHeader({
       >
         <Link href="/memories">{memoriesLabel}</Link>
       </Button>
+
+      <AtoListPanel
+        onSelectAto={(slash) => {
+          router.push(`/brooks-ai-hub/?slash=${slash}`);
+        }}
+      />
 
       {(!open || windowWidth < 768) && (
         <Button
