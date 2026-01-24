@@ -6,7 +6,7 @@ export type VoiceOption = {
 // Define all available voices with their ElevenLabs IDs
 const VOICES = {
   DANIEL: { id: "QOXGBQZ2d1ykGdEdFlgp", label: "Daniel" },
-  BENJAMIN_BEAR: { id: "PLACEHOLDER_BENJAMIN_BEAR", label: "Benjamin Bear" }, // TODO: Replace with actual Benjamin Bear voice ID when available
+  BENJAMIN_BEAR: { id: "SMar3QtpKPfkPZ6oG9pg", label: "Benjamin Bear" },
   BRUCE: { id: "By89qnNqll35EKDmc3Hm", label: "Bruce" },
   SELENA: { id: "7fJYplvotvPf1yl7PLLP", label: "Selena" },
 } as const;
