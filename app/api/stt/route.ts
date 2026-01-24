@@ -33,8 +33,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const extensionByMimeType: Record<string, string> = {
+      "audio/webm": ".webm",
+      "audio/mp4": ".mp4",
+      "audio/ogg": ".ogg",
+      "audio/wav": ".wav",
+    };
+    const audioExtension = extensionByMimeType[audio.type] ?? ".webm";
+
     // Convert Blob to File for OpenAI API
-    const audioFile = new File([audio], "audio.webm", { type: audio.type });
+    const audioFile = new File([audio], `audio${audioExtension}`, {
+      type: audio.type,
+    });
 
     // Use OpenAI Whisper (gpt-4o-transcribe model) for transcription
     const transcription = await client.audio.transcriptions.create({
