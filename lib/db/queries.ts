@@ -23,8 +23,11 @@ import {
   chat,
   type DBMessage,
   document,
+  entitlement,
   memory,
   message,
+  redemption,
+  redemptionCode,
   type Suggestion,
   stream,
   suggestion,
@@ -730,5 +733,254 @@ export async function updateChatRouteKey({
   } catch (error) {
     console.warn("Failed to update routeKey for chat", chatId, error);
     return;
+  }
+}
+
+// ===== Entitlements and Stripe =====
+
+export async function updateUserStripeInfo({
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  foundersAccess,
+}: {
+  userId: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  foundersAccess?: boolean;
+}) {
+  try {
+    const updates: Partial<User> = {};
+    if (stripeCustomerId) {
+      updates.stripeCustomerId = stripeCustomerId;
+    }
+    if (stripeSubscriptionId) {
+      updates.stripeSubscriptionId = stripeSubscriptionId;
+    }
+    if (typeof foundersAccess === "boolean") {
+      updates.foundersAccess = foundersAccess;
+      if (foundersAccess) {
+        updates.foundersAccessGrantedAt = new Date();
+      }
+    }
+
+    return await db
+      .update(user)
+      .set(updates)
+      .where(eq(user.id, userId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user stripe info"
+    );
+  }
+}
+
+export async function getUserById({ id }: { id: string }) {
+  try {
+    const [selectedUser] = await db.select().from(user).where(eq(user.id, id));
+    return selectedUser ?? null;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function createEntitlement({
+  userId,
+  productId,
+  grantedBy,
+  expiresAt,
+  metadata,
+}: {
+  userId: string;
+  productId: string;
+  grantedBy: string;
+  expiresAt?: Date;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    return await db
+      .insert(entitlement)
+      .values({
+        userId,
+        productId,
+        grantedBy,
+        expiresAt: expiresAt ?? null,
+        metadata: metadata ?? null,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create entitlement"
+    );
+  }
+}
+
+export async function getUserEntitlements({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(entitlement)
+      .where(eq(entitlement.userId, userId))
+      .orderBy(desc(entitlement.grantedAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user entitlements"
+    );
+  }
+}
+
+export async function hasEntitlement({
+  userId,
+  productId,
+}: {
+  userId: string;
+  productId: string;
+}) {
+  try {
+    const [result] = await db
+      .select()
+      .from(entitlement)
+      .where(
+        and(
+          eq(entitlement.userId, userId),
+          eq(entitlement.productId, productId)
+        )
+      )
+      .limit(1);
+
+    return !!result;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to check entitlement"
+    );
+  }
+}
+
+export async function createRedemptionCode({
+  code,
+  productId,
+  expiresAt,
+  maxRedemptions,
+  metadata,
+}: {
+  code: string;
+  productId: string;
+  expiresAt?: Date;
+  maxRedemptions?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    return await db
+      .insert(redemptionCode)
+      .values({
+        code,
+        productId,
+        expiresAt: expiresAt ?? null,
+        maxRedemptions: maxRedemptions ?? "1",
+        metadata: metadata ?? null,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create redemption code"
+    );
+  }
+}
+
+export async function getRedemptionCodeByCode({ code }: { code: string }) {
+  try {
+    const [result] = await db
+      .select()
+      .from(redemptionCode)
+      .where(eq(redemptionCode.code, code))
+      .limit(1);
+
+    return result ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get redemption code"
+    );
+  }
+}
+
+export async function redeemCode({
+  codeId,
+  userId,
+}: {
+  codeId: string;
+  userId: string;
+}) {
+  try {
+    return await db
+      .insert(redemption)
+      .values({
+        codeId,
+        userId,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to redeem code");
+  }
+}
+
+export async function incrementCodeRedemptionCount({
+  codeId,
+}: {
+  codeId: string;
+}) {
+  try {
+    const [code] = await db
+      .select()
+      .from(redemptionCode)
+      .where(eq(redemptionCode.id, codeId))
+      .limit(1);
+
+    if (!code) {
+      throw new ChatSDKError("not_found:database", "Redemption code not found");
+    }
+
+    const currentCount = Number.parseInt(code.redemptionCount || "0", 10);
+    const newCount = (currentCount + 1).toString();
+
+    return await db
+      .update(redemptionCode)
+      .set({ redemptionCount: newCount })
+      .where(eq(redemptionCode.id, codeId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to increment code redemption count"
+    );
+  }
+}
+
+export async function hasRedeemedCode({
+  codeId,
+  userId,
+}: {
+  codeId: string;
+  userId: string;
+}) {
+  try {
+    const [result] = await db
+      .select()
+      .from(redemption)
+      .where(and(eq(redemption.codeId, codeId), eq(redemption.userId, userId)))
+      .limit(1);
+
+    return !!result;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to check code redemption"
+    );
   }
 }

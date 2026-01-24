@@ -58,9 +58,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        <span className="font-pixel">
-          /Brooks AI HUB/
-        </span>
+        <span className="font-pixel">/Brooks AI HUB/</span>
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 // Import the actual OpenAI SDK from node_modules, bypassing the tsconfig path alias
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const OpenAI = require("openai").default || require("openai");
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    
+
     const formData = await request.formData();
     const audio = formData.get("audio");
 

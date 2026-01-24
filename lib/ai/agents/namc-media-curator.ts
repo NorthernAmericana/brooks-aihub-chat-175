@@ -97,9 +97,13 @@ async function scrubWorkflowInput(
   inputKey: string,
   piiOnly: any
 ): Promise<void> {
-  if (!workflow || typeof workflow !== "object") return;
+  if (!workflow || typeof workflow !== "object") {
+    return;
+  }
   const value = workflow?.[inputKey];
-  if (typeof value !== "string") return;
+  if (typeof value !== "string") {
+    return;
+  }
   const res = await runGuardrails(value, piiOnly, context, true);
   workflow[inputKey] = getGuardrailSafeText(res, value);
 }
@@ -152,7 +156,7 @@ function buildGuardrailFailOutput(results: any[]) {
     piiCounts = Object.entries(detectedEntities).flatMap(([k, v]) =>
       Array.isArray(v) ? [`${k}:${v.length}`] : []
     ),
-    conf = jb?.info?.confidence;
+    _conf = jb?.info?.confidence;
   return {
     pii: {
       failed: piiCounts.length > 0 || pii?.tripwireTriggered === true,

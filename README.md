@@ -21,6 +21,7 @@
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
 Use the [Vercel deployment guide](docs/ops/vercel.md) for production deployment steps.
+See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
 
 ## Features
 

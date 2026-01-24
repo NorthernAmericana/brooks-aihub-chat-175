@@ -7,7 +7,6 @@ import {
   getChatRouteKey,
   getOfficialVoice,
   getVoiceOptions,
-  type VoiceOption,
 } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
@@ -66,14 +65,12 @@ const PureChatItem = ({
   });
   const routeKey = useMemo(
     () => getChatRouteKey(chat),
-    [chat.routeKey, chat.title]
+    [chat.routeKey, chat.title, chat]
   );
   const officialVoice = useMemo(() => getOfficialVoice(routeKey), [routeKey]);
   const voiceOptions = useMemo(() => getVoiceOptions(routeKey), [routeKey]);
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
-  const [speakerEnabled, setSpeakerEnabled] = useState(
-    chat.ttsEnabled ?? true
-  );
+  const [speakerEnabled, setSpeakerEnabled] = useState(chat.ttsEnabled ?? true);
   const [selectedVoice, setSelectedVoice] = useState(
     chat.ttsVoiceId ?? officialVoice
   );
