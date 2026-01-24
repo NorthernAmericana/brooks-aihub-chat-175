@@ -29,13 +29,13 @@ export async function POST(request: Request) {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const { stream, mimeType } = await fetchElevenLabsSpeech({
+    const { audio, mimeType } = await fetchElevenLabsSpeech({
       text,
       voiceId,
       signal: controller.signal,
     });
 
-    return new Response(stream, {
+    return new Response(audio, {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "no-store",
