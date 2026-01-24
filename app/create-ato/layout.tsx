@@ -26,7 +26,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar user={session?.user} />
-      <SidebarInset className="h-dvh overflow-hidden overscroll-none">
+      <SidebarInset className="h-dvh overflow-y-auto overscroll-none">
         {children}
       </SidebarInset>
     </SidebarProvider>
