@@ -1,6 +1,54 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { toast } from "@/components/toast";
 
 export default function IntroPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(false);
+
+  const handleFoundersAccess = async () => {
+    if (!session?.user) {
+      toast({
+        type: "error",
+        description: "Please sign in to purchase Founders Access",
+      });
+      router.push("/login");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priceId: "price_1SpBht050iAre6ZtPyv42z6s",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast({
+        type: "error",
+        description: "Failed to start checkout. Please try again.",
+      });
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#140d12] text-white">
       <div className="intro-sky absolute inset-0" />
@@ -36,6 +84,15 @@ export default function IntroPage() {
         >
           Tap to Start
         </Link>
+
+        <button
+          className="rounded-full border border-white/30 bg-white/10 px-6 py-2.5 text-xs font-medium uppercase tracking-[0.3em] text-white/90 backdrop-blur-sm transition hover:scale-[1.02] hover:border-white/50 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          disabled={loading}
+          onClick={handleFoundersAccess}
+          type="button"
+        >
+          {loading ? "Loading..." : "Join Founder's Access for $4.99"}
+        </button>
       </div>
     </main>
   );

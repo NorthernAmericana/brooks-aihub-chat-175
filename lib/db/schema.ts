@@ -15,6 +15,10 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  foundersAccess: boolean("foundersAccess").default(false),
+  foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -200,3 +204,47 @@ export const memory = pgTable("Memory", {
 });
 
 export type Memory = InferSelectModel<typeof memory>;
+
+// Entitlements table for product ownership
+export const entitlement = pgTable("Entitlement", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  productId: varchar("productId", { length: 64 }).notNull(), // MDD-GAME_BASE, MDD_NOVEL_BASE, MDD_SPOILER_PASS
+  grantedAt: timestamp("grantedAt").notNull().defaultNow(),
+  grantedBy: varchar("grantedBy", { length: 64 }).notNull(), // stripe, redemption_code, admin, etc.
+  expiresAt: timestamp("expiresAt"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type Entitlement = InferSelectModel<typeof entitlement>;
+
+// Redemption codes table
+export const redemptionCode = pgTable("RedemptionCode", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  code: varchar("code", { length: 64 }).notNull().unique(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  expiresAt: timestamp("expiresAt"),
+  maxRedemptions: varchar("maxRedemptions", { length: 32 }).default("1"), // "1", "unlimited", or a number
+  redemptionCount: varchar("redemptionCount", { length: 32 }).default("0"),
+  isActive: boolean("isActive").default(true),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type RedemptionCode = InferSelectModel<typeof redemptionCode>;
+
+// Track individual redemptions
+export const redemption = pgTable("Redemption", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  codeId: uuid("codeId")
+    .notNull()
+    .references(() => redemptionCode.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  redeemedAt: timestamp("redeemedAt").notNull().defaultNow(),
+});
+
+export type Redemption = InferSelectModel<typeof redemption>;

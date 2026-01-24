@@ -7,13 +7,7 @@ import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
-import {
-  CopyIcon,
-  PencilEditIcon,
-  SpeakerIcon,
-  ThumbDownIcon,
-  ThumbUpIcon,
-} from "./icons";
+import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 
 export function PureMessageActions({
   chatId,
@@ -53,7 +47,7 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
-  const handleSpeak = async () => {
+  const _handleSpeak = async () => {
     if (!textFromParts) {
       toast.error("There's no response text to read yet.");
       return;

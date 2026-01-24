@@ -153,7 +153,7 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedText, setRecordedText] = useState("");
+  const [_recordedText, setRecordedText] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
@@ -208,7 +208,7 @@ function PureMultimodalInput({
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        
+
         // Send to speech-to-text API
         const formData = new FormData();
         formData.append("audio", audioBlob);

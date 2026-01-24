@@ -2,8 +2,8 @@ import {
   Agent,
   type AgentInputItem,
   fileSearchTool,
-  webSearchTool,
   Runner,
+  webSearchTool,
   withTrace,
 } from "@openai/agents";
 import { OpenAI } from "openai";
@@ -213,7 +213,7 @@ export const runMyFlowerAIWorkflow = async ({
     const classifyCategory = classifyResult.output_parsed.category;
 
     if (classifyCategory === "Analyze Data") {
-      const filesearchResult = (
+      const _filesearchResult = (
         await client.vectorStores.search(VECTOR_STORE_ID, {
           query: workflow.input_as_text,
           max_num_results: 10,
@@ -241,7 +241,7 @@ export const runMyFlowerAIWorkflow = async ({
     }
 
     // Default to Conversate mode
-    const filesearchResult = (
+    const _filesearchResult = (
       await client.vectorStores.search(VECTOR_STORE_ID, {
         query: workflow.input_as_text,
         max_num_results: 10,
