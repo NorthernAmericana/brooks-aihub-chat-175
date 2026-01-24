@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { toast } from "@/components/toast";
 
 export default function IntroPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleFoundersAccess = async () => {
     if (!session?.user) {
@@ -49,11 +50,39 @@ export default function IntroPage() {
     }
   };
 
+  useEffect(() => {
+    if (session?.user) {
+      setIsSigningOut(false);
+    }
+  }, [session?.user]);
+
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#140d12] text-white">
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_55%)]" />
+
+      <div className="absolute right-6 top-6 z-20">
+        {session?.user && !isSigningOut ? (
+          <button
+            className="rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/80 transition hover:border-white/40 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+            onClick={async () => {
+              setIsSigningOut(true);
+              await signOut({ redirect: false });
+            }}
+            type="button"
+          >
+            Sign out
+          </button>
+        ) : (
+          <Link
+            className="rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/80 transition hover:border-white/40 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+            href="/login"
+          >
+            Sign in
+          </Link>
+        )}
+      </div>
 
       <div className="intro-card intro-float absolute left-[8%] top-[18%] hidden h-28 w-48 rounded-2xl border border-white/20 sm:block" />
       <div className="intro-card intro-float-slow absolute right-[10%] top-[14%] hidden h-32 w-56 rounded-2xl border border-white/20 sm:block" />
