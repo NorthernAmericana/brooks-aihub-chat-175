@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
   createUnofficialAto,
+  getUnofficialAtoCountByOwner,
   getUnofficialAtosByOwner,
+  getUserById,
 } from "@/lib/db/queries";
 
 const allowedIntelligenceModes = ["Hive", "ATO-Limited"] as const;
@@ -56,6 +58,60 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "name is required." }, { status: 400 });
   }
 
+  const user = await getUserById({ id: session.user.id });
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
+  }
+
+  const hasFoundersAccess = Boolean(user.foundersAccess);
+  const instructionsValue =
+    typeof payload.instructions === "string" ? payload.instructions.trim() : "";
+  const instructionsLimit = hasFoundersAccess ? 999 : 500;
+
+  if (instructionsValue.length > instructionsLimit) {
+    return NextResponse.json(
+      {
+        error: `Instructions must be ${instructionsLimit} characters or fewer.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (hasFoundersAccess) {
+    const now = new Date();
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+    );
+    const monthlyCount = await getUnofficialAtoCountByOwner({
+      ownerUserId: session.user.id,
+      createdAfter: monthStart,
+    });
+
+    if (monthlyCount >= 10) {
+      return NextResponse.json(
+        {
+          error: "Founders members can create up to 10 unofficial ATOs per month.",
+        },
+        { status: 403 }
+      );
+    }
+  } else {
+    const totalCount = await getUnofficialAtoCountByOwner({
+      ownerUserId: session.user.id,
+    });
+
+    if (totalCount >= 3) {
+      return NextResponse.json(
+        {
+          error:
+            "Free accounts can create up to 3 unofficial ATOs. Upgrade to Founders for more.",
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   if (
     payload.intelligenceMode &&
     !allowedIntelligenceModes.includes(payload.intelligenceMode)
@@ -76,7 +132,9 @@ export async function POST(request: Request) {
         ? payload.personalityName
         : null,
     instructions:
-      typeof payload.instructions === "string" ? payload.instructions : null,
+      typeof payload.instructions === "string"
+        ? payload.instructions.trim()
+        : null,
     intelligenceMode: payload.intelligenceMode,
     defaultVoiceId:
       typeof payload.defaultVoiceId === "string" ? payload.defaultVoiceId : null,
