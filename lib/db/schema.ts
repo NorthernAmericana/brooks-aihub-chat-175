@@ -200,3 +200,23 @@ export const memory = pgTable("Memory", {
 });
 
 export type Memory = InferSelectModel<typeof memory>;
+
+export const customATO = pgTable("CustomATO", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: varchar("name", { length: 128 }).notNull(),
+  slash: varchar("slash", { length: 128 }).notNull(),
+  voiceId: text("voiceId").notNull(),
+  voiceLabel: text("voiceLabel").notNull(),
+  instructions: text("instructions").notNull(),
+  memoryScope: varchar("memoryScope", { enum: ["ato-only", "hub-wide"] })
+    .notNull()
+    .default("ato-only"),
+  lastUsedAt: timestamp("lastUsedAt"),
+});
+
+export type CustomATO = InferSelectModel<typeof customATO>;
