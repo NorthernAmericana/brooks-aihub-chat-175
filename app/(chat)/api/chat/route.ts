@@ -10,9 +10,6 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
-import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
-import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
-import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
   type AgentToolId,
   getAgentConfigById,
@@ -20,7 +17,6 @@ import {
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
-import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
@@ -105,24 +101,6 @@ function getSlashTriggerFromMessages(
 
   const match = trimmed.match(/^\/([^\s]+)/);
   return match?.[1];
-}
-
-function getLatestUserMessageText(messages: ChatMessage[]): string | null {
-  const lastUserMessage = [...messages]
-    .reverse()
-    .find((currentMessage) => currentMessage.role === "user");
-
-  if (!lastUserMessage) {
-    return null;
-  }
-
-  const text = lastUserMessage.parts
-    .filter((part) => part.type === "text")
-    .map((part) => part.text)
-    .join("")
-    .trim();
-
-  return text.length > 0 ? text : null;
 }
 
 export async function POST(request: Request) {
@@ -241,9 +219,6 @@ export async function POST(request: Request) {
         getDefaultAgentConfig();
     }
 
-    const isNamcAgent = selectedAgent.id === "namc";
-    const isMyCarMindAgent = selectedAgent.id === "my-car-mind";
-    const isMyFlowerAIAgent = selectedAgent.id === "my-flower-ai";
     const approvedMemories = await getApprovedMemoriesByUserId({
       userId: session.user.id,
     });
@@ -252,92 +227,6 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        if (isNamcAgent) {
-          const latestUserMessage = getLatestUserMessageText(uiMessages);
-          const namcLoreContext = latestUserMessage
-            ? await buildNamcLoreContext(latestUserMessage, {
-                maxSnippets: 4,
-                maxTokens: 1500,
-              })
-            : null;
-          const namcOutput = await runNamcMediaCurator({
-            messages: uiMessages,
-            loreContext: namcLoreContext,
-            memoryContext,
-          });
-
-          dataStream.write({ type: "start" });
-          dataStream.write({ type: "start-step" });
-          dataStream.write({ type: "text-start", id: "text-1" });
-          dataStream.write({
-            type: "text-delta",
-            id: "text-1",
-            delta: namcOutput,
-          });
-          dataStream.write({ type: "text-end", id: "text-1" });
-          dataStream.write({ type: "finish-step" });
-          dataStream.write({ type: "finish", finishReason: "stop" });
-
-          if (titlePromise) {
-            const title = await titlePromise;
-            dataStream.write({ type: "data-chat-title", data: title });
-            updateChatTitleById({ chatId: id, title });
-          }
-          return;
-        }
-
-        if (isMyCarMindAgent) {
-          const myCarMindOutput = await runMyCarMindAtoWorkflow({
-            messages: uiMessages,
-            memoryContext,
-          });
-
-          dataStream.write({ type: "start" });
-          dataStream.write({ type: "start-step" });
-          dataStream.write({ type: "text-start", id: "text-1" });
-          dataStream.write({
-            type: "text-delta",
-            id: "text-1",
-            delta: myCarMindOutput,
-          });
-          dataStream.write({ type: "text-end", id: "text-1" });
-          dataStream.write({ type: "finish-step" });
-          dataStream.write({ type: "finish", finishReason: "stop" });
-
-          if (titlePromise) {
-            const title = await titlePromise;
-            dataStream.write({ type: "data-chat-title", data: title });
-            updateChatTitleById({ chatId: id, title });
-          }
-          return;
-        }
-
-        if (isMyFlowerAIAgent) {
-          const myFlowerAIOutput = await runMyFlowerAIWorkflow({
-            messages: uiMessages,
-            memoryContext,
-          });
-
-          dataStream.write({ type: "start" });
-          dataStream.write({ type: "start-step" });
-          dataStream.write({ type: "text-start", id: "text-1" });
-          dataStream.write({
-            type: "text-delta",
-            id: "text-1",
-            delta: myFlowerAIOutput,
-          });
-          dataStream.write({ type: "text-end", id: "text-1" });
-          dataStream.write({ type: "finish-step" });
-          dataStream.write({ type: "finish", finishReason: "stop" });
-
-          if (titlePromise) {
-            const title = await titlePromise;
-            dataStream.write({ type: "data-chat-title", data: title });
-            updateChatTitleById({ chatId: id, title });
-          }
-          return;
-        }
-
         type ToolDefinition =
           | typeof getWeather
           | ReturnType<typeof createDocument>
