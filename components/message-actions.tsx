@@ -1,5 +1,5 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -7,7 +7,7 @@ import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { CopyIcon, PencilEditIcon, SpeakerIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 
 export function PureMessageActions({
   chatId,
@@ -26,6 +26,9 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
 
   if (isLoading) {
     return null;
@@ -47,7 +50,20 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
-  const _handleSpeak = async () => {
+  const handleSpeak = async () => {
+    // If already playing, stop current playback and start fresh
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
+      setIsPlaying(false);
+      audioRef.current = null;
+      return;
+    }
+
     if (!textFromParts) {
       toast.error("There's no response text to read yet.");
       return;
@@ -98,14 +114,31 @@ export function PureMessageActions({
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
+      audioUrlRef.current = audioUrl;
+      
       const audio = new Audio(audioUrl);
+      audioRef.current = audio;
 
-      audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl));
+      audio.addEventListener("ended", () => {
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+        }
+        setIsPlaying(false);
+        audioRef.current = null;
+      });
+      
       audio.addEventListener("error", () => {
-        URL.revokeObjectURL(audioUrl);
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+        }
+        setIsPlaying(false);
+        audioRef.current = null;
         toast.error("Audio playback failed.");
       });
 
+      setIsPlaying(true);
       await audio.play();
       toast.success("Playing response.");
     } catch (error) {
@@ -114,6 +147,8 @@ export function PureMessageActions({
       } else {
         toast.error("Unable to generate speech right now.");
       }
+      setIsPlaying(false);
+      audioRef.current = null;
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -149,6 +184,14 @@ export function PureMessageActions({
     <Actions className="-ml-0.5">
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
+      </Action>
+
+      <Action 
+        onClick={handleSpeak} 
+        tooltip={isPlaying ? "Stop playback" : "Read aloud"}
+        data-testid="message-speak"
+      >
+        <SpeakerIcon />
       </Action>
 
       <Action
