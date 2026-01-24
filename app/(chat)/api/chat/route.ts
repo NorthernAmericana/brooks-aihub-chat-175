@@ -11,6 +11,7 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
+import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
   type AgentToolId,
@@ -242,6 +243,7 @@ export async function POST(request: Request) {
 
     const isNamcAgent = selectedAgent.id === "namc";
     const isMyCarMindAgent = selectedAgent.id === "my-car-mind";
+    const isMyFlowerAIAgent = selectedAgent.id === "my-flower-ai";
     const approvedMemories = await getApprovedMemoriesByUserId({
       userId: session.user.id,
     });
@@ -297,6 +299,32 @@ export async function POST(request: Request) {
             type: "text-delta",
             id: "text-1",
             delta: myCarMindOutput,
+          });
+          dataStream.write({ type: "text-end", id: "text-1" });
+          dataStream.write({ type: "finish-step" });
+          dataStream.write({ type: "finish", finishReason: "stop" });
+
+          if (titlePromise) {
+            const title = await titlePromise;
+            dataStream.write({ type: "data-chat-title", data: title });
+            updateChatTitleById({ chatId: id, title });
+          }
+          return;
+        }
+
+        if (isMyFlowerAIAgent) {
+          const myFlowerAIOutput = await runMyFlowerAIWorkflow({
+            messages: uiMessages,
+            memoryContext,
+          });
+
+          dataStream.write({ type: "start" });
+          dataStream.write({ type: "start-step" });
+          dataStream.write({ type: "text-start", id: "text-1" });
+          dataStream.write({
+            type: "text-delta",
+            id: "text-1",
+            delta: myFlowerAIOutput,
           });
           dataStream.write({ type: "text-end", id: "text-1" });
           dataStream.write({ type: "finish-step" });
