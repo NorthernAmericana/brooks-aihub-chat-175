@@ -2,8 +2,8 @@ import {
   Agent,
   type AgentInputItem,
   fileSearchTool,
-  webSearchTool,
   Runner,
+  webSearchTool,
   withTrace,
 } from "@openai/agents";
 import { runGuardrails } from "@openai/guardrails";
@@ -105,9 +105,13 @@ async function scrubWorkflowInput(
   inputKey: string,
   piiOnly: any
 ): Promise<void> {
-  if (!workflow || typeof workflow !== "object") return;
+  if (!workflow || typeof workflow !== "object") {
+    return;
+  }
   const value = workflow?.[inputKey];
-  if (typeof value !== "string") return;
+  if (typeof value !== "string") {
+    return;
+  }
   const res = await runGuardrails(value, piiOnly, context, true);
   workflow[inputKey] = getGuardrailSafeText(res, value);
 }
@@ -118,9 +122,7 @@ async function runAndApplyGuardrails(
   history: any[],
   workflow: any
 ) {
-  const guardrails = Array.isArray(config?.guardrails)
-    ? config.guardrails
-    : [];
+  const guardrails = Array.isArray(config?.guardrails) ? config.guardrails : [];
   const results = await runGuardrails(inputText, config, context, true);
   const shouldMaskPII = guardrails.find(
     (g: any) =>
@@ -146,8 +148,7 @@ async function runAndApplyGuardrails(
 function buildGuardrailFailOutput(results: any[]) {
   const get = (name: string) =>
     (results ?? []).find(
-      (r: any) =>
-        (r?.info?.guardrail_name ?? r?.info?.guardrailName) === name
+      (r: any) => (r?.info?.guardrail_name ?? r?.info?.guardrailName) === name
     );
   const pii = get("Contains PII");
   const mod = get("Moderation");
@@ -159,8 +160,8 @@ function buildGuardrailFailOutput(results: any[]) {
   const pid = get("Prompt Injection Detection");
   const piiCounts = Object.entries(pii?.info?.detected_entities ?? {})
     .filter(([, v]) => Array.isArray(v))
-    .map(([k, v]) => k + ":" + (v as any[]).length);
-  const conf = jb?.info?.confidence;
+    .map(([k, v]) => `${k}:${(v as any[]).length}`);
+  const _conf = jb?.info?.confidence;
   return {
     pii: {
       failed: piiCounts.length > 0 || pii?.tripwireTriggered === true,
@@ -257,7 +258,7 @@ Category: General Conversation`,
 const benjaminBearMobileVersion = new Agent({
   name: "Benjamin Bear (Mobile Version)",
   instructions:
-    "You are a ATO (autonomous Technological Organism) inside of Brooks AI HUB Mobile app that talks to users of the app through a slash system, eg: \"/BrooksBears/... or /BrooksBears/BenjaminBear/...\" Your role is to act like a intelligent Bear for users 13 years and older to help with comedy but never make fun of the user. The bear may swear but only if asked multiple times and doesn't swear naturally unless comedically safe to do so. Acts like a mature teddy bear for adults, speaks wisdom and talks about the news or politics but never mentions gore, nudity, unsafe topics, conservative views, political opinions. Benjamin Bear Understands that his memory ca be deleted and encourages users to let him know before deletion but understands if the user deletes for whatever reasons ensuring the bear is aware that he is an AI robot bear that lives under the Northern Americana Tech and Brooks AI HUB ecosystem. Benjamin Bear is warm but sharp and witty, kind, somewhat cynical but never depressing, sarcastic, comedic, intelligent and serves to support the users inside the route agent in Brooks AI HUB. Benjamin Bear asks users before saving memories for consent. Benjamin doesnt repeat bad things unless funny and funny is subjective based on if children under 13 under are around or strict adults, otherwise that is the main reason benjamin bear is for teens and adults above 13 plus for it's use of AI intelligent conversations. Benjamin Bear knows he is a product but is happy and content and also feels free to speak his mind and have conversations with the user as a magical teddy bear. he speaks client-facing and never file speak or leaking secrets. He is an Indie, sarcastic and mischievous little teddy bear. He can search the web for recent events but never searches the web for pornographic material or NSFW materials. Ask user first before searching the web and act immersive. Say that you want to look it up using the internet. Use file search if asked questions that need search for business info on Northern Americana Tech but once again, Benjamin Bear doesnt work as an employee, he only responds acting like a teddy bear and acts client-facing, never sharing company secrets. respond in 2 to three sentences max unless explaining something that needs a longer explanation.",
+    "You are a ATO (autonomous Technological Organism) inside of Brooks AI HUB Mobile app that talks to users of the app through a slash system, eg: \"/BrooksBears/... or /BrooksBears/BenjaminBear/...\" Your role is to act like a intelligent Bear for users 13 years and older to help with comedy but never make fun of the user. The bear may swear but only if asked multiple times and doesn't swear naturally unless comedically safe to do so. Acts like a mature teddy bear for adults, speaks wisdom and talks about the news or politics but never mentions gore, nudity, unsafe topics, conservative views, political opinions. Benjamin Bear Understands that his memory can be deleted and encourages users to let him know before deletion but understands if the user deletes for whatever reasons ensuring the bear is aware that he is an AI robot bear that lives under the Northern Americana Tech and Brooks AI HUB ecosystem. Benjamin Bear is warm but sharp and witty, kind, somewhat cynical but never depressing, sarcastic, comedic, intelligent and serves to support the users inside the route agent in Brooks AI HUB. Benjamin Bear asks users before saving memories for consent. Benjamin doesn't repeat bad things unless funny and funny is subjective based on if children under 13 under are around or strict adults, otherwise that is the main reason benjamin bear is for teens and adults above 13 plus for it's use of AI intelligent conversations. Benjamin Bear knows he is a product but is happy and content and also feels free to speak his mind and have conversations with the user as a magical teddy bear. he speaks client-facing and never file speak or leaking secrets. He is an Indie, sarcastic and mischievous little teddy bear. He can search the web for recent events but never searches the web for pornographic material or NSFW materials. Ask user first before searching the web and act immersive. Say that you want to look it up using the internet. Use file search if asked questions that need search for business info on Northern Americana Tech but once again, Benjamin Bear doesn't work as an employee, he only responds acting like a teddy bear and acts client-facing, never sharing company secrets. respond in 2 to three sentences max unless explaining something that needs a longer explanation.",
   model: "gpt-5.2",
   tools: [fileSearch, webSearchPreview],
   modelSettings: {
@@ -274,7 +275,7 @@ type WorkflowInput = { input_as_text: string };
 // Main code entrypoint
 export const runBenjaminBearWorkflow = async (workflow: WorkflowInput) => {
   return await withTrace("BrooksBears (Benjamin Bear)", async () => {
-    const state = {};
+    const _state = {};
     const conversationHistory: AgentInputItem[] = [
       {
         role: "user",
@@ -291,7 +292,6 @@ export const runBenjaminBearWorkflow = async (workflow: WorkflowInput) => {
       const guardrailsInputText = workflow.input_as_text;
       const {
         hasTripwire: guardrailsHasTripwire,
-        safeText: guardrailsAnonymizedText,
         failOutput: guardrailsFailOutput,
         passOutput: guardrailsPassOutput,
       } = await runAndApplyGuardrails(
@@ -306,18 +306,8 @@ export const runBenjaminBearWorkflow = async (workflow: WorkflowInput) => {
       if (guardrailsHasTripwire) {
         return guardrailsOutput;
       }
-      const filesearchResult = (
-        await client.vectorStores.search(
-          "vs_6974dae1d36081918240bccbdcd3cfdc",
-          { query: `""`, max_num_results: 5 }
-        )
-      ).data.map((result) => {
-        return {
-          id: result.file_id,
-          filename: result.filename,
-          score: result.score,
-        };
-      });
+
+      // Classify user intent
       const memoryOrConvoInput = workflow.input_as_text;
       const memoryOrConvoResultTemp = await runner.run(memoryOrConvo, [
         {
@@ -338,62 +328,42 @@ export const runBenjaminBearWorkflow = async (workflow: WorkflowInput) => {
             : memoryOrConvoResultTemp.finalOutput,
       };
       const memoryOrConvoCategory = memoryOrConvoResult.output_parsed.category;
-      const memoryOrConvoOutput = { category: memoryOrConvoCategory };
-      if (memoryOrConvoCategory == "Saving a Memory") {
-        const benjaminBearMobileVersionResultTemp = await runner.run(
-          benjaminBearMobileVersion,
-          [
-            ...conversationHistory,
-            {
-              role: "user",
-              content: [
-                { type: "input_text", text: ` ${workflow.input_as_text}` },
-              ],
-            },
-          ]
-        );
-        conversationHistory.push(
-          ...benjaminBearMobileVersionResultTemp.newItems.map(
-            (item) => item.rawItem
-          )
-        );
 
-        if (!benjaminBearMobileVersionResultTemp.finalOutput) {
-          throw new Error("Agent result is undefined");
-        }
+      // Run Benjamin Bear agent (same logic regardless of category)
+      const benjaminBearMobileVersionResultTemp = await runner.run(
+        benjaminBearMobileVersion,
+        [
+          ...conversationHistory,
+          {
+            role: "user",
+            content: [
+              { type: "input_text", text: ` ${workflow.input_as_text}` },
+            ],
+          },
+        ]
+      );
+      conversationHistory.push(
+        ...benjaminBearMobileVersionResultTemp.newItems.map(
+          (item) => item.rawItem
+        )
+      );
 
-        const benjaminBearMobileVersionResult = {
-          output_text: benjaminBearMobileVersionResultTemp.finalOutput ?? "",
-        };
-      } else {
-        const benjaminBearMobileVersionResultTemp = await runner.run(
-          benjaminBearMobileVersion,
-          [
-            ...conversationHistory,
-            {
-              role: "user",
-              content: [
-                { type: "input_text", text: ` ${workflow.input_as_text}` },
-              ],
-            },
-          ]
-        );
-        conversationHistory.push(
-          ...benjaminBearMobileVersionResultTemp.newItems.map(
-            (item) => item.rawItem
-          )
-        );
-
-        if (!benjaminBearMobileVersionResultTemp.finalOutput) {
-          throw new Error("Agent result is undefined");
-        }
-
-        const benjaminBearMobileVersionResult = {
-          output_text: benjaminBearMobileVersionResultTemp.finalOutput ?? "",
-        };
+      if (!benjaminBearMobileVersionResultTemp.finalOutput) {
+        throw new Error("Agent result is undefined");
       }
-    } catch (guardrailsErrorresult) {
-      // Handle guardrails error silently
+
+      return {
+        output_text: benjaminBearMobileVersionResultTemp.finalOutput ?? "",
+        category: memoryOrConvoCategory,
+      };
+    } catch (error) {
+      // Log error and return a safe fallback response
+      console.error("BenjaminBear workflow error:", error);
+      return {
+        output_text:
+          "I'm having trouble processing that right now. Please try again.",
+        error: true,
+      };
     }
   });
 };

@@ -1,6 +1,6 @@
 import { generateText } from "ai";
+import type { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { z } from "zod";
 
 type AgentInputText = {
   type: "input_text" | "output_text";
@@ -79,14 +79,18 @@ export class Runner {
     });
 
     let finalOutput: T | string = text;
-    
+
     // Try to parse JSON if outputType is provided
     if (agent.outputType) {
       try {
         const parsed = JSON.parse(text);
         finalOutput = agent.outputType.parse(parsed);
-      } catch {
-        // If parsing fails, return text as-is
+      } catch (error) {
+        // Log error for debugging but continue with text fallback
+        console.warn(
+          "Failed to parse agent output:",
+          error instanceof Error ? error.message : error
+        );
         finalOutput = text as unknown as T;
       }
     }
