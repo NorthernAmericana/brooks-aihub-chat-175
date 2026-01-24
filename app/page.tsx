@@ -8,7 +8,7 @@ import { toast } from "@/components/toast";
 
 export default function IntroPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -55,6 +55,12 @@ export default function IntroPage() {
       setIsSigningOut(false);
     }
   }, [session?.user]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/welcome");
+    }
+  }, [router, status]);
 
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#140d12] text-white">
