@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getUnofficialAtoById } from "@/lib/db/queries";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
@@ -12,7 +12,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const atoId = params.id;
+  const { id: atoId } = await params;
 
   if (!atoId) {
     return NextResponse.json({ error: "id is required." }, { status: 400 });
