@@ -13,10 +13,10 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2025-01-27.acacia",
+  apiVersion: "2025-12-15.clover",
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 if (!webhookSecret) {
   throw new Error("STRIPE_WEBHOOK_SECRET is not set");
 }

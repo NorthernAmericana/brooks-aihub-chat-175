@@ -8,7 +8,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2025-01-27.acacia",
+  apiVersion: "2025-12-15.clover",
 });
 
 const FOUNDERS_ACCESS_PRICE_ID = "price_1SpBht050iAre6ZtPyv42z6s";
