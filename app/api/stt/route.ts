@@ -33,17 +33,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedType = audio.type.split(";")[0] || "audio/webm";
     const extensionByMimeType: Record<string, string> = {
       "audio/webm": ".webm",
       "audio/mp4": ".mp4",
+      "audio/mpeg": ".mp3",
       "audio/ogg": ".ogg",
       "audio/wav": ".wav",
     };
-    const audioExtension = extensionByMimeType[audio.type] ?? ".webm";
+    const audioExtension = extensionByMimeType[normalizedType] ?? ".webm";
 
     // Convert Blob to File for OpenAI API
     const audioFile = new File([audio], `audio${audioExtension}`, {
-      type: audio.type,
+      type: normalizedType,
     });
 
     // Use OpenAI Whisper (gpt-4o-transcribe model) for transcription

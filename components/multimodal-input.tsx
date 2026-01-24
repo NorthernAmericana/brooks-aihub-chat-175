@@ -199,7 +199,21 @@ function PureMultimodalInput({
     let stream: MediaStream | null = null;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const preferredMimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+      ];
+      const supportedMimeType = preferredMimeTypes.find((type) =>
+        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported
+          ? MediaRecorder.isTypeSupported(type)
+          : false
+      );
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        supportedMimeType ? { mimeType: supportedMimeType } : undefined
+      );
       const audioChunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -207,7 +221,9 @@ function PureMultimodalInput({
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const rawType = supportedMimeType || audioChunks[0]?.type || "audio/webm";
+        const normalizedType = rawType.split(";")[0] || "audio/webm";
+        const audioBlob = new Blob(audioChunks, { type: normalizedType });
 
         // Send to speech-to-text API
         const formData = new FormData();
@@ -225,7 +241,16 @@ function PureMultimodalInput({
             setRecordedText(transcribedText);
             setInput((prev) => prev + (prev ? " " : "") + transcribedText);
           } else {
-            toast.error("Failed to transcribe audio");
+            let errorMessage = "Failed to transcribe audio";
+            try {
+              const data = await response.json();
+              if (data?.error) {
+                errorMessage = data.error;
+              }
+            } catch (parseError) {
+              console.error("STT error response parsing failed:", parseError);
+            }
+            toast.error(errorMessage);
           }
         } catch (error) {
           console.error("STT error:", error);

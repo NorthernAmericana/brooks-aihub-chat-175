@@ -166,6 +166,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarFooter>
           <div className="flex flex-col gap-2 p-2">
             <Button
+              asChild
+              className="justify-start"
+              size="sm"
+              variant="outline"
+            >
+              <Link
+                href="/create-ato"
+                onClick={() => {
+                  setOpenMobile(false);
+                }}
+              >
+                Make your own ATO /.../
+              </Link>
+            </Button>
+            <Button
               className="justify-start"
               size="sm"
               variant="outline"
