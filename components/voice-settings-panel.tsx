@@ -23,6 +23,23 @@ type VoiceSettingsPanelProps = {
   chats: Chat[];
 };
 
+// Helper function to get display name for route
+const getRouteDisplayName = (routeKey: string): string => {
+  const routeNames: Record<string, string> = {
+    "brooks-ai-hub": "/Brooks AI HUB/",
+    namc: "/NAMC/",
+    "brooks-bears": "/BrooksBears/",
+    brooksbears: "/BrooksBears/",
+    "my-car-mind": "/MyCarMindATO/",
+    mycarmindato: "/MyCarMindATO/",
+    "my-flower-ai": "/MyFlowerAI/",
+    myflowerai: "/MyFlowerAI/",
+    nat: "/NAT/",
+    default: "Default",
+  };
+  return routeNames[routeKey] ?? `/${routeKey}/`;
+};
+
 export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
   // Show all chats since Brooks AI HUB voice is now available for non-NAMC routes
   const namcChats = useMemo(() => chats, [chats]);
@@ -132,7 +149,7 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
               <div>
                 <p className="font-medium">{chat.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  Route: {routeKey === "namc" ? "/NAMC/" : routeKey === "brooks-bears" || routeKey === "brooksbears" ? "/BrooksBears/" : routeKey === "brooks-ai-hub" ? "/Brooks AI HUB/" : `/${routeKey}/`} •
+                  Route: {getRouteDisplayName(routeKey)} •
                   Default: {defaultVoice.label}
                 </p>
               </div>
