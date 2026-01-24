@@ -3,7 +3,7 @@
 import { SearchIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { AgentConfig } from "@/lib/ai/agents/registry";
+import { listAgentConfigs, type AgentConfig } from "@/lib/ai/agents/registry";
 import { getStoredSlashActions, normalizeSlash } from "@/lib/suggested-actions";
 
 export function SlashSuggestions({
@@ -18,7 +18,11 @@ export function SlashSuggestions({
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
   useEffect(() => {
-    // Fetch agents including custom ones
+    // Load official agents immediately
+    const officialAgents = listAgentConfigs();
+    setAgentConfigs(officialAgents);
+
+    // Fetch all agents (including custom ones) from API
     fetch("/api/agents-list")
       .then((res) => res.json())
       .then((data) => {

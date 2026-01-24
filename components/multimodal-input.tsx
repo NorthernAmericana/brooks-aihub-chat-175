@@ -28,8 +28,8 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import {
-  getAgentConfigById,
-  getAgentConfigBySlash,
+  getAgentConfigByIdSync,
+  getAgentConfigBySlashSync,
 } from "@/lib/ai/agents/registry";
 import {
   chatModels,
@@ -199,8 +199,8 @@ function PureMultimodalInput({
 
     // Check for route change if chat has existing messages and routeKey
     if (parsedAction && messages.length > 0 && chatRouteKey) {
-      const currentAgent = getAgentConfigById(chatRouteKey);
-      const newAgent = getAgentConfigBySlash(parsedAction.slash);
+      const currentAgent = getAgentConfigByIdSync(chatRouteKey);
+      const newAgent = getAgentConfigBySlashSync(parsedAction.slash);
 
       if (
         currentAgent &&

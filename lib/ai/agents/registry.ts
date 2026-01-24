@@ -198,51 +198,13 @@ const agentRegistry: AgentConfig[] = [
 
 export const defaultAgentId = "brooks-ai-hub";
 
-let customAgentsCache: AgentConfig[] = [];
-let customAgentsCacheTime = 0;
-const CACHE_TTL = 60_000; // 1 minute
-
-// Load custom agents from database (server-side only)
-async function loadCustomAgents(): Promise<AgentConfig[]> {
-  // Check cache
-  const now = Date.now();
-  if (customAgentsCache.length > 0 && now - customAgentsCacheTime < CACHE_TTL) {
-    return customAgentsCache;
-  }
-
-  try {
-    // Dynamic import to avoid issues with server-only code
-    const { getAllCustomAgents } = await import("@/lib/db/queries");
-    const customAgents = await getAllCustomAgents();
-
-    customAgentsCache = customAgents.map((agent) => ({
-      id: agent.id,
-      label: agent.name,
-      slash: agent.slash,
-      tools: (agent.tools as AgentToolId[]) ?? [],
-      systemPromptOverride: agent.systemPrompt ?? undefined,
-      isCustom: true,
-      userId: agent.userId,
-    }));
-    customAgentsCacheTime = now;
-
-    return customAgentsCache;
-  } catch (error) {
-    console.warn("Failed to load custom agents:", error);
-    return [];
-  }
+// For client-side use (official agents only) - synchronous
+export function listAgentConfigs(): AgentConfig[] {
+  return agentRegistry;
 }
 
-export async function listAgentConfigs(): Promise<AgentConfig[]> {
-  const customAgents = await loadCustomAgents();
-  return [...agentRegistry, ...customAgents];
-}
-
-export async function getAgentConfigById(
-  id: string
-): Promise<AgentConfig | undefined> {
-  const allAgents = await listAgentConfigs();
-  return allAgents.find((agent) => agent.id === id);
+export function getAgentConfigByIdSync(id: string): AgentConfig | undefined {
+  return agentRegistry.find((agent) => agent.id === id);
 }
 
 const normalizeSlash = (slash: string) =>
@@ -251,14 +213,63 @@ const normalizeSlash = (slash: string) =>
     .replace(/\s+/g, "")
     .toLowerCase();
 
+export function getAgentConfigBySlashSync(
+  slash: string
+): AgentConfig | undefined {
+  const normalized = normalizeSlash(slash);
+  return agentRegistry.find(
+    (agent) => normalizeSlash(agent.slash) === normalized
+  );
+}
+
+export function getDefaultAgentConfigSync(): AgentConfig {
+  return (
+    getAgentConfigByIdSync(defaultAgentId) ??
+    agentRegistry[0] ?? {
+      id: defaultAgentId,
+      label: "Default",
+      slash: "default",
+      tools: [],
+    }
+  );
+}
+
+// Server-side only - async versions that include custom agents
+export async function listAgentConfigsWithCustom(): Promise<AgentConfig[]> {
+  if (typeof window !== "undefined") {
+    // Client-side, return only official agents
+    return agentRegistry;
+  }
+
+  try {
+    // Server-side dynamic import
+    const { loadCustomAgentsFromDb } = await import("./custom-loader");
+    const customConfigs = await loadCustomAgentsFromDb();
+    return [...agentRegistry, ...customConfigs];
+  } catch (error) {
+    console.warn("Failed to load custom agents:", error);
+    return agentRegistry;
+  }
+}
+
+// Server-side only
+export async function getAgentConfigById(
+  id: string
+): Promise<AgentConfig | undefined> {
+  const allAgents = await listAgentConfigsWithCustom();
+  return allAgents.find((agent) => agent.id === id);
+}
+
+// Server-side only
 export async function getAgentConfigBySlash(
   slash: string
 ): Promise<AgentConfig | undefined> {
   const normalized = normalizeSlash(slash);
-  const allAgents = await listAgentConfigs();
+  const allAgents = await listAgentConfigsWithCustom();
   return allAgents.find((agent) => normalizeSlash(agent.slash) === normalized);
 }
 
+// Server-side only
 export async function getDefaultAgentConfig(): Promise<AgentConfig> {
   const defaultAgent = await getAgentConfigById(defaultAgentId);
   return (

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { listAgentConfigsWithCustom } from "@/lib/ai/agents/registry";
 
 export async function GET() {
   const session = await auth();
@@ -10,7 +10,7 @@ export async function GET() {
   }
 
   try {
-    const agents = await listAgentConfigs();
+    const agents = await listAgentConfigsWithCustom();
     return NextResponse.json({ agents });
   } catch (error) {
     console.error("Error fetching agents:", error);
