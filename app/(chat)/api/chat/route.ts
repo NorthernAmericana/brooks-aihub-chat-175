@@ -41,6 +41,7 @@ import {
   saveChat,
   saveMessages,
   updateChatTitleById,
+  updateCustomAtoLastUsed,
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
@@ -260,6 +261,12 @@ export async function POST(request: Request) {
       userId: session.user.id,
     });
     const memoryContext = formatMemoryContext(approvedMemories);
+
+    // Track custom ATO usage
+    if (selectedAgent.id.startsWith("custom-")) {
+      const atoId = selectedAgent.id.replace("custom-", "");
+      await updateCustomAtoLastUsed(atoId, session.user.id);
+    }
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
