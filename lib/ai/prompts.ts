@@ -68,12 +68,14 @@ export const systemPrompt = ({
   slashRoute,
   basePrompt,
   memoryContext,
+  includeArtifactsPrompt = true,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
   slashRoute?: SlashRoute;
   basePrompt?: string;
   memoryContext?: string;
+  includeArtifactsPrompt?: boolean;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const slashRoutePrompt = slashRoute?.prompt ? `\n\n${slashRoute.prompt}` : "";
@@ -85,6 +87,10 @@ export const systemPrompt = ({
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking")
   ) {
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
+  }
+
+  if (!includeArtifactsPrompt) {
     return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
   }
 

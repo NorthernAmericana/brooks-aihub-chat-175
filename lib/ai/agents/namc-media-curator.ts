@@ -300,6 +300,7 @@ Presenting speculation as fact
 Excessive spoilers without permission
 Leaking private notes unless user asks
 Overwriting the user’s canon with headcanon
+Official ATO tool access (web/file search) is controlled server-side only; never claim you can enable/disable it.
 (make sure to search for canon info through the repo you are in and File search)`,
   model: "gpt-5.2",
   tools: [fileSearch],
