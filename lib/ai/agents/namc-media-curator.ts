@@ -9,8 +9,10 @@ import { runGuardrails } from "@openai/guardrails";
 import { OpenAI } from "openai";
 import type { ChatMessage } from "@/lib/types";
 
+const NAMC_VECTOR_STORE_ID = "vs_696eeaf739208191acdb5ec1e14c6b3c";
+
 // Tool definitions
-const fileSearch = fileSearchTool(["vs_696eeaf739208191acdb5ec1e14c6b3c"]);
+const fileSearch = fileSearchTool([NAMC_VECTOR_STORE_ID]);
 
 // Shared client for guardrails and file search
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -40,7 +42,7 @@ const guardrailsConfig: GuardrailsConfig = {
       name: "Hallucination Detection",
       config: {
         model: "gpt-4o",
-        knowledge_source: "vs_696eeaf739208191acdb5ec1e14c6b3c",
+        knowledge_source: NAMC_VECTOR_STORE_ID,
         confidence_threshold: 0.7,
       },
     },
@@ -359,10 +361,12 @@ const buildNamcConversationHistory = (
 
 export const runNamcMediaCurator = async ({
   messages,
+  latestUserMessage,
   loreContext,
   memoryContext,
 }: {
   messages: ChatMessage[];
+  latestUserMessage?: ChatMessage | null;
   loreContext?: string | null;
   memoryContext?: string | null;
 }): Promise<string> => {
@@ -372,9 +376,11 @@ export const runNamcMediaCurator = async ({
       loreContext ?? undefined,
       memoryContext ?? undefined
     );
-    const lastUserMessage = [...(messages ?? [])]
-      .reverse()
-      .find((message) => message.role === "user");
+    const lastUserMessage =
+      latestUserMessage ??
+      [...(messages ?? [])]
+        .reverse()
+        .find((message) => message.role === "user");
     const inputText =
       lastUserMessage?.parts
         ?.filter((part) => part.type === "text")

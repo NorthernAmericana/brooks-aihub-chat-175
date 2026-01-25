@@ -16,6 +16,7 @@ import {
   getAgentConfigBySlash,
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
+import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -227,6 +228,7 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        const isNamcAgent = selectedAgent.id === "namc";
         type ToolDefinition =
           | typeof getWeather
           | ReturnType<typeof createDocument>
@@ -249,32 +251,53 @@ export async function POST(request: Request) {
           ])
         ) as Record<AgentToolId, ToolDefinition>;
 
-        const result = streamText({
-          model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({
-            selectedChatModel,
-            requestHints,
-            basePrompt: selectedAgent.systemPromptOverride,
-            memoryContext: memoryContext ?? undefined,
-          }),
-          messages: modelMessages,
-          stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel ? [] : selectedAgent.tools,
-          providerOptions: isReasoningModel
-            ? {
-                anthropic: {
-                  thinking: { type: "enabled", budgetTokens: 10_000 },
-                },
-              }
-            : undefined,
-          tools,
-          experimental_telemetry: {
-            isEnabled: isProductionEnvironment,
-            functionId: "stream-text",
-          },
-        });
+        if (isNamcAgent) {
+          const lastUserMessage = [...uiMessages]
+            .reverse()
+            .find((currentMessage) => currentMessage.role === "user");
+          const responseText = await runNamcMediaCurator({
+            messages: uiMessages,
+            latestUserMessage: lastUserMessage,
+            memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else {
+          const result = streamText({
+            model: getLanguageModel(selectedChatModel),
+            system: systemPrompt({
+              selectedChatModel,
+              requestHints,
+              basePrompt: selectedAgent.systemPromptOverride,
+              memoryContext: memoryContext ?? undefined,
+            }),
+            messages: modelMessages,
+            stopWhen: stepCountIs(5),
+            experimental_activeTools: isReasoningModel ? [] : selectedAgent.tools,
+            providerOptions: isReasoningModel
+              ? {
+                  anthropic: {
+                    thinking: { type: "enabled", budgetTokens: 10_000 },
+                  },
+                }
+              : undefined,
+            tools,
+            experimental_telemetry: {
+              isEnabled: isProductionEnvironment,
+              functionId: "stream-text",
+            },
+          });
 
-        dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
+          dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
+        }
 
         if (titlePromise) {
           const title = await titlePromise;
