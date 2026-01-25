@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import type { UnofficialAto } from "@/lib/db/schema";
 
 type AtoSettingsPanelProps = {
@@ -85,6 +87,9 @@ export const AtoSettingsPanel = ({
               <p className="text-xs text-muted-foreground">
                 {ato.description || "No description provided."}
               </p>
+              <Button asChild className="mt-3" size="sm" variant="outline">
+                <Link href={`/create-ato/${ato.id}`}>Edit ATO</Link>
+              </Button>
             </div>
 
             <div className="flex flex-col gap-3 text-sm">

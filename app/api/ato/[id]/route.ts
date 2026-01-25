@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
+  getUserById,
   getUnofficialAtoById,
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
@@ -52,6 +53,8 @@ export async function PATCH(
   let payload: {
     webSearchEnabled?: boolean;
     fileSearchEnabled?: boolean;
+    personalityName?: string | null;
+    instructions?: string | null;
   };
 
   try {
@@ -63,14 +66,42 @@ export async function PATCH(
     );
   }
 
-  if (
-    typeof payload.webSearchEnabled !== "boolean" &&
-    typeof payload.fileSearchEnabled !== "boolean"
-  ) {
+  const hasSettingsUpdate =
+    typeof payload.webSearchEnabled === "boolean" ||
+    typeof payload.fileSearchEnabled === "boolean";
+  const hasPersonalityUpdate =
+    typeof payload.personalityName === "string" ||
+    typeof payload.instructions === "string";
+
+  if (!hasSettingsUpdate && !hasPersonalityUpdate) {
     return NextResponse.json(
       { error: "No settings provided." },
       { status: 400 }
     );
+  }
+
+  const instructionsValue =
+    typeof payload.instructions === "string"
+      ? payload.instructions.trim()
+      : undefined;
+
+  if (typeof instructionsValue !== "undefined") {
+    const user = await getUserById({ id: session.user.id });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    const instructionsLimit = user.foundersAccess ? 999 : 500;
+
+    if (instructionsValue.length > instructionsLimit) {
+      return NextResponse.json(
+        {
+          error: `Instructions must be ${instructionsLimit} characters or fewer.`,
+        },
+        { status: 400 }
+      );
+    }
   }
 
   const updated = await updateUnofficialAtoSettings({
@@ -78,6 +109,14 @@ export async function PATCH(
     ownerUserId: session.user.id,
     webSearchEnabled: payload.webSearchEnabled,
     fileSearchEnabled: payload.fileSearchEnabled,
+    personalityName:
+      typeof payload.personalityName === "string"
+        ? payload.personalityName.trim() || null
+        : undefined,
+    instructions:
+      typeof instructionsValue !== "undefined"
+        ? instructionsValue || null
+        : undefined,
   });
 
   if (!updated) {

@@ -313,18 +313,24 @@ export async function updateUnofficialAtoSettings({
   ownerUserId,
   webSearchEnabled,
   fileSearchEnabled,
+  personalityName,
+  instructions,
   planMetadata,
 }: {
   id: string;
   ownerUserId: string;
   webSearchEnabled?: boolean;
   fileSearchEnabled?: boolean;
+  personalityName?: string | null;
+  instructions?: string | null;
   planMetadata?: Record<string, unknown> | null;
 }) {
   try {
     const updateValues: {
       webSearchEnabled?: boolean;
       fileSearchEnabled?: boolean;
+      personalityName?: string | null;
+      instructions?: string | null;
       planMetadata?: Record<string, unknown> | null;
       updatedAt: Date;
     } = {
@@ -337,6 +343,14 @@ export async function updateUnofficialAtoSettings({
 
     if (typeof fileSearchEnabled === "boolean") {
       updateValues.fileSearchEnabled = fileSearchEnabled;
+    }
+
+    if (typeof personalityName !== "undefined") {
+      updateValues.personalityName = personalityName;
+    }
+
+    if (typeof instructions !== "undefined") {
+      updateValues.instructions = instructions;
     }
 
     if (typeof planMetadata !== "undefined") {
