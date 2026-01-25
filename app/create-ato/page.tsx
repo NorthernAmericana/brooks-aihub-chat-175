@@ -46,6 +46,8 @@ export default function CreateAtoPage() {
     const tools = String(formData.get("ato-tools") ?? "").trim();
     const memory = String(formData.get("ato-memory") ?? "").trim();
     const audience = String(formData.get("ato-audience") ?? "").trim();
+    const webSearchEnabled = formData.get("ato-web-search") === "on";
+    const fileSearchEnabled = formData.get("ato-file-search") === "on";
     const selectedVoice =
       ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ??
       ALL_VOICES[0];
@@ -74,6 +76,8 @@ export default function CreateAtoPage() {
           instructions,
           defaultVoiceId: selectedVoice?.id ?? null,
           defaultVoiceLabel: selectedVoice?.label ?? null,
+          webSearchEnabled,
+          fileSearchEnabled,
         }),
       });
 
@@ -272,6 +276,27 @@ export default function CreateAtoPage() {
                   <span>Never store memory.</span>
                 </label>
               </div>
+            </div>
+            <div className="grid gap-3">
+              <p className="text-sm font-medium text-foreground">
+                Tool access toggles
+              </p>
+              <label className="flex items-start gap-2 text-sm text-muted-foreground">
+                <input
+                  className="mt-1 h-4 w-4 accent-foreground"
+                  name="ato-web-search"
+                  type="checkbox"
+                />
+                <span>Enable web search for this ATO.</span>
+              </label>
+              <label className="flex items-start gap-2 text-sm text-muted-foreground">
+                <input
+                  className="mt-1 h-4 w-4 accent-foreground"
+                  name="ato-file-search"
+                  type="checkbox"
+                />
+                <span>Enable file search uploads for this ATO.</span>
+              </label>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-audience">Target audience</Label>
