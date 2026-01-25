@@ -7,6 +7,7 @@ import {
 } from "@openai/agents";
 import { runGuardrails } from "@openai/guardrails";
 import { OpenAI } from "openai";
+import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
 import type { ChatMessage } from "@/lib/types";
 
 const NAMC_VECTOR_STORE_ID = "vs_696eeaf739208191acdb5ec1e14c6b3c";
@@ -371,11 +372,6 @@ export const runNamcMediaCurator = async ({
   memoryContext?: string | null;
 }): Promise<string> => {
   return await withTrace("NAMC AI Media Curator", async () => {
-    const conversationHistory = buildNamcConversationHistory(
-      messages,
-      loreContext ?? undefined,
-      memoryContext ?? undefined
-    );
     const lastUserMessage =
       latestUserMessage ??
       [...(messages ?? [])]
@@ -386,6 +382,16 @@ export const runNamcMediaCurator = async ({
         ?.filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("") ?? "";
+    const resolvedLoreContext =
+      loreContext ??
+      (inputText.trim()
+        ? await buildNamcLoreContext(inputText)
+        : null);
+    const conversationHistory = buildNamcConversationHistory(
+      messages,
+      resolvedLoreContext ?? undefined,
+      memoryContext ?? undefined
+    );
     const workflow = {
       input_as_text: inputText,
       input_text: inputText,
