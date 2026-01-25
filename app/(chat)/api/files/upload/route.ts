@@ -8,7 +8,7 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
 const isPdfFile = (file: Blob, filename: string) =>
   file.type === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File size should be less than 50MB" },
+        { error: "File size should be less than 4MB" },
         { status: 400 }
       );
     }
