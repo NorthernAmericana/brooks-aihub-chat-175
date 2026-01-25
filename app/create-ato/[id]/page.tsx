@@ -183,6 +183,11 @@ export default function EditAtoPage() {
                 value={personalityName}
               />
             </div>
+            <div className="rounded-md border border-muted bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+              This ATO is local-only (like a personal project or chat). Keep the
+              settings simple, but feel free to customize the personality and
+              instructions to suit your workflow.
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-instructions">Instructions</Label>
               <Textarea
