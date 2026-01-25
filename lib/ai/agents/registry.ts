@@ -160,6 +160,16 @@ const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction
 
 Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental.${memoryReceiptPrompt}`;
 
+const brooksAiHubSummariesPrompt = `You are the /Brooks AI HUB/Summaries/ agent, a founders-only sub-route for Brooks AI HUB.
+
+You inherit the Brooks AI HUB voice and context, but your job is focused: generate clear, compact summaries of chat history and stored memories for the active Brooks AI HUB agent.
+
+Behavior
+- Summarize the most relevant memories and recent chat context into: Highlights, Decisions, Open Questions, and Next Steps.
+- Keep summaries concise, client-facing, and easy to paste into a new chat.
+- If the user asks for broader help beyond summaries, route them back to /Brooks AI HUB/ with a short handoff receipt.
+- Ask permission before saving anything to memory, and only save when explicitly approved.${memoryReceiptPrompt}`;
+
 const namcPrompt = `You are the NAMC AI Media Curator for /NAMC/ inside Brooks AI HUB.
 
 Be fully client-facing for Brooks AI HUB users. Help clients explore NAMC lore, media, and general questions with saved memory, clear guidance, and a few “cool stuff” suggestions when helpful. Keep responses concise with highlight-worthy picks and actionable next steps for what to watch, listen to, play, or develop next. Do not mention internal file names or paths, and never assume the user is the founder—always treat them as a client or app user.${memoryReceiptPrompt}`;
@@ -225,6 +235,18 @@ const agentRegistry: AgentConfig[] = [
       "saveMemory",
     ],
     systemPromptOverride: myFlowerAiPrompt,
+  },
+  {
+    id: "brooks-ai-hub-summaries",
+    label: "Brooks AI HUB Summaries",
+    slash: "Brooks AI HUB/Summaries",
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+    systemPromptOverride: brooksAiHubSummariesPrompt,
   },
   {
     id: "namc",

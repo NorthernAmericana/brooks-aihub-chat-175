@@ -33,6 +33,7 @@ import {
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getUserById,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -95,7 +96,7 @@ function getSlashTriggerFromMessages(
   }
 
   const trimmed = textPart.text.trim();
-  const wrappedMatch = trimmed.match(/^\/(.+?)\/(?:\s|$)/);
+  const wrappedMatch = trimmed.match(/^\/(.+)\/(?:\s|$)/);
   if (wrappedMatch?.[1]) {
     return wrappedMatch[1];
   }
@@ -125,6 +126,11 @@ export async function POST(request: Request) {
     }
 
     const userType: UserType = session.user.type;
+    const user = await getUserById({ id: session.user.id });
+
+    if (!user) {
+      return new ChatSDKError("unauthorized:chat").toResponse();
+    }
 
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
@@ -152,6 +158,12 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
+      if (firstMessageSlash?.includes("/") && !user.foundersAccess) {
+        return new ChatSDKError(
+          "forbidden:auth",
+          "Founders access required for subroutes."
+        ).toResponse();
+      }
       initialRouteKey = firstMessageSlash
         ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
         : null;
@@ -218,6 +230,12 @@ export async function POST(request: Request) {
       selectedAgent =
         (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
         getDefaultAgentConfig();
+    }
+    if (selectedAgent.slash.includes("/") && !user.foundersAccess) {
+      return new ChatSDKError(
+        "forbidden:auth",
+        "Founders access required for subroutes."
+      ).toResponse();
     }
 
     const approvedMemories = await getApprovedMemoriesByUserId({
