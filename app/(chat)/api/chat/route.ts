@@ -346,15 +346,17 @@ export async function POST(request: Request) {
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
         };
 
+        const namcDocumentTools: AgentToolId[] = [
+          "createDocument",
+          "updateDocument",
+          "saveMemory",
+        ];
+        if (isNamcSuggestionRequest) {
+          namcDocumentTools.push("requestSuggestions");
+        }
+
         const activeToolIds: AgentToolId[] = isNamcDocumentRequest
-          ? Array.from(
-              new Set<AgentToolId>([
-                "createDocument",
-                "updateDocument",
-                ...(isNamcSuggestionRequest ? ["requestSuggestions"] : []),
-                "saveMemory",
-              ])
-            )
+          ? namcDocumentTools
           : selectedAgent.tools;
 
         const tools = Object.fromEntries(
