@@ -31,8 +31,10 @@ import {
   deleteChatById,
   getApprovedMemoriesByUserId,
   getChatById,
+  getEnabledAtoFilesByAtoId,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getUnofficialAtoById,
   getUserById,
   saveChat,
   saveMessages,
@@ -132,6 +134,28 @@ export async function POST(request: Request) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
 
+    const enabledFileUrls = new Set<string>();
+
+    if (requestBody.atoId) {
+      const ato = await getUnofficialAtoById({
+        id: requestBody.atoId,
+        ownerUserId: session.user.id,
+      });
+
+      if (!ato) {
+        return new ChatSDKError("forbidden:chat").toResponse();
+      }
+
+      const enabledFiles = await getEnabledAtoFilesByAtoId({
+        atoId: requestBody.atoId,
+        ownerUserId: session.user.id,
+      });
+
+      enabledFiles.forEach((file) => {
+        enabledFileUrls.add(file.blobUrl);
+      });
+    }
+
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
@@ -142,6 +166,27 @@ export async function POST(request: Request) {
     }
 
     const isToolApprovalFlow = Boolean(messages);
+
+    const filterParts = <T extends { parts?: unknown[] }>(entry: T): T => {
+      if (!requestBody.atoId || !Array.isArray(entry.parts)) {
+        return entry;
+      }
+
+      const filteredParts = entry.parts.filter((part) => {
+        if (
+          typeof part === "object" &&
+          part !== null &&
+          "type" in part &&
+          (part as { type?: string }).type === "file"
+        ) {
+          const url = (part as { url?: string }).url;
+          return typeof url === "string" ? enabledFileUrls.has(url) : false;
+        }
+        return true;
+      });
+
+      return { ...entry, parts: filteredParts };
+    };
 
     const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
@@ -181,9 +226,12 @@ export async function POST(request: Request) {
       });
     }
 
+    const sanitizedMessage = message
+      ? filterParts(message as ChatMessage)
+      : undefined;
     const uiMessages = isToolApprovalFlow
-      ? (messages as ChatMessage[])
-      : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
+      ? (messages as ChatMessage[]).map((current) => filterParts(current))
+      : [...convertToUIMessages(messagesFromDb), ...(sanitizedMessage ? [sanitizedMessage] : [])];
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -194,14 +242,14 @@ export async function POST(request: Request) {
       country,
     };
 
-    if (message?.role === "user") {
+    if (sanitizedMessage?.role === "user") {
       await saveMessages({
         messages: [
           {
             chatId: id,
-            id: message.id,
+            id: sanitizedMessage.id,
             role: "user",
-            parts: message.parts,
+            parts: sanitizedMessage.parts,
             attachments: [],
             createdAt: new Date(),
           },

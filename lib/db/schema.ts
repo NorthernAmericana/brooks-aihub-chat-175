@@ -232,6 +232,24 @@ export const unofficialAto = pgTable("UnofficialAto", {
 
 export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
 
+export const atoFile = pgTable("AtoFile", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  atoId: uuid("atoId")
+    .notNull()
+    .references(() => unofficialAto.id),
+  ownerUserId: uuid("ownerUserId")
+    .notNull()
+    .references(() => user.id),
+  filename: text("filename").notNull(),
+  blobUrl: text("blobUrl").notNull(),
+  blobPathname: text("blobPathname").notNull(),
+  contentType: text("contentType").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type AtoFile = InferSelectModel<typeof atoFile>;
+
 // Entitlements table for product ownership
 export const entitlement = pgTable("Entitlement", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),

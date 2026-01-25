@@ -130,6 +130,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            ...(atoId ? { atoId } : null),
             ...request.body,
           },
         };

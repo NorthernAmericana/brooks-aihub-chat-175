@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 import {
+  createAtoFile,
   getUnofficialAtoById,
   getUserById,
   updateUnofficialAtoSettings,
@@ -122,6 +123,18 @@ export async function POST(request: Request) {
       const data = await put(`${filename}`, fileBuffer, {
         access: "public",
       });
+
+      if (atoIdToUpdate) {
+        await createAtoFile({
+          atoId: atoIdToUpdate,
+          ownerUserId: session.user.id,
+          filename,
+          blobUrl: data.url,
+          blobPathname: data.pathname,
+          contentType: data.contentType ?? file.type,
+          enabled: true,
+        });
+      }
 
       if (atoIdToUpdate && atoPlanMetadataToUpdate) {
         await updateUnofficialAtoSettings({

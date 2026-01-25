@@ -26,6 +26,21 @@ type AtoResponse = {
   error?: string;
 };
 
+type AtoFile = {
+  id: string;
+  filename: string;
+  blobUrl: string;
+  blobPathname: string;
+  contentType: string;
+  enabled: boolean;
+  createdAt: string;
+};
+
+type AtoFilesResponse = {
+  files?: AtoFile[];
+  error?: string;
+};
+
 export default function EditAtoPage() {
   const params = useParams();
   const atoId = useMemo(() => {
@@ -43,6 +58,16 @@ export default function EditAtoPage() {
   const [atoDescription, setAtoDescription] = useState("");
   const [personalityName, setPersonalityName] = useState("");
   const [instructionsText, setInstructionsText] = useState("");
+  const [atoFiles, setAtoFiles] = useState<AtoFile[]>([]);
+  const [filesError, setFilesError] = useState<string | null>(null);
+  const [filesFeedback, setFilesFeedback] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
+  const [isFilesLoading, setIsFilesLoading] = useState(false);
+  const [updatingFiles, setUpdatingFiles] = useState<Record<string, boolean>>(
+    {}
+  );
 
   useEffect(() => {
     if (!atoId) {
@@ -88,6 +113,98 @@ export default function EditAtoPage() {
       isActive = false;
     };
   }, [atoId]);
+
+  useEffect(() => {
+    if (!atoId) {
+      return;
+    }
+
+    let isActive = true;
+
+    const loadFiles = async () => {
+      setIsFilesLoading(true);
+      setFilesError(null);
+
+      try {
+        const response = await fetch(`/api/ato/${atoId}/files`);
+        const data = (await response.json()) as AtoFilesResponse;
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Unable to load file list.");
+        }
+
+        if (isActive) {
+          setAtoFiles(data.files ?? []);
+        }
+      } catch (error) {
+        console.error(error);
+        if (isActive) {
+          setFilesError("Unable to load ATO files.");
+        }
+      } finally {
+        if (isActive) {
+          setIsFilesLoading(false);
+        }
+      }
+    };
+
+    void loadFiles();
+
+    return () => {
+      isActive = false;
+    };
+  }, [atoId]);
+
+  const handleFileToggle = async (file: AtoFile, enabled: boolean) => {
+    if (!atoId) {
+      return;
+    }
+
+    setFilesFeedback(null);
+    setUpdatingFiles((previous) => ({ ...previous, [file.id]: true }));
+    setAtoFiles((previous) =>
+      previous.map((current) =>
+        current.id === file.id ? { ...current, enabled } : current
+      )
+    );
+
+    try {
+      const response = await fetch(`/api/ato/${atoId}/files/${file.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+
+      const data = (await response.json()) as { file?: AtoFile; error?: string };
+
+      if (!response.ok || !data.file) {
+        throw new Error(data.error ?? "Unable to update file setting.");
+      }
+
+      setAtoFiles((previous) =>
+        previous.map((current) =>
+          current.id === data.file?.id ? data.file : current
+        )
+      );
+      setFilesFeedback({
+        type: "success",
+        message: "File access updated.",
+      });
+    } catch (error) {
+      console.error(error);
+      setAtoFiles((previous) =>
+        previous.map((current) =>
+          current.id === file.id ? file : current
+        )
+      );
+      setFilesFeedback({
+        type: "error",
+        message: "Unable to update file access.",
+      });
+    } finally {
+      setUpdatingFiles((previous) => ({ ...previous, [file.id]: false }));
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -204,6 +321,76 @@ export default function EditAtoPage() {
                 Founders: ≤ 999.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>File access settings</CardTitle>
+            <CardDescription>
+              Choose which uploaded files this ATO can use during file search.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {isFilesLoading ? (
+              <p className="text-sm text-muted-foreground">
+                Loading uploaded files...
+              </p>
+            ) : filesError ? (
+              <p className="text-sm text-destructive">{filesError}</p>
+            ) : atoFiles.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No files uploaded yet.
+              </p>
+            ) : (
+              <ul className="grid gap-3">
+                {atoFiles.map((file) => (
+                  <li
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    key={file.id}
+                  >
+                    <div className="min-w-0">
+                      <a
+                        className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                        href={file.blobUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {file.filename}
+                      </a>
+                      <p className="text-xs text-muted-foreground">
+                        {file.contentType} · Uploaded{" "}
+                        {new Date(file.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        checked={file.enabled}
+                        className="h-4 w-4 accent-foreground"
+                        disabled={Boolean(updatingFiles[file.id])}
+                        onChange={(event) =>
+                          handleFileToggle(file, event.target.checked)
+                        }
+                        type="checkbox"
+                      />
+                      Enabled
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {filesFeedback && (
+              <div
+                aria-live="polite"
+                className={`rounded-md border px-3 py-2 text-xs ${
+                  filesFeedback.type === "error"
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                }`}
+              >
+                {filesFeedback.message}
+              </div>
+            )}
           </CardContent>
         </Card>
 

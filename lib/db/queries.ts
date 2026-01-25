@@ -24,6 +24,7 @@ import {
   type DBMessage,
   document,
   entitlement,
+  atoFile,
   memory,
   message,
   redemption,
@@ -390,6 +391,122 @@ export async function updateUnofficialAtoSettings({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update unofficial ATO"
+    );
+  }
+}
+
+export async function createAtoFile({
+  atoId,
+  ownerUserId,
+  filename,
+  blobUrl,
+  blobPathname,
+  contentType,
+  enabled,
+}: {
+  atoId: string;
+  ownerUserId: string;
+  filename: string;
+  blobUrl: string;
+  blobPathname: string;
+  contentType: string;
+  enabled?: boolean;
+}) {
+  try {
+    const [record] = await db
+      .insert(atoFile)
+      .values({
+        atoId,
+        ownerUserId,
+        filename,
+        blobUrl,
+        blobPathname,
+        contentType,
+        enabled: enabled ?? true,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to create ATO file");
+  }
+}
+
+export async function getAtoFilesByAtoId({
+  atoId,
+  ownerUserId,
+}: {
+  atoId: string;
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(atoFile)
+      .where(and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId)))
+      .orderBy(desc(atoFile.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get ATO files");
+  }
+}
+
+export async function getEnabledAtoFilesByAtoId({
+  atoId,
+  ownerUserId,
+}: {
+  atoId: string;
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(atoFile)
+      .where(
+        and(
+          eq(atoFile.atoId, atoId),
+          eq(atoFile.ownerUserId, ownerUserId),
+          eq(atoFile.enabled, true)
+        )
+      )
+      .orderBy(desc(atoFile.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get enabled ATO files"
+    );
+  }
+}
+
+export async function updateAtoFileEnabled({
+  id,
+  atoId,
+  ownerUserId,
+  enabled,
+}: {
+  id: string;
+  atoId: string;
+  ownerUserId: string;
+  enabled: boolean;
+}) {
+  try {
+    const [record] = await db
+      .update(atoFile)
+      .set({ enabled })
+      .where(
+        and(
+          eq(atoFile.id, id),
+          eq(atoFile.atoId, atoId),
+          eq(atoFile.ownerUserId, ownerUserId)
+        )
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update ATO file"
     );
   }
 }
