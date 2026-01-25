@@ -376,7 +376,8 @@ function PureMultimodalInput({
     file.name.toLowerCase().endsWith(".pdf");
   const isImageFile = (file: File) => file.type.startsWith("image/");
   const isVideoFile = (file: File) => file.type.startsWith("video/");
-  const isChatMediaFile = (file: File) => isImageFile(file) || isVideoFile(file);
+  const isChatMediaFile = (file: File) =>
+    isImageFile(file) || isVideoFile(file) || isPdfFile(file);
 
   const getChatAttachmentCounts = useCallback(
     (currentAttachments: Attachment[]) => ({
@@ -403,7 +404,7 @@ function PureMultimodalInput({
           return;
         }
       } else if (!isChatMediaFile(file)) {
-        toast.error("Only images or videos are accepted in chat uploads.");
+        toast.error("Only images, videos, or PDFs are accepted in chat uploads.");
         return;
       }
 
@@ -459,7 +460,9 @@ function PureMultimodalInput({
       } else {
         validFiles = incomingFiles.filter((file) => isChatMediaFile(file));
         if (validFiles.length !== incomingFiles.length) {
-          toast.error("Only images or videos are accepted in chat uploads.");
+          toast.error(
+            "Only images, videos, or PDFs are accepted in chat uploads."
+          );
         }
 
         const { images: existingImages, videos: existingVideos } =
@@ -610,7 +613,11 @@ function PureMultimodalInput({
         )}
 
       <input
-        accept={isAtoUpload ? "application/pdf" : "image/*,video/*"}
+        accept={
+          isAtoUpload
+            ? "application/pdf"
+            : "image/*,video/*,application/pdf"
+        }
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         disabled={!canUploadFiles}
         multiple

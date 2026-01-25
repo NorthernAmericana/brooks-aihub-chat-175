@@ -8,13 +8,15 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
 const isPdfFile = (file: Blob, filename: string) =>
   file.type === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
 
-const isChatMediaFile = (file: Blob) =>
-  file.type.startsWith("image/") || file.type.startsWith("video/");
+const isChatMediaFile = (file: Blob, filename: string) =>
+  file.type.startsWith("image/") ||
+  file.type.startsWith("video/") ||
+  isPdfFile(file, filename);
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File size should be less than 5MB" },
+        { error: "File size should be less than 4MB" },
         { status: 400 }
       );
     }
@@ -107,9 +109,9 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-    } else if (!isChatMediaFile(file)) {
+    } else if (!isChatMediaFile(file, filename)) {
       return NextResponse.json(
-        { error: "Only images or videos are accepted in chat uploads." },
+        { error: "Only images, videos, or PDFs are accepted in chat uploads." },
         { status: 400 }
       );
     }
