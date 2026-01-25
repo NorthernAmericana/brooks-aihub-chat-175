@@ -1144,6 +1144,51 @@ export async function createEntitlement({
   }
 }
 
+export async function updateEntitlementProgress({
+  userId,
+  productId,
+  progress,
+}: {
+  userId: string;
+  productId: string;
+  progress: Record<string, unknown>;
+}) {
+  try {
+    const [existing] = await db
+      .select()
+      .from(entitlement)
+      .where(and(eq(entitlement.userId, userId), eq(entitlement.productId, productId)))
+      .orderBy(desc(entitlement.grantedAt))
+      .limit(1);
+
+    if (!existing) {
+      throw new ChatSDKError(
+        "bad_request:database",
+        "Entitlement not found for progress update"
+      );
+    }
+
+    const mergedMetadata = {
+      ...(existing.metadata ?? {}),
+      progress,
+    };
+
+    return await db
+      .update(entitlement)
+      .set({ metadata: mergedMetadata })
+      .where(eq(entitlement.id, existing.id))
+      .returning();
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update entitlement progress"
+    );
+  }
+}
+
 export async function getUserEntitlements({ userId }: { userId: string }) {
   try {
     return await db

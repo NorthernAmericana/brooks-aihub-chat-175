@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       productId: redemptionCode.productId,
       grantedBy: "redemption_code",
       metadata: {
+        ...(redemptionCode.metadata ?? {}),
         code: redemptionCode.code,
         codeId: redemptionCode.id,
       },
