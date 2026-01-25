@@ -17,6 +17,7 @@ import {
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
+import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -341,6 +342,7 @@ export async function POST(request: Request) {
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
+        const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
           isNamcAgent && isDocumentRequest(lastUserText);
@@ -385,6 +387,21 @@ export async function POST(request: Request) {
           const responseText = await runNamcMediaCurator({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
+            memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else if (isMyFlowerAiAgent) {
+          const responseText = await runMyFlowerAIWorkflow({
+            messages: uiMessages,
             memoryContext,
           });
           const responseId = generateUUID();
