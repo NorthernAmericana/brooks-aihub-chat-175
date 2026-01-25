@@ -35,6 +35,7 @@ import {
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
+  getUserEntitlements,
   getUserById,
   saveChat,
   saveMessages,
@@ -42,6 +43,11 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
+import {
+  deriveEntitlementRules,
+  formatSpoilerAccessContext,
+  getSpoilerAccessSummary,
+} from "@/lib/entitlements/products";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -320,7 +326,16 @@ export async function POST(request: Request) {
     const approvedMemories = await getApprovedMemoriesByUserId({
       userId: session.user.id,
     });
-    const memoryContext = formatMemoryContext(approvedMemories);
+    const baseMemoryContext = formatMemoryContext(approvedMemories);
+    const userEntitlements = await getUserEntitlements({
+      userId: session.user.id,
+    });
+    const entitlementRules = deriveEntitlementRules(userEntitlements);
+    const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
+    const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
+    const memoryContext =
+      [baseMemoryContext, spoilerAccessContext].filter(Boolean).join("\n\n") ||
+      null;
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
