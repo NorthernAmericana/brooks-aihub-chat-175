@@ -197,6 +197,8 @@ export async function createUnofficialAto({
   defaultVoiceLabel,
   webSearchEnabled,
   fileSearchEnabled,
+  fileUsageEnabled,
+  fileStoragePath,
   planMetadata,
 }: {
   ownerUserId: string;
@@ -209,6 +211,8 @@ export async function createUnofficialAto({
   defaultVoiceLabel?: string | null;
   webSearchEnabled?: boolean;
   fileSearchEnabled?: boolean;
+  fileUsageEnabled?: boolean;
+  fileStoragePath?: string | null;
   planMetadata?: Record<string, unknown> | null;
 }) {
   try {
@@ -225,6 +229,8 @@ export async function createUnofficialAto({
         defaultVoiceLabel: defaultVoiceLabel ?? null,
         webSearchEnabled: webSearchEnabled ?? false,
         fileSearchEnabled: fileSearchEnabled ?? false,
+        fileUsageEnabled: fileUsageEnabled ?? false,
+        fileStoragePath: fileStoragePath ?? null,
         planMetadata: planMetadata ?? null,
       })
       .returning();
@@ -313,6 +319,8 @@ export async function updateUnofficialAtoSettings({
   ownerUserId,
   webSearchEnabled,
   fileSearchEnabled,
+  fileUsageEnabled,
+  fileStoragePath,
   personalityName,
   instructions,
   planMetadata,
@@ -321,6 +329,8 @@ export async function updateUnofficialAtoSettings({
   ownerUserId: string;
   webSearchEnabled?: boolean;
   fileSearchEnabled?: boolean;
+  fileUsageEnabled?: boolean;
+  fileStoragePath?: string | null;
   personalityName?: string | null;
   instructions?: string | null;
   planMetadata?: Record<string, unknown> | null;
@@ -329,6 +339,8 @@ export async function updateUnofficialAtoSettings({
     const updateValues: {
       webSearchEnabled?: boolean;
       fileSearchEnabled?: boolean;
+      fileUsageEnabled?: boolean;
+      fileStoragePath?: string | null;
       personalityName?: string | null;
       instructions?: string | null;
       planMetadata?: Record<string, unknown> | null;
@@ -343,6 +355,14 @@ export async function updateUnofficialAtoSettings({
 
     if (typeof fileSearchEnabled === "boolean") {
       updateValues.fileSearchEnabled = fileSearchEnabled;
+    }
+
+    if (typeof fileUsageEnabled === "boolean") {
+      updateValues.fileUsageEnabled = fileUsageEnabled;
+    }
+
+    if (typeof fileStoragePath !== "undefined") {
+      updateValues.fileStoragePath = fileStoragePath;
     }
 
     if (typeof personalityName !== "undefined") {

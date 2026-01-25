@@ -220,6 +220,8 @@ export const unofficialAto = pgTable("UnofficialAto", {
   defaultVoiceLabel: text("defaultVoiceLabel"),
   webSearchEnabled: boolean("webSearchEnabled").notNull().default(false),
   fileSearchEnabled: boolean("fileSearchEnabled").notNull().default(false),
+  fileUsageEnabled: boolean("fileUsageEnabled").notNull().default(false),
+  fileStoragePath: text("fileStoragePath"),
   ownerUserId: uuid("ownerUserId")
     .notNull()
     .references(() => user.id),
