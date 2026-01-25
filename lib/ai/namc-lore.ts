@@ -16,7 +16,7 @@ const MAX_CONTEXT_TOKENS = 1500;
 const DEFAULT_MAX_SNIPPETS = 4;
 const namcRoot = path.join(process.cwd(), "namc");
 const loreDirectories = ["lore", "projects"];
-const topLevelFiles = ["lore_dictionary.md", "timeline_master.md"];
+const topLevelFiles = ["README.md", "lore_dictionary.md", "timeline_master.md"];
 
 let cachedDocuments: NamcLoreDocument[] | null = null;
 
