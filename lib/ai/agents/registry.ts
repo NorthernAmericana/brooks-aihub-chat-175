@@ -240,12 +240,7 @@ const agentRegistry: AgentConfig[] = [
     id: "my-flower-ai",
     label: "My Flower AI",
     slash: "MyFlowerAI",
-    tools: [
-      "createDocument",
-      "updateDocument",
-      "requestSuggestions",
-      "saveMemory",
-    ],
+    tools: ["requestSuggestions", "saveMemory"],
     systemPromptOverride: myFlowerAiPrompt,
   },
   {
