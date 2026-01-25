@@ -107,6 +107,37 @@ function getSlashTriggerFromMessages(
   return match?.[1];
 }
 
+function getLastUserMessageText(messages: ChatMessage[]): string | null {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((currentMessage) => currentMessage.role === "user");
+  if (!lastUserMessage) {
+    return null;
+  }
+  const textPart = lastUserMessage.parts.find((part) => part.type === "text") as
+    | { type: "text"; text: string }
+    | undefined;
+  return textPart?.text ?? null;
+}
+
+function isDocumentRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+  return /\b(create|write|draft|make|update|edit)\b[\s\S]*\b(document|doc)\b/i.test(
+    text
+  );
+}
+
+function isDocumentSuggestionRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+  return /\b(suggest|suggestions|feedback|review)\b[\s\S]*\b(document|doc)\b/i.test(
+    text
+  );
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -295,6 +326,11 @@ export async function POST(request: Request) {
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
+        const lastUserText = getLastUserMessageText(uiMessages);
+        const isNamcDocumentRequest =
+          isNamcAgent && isDocumentRequest(lastUserText);
+        const isNamcSuggestionRequest =
+          isNamcAgent && isDocumentSuggestionRequest(lastUserText);
         type ToolDefinition =
           | typeof getWeather
           | ReturnType<typeof createDocument>
@@ -310,14 +346,24 @@ export async function POST(request: Request) {
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
         };
 
+        const namcDocumentTools: AgentToolId[] = [
+          "createDocument",
+          "updateDocument",
+          "saveMemory",
+        ];
+        if (isNamcSuggestionRequest) {
+          namcDocumentTools.push("requestSuggestions");
+        }
+
+        const activeToolIds: AgentToolId[] = isNamcDocumentRequest
+          ? namcDocumentTools
+          : selectedAgent.tools;
+
         const tools = Object.fromEntries(
-          selectedAgent.tools.map((toolId) => [
-            toolId,
-            toolImplementations[toolId],
-          ])
+          activeToolIds.map((toolId) => [toolId, toolImplementations[toolId]])
         ) as Record<AgentToolId, ToolDefinition>;
 
-        if (isNamcAgent) {
+        if (isNamcAgent && !isNamcDocumentRequest) {
           const lastUserMessage = [...uiMessages]
             .reverse()
             .find((currentMessage) => currentMessage.role === "user");
@@ -344,10 +390,11 @@ export async function POST(request: Request) {
               requestHints,
               basePrompt: selectedAgent.systemPromptOverride,
               memoryContext: memoryContext ?? undefined,
+              includeArtifactsPrompt: !isNamcAgent || isNamcDocumentRequest,
             }),
             messages: modelMessages,
             stopWhen: stepCountIs(5),
-            experimental_activeTools: isReasoningModel ? [] : selectedAgent.tools,
+            experimental_activeTools: isReasoningModel ? [] : activeToolIds,
             providerOptions: isReasoningModel
               ? {
                   anthropic: {
