@@ -20,21 +20,47 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   }, []);
 
   const suggestedFolders = useMemo(() => {
-    const desired = new Set([
-      "Brooks AI HUB",
-      "BrooksBears",
-      "MyCarMindATO",
-      "MyFlowerAI",
-      "NAMC",
-    ]);
+    const desiredOrder = [
+      { slash: "Brooks AI HUB", foundersOnly: false },
+      { slash: "BrooksBears", foundersOnly: false },
+      { slash: "MyCarMindATO", foundersOnly: false },
+      { slash: "MyFlowerAI", foundersOnly: false },
+      { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
+      { slash: "NAT", foundersOnly: false },
+      { slash: "NAMC", foundersOnly: false },
+    ];
 
-    return listAgentConfigs()
-      .filter((agent) => desired.has(agent.slash))
-      .map((agent) => ({
-        label: agent.label,
-        slash: agent.slash,
-        folder: `/${agent.slash}/`,
-      }));
+    const agentBySlash = new Map(
+      listAgentConfigs().map((agent) => [agent.slash, agent])
+    );
+    const labelOverrides: Record<string, string> = {
+      NAT: "Northern Americana Tech Agent",
+    };
+
+    return desiredOrder
+      .map((entry) => {
+        const agent = agentBySlash.get(entry.slash);
+        if (!agent) {
+          return null;
+        }
+
+        return {
+          label: labelOverrides[agent.slash] ?? agent.label,
+          slash: agent.slash,
+          folder: `/${agent.slash}/`,
+          foundersOnly: entry.foundersOnly,
+        };
+      })
+      .filter(
+        (
+          folder
+        ): folder is {
+          label: string;
+          slash: string;
+          folder: string;
+          foundersOnly: boolean;
+        } => Boolean(folder)
+      );
   }, []);
 
   const formattedNow = useMemo(
@@ -91,6 +117,15 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
               <span className="flex flex-col gap-0.5 text-left leading-tight">
                 <span className="text-xs font-semibold sm:text-sm md:text-base">
                   {folder.label}
+                  {folder.foundersOnly ? (
+                    <span
+                      aria-label="Founders access only"
+                      className="ml-1 inline-flex align-middle text-base"
+                      title="Founders access only"
+                    >
+                      💎
+                    </span>
+                  ) : null}
                 </span>
                 <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem] md:text-xs">
                   {folder.folder}

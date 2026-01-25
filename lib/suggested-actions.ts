@@ -23,7 +23,7 @@ export function parseSlashAction(
     return null;
   }
 
-  const match = trimmed.match(/^\/([^/]+)\/\s*(.*)$/);
+  const match = trimmed.match(/^\/(.+)\/\s*(.*)$/);
   if (!match) {
     return null;
   }
