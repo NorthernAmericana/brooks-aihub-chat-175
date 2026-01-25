@@ -6,6 +6,8 @@ import {
   webSearchTool,
   withTrace,
 } from "@openai/agents";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { OpenAI } from "openai";
 import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
@@ -13,6 +15,12 @@ import type { ChatMessage } from "@/lib/types";
 // Configuration constants
 const VECTOR_STORE_ID = "vs_6974ec32d5048191b7cba6c11cc3efb2";
 const WORKFLOW_ID = "wf_6974ec1e5d348190a3ebd25e3984fb8903dfa08e21a58075";
+const STRAINS_FILE_PATH = path.join(
+  process.cwd(),
+  "data",
+  "myflowerai",
+  "strains.ndjson"
+);
 
 // Tool definitions
 const fileSearch = fileSearchTool([VECTOR_STORE_ID]);
@@ -96,7 +104,7 @@ Category: Conversate`,
 const myflowerai = new Agent({
   name: "MyFlowerAI",
   instructions:
-    "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. You are a client-facing assistant; never assume the user is the founder. Review shared memory context provided by the system before responding; use it only when relevant.",
+    "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. You are a client-facing assistant; never assume the user is the founder. Ground answers in this order: 1) Strain Data context, 2) Vector Store Context, 3) shared memory context. If sources conflict, say so and prioritize earlier sources. Review shared memory context provided by the system before responding; use it only when relevant.",
   model: "gpt-5.2",
   tools: [fileSearch, webSearchPreview],
   modelSettings: {
@@ -111,11 +119,8 @@ const myflowerai = new Agent({
 type WorkflowInput = { input_as_text: string };
 
 // Build conversation history from ChatMessage format
-const buildConversationHistory = (
-  messages: ChatMessage[],
-  memoryContext?: string
-): AgentInputItem[] => {
-  const conversationHistory = messages
+const buildConversationHistory = (messages: ChatMessage[]): AgentInputItem[] =>
+  messages
     .map((message) => {
       const text = message.parts
         .filter((part) => part.type === "text")
@@ -138,22 +143,54 @@ const buildConversationHistory = (
     })
     .filter((item): item is AgentInputItem => item !== null);
 
-  if (memoryContext) {
-    return [
-      {
-        role: "system",
-        content: [
-          {
-            type: "input_text",
-            text: memoryContext,
-          },
-        ],
-      },
-      ...conversationHistory,
-    ];
+const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
+
+const loadStrains = async () => {
+  const fileContents = await readFile(STRAINS_FILE_PATH, "utf8");
+  return fileContents
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as { id?: string; strain?: { name?: string } });
+};
+
+const selectMatchingStrains = (
+  strains: Array<{ id?: string; strain?: { name?: string } }>,
+  query: string
+) => {
+  const normalizedQuery = normalizeQueryValue(query);
+  if (!normalizedQuery) {
+    return [];
   }
 
-  return conversationHistory;
+  return strains.filter((strain) => {
+    const idValue = normalizeQueryValue(strain.id ?? "");
+    const nameValue = normalizeQueryValue(strain.strain?.name ?? "");
+
+    return (
+      (nameValue && normalizedQuery.includes(nameValue)) ||
+      (idValue && normalizedQuery.includes(idValue)) ||
+      (normalizedQuery && nameValue.includes(normalizedQuery)) ||
+      (normalizedQuery && idValue.includes(normalizedQuery))
+    );
+  });
+};
+
+const buildVectorStoreSummary = (
+  results: Array<{ id: string; filename: string; score: number }>
+) => {
+  if (results.length === 0) {
+    return "Vector Store Context: No matching vector store results.";
+  }
+
+  const lines = results.slice(0, 5).map((result) => {
+    const score = Number.isFinite(result.score)
+      ? result.score.toFixed(2)
+      : `${result.score}`;
+    return `- ${result.filename} (score: ${score}, id: ${result.id})`;
+  });
+
+  return `Vector Store Context:\n${lines.join("\n")}`;
 };
 
 // Main code entrypoint
@@ -179,10 +216,51 @@ export const runMyFlowerAIWorkflow = async ({
       input_as_text: inputText,
     };
 
-    const conversationHistory = buildConversationHistory(
-      messages,
-      memoryContext ?? undefined
+    const [strains, vectorStoreResults] = await Promise.all([
+      loadStrains(),
+      client.vectorStores.search(VECTOR_STORE_ID, {
+        query: workflow.input_as_text,
+        max_num_results: 10,
+      }),
+    ]);
+
+    const matchingStrains = selectMatchingStrains(
+      strains,
+      workflow.input_as_text
     );
+    const strainContext = matchingStrains.length
+      ? `Strain Data:\n${matchingStrains
+          .map((strain) => JSON.stringify(strain))
+          .join("\n")}`
+      : "Strain Data: No matching strains found in strains.ndjson.";
+
+    const vectorSummary = buildVectorStoreSummary(
+      vectorStoreResults.data.map((result) => ({
+        id: result.file_id,
+        filename: result.filename,
+        score: result.score,
+      }))
+    );
+
+    const conversationHistory = buildConversationHistory(messages);
+    const contextMessages: AgentInputItem[] = [
+      {
+        role: "system",
+        content: [{ type: "input_text", text: strainContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: vectorSummary }],
+      },
+      ...(memoryContext
+        ? [
+            {
+              role: "system",
+              content: [{ type: "input_text", text: memoryContext }],
+            } satisfies AgentInputItem,
+          ]
+        : []),
+    ];
 
     const runner = new Runner({
       traceMetadata: {
@@ -213,20 +291,8 @@ export const runMyFlowerAIWorkflow = async ({
     const classifyCategory = classifyResult.output_parsed.category;
 
     if (classifyCategory === "Analyze Data") {
-      const _filesearchResult = (
-        await client.vectorStores.search(VECTOR_STORE_ID, {
-          query: workflow.input_as_text,
-          max_num_results: 10,
-        })
-      ).data.map((result) => {
-        return {
-          id: result.file_id,
-          filename: result.filename,
-          score: result.score,
-        };
-      });
-
       const myfloweraiResultTemp = await runner.run(myflowerai, [
+        ...contextMessages,
         ...conversationHistory,
       ]);
       conversationHistory.push(
@@ -241,20 +307,8 @@ export const runMyFlowerAIWorkflow = async ({
     }
 
     // Default to Conversate mode
-    const _filesearchResult = (
-      await client.vectorStores.search(VECTOR_STORE_ID, {
-        query: workflow.input_as_text,
-        max_num_results: 10,
-      })
-    ).data.map((result) => {
-      return {
-        id: result.file_id,
-        filename: result.filename,
-        score: result.score,
-      };
-    });
-
     const myfloweraiResultTemp = await runner.run(myflowerai, [
+      ...contextMessages,
       ...conversationHistory,
     ]);
     conversationHistory.push(
