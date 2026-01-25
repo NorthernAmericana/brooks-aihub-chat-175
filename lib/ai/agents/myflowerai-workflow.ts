@@ -184,9 +184,11 @@ const buildVectorStoreSummary = (
   }
 
   const lines = results.slice(0, 5).map((result) => {
-    const scoreLabel = Number.isFinite(result.score)
-      ? result.score.toFixed(2)
-      : "n/a";
+    const scoreValue = result.score ?? null;
+    const scoreLabel =
+      typeof scoreValue === "number" && Number.isFinite(scoreValue)
+        ? scoreValue.toFixed(2)
+        : "n/a";
     return `- ${result.filename} (score: ${scoreLabel}, id: ${result.id})`;
   });
 
