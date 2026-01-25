@@ -1,3 +1,5 @@
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
@@ -5,6 +7,7 @@ import {
   getUnofficialAtoCountByOwner,
   getUnofficialAtosByOwner,
   getUserById,
+  updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
 const allowedIntelligenceModes = ["Hive", "ATO-Limited"] as const;
@@ -40,6 +43,7 @@ export async function POST(request: Request) {
     defaultVoiceLabel?: string | null;
     webSearchEnabled?: boolean;
     fileSearchEnabled?: boolean;
+    fileUsageEnabled?: boolean;
     planMetadata?: Record<string, unknown> | null;
   };
 
@@ -122,6 +126,13 @@ export async function POST(request: Request) {
     );
   }
 
+  const fileUsageEnabled =
+    typeof payload.fileUsageEnabled === "boolean"
+      ? payload.fileUsageEnabled
+      : typeof payload.fileSearchEnabled === "boolean"
+        ? payload.fileSearchEnabled
+        : undefined;
+
   const ato = await createUnofficialAto({
     ownerUserId: session.user.id,
     name,
@@ -150,6 +161,7 @@ export async function POST(request: Request) {
       typeof payload.fileSearchEnabled === "boolean"
         ? payload.fileSearchEnabled
         : undefined,
+    fileUsageEnabled,
     planMetadata:
       payload.planMetadata &&
       typeof payload.planMetadata === "object" &&
@@ -163,6 +175,36 @@ export async function POST(request: Request) {
       { error: "Failed to create ATO." },
       { status: 500 }
     );
+  }
+
+  if (fileUsageEnabled === true && !ato.fileStoragePath) {
+    const storagePath = path.join("storage", "atos", ato.id);
+    const absoluteStoragePath = path.join(process.cwd(), storagePath);
+
+    try {
+      await mkdir(absoluteStoragePath, { recursive: true });
+    } catch (_error) {
+      return NextResponse.json(
+        { error: "Failed to create storage location." },
+        { status: 500 }
+      );
+    }
+
+    const updatedAto = await updateUnofficialAtoSettings({
+      id: ato.id,
+      ownerUserId: session.user.id,
+      fileUsageEnabled: true,
+      fileStoragePath: storagePath,
+    });
+
+    if (!updatedAto) {
+      return NextResponse.json(
+        { error: "Failed to update ATO storage location." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ato: updatedAto }, { status: 201 });
   }
 
   return NextResponse.json({ ato }, { status: 201 });

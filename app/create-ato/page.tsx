@@ -89,6 +89,7 @@ export default function CreateAtoPage() {
           defaultVoiceLabel: selectedVoice?.label ?? null,
           webSearchEnabled,
           fileSearchEnabled,
+          fileUsageEnabled: fileSearchEnabled,
         }),
       });
 
