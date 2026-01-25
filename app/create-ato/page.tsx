@@ -26,6 +26,7 @@ export default function CreateAtoPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [instructionsText, setInstructionsText] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState(
     ALL_VOICES[0]?.id ?? ""
   );
@@ -40,27 +41,37 @@ export default function CreateAtoPage() {
     const name = String(formData.get("ato-name") ?? "").trim();
     const route = String(formData.get("ato-route") ?? "").trim();
     const description = String(formData.get("ato-tagline") ?? "").trim();
+    const personalityName = String(
+      formData.get("ato-personality-name") ?? ""
+    ).trim();
     const tone = String(formData.get("ato-tone") ?? "").trim();
     const boundaries = String(formData.get("ato-boundaries") ?? "").trim();
     const intro = String(formData.get("ato-intro") ?? "").trim();
     const tools = String(formData.get("ato-tools") ?? "").trim();
     const memory = String(formData.get("ato-memory") ?? "").trim();
     const audience = String(formData.get("ato-audience") ?? "").trim();
+    const instructionsInput = String(
+      formData.get("ato-instructions") ?? ""
+    ).trim();
     const webSearchEnabled = formData.get("ato-web-search") === "on";
     const fileSearchEnabled = formData.get("ato-file-search") === "on";
     const selectedVoice =
       ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ??
       ALL_VOICES[0];
 
-    const instructionsParts = [
-      route ? `Slash route: ${route}` : null,
-      tone ? `Tone & voice: ${tone}` : null,
-      boundaries ? `Safety boundaries: ${boundaries}` : null,
-      intro ? `Welcome message: ${intro}` : null,
-      tools ? `Preferred tools: ${tools}` : null,
-      memory ? `Memory preference: ${memory}` : null,
-      audience ? `Target audience: ${audience}` : null,
-    ].filter((part): part is string => Boolean(part));
+    const instructionsParts = (
+      instructionsInput
+        ? [instructionsInput]
+        : [
+            route ? `Slash route: ${route}` : null,
+            tone ? `Tone & voice: ${tone}` : null,
+            boundaries ? `Safety boundaries: ${boundaries}` : null,
+            intro ? `Welcome message: ${intro}` : null,
+            tools ? `Preferred tools: ${tools}` : null,
+            memory ? `Memory preference: ${memory}` : null,
+            audience ? `Target audience: ${audience}` : null,
+          ]
+    ).filter((part): part is string => Boolean(part));
 
     const instructions =
       instructionsParts.length > 0 ? instructionsParts.join("\n") : null;
@@ -72,7 +83,7 @@ export default function CreateAtoPage() {
         body: JSON.stringify({
           name,
           description: description || null,
-          personalityName: tone || null,
+          personalityName: personalityName || null,
           instructions,
           defaultVoiceId: selectedVoice?.id ?? null,
           defaultVoiceLabel: selectedVoice?.label ?? null,
@@ -94,6 +105,7 @@ export default function CreateAtoPage() {
 
       setSuccessMessage("ATO request submitted successfully.");
       event.currentTarget.reset();
+      setInstructionsText("");
       setSelectedVoiceId(ALL_VOICES[0]?.id ?? "");
     } catch (_error) {
       setErrorMessage("Unable to submit your ATO request. Please try again.");
@@ -166,6 +178,17 @@ export default function CreateAtoPage() {
                 type="text"
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ato-personality-name">
+                Personality name (optional)
+              </Label>
+              <Input
+                id="ato-personality-name"
+                name="ato-personality-name"
+                placeholder="Example: Sage"
+                type="text"
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -224,6 +247,23 @@ export default function CreateAtoPage() {
                 placeholder="Hey there! I'm your wellness ATO — tell me what you want to improve today."
                 rows={3}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ato-instructions">
+                Instructions (optional)
+              </Label>
+              <Textarea
+                id="ato-instructions"
+                name="ato-instructions"
+                onChange={(event) => setInstructionsText(event.target.value)}
+                placeholder="Share the primary instructions for your ATO. If filled, this becomes the saved instructions text."
+                rows={5}
+                value={instructionsText}
+              />
+              <p className="text-xs text-muted-foreground">
+                {instructionsText.length} characters. Free plans: ≤ 500;
+                Founders: ≤ 999.
+              </p>
             </div>
           </CardContent>
         </Card>
