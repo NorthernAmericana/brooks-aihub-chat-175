@@ -193,7 +193,9 @@ export default function EditAtoPage() {
               <Textarea
                 id="ato-instructions"
                 onChange={(event) => setInstructionsText(event.target.value)}
-                placeholder="Update the saved ATO instructions."
+                placeholder={
+                  "Example:\nThis ATO /.../ is an Autonomous Technological Organism on Brooks AI HUB, using generative agentic AI to help me build my personal app and workspace.\nThis is a private, project-style ATO; guide the user like a personal workspace assistant. Use shared memory context when available.\nKeep responses scoped to this personal project/file and avoid public-facing framing."
+                }
                 rows={6}
                 value={instructionsText}
               />
