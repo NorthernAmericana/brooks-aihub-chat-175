@@ -1,7 +1,5 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { auth } from "@/app/(auth)/auth";
 import {
   createAtoFile,
@@ -10,25 +8,13 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
-const ALLOWED_MIME_TYPES = new Set(["application/pdf"]);
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-// Use Blob instead of File since File is not available in Node.js environment
-const FileSchema = z.object({
-  file: z
-    .instanceof(Blob)
-    .refine((file) => file.size <= 5 * 1024 * 1024, {
-      message: "File size should be less than 5MB",
-    })
-    .refine((file) => ALLOWED_MIME_TYPES.has(file.type), {
-      message: "Only PDF files are accepted.",
-    }),
-  filename: z
-    .string()
-    .min(1, { message: "Filename is required." })
-    .refine((name) => name.toLowerCase().endsWith(".pdf"), {
-      message: "Only PDF files are accepted.",
-    }),
-});
+const isPdfFile = (file: Blob, filename: string) =>
+  file.type === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
+
+const isChatMediaFile = (file: Blob) =>
+  file.type.startsWith("image/") || file.type.startsWith("video/");
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -45,11 +31,19 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as Blob;
     const atoId = formData.get("atoId");
+    const filename = (formData.get("file") as File)?.name ?? "upload";
     let atoPlanMetadataToUpdate: Record<string, unknown> | null = null;
     let atoIdToUpdate: string | null = null;
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File size should be less than 5MB" },
+        { status: 400 }
+      );
     }
 
     if (typeof atoId === "string" && atoId) {
@@ -106,15 +100,18 @@ export async function POST(request: Request) {
       atoIdToUpdate = ato.id;
     }
 
-    const filename = (formData.get("file") as File).name;
-    const validatedFile = FileSchema.safeParse({ file, filename });
-
-    if (!validatedFile.success) {
-      const errorMessage = validatedFile.error.issues
-        .map((issue) => issue.message)
-        .join(", ");
-
-      return NextResponse.json({ error: errorMessage }, { status: 400 });
+    if (atoIdToUpdate) {
+      if (!isPdfFile(file, filename)) {
+        return NextResponse.json(
+          { error: "Only PDF files are accepted for ATO uploads." },
+          { status: 400 }
+        );
+      }
+    } else if (!isChatMediaFile(file)) {
+      return NextResponse.json(
+        { error: "Only images or videos are accepted in chat uploads." },
+        { status: 400 }
+      );
     }
 
     const fileBuffer = await file.arrayBuffer();
