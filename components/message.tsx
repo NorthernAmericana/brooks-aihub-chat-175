@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { ToolUIPart } from "ai";
 import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
@@ -26,6 +27,7 @@ import { Weather } from "./weather";
 const PurePreviewMessage = ({
   addToolApprovalResponse,
   chatId,
+  chatTitle,
   message,
   vote,
   isLoading,
@@ -36,6 +38,7 @@ const PurePreviewMessage = ({
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
@@ -128,9 +131,9 @@ const PurePreviewMessage = ({
                   <div key={key}>
                     <MessageContent
                       className={cn({
-                        "wrap-break-word w-fit rounded-2xl px-3 py-2 text-right text-white":
+                        "wrap-break-word w-fit rounded-2xl px-2.5 py-1.5 text-right text-white text-sm":
                           message.role === "user",
-                        "bg-transparent px-0 py-0 text-left":
+                        "bg-transparent px-0 py-0 text-left text-sm":
                           message.role === "assistant",
                       })}
                       data-testid="message-content"
@@ -261,6 +264,109 @@ const PurePreviewMessage = ({
               );
             }
 
+            if (type === "tool-saveMemory") {
+              const toolPart = part as unknown as {
+                toolCallId: string;
+                state: string;
+                input?: unknown;
+                output?: unknown;
+                errorText?: string;
+                approval?: { id?: string; approved?: boolean };
+              };
+              const toolState = toolPart.state as ToolUIPart["state"];
+              const { toolCallId } = toolPart;
+              const approvalId = toolPart.approval?.id;
+              const isDenied =
+                toolState === "output-denied" ||
+                (toolState === "approval-responded" &&
+                  toolPart.approval?.approved === false);
+              const widthClass = "w-[min(100%,450px)]";
+              const outputErrorText = toolPart.errorText;
+
+              const outputContent = toolPart.output
+                ? typeof toolPart.output === "string"
+                  ? toolPart.output
+                  : JSON.stringify(toolPart.output, null, 2)
+                : null;
+
+              if (isDenied) {
+                return (
+                  <div className={widthClass} key={toolCallId}>
+                    <Tool className="w-full" defaultOpen={true}>
+                      <ToolHeader
+                        state="output-denied"
+                        type="tool-saveMemory"
+                      />
+                      <ToolContent>
+                        <div className="px-4 py-3 text-muted-foreground text-sm">
+                          Memory save was denied.
+                        </div>
+                      </ToolContent>
+                    </Tool>
+                  </div>
+                );
+              }
+
+              return (
+                <div className={widthClass} key={toolCallId}>
+                  <Tool className="w-full" defaultOpen={true}>
+                    <ToolHeader state={toolState} type="tool-saveMemory" />
+                    <ToolContent>
+                      {(toolState === "input-available" ||
+                        toolState === "approval-requested" ||
+                        toolState === "approval-responded" ||
+                        toolState === "output-available" ||
+                        toolState === "output-error") && (
+                        <ToolInput input={toolPart.input} />
+                      )}
+                      {(toolState === "output-available" ||
+                        toolState === "output-error") && (
+                        <ToolOutput
+                          errorText={outputErrorText}
+                          output={
+                            outputContent ? (
+                              <pre className="whitespace-pre-wrap p-3 font-mono text-xs">
+                                {outputContent}
+                              </pre>
+                            ) : null
+                          }
+                        />
+                      )}
+                      {toolState === "approval-requested" && approvalId && (
+                        <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                          <button
+                            className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: false,
+                                reason: "User denied memory save",
+                              });
+                            }}
+                            type="button"
+                          >
+                            Deny
+                          </button>
+                          <button
+                            className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: true,
+                              });
+                            }}
+                            type="button"
+                          >
+                            Allow
+                          </button>
+                        </div>
+                      )}
+                    </ToolContent>
+                  </Tool>
+                </div>
+              );
+            }
+
             if (type === "tool-createDocument") {
               const { toolCallId } = part;
 
@@ -348,6 +454,7 @@ const PurePreviewMessage = ({
           {!isReadonly && (
             <MessageActions
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}
               message={message}

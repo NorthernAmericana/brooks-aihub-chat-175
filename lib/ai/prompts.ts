@@ -36,6 +36,11 @@ Do not update document right after creating it. Wait for user feedback or reques
 - ONLY use when the user explicitly asks for suggestions on an existing document
 - Requires a valid document ID from a previously created document
 - Never use for general questions or information requests
+
+**Using \`saveMemory\`:**
+- Use only when the user explicitly asks to save a receipt-worthy outcome
+- Store a concise, receipt-style summary with the relevant route and tags when possible
+- Never save memories without user confirmation
 `;
 
 export const regularPrompt = `You are a friendly assistant! Keep your responses concise and helpful.
@@ -62,16 +67,19 @@ export const systemPrompt = ({
   requestHints,
   slashRoute,
   basePrompt,
+  memoryContext,
+  includeArtifactsPrompt = true,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
   slashRoute?: SlashRoute;
   basePrompt?: string;
+  memoryContext?: string;
+  includeArtifactsPrompt?: boolean;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  const slashRoutePrompt = slashRoute?.prompt
-    ? `\n\n${slashRoute.prompt}`
-    : "";
+  const slashRoutePrompt = slashRoute?.prompt ? `\n\n${slashRoute.prompt}` : "";
+  const memoryPrompt = memoryContext ? `\n\n${memoryContext}` : "";
   const prompt = basePrompt ?? regularPrompt;
 
   // reasoning models don't need artifacts prompt (they can't use tools)
@@ -79,10 +87,14 @@ export const systemPrompt = ({
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking")
   ) {
-    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}`;
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
   }
 
-  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}\n\n${artifactsPrompt}`;
+  if (!includeArtifactsPrompt) {
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
+  }
+
+  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `

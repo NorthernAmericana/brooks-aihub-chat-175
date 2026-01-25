@@ -37,6 +37,8 @@ export function Chat({
   initialMessages,
   initialChatModel,
   initialVisibilityType,
+  initialChatTitle,
+  initialRouteKey,
   isReadonly,
   autoResume,
 }: {
@@ -44,6 +46,8 @@ export function Chat({
   initialMessages: ChatMessage[];
   initialChatModel: string;
   initialVisibilityType: VisibilityType;
+  initialChatTitle: string;
+  initialRouteKey?: string | null;
   isReadonly: boolean;
   autoResume: boolean;
 }) {
@@ -126,6 +130,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            ...(atoId ? { atoId } : null),
             ...request.body,
           },
         };
@@ -155,6 +160,7 @@ export function Chat({
 
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
+  const atoId = searchParams.get("atoId");
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
@@ -166,9 +172,16 @@ export function Chat({
       });
 
       setHasAppendedQuery(true);
-      window.history.replaceState({}, "", `/chat/${id}`);
+      const params = new URLSearchParams();
+      if (atoId) {
+        params.set("atoId", atoId);
+      }
+      const nextUrl = params.toString()
+        ? `/chat/${id}?${params.toString()}`
+        : `/chat/${id}`;
+      window.history.replaceState({}, "", nextUrl);
     }
-  }, [query, sendMessage, hasAppendedQuery, id]);
+  }, [query, sendMessage, hasAppendedQuery, id, atoId]);
 
   const { data: votes } = useSWR<Vote[]>(
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
@@ -185,26 +198,23 @@ export function Chat({
     setMessages,
   });
 
-  const handleSuggestedFolderSelect = useCallback(
-    (folder: string) => {
-      const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
-      setInput(`${normalizedFolder} `);
+  const handleSuggestedFolderSelect = useCallback((folder: string) => {
+    const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
+    setInput(`${normalizedFolder} `);
 
-      requestAnimationFrame(() => {
-        const textarea = document.querySelector<HTMLTextAreaElement>(
-          '[data-testid="multimodal-input"]'
-        );
-        if (!textarea) {
-          return;
-        }
+    requestAnimationFrame(() => {
+      const textarea = document.querySelector<HTMLTextAreaElement>(
+        '[data-testid="multimodal-input"]'
+      );
+      if (!textarea) {
+        return;
+      }
 
-        textarea.focus();
-        const endPosition = textarea.value.length;
-        textarea.setSelectionRange(endPosition, endPosition);
-      });
-    },
-    [setInput]
-  );
+      textarea.focus();
+      const endPosition = textarea.value.length;
+      textarea.setSelectionRange(endPosition, endPosition);
+    });
+  }, []);
 
   return (
     <>
@@ -218,6 +228,7 @@ export function Chat({
         <Messages
           addToolApprovalResponse={addToolApprovalResponse}
           chatId={id}
+          chatTitle={initialChatTitle}
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}
@@ -234,9 +245,11 @@ export function Chat({
             <MultimodalInput
               attachments={attachments}
               chatId={id}
+              chatRouteKey={initialRouteKey}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
+              atoId={atoId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}
@@ -254,6 +267,7 @@ export function Chat({
         addToolApprovalResponse={addToolApprovalResponse}
         attachments={attachments}
         chatId={id}
+        chatTitle={initialChatTitle}
         input={input}
         isReadonly={isReadonly}
         messages={messages}
@@ -279,18 +293,14 @@ export function Chat({
             <AlertDialogDescription>
               This application requires{" "}
               {process.env.NODE_ENV === "production" ? "the owner" : "you"} to
-              activate Vercel AI Gateway.
+              activate AI Gateway billing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                window.open(
-                  "https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card",
-                  "_blank"
-                );
-                window.location.href = "/";
+                window.location.href = "/settings";
               }}
             >
               Activate

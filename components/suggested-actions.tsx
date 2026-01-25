@@ -1,9 +1,20 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { motion } from "framer-motion";
-import { memo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
+import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import {
+  formatSlashAction,
+  getStoredSlashActions,
+  normalizeSlash,
+  parseSlashAction,
+  rememberSlashAction,
+  type SlashAction,
+} from "@/lib/suggested-actions";
 import type { ChatMessage } from "@/lib/types";
+import { getTextFromMessage } from "@/lib/utils";
 import { Suggestion } from "./elements/suggestion";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -11,15 +22,125 @@ type SuggestedActionsProps = {
   chatId: string;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedVisibilityType: VisibilityType;
+  messages: UIMessage[];
 };
 
-function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
-  const suggestedActions = [
-    "/brooksbears help me calm down",
-    "/carmind log this trip",
-    "/myflowerai check-in",
-    "/namc brainstorm a scene",
-  ];
+const defaultPromptsByAgentId = new Map([
+  ["brooks-bears", "help me calm down"],
+  ["my-car-mind", "log this trip"],
+  ["my-flower-ai", "check-in"],
+  ["namc", "brainstorm a scene"],
+]);
+
+const createActionKey = (action: { slash: string; prompt: string }) =>
+  `${normalizeSlash(action.slash)}::${action.prompt.toLowerCase()}`;
+
+function PureSuggestedActions({
+  chatId,
+  sendMessage,
+  messages,
+}: SuggestedActionsProps) {
+  const agentConfigs = useMemo(
+    () => listAgentConfigs().filter((agent) => agent.id !== "default"),
+    []
+  );
+  const [storedActions, setStoredActions] = useState<SlashAction[]>([]);
+
+  useEffect(() => {
+    setStoredActions(getStoredSlashActions());
+  }, []);
+
+  const rememberedActions = useMemo(() => {
+    const results: SlashAction[] = [];
+    const seen = new Set<string>();
+
+    for (const message of [...messages].reverse()) {
+      if (message.role !== "user") {
+        continue;
+      }
+
+      const text = getTextFromMessage(message).trim();
+      if (!text) {
+        continue;
+      }
+
+      const parsed = parseSlashAction(text, agentConfigs);
+      if (!parsed) {
+        continue;
+      }
+
+      const key = createActionKey(parsed);
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      results.push({
+        ...parsed,
+        lastUsedAt: 0,
+      });
+
+      if (results.length >= 6) {
+        break;
+      }
+    }
+
+    return results;
+  }, [agentConfigs, messages]);
+
+  const suggestedActions = useMemo(() => {
+    const combined: SlashAction[] = [];
+    const seen = new Set<string>();
+
+    const addAction = (action: SlashAction) => {
+      const key = createActionKey(action);
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      combined.push(action);
+    };
+
+    const sortedStored = [...storedActions].sort(
+      (a, b) => b.lastUsedAt - a.lastUsedAt
+    );
+    sortedStored.forEach(addAction);
+    rememberedActions.forEach(addAction);
+
+    if (combined.length < 4) {
+      agentConfigs.forEach((agent) => {
+        const prompt = defaultPromptsByAgentId.get(agent.id);
+        if (!prompt) {
+          return;
+        }
+
+        addAction({
+          slash: agent.slash,
+          prompt,
+          lastUsedAt: 0,
+        });
+      });
+    }
+
+    return combined.slice(0, 4).map(formatSlashAction);
+  }, [agentConfigs, rememberedActions, storedActions]);
+
+  const displaySuggestedAction = (suggestedAction: string) => {
+    const parsed = parseSlashAction(suggestedAction, agentConfigs);
+    if (!parsed) {
+      return suggestedAction;
+    }
+
+    const agent = agentConfigs.find(
+      (config) => normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
+    );
+    if (!agent) {
+      return suggestedAction;
+    }
+
+    const suffix = parsed.prompt ? ` ${parsed.prompt}` : "";
+    return `${agent.label} · /${agent.slash}/${suffix}`;
+  };
 
   return (
     <div
@@ -37,6 +158,11 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
           <Suggestion
             className="h-auto w-full whitespace-normal p-3 text-left"
             onClick={(suggestion) => {
+              const parsed = parseSlashAction(suggestion, agentConfigs);
+              if (parsed) {
+                setStoredActions(rememberSlashAction(parsed));
+              }
+
               window.history.pushState({}, "", `/chat/${chatId}`);
               sendMessage({
                 role: "user",
@@ -45,7 +171,7 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
             }}
             suggestion={suggestedAction}
           >
-            {suggestedAction}
+            {displaySuggestedAction(suggestedAction)}
           </Suggestion>
         </motion.div>
       ))}
@@ -60,6 +186,15 @@ export const SuggestedActions = memo(
       return false;
     }
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
+      return false;
+    }
+    if (prevProps.messages.length !== nextProps.messages.length) {
+      return false;
+    }
+
+    const prevLastId = prevProps.messages.at(-1)?.id;
+    const nextLastId = nextProps.messages.at(-1)?.id;
+    if (prevLastId !== nextLastId) {
       return false;
     }
 

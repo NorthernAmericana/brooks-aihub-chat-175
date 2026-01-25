@@ -55,6 +55,7 @@ export type UIArtifact = {
 function PureArtifact({
   addToolApprovalResponse,
   chatId,
+  chatTitle,
   input,
   setInput,
   status,
@@ -72,6 +73,7 @@ function PureArtifact({
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatTitle: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -325,6 +327,7 @@ function PureArtifact({
                   addToolApprovalResponse={addToolApprovalResponse}
                   artifactStatus={artifact.status}
                   chatId={chatId}
+                  chatTitle={chatTitle}
                   isReadonly={isReadonly}
                   messages={messages}
                   regenerate={regenerate}

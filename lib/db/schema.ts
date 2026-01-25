@@ -15,6 +15,10 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  foundersAccess: boolean("foundersAccess").default(false),
+  foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -29,6 +33,10 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
+  routeKey: text("routeKey"),
+  ttsEnabled: boolean("ttsEnabled").default(true),
+  ttsVoiceId: text("ttsVoiceId"),
+  ttsVoiceLabel: text("ttsVoiceLabel"),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -168,3 +176,120 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const memory = pgTable("Memory", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  sourceType: varchar("sourceType", {
+    enum: ["chat", "document", "file", "web", "integration", "manual"],
+  }).notNull(),
+  sourceUri: text("sourceUri").notNull(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  orgId: varchar("orgId", { length: 64 }).notNull().default("default"),
+  productId: varchar("productId", { length: 64 })
+    .notNull()
+    .default("brooks-aihub"),
+  route: varchar("route", { length: 128 }),
+  agentId: varchar("agentId", { length: 64 }),
+  agentLabel: varchar("agentLabel", { length: 128 }),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  tags: json("tags").$type<string[]>().notNull().default([]),
+  rawText: text("rawText").notNull(),
+  normalizedText: text("normalizedText"),
+  embeddingsRef: text("embeddingsRef"),
+});
+
+export type Memory = InferSelectModel<typeof memory>;
+
+export const unofficialAto = pgTable("UnofficialAto", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  personalityName: text("personalityName"),
+  instructions: text("instructions"),
+  intelligenceMode: varchar("intelligenceMode", {
+    enum: ["Hive", "ATO-Limited"],
+  })
+    .notNull()
+    .default("ATO-Limited"),
+  defaultVoiceId: text("defaultVoiceId"),
+  defaultVoiceLabel: text("defaultVoiceLabel"),
+  webSearchEnabled: boolean("webSearchEnabled").notNull().default(false),
+  fileSearchEnabled: boolean("fileSearchEnabled").notNull().default(false),
+  fileUsageEnabled: boolean("fileUsageEnabled").notNull().default(false),
+  fileStoragePath: text("fileStoragePath"),
+  ownerUserId: uuid("ownerUserId")
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  planMetadata: json("planMetadata").$type<Record<string, unknown>>(),
+});
+
+export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
+
+export const atoFile = pgTable("AtoFile", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  atoId: uuid("atoId")
+    .notNull()
+    .references(() => unofficialAto.id),
+  ownerUserId: uuid("ownerUserId")
+    .notNull()
+    .references(() => user.id),
+  filename: text("filename").notNull(),
+  blobUrl: text("blobUrl").notNull(),
+  blobPathname: text("blobPathname").notNull(),
+  contentType: text("contentType").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type AtoFile = InferSelectModel<typeof atoFile>;
+
+// Entitlements table for product ownership
+export const entitlement = pgTable("Entitlement", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  productId: varchar("productId", { length: 64 }).notNull(), // MDD-GAME_BASE, MDD_NOVEL_BASE, MDD_SPOILER_PASS
+  grantedAt: timestamp("grantedAt").notNull().defaultNow(),
+  grantedBy: varchar("grantedBy", { length: 64 }).notNull(), // stripe, redemption_code, admin, etc.
+  expiresAt: timestamp("expiresAt"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type Entitlement = InferSelectModel<typeof entitlement>;
+
+// Redemption codes table
+export const redemptionCode = pgTable("RedemptionCode", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  code: varchar("code", { length: 64 }).notNull().unique(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  expiresAt: timestamp("expiresAt"),
+  maxRedemptions: varchar("maxRedemptions", { length: 32 }).default("1"), // "1", "unlimited", or a number
+  redemptionCount: varchar("redemptionCount", { length: 32 }).default("0"),
+  isActive: boolean("isActive").default(true),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type RedemptionCode = InferSelectModel<typeof redemptionCode>;
+
+// Track individual redemptions
+export const redemption = pgTable("Redemption", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  codeId: uuid("codeId")
+    .notNull()
+    .references(() => redemptionCode.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  redeemedAt: timestamp("redeemedAt").notNull().defaultNow(),
+});
+
+export type Redemption = InferSelectModel<typeof redemption>;

@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@openai/agents": ["./lib/openai/agents"],
+      "@openai/guardrails": ["./lib/openai/guardrails"]
     },
     "strictNullChecks": true
   },

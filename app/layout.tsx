@@ -8,12 +8,15 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  metadataBase: new URL("https://brooksaihub.com"),
+  title: "Brooks AI HUB",
+  description: "Brooks AI HUB assistant experience.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/app-icon.svg",
+    icon: [
+      { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/app-icon.png", sizes: "2048x2048" }],
   },
 };
 
@@ -76,6 +79,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" sizes="2048x2048" href="/icons/app-icon.png" />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{

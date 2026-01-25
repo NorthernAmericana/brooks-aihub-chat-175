@@ -22,7 +22,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const chat = await getChatById({ id });
 
   if (!chat) {
-    redirect("/");
+    redirect("/brooks-ai-hub/");
   }
 
   const session = await auth();
@@ -57,7 +57,9 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
           autoResume={true}
           id={chat.id}
           initialChatModel={DEFAULT_CHAT_MODEL}
+          initialChatTitle={chat.title}
           initialMessages={uiMessages}
+          initialRouteKey={chat.routeKey}
           initialVisibilityType={chat.visibility}
           isReadonly={session?.user?.id !== chat.userId}
         />
@@ -72,7 +74,9 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
         autoResume={true}
         id={chat.id}
         initialChatModel={chatModelFromCookie.value}
+        initialChatTitle={chat.title}
         initialMessages={uiMessages}
+        initialRouteKey={chat.routeKey}
         initialVisibilityType={chat.visibility}
         isReadonly={session?.user?.id !== chat.userId}
       />

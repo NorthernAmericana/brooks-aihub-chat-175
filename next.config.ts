@@ -2,6 +2,30 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  async redirects() {
+    return [
+      {
+        source: "/Brooks AI HUB",
+        destination: "/brooks-ai-hub/",
+        permanent: false,
+      },
+      {
+        source: "/Brooks AI HUB/",
+        destination: "/brooks-ai-hub/",
+        permanent: false,
+      },
+      {
+        source: "/Brooks%20AI%20HUB",
+        destination: "/brooks-ai-hub/",
+        permanent: false,
+      },
+      {
+        source: "/Brooks%20AI%20HUB/",
+        destination: "/brooks-ai-hub/",
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

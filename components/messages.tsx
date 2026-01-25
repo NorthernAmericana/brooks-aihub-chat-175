@@ -10,6 +10,7 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatTitle: string;
   status: UseChatHelpers<ChatMessage>["status"];
   votes: Vote[] | undefined;
   messages: ChatMessage[];
@@ -24,6 +25,7 @@ type MessagesProps = {
 function PureMessages({
   addToolApprovalResponse,
   chatId,
+  chatTitle,
   status,
   votes,
   messages,
@@ -51,7 +53,7 @@ function PureMessages({
         className="absolute inset-0 touch-pan-y overscroll-contain overflow-y-auto"
         ref={messagesContainerRef}
       >
-        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
+        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-3 px-2 py-3 md:gap-4 md:px-4">
           {messages.length === 0 && (
             <Greeting onSelectFolder={onSelectSuggestedFolder} />
           )}
@@ -60,6 +62,7 @@ function PureMessages({
             <PreviewMessage
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={
                 status === "streaming" && messages.length - 1 === index
               }

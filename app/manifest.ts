@@ -12,9 +12,33 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#ffffff",
     icons: [
       {
-        src: "/icons/app-icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/icons/icon-192.png",
+        sizes: "2048x2048",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-192.png",
+        sizes: "2048x2048",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/icons/icon-512.png",
+        sizes: "2048x2048",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512.png",
+        sizes: "2048x2048",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/icons/app-icon.png",
+        sizes: "2048x2048",
+        type: "image/png",
       },
       {
         src: "/brand/brooks-ai-hub-logo.png",

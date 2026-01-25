@@ -1,21 +1,24 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { CopyIcon, PencilEditIcon, SpeakerIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 
 export function PureMessageActions({
   chatId,
+  chatTitle,
   message,
   vote,
   isLoading,
   setMode,
 }: {
   chatId: string;
+  chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
@@ -23,6 +26,9 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
 
   if (isLoading) {
     return null;
@@ -42,6 +48,113 @@ export function PureMessageActions({
 
     await copyToClipboard(textFromParts);
     toast.success("Copied to clipboard!");
+  };
+
+  const handleSpeak = async () => {
+    // If already playing, stop current playback and start fresh
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
+      setIsPlaying(false);
+      audioRef.current = null;
+      return;
+    }
+
+    if (!textFromParts) {
+      toast.error("There's no response text to read yet.");
+      return;
+    }
+
+    const loadingToast = toast.loading("Generating speech...");
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    try {
+      // Fetch chat settings to get persisted voice and enabled state
+      const chatResponse = await fetch(`/api/chat-settings?chatId=${chatId}`);
+      if (!chatResponse.ok) {
+        toast.error("Failed to load chat settings.");
+        return;
+      }
+
+      const chatData = await chatResponse.json();
+
+      // Check if TTS is disabled for this chat
+      if (chatData.ttsEnabled === false) {
+        toast.error(
+          "Text-to-speech is disabled for this chat. Enable it in voice settings."
+        );
+        return;
+      }
+
+      // Determine voice ID: use persisted setting or route default
+      const routeKey = getRouteKey(chatTitle);
+      const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
+
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+      const response = await fetch("/api/tts/elevenlabs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textFromParts, voiceId }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const message =
+          errorPayload?.error ?? "Unable to generate speech right now.";
+        toast.error(message);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      audioUrlRef.current = audioUrl;
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.addEventListener("ended", () => {
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+        }
+        setIsPlaying(false);
+        audioRef.current = null;
+      });
+      
+      audio.addEventListener("error", () => {
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+        }
+        setIsPlaying(false);
+        audioRef.current = null;
+        toast.error("Audio playback failed.");
+      });
+
+      setIsPlaying(true);
+      await audio.play();
+      toast.success("Playing response.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.error("Speech request timed out.");
+      } else {
+        toast.error("Unable to generate speech right now.");
+      }
+      setIsPlaying(false);
+      audioRef.current = null;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      toast.dismiss(loadingToast);
+    }
   };
 
   // User messages get edit (on hover) and copy actions
@@ -71,6 +184,14 @@ export function PureMessageActions({
     <Actions className="-ml-0.5">
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
+      </Action>
+
+      <Action 
+        onClick={handleSpeak} 
+        tooltip={isPlaying ? "Stop playback" : "Read aloud"}
+        data-testid="message-speak"
+      >
+        <SpeakerIcon />
       </Action>
 
       <Action

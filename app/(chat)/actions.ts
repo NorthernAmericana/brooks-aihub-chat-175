@@ -3,6 +3,7 @@
 import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
 import type { VisibilityType } from "@/components/visibility-selector";
+import { getAgentConfigById } from "@/lib/ai/agents/registry";
 import { titlePrompt } from "@/lib/ai/prompts";
 import { getTitleModel } from "@/lib/ai/providers";
 import {
@@ -19,18 +20,30 @@ export async function saveChatModelAsCookie(model: string) {
 
 export async function generateTitleFromUserMessage({
   message,
+  routeKey,
 }: {
   message: UIMessage;
+  routeKey?: string | null;
 }) {
   const { text } = await generateText({
     model: getTitleModel(),
     system: titlePrompt,
     prompt: getTextFromMessage(message),
   });
-  return text
+  const cleanedTitle = text
     .replace(/^[#*"\s]+/, "")
     .replace(/["]+$/, "")
     .trim();
+
+  // Prefix with route for backward compatibility with voice system
+  if (routeKey) {
+    const agentConfig = getAgentConfigById(routeKey);
+    if (agentConfig) {
+      return `/${agentConfig.slash}/ ${cleanedTitle}`;
+    }
+  }
+
+  return cleanedTitle;
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {

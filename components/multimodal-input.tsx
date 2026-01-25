@@ -4,6 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -15,6 +16,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
@@ -28,12 +30,18 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import {
+  getAgentConfigById,
+  getAgentConfigBySlash,
+} from "@/lib/ai/agents/registry";
+import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
+import { useEntitlements } from "@/hooks/use-entitlements";
+import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, fetcher } from "@/lib/utils";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -41,8 +49,10 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
+import { RouteChangeModal } from "./route-change-modal";
+import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
@@ -55,6 +65,7 @@ function setCookie(name: string, value: string) {
 
 function PureMultimodalInput({
   chatId,
+  chatRouteKey,
   input,
   setInput,
   status,
@@ -68,8 +79,10 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  atoId,
 }: {
   chatId: string;
+  chatRouteKey?: string | null;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -83,9 +96,12 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  atoId?: string | null;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { data: session } = useSession();
+  const { entitlements } = useEntitlements(session?.user?.id);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -143,9 +159,179 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [_recordedText, setRecordedText] = useState("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const [routeChangeModal, setRouteChangeModal] = useState<{
+    open: boolean;
+    currentRoute: string;
+    newRoute: string;
+    draftMessage: string;
+  }>({
+    open: false,
+    currentRoute: "",
+    newRoute: "",
+    draftMessage: "",
+  });
+  const { data: atoData } = useSWR<{ ato: { fileSearchEnabled: boolean } }>(
+    atoId ? `/api/ato/${atoId}` : null,
+    fetcher
+  );
+  const canUploadFiles = atoId ? Boolean(atoData?.ato?.fileSearchEnabled) : true;
+  const isAtoUpload = Boolean(atoId);
+  const maxChatImages = entitlements.foundersAccess ? 10 : 5;
+  const maxChatVideos = 1;
+  const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
+
+  // Detect when user types "/" at the start to show suggestions
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (trimmed === "/" || trimmed.startsWith("/")) {
+      const match = trimmed.match(/^\/([^\s/]*)$/);
+      if (match) {
+        setShowSlashSuggestions(true);
+      } else {
+        setShowSlashSuggestions(false);
+      }
+    } else {
+      setShowSlashSuggestions(false);
+    }
+  }, [input]);
+
+  const handleSlashSelect = useCallback(
+    (slash: string) => {
+      setInput(`/${slash}/ `);
+      setShowSlashSuggestions(false);
+      // Focus the textarea
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    },
+    [setInput]
+  );
+
+  const handleStartRecording = useCallback(async () => {
+    let stream: MediaStream | null = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferredMimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+      ];
+      const supportedMimeType = preferredMimeTypes.find((type) =>
+        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported
+          ? MediaRecorder.isTypeSupported(type)
+          : false
+      );
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        supportedMimeType ? { mimeType: supportedMimeType } : undefined
+      );
+      const audioChunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const rawType = supportedMimeType || audioChunks[0]?.type || "audio/webm";
+        const normalizedType = rawType.split(";")[0] || "audio/webm";
+        const audioBlob = new Blob(audioChunks, { type: normalizedType });
+
+        // Send to speech-to-text API
+        const formData = new FormData();
+        formData.append("audio", audioBlob);
+
+        try {
+          const response = await fetch("/api/stt", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const transcribedText = data.text || "";
+            setRecordedText(transcribedText);
+            setInput((prev) => prev + (prev ? " " : "") + transcribedText);
+          } else {
+            let errorMessage = "Failed to transcribe audio";
+            try {
+              const data = await response.json();
+              if (data?.error) {
+                errorMessage = data.error;
+              }
+            } catch (parseError) {
+              console.error("STT error response parsing failed:", parseError);
+            }
+            toast.error(errorMessage);
+          }
+        } catch (error) {
+          console.error("STT error:", error);
+          toast.error("Speech-to-text failed");
+        } finally {
+          // Stop all tracks
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        }
+      };
+
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      toast.success("Recording started");
+    } catch (error) {
+      console.error("Microphone access error:", error);
+      toast.error("Microphone access denied");
+      // Clean up stream if it was created but MediaRecorder failed
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    }
+  }, [setInput]);
+
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+      toast.success("Recording stopped");
+    }
+  }, [isRecording]);
 
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
+
+    const parsedAction = parseSlashAction(input);
+
+    // Check for route change if chat has existing messages and routeKey
+    if (parsedAction && messages.length > 0 && chatRouteKey) {
+      const currentAgent = getAgentConfigById(chatRouteKey);
+      const newAgent = getAgentConfigBySlash(parsedAction.slash);
+
+      if (
+        currentAgent &&
+        newAgent &&
+        currentAgent.id !== newAgent.id &&
+        newAgent.id !== "default"
+      ) {
+        // User is trying to change routes - show modal
+        setRouteChangeModal({
+          open: true,
+          currentRoute: currentAgent.slash,
+          newRoute: newAgent.slash,
+          draftMessage: input,
+        });
+        return; // Don't send the message
+      }
+    }
+
+    if (parsedAction) {
+      rememberSlashAction(parsedAction);
+    }
 
     sendMessage({
       role: "user",
@@ -181,43 +367,151 @@ function PureMultimodalInput({
     width,
     chatId,
     resetHeight,
+    messages.length,
+    chatRouteKey,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const isPdfFile = (file: File) =>
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf");
+  const isImageFile = (file: File) => file.type.startsWith("image/");
+  const isVideoFile = (file: File) => file.type.startsWith("video/");
+  const isChatMediaFile = (file: File) =>
+    isImageFile(file) || isVideoFile(file) || isPdfFile(file);
 
-    try {
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
+  const getChatAttachmentCounts = useCallback(
+    (currentAttachments: Attachment[]) => ({
+      images: currentAttachments.filter((attachment) =>
+        attachment.contentType?.startsWith("image/")
+      ).length,
+      videos: currentAttachments.filter((attachment) =>
+        attachment.contentType?.startsWith("video/")
+      ).length,
+    }),
+    []
+  );
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType,
-        };
+  const uploadFile = useCallback(
+    async (file: File) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
       }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+      if (isAtoUpload) {
+        if (!isPdfFile(file)) {
+          toast.error("Only PDF files are accepted for ATO uploads.");
+          return;
+        }
+      } else if (!isChatMediaFile(file)) {
+        toast.error("Only images, videos, or PDFs are accepted in chat uploads.");
+        return;
+      }
 
-      setUploadQueue(files.map((file) => file.name));
+      const formData = new FormData();
+      formData.append("file", file);
+      if (atoId) {
+        formData.append("atoId", atoId);
+      }
 
       try {
-        const uploadPromises = files.map((file) => uploadFile(file));
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const { url, pathname, contentType } = data;
+
+          return {
+            url,
+            name: pathname,
+            contentType,
+          };
+        }
+        const { error } = await response.json();
+        toast.error(error);
+      } catch (_error) {
+        toast.error("Failed to upload file, please try again!");
+      }
+    },
+    [atoId, canUploadFiles, isAtoUpload, isChatMediaFile, isPdfFile]
+  );
+
+  const handleFilesForUpload = useCallback(
+    async (incomingFiles: File[]) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
+      }
+
+      if (incomingFiles.length === 0) {
+        return;
+      }
+
+      let validFiles = incomingFiles;
+
+      if (isAtoUpload) {
+        validFiles = incomingFiles.filter((file) => isPdfFile(file));
+        if (validFiles.length !== incomingFiles.length) {
+          toast.error("Only PDF files are accepted for ATO uploads.");
+        }
+      } else {
+        validFiles = incomingFiles.filter((file) => isChatMediaFile(file));
+        if (validFiles.length !== incomingFiles.length) {
+          toast.error(
+            "Only images, videos, or PDFs are accepted in chat uploads."
+          );
+        }
+
+        const { images: existingImages, videos: existingVideos } =
+          getChatAttachmentCounts(attachments);
+        let remainingImages = maxChatImages - existingImages;
+        let remainingVideos = maxChatVideos - existingVideos;
+        const filteredFiles: File[] = [];
+        let rejectedImages = 0;
+        let rejectedVideos = 0;
+
+        for (const file of validFiles) {
+          if (isImageFile(file)) {
+            if (remainingImages > 0) {
+              filteredFiles.push(file);
+              remainingImages -= 1;
+            } else {
+              rejectedImages += 1;
+            }
+          } else if (isVideoFile(file)) {
+            if (remainingVideos > 0) {
+              filteredFiles.push(file);
+              remainingVideos -= 1;
+            } else {
+              rejectedVideos += 1;
+            }
+          }
+        }
+
+        if (rejectedImages > 0) {
+          toast.error(
+            `Image upload limit reached. ${chatUploadPlanLabel} plans allow up to ${maxChatImages} images per message.`
+          );
+        }
+
+        if (rejectedVideos > 0) {
+          toast.error("Only 1 video can be added per message.");
+        }
+
+        validFiles = filteredFiles;
+      }
+
+      if (validFiles.length === 0) {
+        return;
+      }
+
+      setUploadQueue(validFiles.map((file) => file.name));
+
+      try {
+        const uploadPromises = validFiles.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
           (attachment) => attachment !== undefined
@@ -233,55 +527,65 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile]
+    [
+      attachments,
+      canUploadFiles,
+      chatUploadPlanLabel,
+      getChatAttachmentCounts,
+      isAtoUpload,
+      isChatMediaFile,
+      isImageFile,
+      isPdfFile,
+      isVideoFile,
+      maxChatImages,
+      maxChatVideos,
+      setAttachments,
+      uploadFile,
+    ]
+  );
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      await handleFilesForUpload(files);
+    },
+    [handleFilesForUpload]
   );
 
   const handlePaste = useCallback(
     async (event: ClipboardEvent) => {
+      if (!canUploadFiles) {
+        toast.error("File uploads are disabled for this ATO.");
+        return;
+      }
+
       const items = event.clipboardData?.items;
       if (!items) {
         return;
       }
 
-      const imageItems = Array.from(items).filter((item) =>
-        item.type.startsWith("image/")
-      );
+      const fileItems = Array.from(items).filter((item) => item.kind === "file");
 
-      if (imageItems.length === 0) {
+      if (fileItems.length === 0) {
         return;
       }
 
-      // Prevent default paste behavior for images
-      event.preventDefault();
+      if (isAtoUpload) {
+        toast.error("Only PDF files are accepted for ATO uploads.");
+        event.preventDefault();
+        return;
+      }
 
-      setUploadQueue((prev) => [...prev, "Pasted image"]);
+      const files = fileItems
+        .map((item) => item.getAsFile())
+        .filter((file): file is File => Boolean(file));
 
-      try {
-        const uploadPromises = imageItems
-          .map((item) => item.getAsFile())
-          .filter((file): file is File => file !== null)
-          .map((file) => uploadFile(file));
-
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) =>
-            attachment !== undefined &&
-            attachment.url !== undefined &&
-            attachment.contentType !== undefined
-        );
-
-        setAttachments((curr) => [
-          ...curr,
-          ...(successfullyUploadedAttachments as Attachment[]),
-        ]);
-      } catch (error) {
-        console.error("Error uploading pasted images:", error);
-        toast.error("Failed to upload pasted image(s)");
-      } finally {
-        setUploadQueue([]);
+      if (files.length > 0) {
+        event.preventDefault();
+        await handleFilesForUpload(files);
       }
     },
-    [setAttachments, uploadFile]
+    [canUploadFiles, handleFilesForUpload, isAtoUpload]
   );
 
   // Add paste event listener to textarea
@@ -302,13 +606,20 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            messages={messages}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
         )}
 
       <input
+        accept={
+          isAtoUpload
+            ? "application/pdf"
+            : "image/*,video/*,application/pdf"
+        }
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+        disabled={!canUploadFiles}
         multiple
         onChange={handleFileChange}
         ref={fileInputRef}
@@ -381,6 +692,7 @@ function PureMultimodalInput({
           <PromptInputTools className="gap-0 sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
+              isUploadEnabled={canUploadFiles}
               selectedModelId={selectedModelId}
               status={status}
             />
@@ -388,6 +700,24 @@ function PureMultimodalInput({
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
             />
+            <Button
+              className={cn(
+                "aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent",
+                isRecording && "bg-red-500 text-white hover:bg-red-600"
+              )}
+              data-testid="mic-button"
+              onClick={isRecording ? handleStopRecording : handleStartRecording}
+              type="button"
+              variant="ghost"
+            >
+              {isRecording ? (
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                </div>
+              ) : (
+                <MicIcon />
+              )}
+            </Button>
           </PromptInputTools>
 
           {status === "submitted" ? (
@@ -404,6 +734,25 @@ function PureMultimodalInput({
           )}
         </PromptInputToolbar>
       </PromptInput>
+
+      {/* Slash suggestions dropdown */}
+      {showSlashSuggestions && (
+        <SlashSuggestions
+          onClose={() => setShowSlashSuggestions(false)}
+          onSelect={handleSlashSelect}
+        />
+      )}
+
+      {/* Route change modal */}
+      <RouteChangeModal
+        currentRoute={routeChangeModal.currentRoute}
+        draftMessage={routeChangeModal.draftMessage}
+        newRoute={routeChangeModal.newRoute}
+        onOpenChange={(open) =>
+          setRouteChangeModal((prev) => ({ ...prev, open }))
+        }
+        open={routeChangeModal.open}
+      />
     </div>
   );
 }
@@ -426,6 +775,12 @@ export const MultimodalInput = memo(
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
       return false;
     }
+    if (prevProps.chatRouteKey !== nextProps.chatRouteKey) {
+      return false;
+    }
+    if (prevProps.atoId !== nextProps.atoId) {
+      return false;
+    }
 
     return true;
   }
@@ -435,10 +790,12 @@ function PureAttachmentsButton({
   fileInputRef,
   status,
   selectedModelId,
+  isUploadEnabled,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
   selectedModelId: string;
+  isUploadEnabled: boolean;
 }) {
   const isReasoningModel =
     selectedModelId.includes("reasoning") || selectedModelId.includes("think");
@@ -447,7 +804,7 @@ function PureAttachmentsButton({
     <Button
       className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
-      disabled={status !== "ready" || isReasoningModel}
+      disabled={status !== "ready" || isReasoningModel || !isUploadEnabled}
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();

@@ -23,7 +23,13 @@ import {
   chat,
   type DBMessage,
   document,
+  entitlement,
+  atoFile,
+  memory,
   message,
+  redemption,
+  redemptionCode,
+  unofficialAto,
   type Suggestion,
   stream,
   suggestion,
@@ -84,11 +90,13 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  routeKey,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  routeKey?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -97,6 +105,7 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      routeKey: routeKey ?? null,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -149,6 +158,398 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete all chats by user id"
+    );
+  }
+}
+
+export async function getApprovedMemoriesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories"
+    );
+  }
+}
+
+export async function createUnofficialAto({
+  ownerUserId,
+  name,
+  description,
+  personalityName,
+  instructions,
+  intelligenceMode,
+  defaultVoiceId,
+  defaultVoiceLabel,
+  webSearchEnabled,
+  fileSearchEnabled,
+  fileUsageEnabled,
+  fileStoragePath,
+  planMetadata,
+}: {
+  ownerUserId: string;
+  name: string;
+  description?: string | null;
+  personalityName?: string | null;
+  instructions?: string | null;
+  intelligenceMode?: "Hive" | "ATO-Limited";
+  defaultVoiceId?: string | null;
+  defaultVoiceLabel?: string | null;
+  webSearchEnabled?: boolean;
+  fileSearchEnabled?: boolean;
+  fileUsageEnabled?: boolean;
+  fileStoragePath?: string | null;
+  planMetadata?: Record<string, unknown> | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(unofficialAto)
+      .values({
+        ownerUserId,
+        name,
+        description: description ?? null,
+        personalityName: personalityName ?? null,
+        instructions: instructions ?? null,
+        intelligenceMode: intelligenceMode ?? "ATO-Limited",
+        defaultVoiceId: defaultVoiceId ?? null,
+        defaultVoiceLabel: defaultVoiceLabel ?? null,
+        webSearchEnabled: webSearchEnabled ?? false,
+        fileSearchEnabled: fileSearchEnabled ?? false,
+        fileUsageEnabled: fileUsageEnabled ?? false,
+        fileStoragePath: fileStoragePath ?? null,
+        planMetadata: planMetadata ?? null,
+      })
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create unofficial ATO"
+    );
+  }
+}
+
+export async function getUnofficialAtosByOwner({
+  ownerUserId,
+}: {
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(unofficialAto)
+      .where(eq(unofficialAto.ownerUserId, ownerUserId))
+      .orderBy(desc(unofficialAto.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATOs"
+    );
+  }
+}
+
+export async function getUnofficialAtoCountByOwner({
+  ownerUserId,
+  createdAfter,
+}: {
+  ownerUserId: string;
+  createdAfter?: Date;
+}) {
+  try {
+    const conditions = [eq(unofficialAto.ownerUserId, ownerUserId)];
+    if (createdAfter) {
+      conditions.push(gte(unofficialAto.createdAt, createdAfter));
+    }
+
+    const [record] = await db
+      .select({ value: count() })
+      .from(unofficialAto)
+      .where(and(...conditions));
+
+    return Number(record?.value ?? 0);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO usage count"
+    );
+  }
+}
+
+export async function getUnofficialAtoById({
+  id,
+  ownerUserId,
+}: {
+  id: string;
+  ownerUserId: string;
+}) {
+  try {
+    const [record] = await db
+      .select()
+      .from(unofficialAto)
+      .where(
+        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+      );
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO"
+    );
+  }
+}
+
+export async function updateUnofficialAtoSettings({
+  id,
+  ownerUserId,
+  webSearchEnabled,
+  fileSearchEnabled,
+  fileUsageEnabled,
+  fileStoragePath,
+  personalityName,
+  instructions,
+  planMetadata,
+}: {
+  id: string;
+  ownerUserId: string;
+  webSearchEnabled?: boolean;
+  fileSearchEnabled?: boolean;
+  fileUsageEnabled?: boolean;
+  fileStoragePath?: string | null;
+  personalityName?: string | null;
+  instructions?: string | null;
+  planMetadata?: Record<string, unknown> | null;
+}) {
+  try {
+    const updateValues: {
+      webSearchEnabled?: boolean;
+      fileSearchEnabled?: boolean;
+      fileUsageEnabled?: boolean;
+      fileStoragePath?: string | null;
+      personalityName?: string | null;
+      instructions?: string | null;
+      planMetadata?: Record<string, unknown> | null;
+      updatedAt: Date;
+    } = {
+      updatedAt: new Date(),
+    };
+
+    if (typeof webSearchEnabled === "boolean") {
+      updateValues.webSearchEnabled = webSearchEnabled;
+    }
+
+    if (typeof fileSearchEnabled === "boolean") {
+      updateValues.fileSearchEnabled = fileSearchEnabled;
+    }
+
+    if (typeof fileUsageEnabled === "boolean") {
+      updateValues.fileUsageEnabled = fileUsageEnabled;
+    }
+
+    if (typeof fileStoragePath !== "undefined") {
+      updateValues.fileStoragePath = fileStoragePath;
+    }
+
+    if (typeof personalityName !== "undefined") {
+      updateValues.personalityName = personalityName;
+    }
+
+    if (typeof instructions !== "undefined") {
+      updateValues.instructions = instructions;
+    }
+
+    if (typeof planMetadata !== "undefined") {
+      updateValues.planMetadata = planMetadata;
+    }
+
+    const [record] = await db
+      .update(unofficialAto)
+      .set(updateValues)
+      .where(
+        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update unofficial ATO"
+    );
+  }
+}
+
+export async function createAtoFile({
+  atoId,
+  ownerUserId,
+  filename,
+  blobUrl,
+  blobPathname,
+  contentType,
+  enabled,
+}: {
+  atoId: string;
+  ownerUserId: string;
+  filename: string;
+  blobUrl: string;
+  blobPathname: string;
+  contentType: string;
+  enabled?: boolean;
+}) {
+  try {
+    const [record] = await db
+      .insert(atoFile)
+      .values({
+        atoId,
+        ownerUserId,
+        filename,
+        blobUrl,
+        blobPathname,
+        contentType,
+        enabled: enabled ?? true,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to create ATO file");
+  }
+}
+
+export async function getAtoFilesByAtoId({
+  atoId,
+  ownerUserId,
+}: {
+  atoId: string;
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(atoFile)
+      .where(and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId)))
+      .orderBy(desc(atoFile.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get ATO files");
+  }
+}
+
+export async function getEnabledAtoFilesByAtoId({
+  atoId,
+  ownerUserId,
+}: {
+  atoId: string;
+  ownerUserId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(atoFile)
+      .where(
+        and(
+          eq(atoFile.atoId, atoId),
+          eq(atoFile.ownerUserId, ownerUserId),
+          eq(atoFile.enabled, true)
+        )
+      )
+      .orderBy(desc(atoFile.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get enabled ATO files"
+    );
+  }
+}
+
+export async function updateAtoFileEnabled({
+  id,
+  atoId,
+  ownerUserId,
+  enabled,
+}: {
+  id: string;
+  atoId: string;
+  ownerUserId: string;
+  enabled: boolean;
+}) {
+  try {
+    const [record] = await db
+      .update(atoFile)
+      .set({ enabled })
+      .where(
+        and(
+          eq(atoFile.id, id),
+          eq(atoFile.atoId, atoId),
+          eq(atoFile.ownerUserId, ownerUserId)
+        )
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update ATO file"
+    );
+  }
+}
+
+export async function createMemoryRecord({
+  ownerId,
+  sourceUri,
+  rawText,
+  route,
+  agentId,
+  agentLabel,
+  tags,
+}: {
+  ownerId: string;
+  sourceUri: string;
+  rawText: string;
+  route?: string | null;
+  agentId?: string | null;
+  agentLabel?: string | null;
+  tags?: string[];
+}) {
+  try {
+    const [record] = await db
+      .insert(memory)
+      .values({
+        ownerId,
+        sourceType: "chat",
+        sourceUri,
+        route: route ?? null,
+        agentId: agentId ?? null,
+        agentLabel: agentLabel ?? null,
+        rawText,
+        tags: tags ?? [],
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create memory record"
     );
   }
 }
@@ -530,6 +931,51 @@ export async function updateChatTitleById({
   }
 }
 
+export async function updateChatTtsSettings({
+  chatId,
+  userId,
+  ttsEnabled,
+  ttsVoiceId,
+  ttsVoiceLabel,
+}: {
+  chatId: string;
+  userId: string;
+  ttsEnabled?: boolean;
+  ttsVoiceId?: string;
+  ttsVoiceLabel?: string;
+}) {
+  try {
+    const updates: Partial<Chat> = {};
+
+    if (typeof ttsEnabled === "boolean") {
+      updates.ttsEnabled = ttsEnabled;
+    }
+    if (typeof ttsVoiceId === "string") {
+      updates.ttsVoiceId = ttsVoiceId;
+    }
+    if (typeof ttsVoiceLabel === "string") {
+      updates.ttsVoiceLabel = ttsVoiceLabel;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return null;
+    }
+
+    const [updatedChat] = await db
+      .update(chat)
+      .set(updates)
+      .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
+      .returning();
+
+    return updatedChat ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat TTS settings"
+    );
+  }
+}
+
 export async function getMessageCountByUserId({
   id,
   differenceInHours,
@@ -597,6 +1043,315 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function updateChatRouteKey({
+  chatId,
+  routeKey,
+}: {
+  chatId: string;
+  routeKey: string;
+}) {
+  try {
+    return await db.update(chat).set({ routeKey }).where(eq(chat.id, chatId));
+  } catch (error) {
+    console.warn("Failed to update routeKey for chat", chatId, error);
+    return;
+  }
+}
+
+// ===== Entitlements and Stripe =====
+
+export async function updateUserStripeInfo({
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  foundersAccess,
+}: {
+  userId: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  foundersAccess?: boolean;
+}) {
+  try {
+    const updates: Partial<User> = {};
+    if (stripeCustomerId) {
+      updates.stripeCustomerId = stripeCustomerId;
+    }
+    if (stripeSubscriptionId) {
+      updates.stripeSubscriptionId = stripeSubscriptionId;
+    }
+    if (typeof foundersAccess === "boolean") {
+      updates.foundersAccess = foundersAccess;
+      if (foundersAccess) {
+        updates.foundersAccessGrantedAt = new Date();
+      }
+    }
+
+    return await db
+      .update(user)
+      .set(updates)
+      .where(eq(user.id, userId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user stripe info"
+    );
+  }
+}
+
+export async function getUserById({ id }: { id: string }) {
+  try {
+    const [selectedUser] = await db.select().from(user).where(eq(user.id, id));
+    return selectedUser ?? null;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function createEntitlement({
+  userId,
+  productId,
+  grantedBy,
+  expiresAt,
+  metadata,
+}: {
+  userId: string;
+  productId: string;
+  grantedBy: string;
+  expiresAt?: Date;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    return await db
+      .insert(entitlement)
+      .values({
+        userId,
+        productId,
+        grantedBy,
+        expiresAt: expiresAt ?? null,
+        metadata: metadata ?? null,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create entitlement"
+    );
+  }
+}
+
+export async function updateEntitlementProgress({
+  userId,
+  productId,
+  progress,
+}: {
+  userId: string;
+  productId: string;
+  progress: Record<string, unknown>;
+}) {
+  try {
+    const [existing] = await db
+      .select()
+      .from(entitlement)
+      .where(and(eq(entitlement.userId, userId), eq(entitlement.productId, productId)))
+      .orderBy(desc(entitlement.grantedAt))
+      .limit(1);
+
+    if (!existing) {
+      throw new ChatSDKError(
+        "bad_request:database",
+        "Entitlement not found for progress update"
+      );
+    }
+
+    const mergedMetadata = {
+      ...(existing.metadata ?? {}),
+      progress,
+    };
+
+    return await db
+      .update(entitlement)
+      .set({ metadata: mergedMetadata })
+      .where(eq(entitlement.id, existing.id))
+      .returning();
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update entitlement progress"
+    );
+  }
+}
+
+export async function getUserEntitlements({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(entitlement)
+      .where(eq(entitlement.userId, userId))
+      .orderBy(desc(entitlement.grantedAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user entitlements"
+    );
+  }
+}
+
+export async function hasEntitlement({
+  userId,
+  productId,
+}: {
+  userId: string;
+  productId: string;
+}) {
+  try {
+    const [result] = await db
+      .select()
+      .from(entitlement)
+      .where(
+        and(
+          eq(entitlement.userId, userId),
+          eq(entitlement.productId, productId)
+        )
+      )
+      .limit(1);
+
+    return !!result;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to check entitlement"
+    );
+  }
+}
+
+export async function createRedemptionCode({
+  code,
+  productId,
+  expiresAt,
+  maxRedemptions,
+  metadata,
+}: {
+  code: string;
+  productId: string;
+  expiresAt?: Date;
+  maxRedemptions?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    return await db
+      .insert(redemptionCode)
+      .values({
+        code,
+        productId,
+        expiresAt: expiresAt ?? null,
+        maxRedemptions: maxRedemptions ?? "1",
+        metadata: metadata ?? null,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create redemption code"
+    );
+  }
+}
+
+export async function getRedemptionCodeByCode({ code }: { code: string }) {
+  try {
+    const [result] = await db
+      .select()
+      .from(redemptionCode)
+      .where(eq(redemptionCode.code, code))
+      .limit(1);
+
+    return result ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get redemption code"
+    );
+  }
+}
+
+export async function redeemCode({
+  codeId,
+  userId,
+}: {
+  codeId: string;
+  userId: string;
+}) {
+  try {
+    return await db
+      .insert(redemption)
+      .values({
+        codeId,
+        userId,
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to redeem code");
+  }
+}
+
+export async function incrementCodeRedemptionCount({
+  codeId,
+}: {
+  codeId: string;
+}) {
+  try {
+    const [code] = await db
+      .select()
+      .from(redemptionCode)
+      .where(eq(redemptionCode.id, codeId))
+      .limit(1);
+
+    if (!code) {
+      throw new ChatSDKError("not_found:database", "Redemption code not found");
+    }
+
+    const currentCount = Number.parseInt(code.redemptionCount || "0", 10);
+    const newCount = (currentCount + 1).toString();
+
+    return await db
+      .update(redemptionCode)
+      .set({ redemptionCount: newCount })
+      .where(eq(redemptionCode.id, codeId))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to increment code redemption count"
+    );
+  }
+}
+
+export async function hasRedeemedCode({
+  codeId,
+  userId,
+}: {
+  codeId: string;
+  userId: string;
+}) {
+  try {
+    const [result] = await db
+      .select()
+      .from(redemption)
+      .where(and(eq(redemption.codeId, codeId), eq(redemption.userId, userId)))
+      .limit(1);
+
+    return !!result;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to check code redemption"
     );
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/toast";
+import { Button } from "@/components/ui/button";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 type PwaInstallButtonProps = {
@@ -17,15 +17,15 @@ export function PwaInstallButton({
   size = "sm",
   variant = "default",
 }: PwaInstallButtonProps) {
-  const { isStandalone, promptInstall } = usePwaInstall();
+  const { hasInstallPrompt, isStandalone, promptInstall } = usePwaInstall();
 
-  const buttonLabel = label ?? (isStandalone ? "App installed" : "Install app");
+  if (isStandalone || !hasInstallPrompt) {
+    return null;
+  }
+
+  const buttonLabel = label ?? "Install app";
 
   const handleInstall = async () => {
-    if (isStandalone) {
-      return;
-    }
-
     const result = await promptInstall();
 
     if (!result.available) {
@@ -48,7 +48,7 @@ export function PwaInstallButton({
   return (
     <Button
       className={className}
-      disabled={isStandalone}
+      disabled={isStandalone || !hasInstallPrompt}
       onClick={handleInstall}
       size={size}
       variant={variant}
