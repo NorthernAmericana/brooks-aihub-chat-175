@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const audioExtension = extensionByMimeType[normalizedType] ?? ".webm";
 
     // Convert Blob to File for OpenAI API
-    const audioFile = new File([audio], `audio${audioExtension}`, {
+    const audioFile = await toFile(audio, `audio${audioExtension}`, {
       type: normalizedType,
     });
 
