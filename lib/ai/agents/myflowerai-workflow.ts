@@ -177,17 +177,17 @@ const selectMatchingStrains = (
 };
 
 const buildVectorStoreSummary = (
-  results: Array<{ id: string; filename: string; score: number }>
+  results: Array<{ id: string; filename: string; score?: number }>
 ) => {
   if (results.length === 0) {
     return "Vector Store Context: No matching vector store results.";
   }
 
   const lines = results.slice(0, 5).map((result) => {
-    const score = Number.isFinite(result.score)
+    const scoreLabel = Number.isFinite(result.score)
       ? result.score.toFixed(2)
-      : `${result.score}`;
-    return `- ${result.filename} (score: ${score}, id: ${result.id})`;
+      : "n/a";
+    return `- ${result.filename} (score: ${scoreLabel}, id: ${result.id})`;
   });
 
   return `Vector Store Context:\n${lines.join("\n")}`;
