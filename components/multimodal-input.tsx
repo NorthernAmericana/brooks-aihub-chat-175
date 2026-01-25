@@ -4,6 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -37,6 +38,7 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
+import { useEntitlements } from "@/hooks/use-entitlements";
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher } from "@/lib/utils";
@@ -98,6 +100,8 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { data: session } = useSession();
+  const { entitlements } = useEntitlements(session?.user?.id);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -175,6 +179,10 @@ function PureMultimodalInput({
     fetcher
   );
   const canUploadFiles = atoId ? Boolean(atoData?.ato?.fileSearchEnabled) : true;
+  const isAtoUpload = Boolean(atoId);
+  const maxChatImages = entitlements.foundersAccess ? 10 : 5;
+  const maxChatVideos = 1;
+  const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
 
   // Detect when user types "/" at the start to show suggestions
   useEffect(() => {
@@ -363,6 +371,25 @@ function PureMultimodalInput({
     chatRouteKey,
   ]);
 
+  const isPdfFile = (file: File) =>
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf");
+  const isImageFile = (file: File) => file.type.startsWith("image/");
+  const isVideoFile = (file: File) => file.type.startsWith("video/");
+  const isChatMediaFile = (file: File) => isImageFile(file) || isVideoFile(file);
+
+  const getChatAttachmentCounts = useCallback(
+    (currentAttachments: Attachment[]) => ({
+      images: currentAttachments.filter((attachment) =>
+        attachment.contentType?.startsWith("image/")
+      ).length,
+      videos: currentAttachments.filter((attachment) =>
+        attachment.contentType?.startsWith("video/")
+      ).length,
+    }),
+    []
+  );
+
   const uploadFile = useCallback(
     async (file: File) => {
       if (!canUploadFiles) {
@@ -370,11 +397,13 @@ function PureMultimodalInput({
         return;
       }
 
-      const isPdf =
-        file.type === "application/pdf" ||
-        file.name.toLowerCase().endsWith(".pdf");
-      if (!isPdf) {
-        toast.error("Only PDF files are accepted for ATO uploads.");
+      if (isAtoUpload) {
+        if (!isPdfFile(file)) {
+          toast.error("Only PDF files are accepted for ATO uploads.");
+          return;
+        }
+      } else if (!isChatMediaFile(file)) {
+        toast.error("Only images or videos are accepted in chat uploads.");
         return;
       }
 
@@ -406,25 +435,74 @@ function PureMultimodalInput({
         toast.error("Failed to upload file, please try again!");
       }
     },
-    [atoId, canUploadFiles]
+    [atoId, canUploadFiles, isAtoUpload, isChatMediaFile, isPdfFile]
   );
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFilesForUpload = useCallback(
+    async (incomingFiles: File[]) => {
       if (!canUploadFiles) {
         toast.error("File uploads are disabled for this ATO.");
         return;
       }
 
-      const files = Array.from(event.target.files || []);
-      const validFiles = files.filter(
-        (file) =>
-          file.type === "application/pdf" ||
-          file.name.toLowerCase().endsWith(".pdf")
-      );
+      if (incomingFiles.length === 0) {
+        return;
+      }
 
-      if (validFiles.length !== files.length) {
-        toast.error("Only PDF files are accepted for ATO uploads.");
+      let validFiles = incomingFiles;
+
+      if (isAtoUpload) {
+        validFiles = incomingFiles.filter((file) => isPdfFile(file));
+        if (validFiles.length !== incomingFiles.length) {
+          toast.error("Only PDF files are accepted for ATO uploads.");
+        }
+      } else {
+        validFiles = incomingFiles.filter((file) => isChatMediaFile(file));
+        if (validFiles.length !== incomingFiles.length) {
+          toast.error("Only images or videos are accepted in chat uploads.");
+        }
+
+        const { images: existingImages, videos: existingVideos } =
+          getChatAttachmentCounts(attachments);
+        let remainingImages = maxChatImages - existingImages;
+        let remainingVideos = maxChatVideos - existingVideos;
+        const filteredFiles: File[] = [];
+        let rejectedImages = 0;
+        let rejectedVideos = 0;
+
+        for (const file of validFiles) {
+          if (isImageFile(file)) {
+            if (remainingImages > 0) {
+              filteredFiles.push(file);
+              remainingImages -= 1;
+            } else {
+              rejectedImages += 1;
+            }
+          } else if (isVideoFile(file)) {
+            if (remainingVideos > 0) {
+              filteredFiles.push(file);
+              remainingVideos -= 1;
+            } else {
+              rejectedVideos += 1;
+            }
+          }
+        }
+
+        if (rejectedImages > 0) {
+          toast.error(
+            `Image upload limit reached. ${chatUploadPlanLabel} plans allow up to ${maxChatImages} images per message.`
+          );
+        }
+
+        if (rejectedVideos > 0) {
+          toast.error("Only 1 video can be added per message.");
+        }
+
+        validFiles = filteredFiles;
+      }
+
+      if (validFiles.length === 0) {
+        return;
       }
 
       setUploadQueue(validFiles.map((file) => file.name));
@@ -446,7 +524,29 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [canUploadFiles]
+    [
+      attachments,
+      canUploadFiles,
+      chatUploadPlanLabel,
+      getChatAttachmentCounts,
+      isAtoUpload,
+      isChatMediaFile,
+      isImageFile,
+      isPdfFile,
+      isVideoFile,
+      maxChatImages,
+      maxChatVideos,
+      setAttachments,
+      uploadFile,
+    ]
+  );
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      await handleFilesForUpload(files);
+    },
+    [handleFilesForUpload]
   );
 
   const handlePaste = useCallback(
@@ -461,17 +561,28 @@ function PureMultimodalInput({
         return;
       }
 
-      const imageItems = Array.from(items).filter((item) =>
-        item.type.startsWith("image/")
-      );
+      const fileItems = Array.from(items).filter((item) => item.kind === "file");
 
-      if (imageItems.length > 0) {
-        event.preventDefault();
-        toast.error("Only PDF files are accepted for ATO uploads.");
+      if (fileItems.length === 0) {
         return;
       }
+
+      if (isAtoUpload) {
+        toast.error("Only PDF files are accepted for ATO uploads.");
+        event.preventDefault();
+        return;
+      }
+
+      const files = fileItems
+        .map((item) => item.getAsFile())
+        .filter((file): file is File => Boolean(file));
+
+      if (files.length > 0) {
+        event.preventDefault();
+        await handleFilesForUpload(files);
+      }
     },
-    [canUploadFiles]
+    [canUploadFiles, handleFilesForUpload, isAtoUpload]
   );
 
   // Add paste event listener to textarea
@@ -499,7 +610,7 @@ function PureMultimodalInput({
         )}
 
       <input
-        accept="application/pdf"
+        accept={isAtoUpload ? "application/pdf" : "image/*,video/*"}
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         disabled={!canUploadFiles}
         multiple
