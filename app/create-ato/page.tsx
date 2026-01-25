@@ -126,6 +126,12 @@ export default function CreateAtoPage() {
             Create your own ATO by defining the slash route, personality, and
             capabilities you want to launch inside Brooks AI HUB.
           </p>
+          <p className="text-sm text-muted-foreground">
+            Unofficial, custom ATOs are local-only (like your projects or
+            chats), not public GPTs. The settings are simpler but still
+            customizable—think of this as making a personal thinking or project
+            file you can open anytime.
+          </p>
           <div className="rounded-lg border border-muted bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Submission limits</p>
             <ul className="mt-1 list-disc space-y-1 pl-4">
@@ -264,6 +270,20 @@ export default function CreateAtoPage() {
                 {instructionsText.length} characters. Free plans: ≤ 500;
                 Founders: ≤ 999.
               </p>
+            </div>
+            <div className="rounded-lg border border-muted bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">
+                Suggested instruction template
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                <li>Start with the mission or job-to-be-done.</li>
+                <li>Define tone, boundaries, and handoff rules.</li>
+                <li>List preferred tools, data sources, and memory behavior.</li>
+                <li>
+                  Keep it local-only and project-like, like a personal thinking
+                  file you revisit.
+                </li>
+              </ul>
             </div>
           </CardContent>
         </Card>
