@@ -13,7 +13,10 @@ export const metadata: Metadata = {
   description: "Brooks AI HUB assistant experience.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/app-icon.png",
+    icon: [
+      { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/app-icon.png", sizes: "2048x2048" }],
   },
 };
 
@@ -76,6 +79,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" sizes="2048x2048" href="/icons/app-icon.png" />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{
