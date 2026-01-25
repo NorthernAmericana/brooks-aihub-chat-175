@@ -123,7 +123,7 @@ This document describes the implementation of sticky slash routing per conversat
 ### Supported Routes
 - `/Brooks AI HUB/` - Main curator and router
 - `/NAMC/` - Media curator for NAMC content
-- `/NAT/` - NAT strategy and business
+- `/NAT/` - NAT company overview and client-facing business info
 - `/BrooksBears/` - Companion experience
 - `/MyCarMindATO/` - Driving intelligence
 - `/MyFlowerAI/` - Cannabis journaling
