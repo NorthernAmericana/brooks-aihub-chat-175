@@ -370,6 +370,14 @@ function PureMultimodalInput({
         return;
       }
 
+      const isPdf =
+        file.type === "application/pdf" ||
+        file.name.toLowerCase().endsWith(".pdf");
+      if (!isPdf) {
+        toast.error("Only PDF files are accepted for ATO uploads.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       if (atoId) {
@@ -409,11 +417,20 @@ function PureMultimodalInput({
       }
 
       const files = Array.from(event.target.files || []);
+      const validFiles = files.filter(
+        (file) =>
+          file.type === "application/pdf" ||
+          file.name.toLowerCase().endsWith(".pdf")
+      );
 
-      setUploadQueue(files.map((file) => file.name));
+      if (validFiles.length !== files.length) {
+        toast.error("Only PDF files are accepted for ATO uploads.");
+      }
+
+      setUploadQueue(validFiles.map((file) => file.name));
 
       try {
-        const uploadPromises = files.map((file) => uploadFile(file));
+        const uploadPromises = validFiles.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
           (attachment) => attachment !== undefined
@@ -429,7 +446,7 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [canUploadFiles, setAttachments, uploadFile]
+    [canUploadFiles]
   );
 
   const handlePaste = useCallback(
@@ -448,41 +465,13 @@ function PureMultimodalInput({
         item.type.startsWith("image/")
       );
 
-      if (imageItems.length === 0) {
+      if (imageItems.length > 0) {
+        event.preventDefault();
+        toast.error("Only PDF files are accepted for ATO uploads.");
         return;
       }
-
-      // Prevent default paste behavior for images
-      event.preventDefault();
-
-      setUploadQueue((prev) => [...prev, "Pasted image"]);
-
-      try {
-        const uploadPromises = imageItems
-          .map((item) => item.getAsFile())
-          .filter((file): file is File => file !== null)
-          .map((file) => uploadFile(file));
-
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) =>
-            attachment !== undefined &&
-            attachment.url !== undefined &&
-            attachment.contentType !== undefined
-        );
-
-        setAttachments((curr) => [
-          ...curr,
-          ...(successfullyUploadedAttachments as Attachment[]),
-        ]);
-      } catch (error) {
-        console.error("Error uploading pasted images:", error);
-        toast.error("Failed to upload pasted image(s)");
-      } finally {
-        setUploadQueue([]);
-      }
     },
-    [canUploadFiles, setAttachments, uploadFile]
+    [canUploadFiles]
   );
 
   // Add paste event listener to textarea
@@ -510,7 +499,7 @@ function PureMultimodalInput({
         )}
 
       <input
-        accept="image/jpeg,image/png,application/pdf,text/plain,text/markdown"
+        accept="application/pdf"
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         disabled={!canUploadFiles}
         multiple

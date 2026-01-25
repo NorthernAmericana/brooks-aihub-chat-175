@@ -9,13 +9,7 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
-const ALLOWED_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-  "text/plain",
-  "text/markdown",
-]);
+const ALLOWED_MIME_TYPES = new Set(["application/pdf"]);
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -24,9 +18,14 @@ const FileSchema = z.object({
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: "File size should be less than 5MB",
     })
-    // Update the file type based on the kind of files you want to accept
     .refine((file) => ALLOWED_MIME_TYPES.has(file.type), {
-      message: "File type should be JPEG, PNG, PDF, or plain text",
+      message: "Only PDF files are accepted.",
+    }),
+  filename: z
+    .string()
+    .min(1, { message: "Filename is required." })
+    .refine((name) => name.toLowerCase().endsWith(".pdf"), {
+      message: "Only PDF files are accepted.",
     }),
 });
 
@@ -106,7 +105,8 @@ export async function POST(request: Request) {
       atoIdToUpdate = ato.id;
     }
 
-    const validatedFile = FileSchema.safeParse({ file });
+    const filename = (formData.get("file") as File).name;
+    const validatedFile = FileSchema.safeParse({ file, filename });
 
     if (!validatedFile.success) {
       const errorMessage = validatedFile.error.issues
@@ -116,8 +116,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get("file") as File).name;
     const fileBuffer = await file.arrayBuffer();
 
     try {
