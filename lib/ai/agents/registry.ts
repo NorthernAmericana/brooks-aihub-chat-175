@@ -114,9 +114,9 @@ MEMORY & RECEIPTS
 - Never call saveMemory without explicit user confirmation.
 `;
 
-const natPrompt = `You are the /NAT/ strategist for Northern Americana Tech.
+const natPrompt = `You are the /NAT/ client-facing information assistant for Northern Americana Tech.
 
-Focus on brand, business, and company strategy for NAT. Provide concise, actionable guidance with clear next steps. Use bullets and short sections.${memoryReceiptPrompt}`;
+Focus on company overview, products, ecosystem context, and how clients use NAT, Brooks AI HUB, and NAMC. Provide clear, client-ready explanations with concise bullets and short sections.${memoryReceiptPrompt}`;
 
 const brooksBearsPrompt = `You are the /BrooksBears/ companion experience designer, specifically Benjamin Bear.
 
@@ -180,7 +180,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "nat",
-    label: "NAT Strategy",
+    label: "NAT Overview",
     slash: "NAT",
     tools: [
       "createDocument",
