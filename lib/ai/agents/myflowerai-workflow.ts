@@ -8,7 +8,7 @@ import {
 } from "@openai/agents";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { OpenAI } from "openai";
+import { OpenAI } from "@/lib/openai/client";
 import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
 

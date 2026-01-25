@@ -21,8 +21,7 @@
     "paths": {
       "@/*": ["./*"],
       "@openai/agents": ["./lib/openai/agents"],
-      "@openai/guardrails": ["./lib/openai/guardrails"],
-      "openai": ["./lib/openai/client"]
+      "@openai/guardrails": ["./lib/openai/guardrails"]
     },
     "strictNullChecks": true
   },

@@ -6,7 +6,7 @@ import {
   withTrace,
 } from "@openai/agents";
 import { runGuardrails } from "@openai/guardrails";
-import { OpenAI } from "openai";
+import { OpenAI } from "@/lib/openai/client";
 import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
 import type { ChatMessage } from "@/lib/types";
 
