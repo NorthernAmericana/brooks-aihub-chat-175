@@ -70,7 +70,12 @@ export async function POST(request: Request) {
       }
 
       const user = await getUserById({ id: session.user.id });
-      const maxFiles = user?.foundersAccess ? 10 : 5;
+
+      if (!user) {
+        return NextResponse.json({ error: "User not found." }, { status: 404 });
+      }
+
+      const maxFiles = user.foundersAccess ? 10 : 5;
       const existingMetadata =
         (ato.planMetadata as Record<string, unknown> | null) ?? {};
       const fileSearchMetadata =
@@ -82,9 +87,10 @@ export async function POST(request: Request) {
           : 0;
 
       if (currentCount >= maxFiles) {
+        const planLabel = user.foundersAccess ? "Founders" : "Free";
         return NextResponse.json(
           {
-            error: `File upload limit reached. Max ${maxFiles} files per ATO.`,
+            error: `File upload limit reached. ${planLabel} plans allow up to ${maxFiles} files per ATO.`,
           },
           { status: 403 }
         );

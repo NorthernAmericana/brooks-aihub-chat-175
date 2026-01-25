@@ -208,9 +208,10 @@ export default function EditAtoPage() {
         </Card>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            Changes apply immediately to your unofficial ATO.
-          </p>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p>Changes apply immediately to your unofficial ATO.</p>
+            <p>File uploads: Free plans allow up to 5 files per ATO; Founders up to 10.</p>
+          </div>
           <Button disabled={isLoading || isSubmitting} type="submit">
             {isSubmitting ? "Saving..." : "Save changes"}
           </Button>

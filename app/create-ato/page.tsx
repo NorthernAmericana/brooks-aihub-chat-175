@@ -358,7 +358,12 @@ export default function CreateAtoPage() {
                   name="ato-file-search"
                   type="checkbox"
                 />
-                <span>Enable file search uploads for this ATO.</span>
+                <span>
+                  Enable file search uploads for this ATO.
+                  <span className="block text-xs text-muted-foreground">
+                    Free: up to 5 files per ATO. Founders: up to 10.
+                  </span>
+                </span>
               </label>
             </div>
             <div className="grid gap-2">
