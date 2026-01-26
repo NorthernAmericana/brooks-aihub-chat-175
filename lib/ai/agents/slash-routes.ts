@@ -3,7 +3,8 @@ export type SlashRouteTool =
   | "createDocument"
   | "updateDocument"
   | "requestSuggestions"
-  | "saveMemory";
+  | "saveMemory"
+  | "saveHomeLocation";
 
 export type SlashRoute = {
   id: string;

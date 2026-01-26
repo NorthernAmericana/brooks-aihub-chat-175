@@ -35,6 +35,8 @@ import {
   suggestion,
   type User,
   user,
+  type UserLocation,
+  userLocation,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -183,6 +185,34 @@ export async function getApprovedMemoriesByUserId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories"
+    );
+  }
+}
+
+export async function getApprovedMemoriesByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          eq(memory.route, route)
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories by route"
     );
   }
 }
@@ -550,6 +580,71 @@ export async function createMemoryRecord({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create memory record"
+    );
+  }
+}
+
+export async function createHomeLocationRecord({
+  ownerId,
+  route,
+  rawText,
+  normalizedText,
+}: {
+  ownerId: string;
+  route: string;
+  rawText: string;
+  normalizedText?: string | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(userLocation)
+      .values({
+        ownerId,
+        route,
+        locationType: "home-location",
+        rawText,
+        normalizedText: normalizedText ?? null,
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create home location record"
+    );
+  }
+}
+
+export async function getHomeLocationByUserId({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}): Promise<UserLocation | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userLocation)
+      .where(
+        and(
+          eq(userLocation.ownerId, userId),
+          eq(userLocation.route, route),
+          eq(userLocation.locationType, "home-location"),
+          eq(userLocation.isApproved, true)
+        )
+      )
+      .orderBy(desc(userLocation.updatedAt), desc(userLocation.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get home location"
     );
   }
 }

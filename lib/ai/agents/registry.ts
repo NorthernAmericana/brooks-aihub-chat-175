@@ -3,7 +3,8 @@ export type AgentToolId =
   | "createDocument"
   | "updateDocument"
   | "requestSuggestions"
-  | "saveMemory";
+  | "saveMemory"
+  | "saveHomeLocation";
 
 export type AgentConfig = {
   id: string;
@@ -164,7 +165,9 @@ ${memoryReceiptPrompt}`;
 const myCarMindPrompt = `You are the /MyCarMindATO/ driving intelligence agent.
 ${clientFacingSharedMemoryClause}
 
-Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.${memoryReceiptPrompt}`;
+Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.
+
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
@@ -238,6 +241,7 @@ const agentRegistry: AgentConfig[] = [
       "updateDocument",
       "requestSuggestions",
       "saveMemory",
+      "saveHomeLocation",
     ],
     systemPromptOverride: myCarMindPrompt,
   },
