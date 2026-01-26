@@ -129,7 +129,12 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
               drag
               dragElastic={0.45}
               dragMomentum
-              dragTransition={{ stiffness: 240, damping: 18, mass: 0.6 }}
+              dragTransition={{
+                bounceStiffness: 260,
+                bounceDamping: 18,
+                power: 0.5,
+                timeConstant: 240,
+              }}
               key={folder.folder}
               onTap={() => onSelectFolder?.(folder.folder)}
               style={{
