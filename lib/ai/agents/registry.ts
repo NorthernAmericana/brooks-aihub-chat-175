@@ -1,4 +1,9 @@
 export type AgentToolId =
+  | "getDirections"
+  | "searchPlaces"
+  | "getDistanceMatrix"
+  | "getTraffic"
+  | "getLocalNews"
   | "getWeather"
   | "createDocument"
   | "updateDocument"
@@ -237,6 +242,12 @@ const agentRegistry: AgentConfig[] = [
     label: "My Car Mind ATO",
     slash: "MyCarMindATO",
     tools: [
+      "getDirections",
+      "searchPlaces",
+      "getDistanceMatrix",
+      "getTraffic",
+      "getLocalNews",
+      "getWeather",
       "createDocument",
       "updateDocument",
       "requestSuggestions",

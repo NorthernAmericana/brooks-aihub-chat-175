@@ -22,10 +22,15 @@ import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { getDirections } from "@/lib/ai/tools/get-directions";
+import { getDistanceMatrix } from "@/lib/ai/tools/get-distance-matrix";
+import { getLocalNews } from "@/lib/ai/tools/get-local-news";
+import { getTraffic } from "@/lib/ai/tools/get-traffic";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
 import { saveMemory } from "@/lib/ai/tools/save-memory";
+import { searchPlaces } from "@/lib/ai/tools/search-places";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -378,14 +383,24 @@ export async function POST(request: Request) {
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
         type ToolDefinition =
+          | typeof getDirections
+          | typeof getDistanceMatrix
+          | typeof getLocalNews
+          | typeof getTraffic
           | typeof getWeather
           | ReturnType<typeof createDocument>
           | ReturnType<typeof updateDocument>
           | ReturnType<typeof requestSuggestions>
           | ReturnType<typeof saveMemory>
-          | ReturnType<typeof saveHomeLocation>;
+          | ReturnType<typeof saveHomeLocation>
+          | typeof searchPlaces;
 
         const toolImplementations: Record<AgentToolId, ToolDefinition> = {
+          getDirections,
+          searchPlaces,
+          getDistanceMatrix,
+          getTraffic,
+          getLocalNews,
           getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
