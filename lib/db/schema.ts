@@ -205,6 +205,25 @@ export const memory = pgTable("Memory", {
 
 export type Memory = InferSelectModel<typeof memory>;
 
+export const userLocation = pgTable("UserLocation", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  route: varchar("route", { length: 128 }).notNull(),
+  locationType: varchar("locationType", {
+    enum: ["home-location"],
+  }).notNull(),
+  rawText: text("rawText").notNull(),
+  normalizedText: text("normalizedText"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserLocation = InferSelectModel<typeof userLocation>;
+
 export const unofficialAto = pgTable("UnofficialAto", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),

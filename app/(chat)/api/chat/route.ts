@@ -24,15 +24,18 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
 import { saveMemory } from "@/lib/ai/tools/save-memory";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
+  getApprovedMemoriesByUserIdAndRoute,
   getApprovedMemoriesByUserId,
   getChatById,
   getEnabledAtoFilesByAtoId,
+  getHomeLocationByUserId,
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
@@ -57,6 +60,8 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
 
+const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
+
 const formatMemoryContext = (
   memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
 ) => {
@@ -73,6 +78,16 @@ const formatMemoryContext = (
     .join("\n");
 
   return `MEMORY CONTEXT\nUse these approved user memories when relevant:\n${formatted}`;
+};
+
+const formatHomeLocationContext = (
+  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserId>>
+) => {
+  if (!homeLocation) {
+    return null;
+  }
+
+  return `HOME LOCATION\nUser-approved home location:\n- ${homeLocation.rawText}`;
 };
 
 function getStreamContext() {
@@ -324,10 +339,23 @@ export async function POST(request: Request) {
       ).toResponse();
     }
 
-    const approvedMemories = await getApprovedMemoriesByUserId({
-      userId: session.user.id,
-    });
+    const isMyCarMindAgent = selectedAgent.id === "my-car-mind";
+    const approvedMemories = isMyCarMindAgent
+      ? await getApprovedMemoriesByUserIdAndRoute({
+          userId: session.user.id,
+          route: selectedAgent.slash,
+        })
+      : await getApprovedMemoriesByUserId({
+          userId: session.user.id,
+        });
     const baseMemoryContext = formatMemoryContext(approvedMemories);
+    const homeLocation = isMyCarMindAgent
+      ? await getHomeLocationByUserId({
+          userId: session.user.id,
+          route: MY_CAR_MIND_ROUTE,
+        })
+      : null;
+    const homeLocationContext = formatHomeLocationContext(homeLocation);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
     });
@@ -335,8 +363,9 @@ export async function POST(request: Request) {
     const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
     const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
     const memoryContext =
-      [baseMemoryContext, spoilerAccessContext].filter(Boolean).join("\n\n") ||
-      null;
+      [baseMemoryContext, homeLocationContext, spoilerAccessContext]
+        .filter(Boolean)
+        .join("\n\n") || null;
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
@@ -353,7 +382,8 @@ export async function POST(request: Request) {
           | ReturnType<typeof createDocument>
           | ReturnType<typeof updateDocument>
           | ReturnType<typeof requestSuggestions>
-          | ReturnType<typeof saveMemory>;
+          | ReturnType<typeof saveMemory>
+          | ReturnType<typeof saveHomeLocation>;
 
         const toolImplementations: Record<AgentToolId, ToolDefinition> = {
           getWeather,
@@ -361,6 +391,7 @@ export async function POST(request: Request) {
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
+          saveHomeLocation: saveHomeLocation({ session }),
         };
 
         const namcDocumentTools: AgentToolId[] = [
