@@ -23,6 +23,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     const desiredOrder = [
       { slash: "Brooks AI HUB", foundersOnly: false },
       { slash: "BrooksBears", foundersOnly: false },
+      {
+        slash: "BrooksBears/BenjaminBear",
+        foundersOnly: true,
+        displayFolder: "/BrooksBears/BenjaminBear/ 💎",
+      },
       { slash: "MyCarMindATO", foundersOnly: false },
       { slash: "MyFlowerAI", foundersOnly: false },
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
@@ -44,10 +49,13 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           return null;
         }
 
+        const folder = `/${agent.slash}/`;
+
         return {
           label: labelOverrides[agent.slash] ?? agent.label,
           slash: agent.slash,
-          folder: `/${agent.slash}/`,
+          folder,
+          displayFolder: entry.displayFolder ?? folder,
           foundersOnly: entry.foundersOnly,
         };
       })
@@ -58,6 +66,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           label: string;
           slash: string;
           folder: string;
+          displayFolder: string;
           foundersOnly: boolean;
         } => Boolean(folder)
       );
@@ -128,7 +137,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   ) : null}
                 </span>
                 <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem] md:text-xs">
-                  {folder.folder}
+                  {folder.displayFolder}
                 </span>
               </span>
             </button>

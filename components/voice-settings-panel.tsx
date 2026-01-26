@@ -29,6 +29,7 @@ const getRouteDisplayName = (routeKey: string): string => {
     namc: "/NAMC/",
     "brooks-bears": "/BrooksBears/",
     brooksbears: "/BrooksBears/",
+    "brooks-bears-benjamin": "/BrooksBears/BenjaminBear/",
     "my-car-mind": "/MyCarMindATO/",
     mycarmindato: "/MyCarMindATO/",
     "my-flower-ai": "/MyFlowerAI/",

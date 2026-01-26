@@ -210,6 +210,23 @@ export const MicIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
+export const PhoneIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        d="M13.72 10.92L12.24 10.2C11.76 9.97 11.21 10.09 10.86 10.5L10.16 11.34C8.96 10.76 7.94 9.76 7.34 8.58L8.18 7.88C8.6 7.53 8.72 6.98 8.48 6.5L7.76 5.02C7.47 4.43 6.75 4.17 6.14 4.4L4.74 4.93C4.23 5.12 3.91 5.61 3.97 6.16C4.22 8.33 5.24 10.4 6.83 11.99C8.42 13.58 10.49 14.6 12.66 14.85C13.21 14.91 13.7 14.59 13.89 14.08L14.42 12.68C14.65 12.07 14.3 11.21 13.72 10.92Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
 export const SpeakerIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg

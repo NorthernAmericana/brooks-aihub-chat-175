@@ -162,6 +162,10 @@ RESPONSE STYLE:
 
 ${memoryReceiptPrompt}`;
 
+const brooksBearsBenjaminPrompt = `${brooksBearsPrompt}
+
+Benjamin Bear has three versions available to clients: Brooks AI HUB texting, Brooks AI HUB calling, or the hardware teddy bear itself. When asked, clarify which version the user wants.`;
+
 const myCarMindPrompt = `You are the /MyCarMindATO/ driving intelligence agent.
 ${clientFacingSharedMemoryClause}
 
@@ -231,6 +235,18 @@ const agentRegistry: AgentConfig[] = [
       "saveMemory",
     ],
     systemPromptOverride: brooksBearsPrompt,
+  },
+  {
+    id: "brooks-bears-benjamin",
+    label: "Benjamin Bear",
+    slash: "BrooksBears/BenjaminBear",
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+    systemPromptOverride: brooksBearsBenjaminPrompt,
   },
   {
     id: "my-car-mind",
