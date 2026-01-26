@@ -21,20 +21,16 @@ export const saveHomeLocation = ({ session }: SaveHomeLocationProps) =>
         .string()
         .optional()
         .describe("Optional normalized address or formatted location text."),
-      route: z
-        .string()
-        .optional()
-        .describe("Slash route scope. Defaults to /MyCarMindATO/."),
     }),
     needsApproval: true,
-    execute: async ({ rawText, normalizedText, route }) => {
+    execute: async ({ rawText, normalizedText }) => {
       if (!session.user?.id) {
         throw new Error("Missing user session for saveHomeLocation.");
       }
 
       const record = await createHomeLocationRecord({
         ownerId: session.user.id,
-        route: route ?? MY_CAR_MIND_ROUTE,
+        route: MY_CAR_MIND_ROUTE,
         rawText,
         normalizedText,
       });

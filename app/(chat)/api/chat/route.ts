@@ -352,6 +352,7 @@ export async function POST(request: Request) {
     const homeLocation = isMyCarMindAgent
       ? await getHomeLocationByUserId({
           userId: session.user.id,
+          // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
           route: MY_CAR_MIND_ROUTE,
         })
       : null;
