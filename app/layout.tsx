@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Brooks AI HUB",
   description: "Brooks AI HUB assistant experience.",
   manifest: "/manifest.webmanifest",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
   icons: {
     icon: [
       { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },

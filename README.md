@@ -96,3 +96,69 @@ pnpm dev
 ```
 
 Your app should now be running on [localhost:3000](http://localhost:3000).
+
+## Progressive Web App (PWA)
+
+Brooks AI HUB is a fully installable Progressive Web App that works offline and provides a native app-like experience.
+
+### Features
+
+- **Installable**: Add the app to your home screen on mobile or desktop
+- **Offline Support**: Access cached content and see an offline page when disconnected
+- **Fast Loading**: Service worker caching ensures quick load times
+- **App-like Experience**: Runs in standalone mode without browser UI
+
+### How It Works
+
+The PWA functionality is implemented using:
+
+1. **Service Worker** (`public/sw.js`): Handles caching strategies and offline fallback
+   - Precaches critical resources (home page, offline page, icons)
+   - Implements runtime caching for navigation, assets, and API requests
+   - Automatic cache versioning and cleanup on updates
+
+2. **Web App Manifest** (`app/manifest.ts`): Defines app metadata and install behavior
+   - App name, icons, theme colors, and display mode
+   - Served at `/manifest.webmanifest` via Next.js metadata route
+
+3. **Service Worker Registration** (`components/pwa-register.tsx`): Registers the service worker on client load
+
+### Testing Installability
+
+#### Using Chrome DevTools
+
+1. Open the app in Chrome or a Chromium-based browser (must be served over HTTPS or localhost)
+2. Open DevTools (F12) → Application tab
+3. Check **Service Workers** section to verify registration
+4. Check **Manifest** section to verify manifest is valid and installability criteria are met
+5. Look for install button in the address bar or browser menu
+
+#### Using Lighthouse
+
+1. Open DevTools → Lighthouse tab
+2. Select "Progressive Web App" category
+3. Click "Generate report"
+4. Review PWA installability checks and recommendations
+
+#### Manual Testing
+
+1. **Desktop**: Look for the install icon in the Chrome address bar
+2. **Mobile**: Use "Add to Home Screen" from the browser menu
+3. **Offline**: Disconnect from network and verify offline page appears when navigating
+
+### Customization
+
+To customize PWA settings:
+
+- **App name/colors**: Edit `app/manifest.ts`
+- **Cached resources**: Modify `PRECACHE_URLS` in `public/sw.js`
+- **Offline page**: Customize `app/offline/page.tsx`
+- **Cache strategy**: Adjust fetch handlers in `public/sw.js`
+
+### Cache Versioning
+
+When updating the service worker:
+
+1. Increment `CACHE_VERSION` in `public/sw.js` (e.g., "v1" → "v2")
+2. Old caches are automatically cleaned up on activation
+3. Users will receive the updated service worker on next page load
