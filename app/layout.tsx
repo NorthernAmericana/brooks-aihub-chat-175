@@ -7,8 +7,14 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const isPreview = process.env.VERCEL_ENV === "preview";
+const isDevelopment = process.env.NODE_ENV === "development";
+const metadataBase =
+  siteUrl && !isPreview && !isDevelopment ? new URL(siteUrl) : undefined;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://brooksaihub.com"),
+  ...(metadataBase ? { metadataBase } : {}),
   title: "Brooks AI HUB",
   description: "Brooks AI HUB assistant experience.",
   manifest: "/manifest.webmanifest",
