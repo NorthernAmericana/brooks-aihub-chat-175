@@ -107,28 +107,28 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           Suggested folders
         </div>
-        <div className="mt-3 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        <div className="mt-3 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
           {suggestedFolders.map((folder) => (
             <button
-              className="flex h-full rounded-2xl border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2 sm:text-sm md:text-base"
+              className="flex h-full rounded-2xl border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-3 sm:py-2 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               type="button"
             >
-              <span className="flex flex-col gap-0.5 text-left leading-tight">
-                <span className="text-xs font-semibold sm:text-sm md:text-base">
+              <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
+                <span className="truncate text-xs font-semibold sm:text-sm">
                   {folder.label}
                   {folder.foundersOnly ? (
                     <span
                       aria-label="Founders access only"
-                      className="ml-1 inline-flex align-middle text-base"
+                      className="ml-1 inline-flex align-middle text-sm"
                       title="Founders access only"
                     >
                       💎
                     </span>
                   ) : null}
                 </span>
-                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem] md:text-xs">
+                <span className="truncate text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem]">
                   {folder.folder}
                 </span>
               </span>
