@@ -16,6 +16,7 @@ import {
   getAgentConfigBySlash,
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
+import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
@@ -436,6 +437,21 @@ export async function POST(request: Request) {
           dataStream.write({ type: "text-end", id: responseId });
         } else if (isMyFlowerAiAgent) {
           const responseText = await runMyFlowerAIWorkflow({
+            messages: uiMessages,
+            memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else if (selectedAgent.id === "my-car-mind") {
+          const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
             memoryContext,
           });
