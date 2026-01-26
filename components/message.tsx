@@ -137,11 +137,12 @@ const PurePreviewMessage = ({
                     ? trimmedText.match(SLASH_PREFIX_REGEX)
                     : null;
                 const matchText = slashMatch?.[0] ?? "";
-                const slashPrefix = slashMatch
+                const slashPrefixText = slashMatch
                   ? matchText.replace(/\s+$/, "")
-                  : null;
+                  : "";
+                const slashPrefix = slashPrefixText || null;
                 const slashSpacing = slashMatch
-                  ? matchText.slice(slashPrefix.length)
+                  ? matchText.slice(slashPrefixText.length)
                   : "";
                 const slashRemainder = slashMatch
                   ? `${slashSpacing}${trimmedText.slice(matchText.length)}`
