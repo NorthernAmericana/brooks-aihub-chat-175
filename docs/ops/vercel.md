@@ -37,3 +37,26 @@ Run these checks against the production URL **https://chat.vercel.ai/** after ea
    - **URL**: https://chat.vercel.ai/
    - **How**: Chrome DevTools → Application → Service Workers → check **Offline**, then refresh.
    - **Expected outcome**: The app serves a cached/offline experience instead of a network error.
+
+## Mobile installability notes
+
+- **iOS (Safari/Chrome/Edge)**: iOS browsers do not support the native PWA install prompt. Users must use Safari → Share → **Add to Home Screen**. This is a platform limitation, not a configuration issue.
+- **Android (Chrome)**: If the install banner does not appear, confirm the manifest loads without redirects, the service worker is active, and the site is served over HTTPS. Run the Lighthouse PWA audit above to verify eligibility.
+
+## Next step: publish a Trusted Web Activity (TWA)
+
+If native Android install is required (Play Store or full-screen app shell), ship a TWA wrapper around the deployed web app.
+
+1. **Verify the PWA is eligible**
+   - Run the Lighthouse PWA audit and fix any blocking issues (manifest fetch, service worker, HTTPS).
+2. **Generate Android project**
+   - Use Bubblewrap (`bubblewrap`) to create a TWA project pointing at the production URL.
+   - Example: `npx @bubblewrap/cli init --manifest=https://brooks-aihub-chat-175.vercel.app/manifest.webmanifest`
+3. **Configure signing + Digital Asset Links**
+   - Generate a signing key (keystore).
+   - Host the `assetlinks.json` file at `https://brooks-aihub-chat-175.vercel.app/.well-known/assetlinks.json`.
+   - The file must include the app package name and the signing certificate fingerprint.
+4. **Build & test on device**
+   - Build an APK/AAB, install on an Android device, and confirm it launches the PWA in full-screen mode.
+5. **Publish**
+   - Upload the AAB to the Play Console and complete the store listing flow.
