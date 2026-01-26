@@ -154,26 +154,78 @@ const loadStrains = async () => {
     .map((line) => JSON.parse(line) as { id?: string; strain?: { name?: string } });
 };
 
+const FALLBACK_STRAIN_LIMIT = 8;
+const GENERIC_STRAIN_QUERIES = new Set([
+  "strain",
+  "strains",
+  "strain list",
+  "list strains",
+  "available strains",
+  "what strains",
+  "what strain data do you have",
+]);
+const GENERIC_STRAIN_QUERY_PATTERNS = [
+  /what\s+strain\s+data\s+do\s+you\s+have/,
+  /\b(list|show)\b.*\bstrains?\b/,
+  /\bavailable\b.*\bstrains?\b/,
+  /\bstrain\s+data\b/,
+  /\bstrain\s+list\b/,
+];
+
+const isGenericStrainQuery = (query: string) =>
+  GENERIC_STRAIN_QUERIES.has(query) ||
+  GENERIC_STRAIN_QUERY_PATTERNS.some((pattern) => pattern.test(query));
+
 const selectMatchingStrains = (
   strains: Array<{ id?: string; strain?: { name?: string } }>,
   query: string
 ) => {
   const normalizedQuery = normalizeQueryValue(query);
-  if (!normalizedQuery) {
-    return [];
+  const isGenericQuery =
+    !normalizedQuery || isGenericStrainQuery(normalizedQuery);
+
+  const matching = normalizedQuery
+    ? strains.filter((strain) => {
+        const idValue = normalizeQueryValue(strain.id ?? "");
+        const nameValue = normalizeQueryValue(strain.strain?.name ?? "");
+
+        return (
+          (nameValue && normalizedQuery.includes(nameValue)) ||
+          (idValue && normalizedQuery.includes(idValue)) ||
+          (normalizedQuery && nameValue.includes(normalizedQuery)) ||
+          (normalizedQuery && idValue.includes(normalizedQuery))
+        );
+      })
+    : [];
+
+  const shouldFallback = isGenericQuery || matching.length === 0;
+  const fallback = shouldFallback
+    ? strains.slice(0, FALLBACK_STRAIN_LIMIT)
+    : [];
+
+  return {
+    matching,
+    fallback,
+    usedFallback: shouldFallback,
+    isGenericQuery,
+  };
+};
+
+const buildStrainSummary = (
+  strains: Array<{ id?: string; strain?: { name?: string; type?: string } }>,
+  label: string
+) => {
+  if (!strains.length) {
+    return "Strain Data: No matching strains found in strains.ndjson.";
   }
 
-  return strains.filter((strain) => {
-    const idValue = normalizeQueryValue(strain.id ?? "");
-    const nameValue = normalizeQueryValue(strain.strain?.name ?? "");
-
-    return (
-      (nameValue && normalizedQuery.includes(nameValue)) ||
-      (idValue && normalizedQuery.includes(idValue)) ||
-      (normalizedQuery && nameValue.includes(normalizedQuery)) ||
-      (normalizedQuery && idValue.includes(normalizedQuery))
-    );
+  const lines = strains.map((strain) => {
+    const name = strain.strain?.name ?? strain.id ?? "Unknown strain";
+    const type = strain.strain?.type;
+    return `- ${name}${type ? ` (${type})` : ""}`;
   });
+
+  return `Strain Data (${label}):\n${lines.join("\n")}`;
 };
 
 const buildVectorStoreSummary = (
@@ -226,15 +278,20 @@ export const runMyFlowerAIWorkflow = async ({
       }),
     ]);
 
-    const matchingStrains = selectMatchingStrains(
+    const strainSelection = selectMatchingStrains(
       strains,
       workflow.input_as_text
     );
-    const strainContext = matchingStrains.length
-      ? `Strain Data:\n${matchingStrains
+    const strainContext = strainSelection.usedFallback
+      ? buildStrainSummary(
+          strainSelection.fallback,
+          strainSelection.isGenericQuery
+            ? "sample list for generic request"
+            : "sample list; no direct matches"
+        )
+      : `Strain Data:\n${strainSelection.matching
           .map((strain) => JSON.stringify(strain))
-          .join("\n")}`
-      : "Strain Data: No matching strains found in strains.ndjson.";
+          .join("\n")}`;
 
     const vectorSummary = buildVectorStoreSummary(
       vectorStoreResults.data.map((result) => ({
