@@ -48,11 +48,11 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
-  --cloud-bg: linear-gradient(180deg, hsl(346 70% 96%) 0%, hsl(344 66% 91%) 100%);
-  --cloud-border: hsl(345 40% 88%);
-  --cloud-shadow-outer: 0 14px 28px rgba(245, 192, 212, 0.32),
-    0 6px 12px rgba(245, 192, 212, 0.24);
-  --cloud-shadow-inner: inset 0 2px 8px rgba(255, 255, 255, 0.8);
+  --cloud-bg: linear-gradient(180deg, hsl(350 80% 97%) 0%, hsl(345 72% 92%) 100%);
+  --cloud-border: hsl(345 45% 90%);
+  --cloud-shadow-outer: 0 22px 40px rgba(245, 195, 216, 0.26),
+    0 10px 18px rgba(245, 195, 216, 0.2);
+  --cloud-shadow-inner: inset 0 3px 10px rgba(255, 255, 255, 0.75);
   --cloud-text: var(--foreground);
 }
 
@@ -91,11 +91,11 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
-  --cloud-bg: linear-gradient(180deg, hsl(344 30% 22%) 0%, hsl(344 28% 18%) 100%);
-  --cloud-border: hsl(345 20% 32%);
-  --cloud-shadow-outer: 0 16px 30px rgba(7, 4, 10, 0.45),
-    0 6px 14px rgba(7, 4, 10, 0.3);
-  --cloud-shadow-inner: inset 0 1px 6px rgba(255, 255, 255, 0.08);
+  --cloud-bg: linear-gradient(180deg, hsl(344 32% 24%) 0%, hsl(344 30% 19%) 100%);
+  --cloud-border: hsl(345 22% 34%);
+  --cloud-shadow-outer: 0 20px 36px rgba(6, 4, 10, 0.5),
+    0 8px 16px rgba(6, 4, 10, 0.32);
+  --cloud-shadow-inner: inset 0 2px 8px rgba(255, 255, 255, 0.12);
   --cloud-text: var(--foreground);
 }
 
