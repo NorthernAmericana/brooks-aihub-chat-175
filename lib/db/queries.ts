@@ -586,11 +586,13 @@ export async function createMemoryRecord({
 
 export async function createHomeLocationRecord({
   ownerId,
+  chatId,
   route,
   rawText,
   normalizedText,
 }: {
   ownerId: string;
+  chatId: string;
   route: string;
   rawText: string;
   normalizedText?: string | null;
@@ -600,6 +602,7 @@ export async function createHomeLocationRecord({
       .insert(userLocation)
       .values({
         ownerId,
+        chatId,
         route,
         locationType: "home-location",
         rawText,
@@ -620,9 +623,11 @@ export async function createHomeLocationRecord({
 
 export async function getHomeLocationByUserId({
   userId,
+  chatId,
   route,
 }: {
   userId: string;
+  chatId: string;
   route: string;
 }): Promise<UserLocation | null> {
   try {
@@ -632,6 +637,7 @@ export async function getHomeLocationByUserId({
       .where(
         and(
           eq(userLocation.ownerId, userId),
+          eq(userLocation.chatId, chatId),
           eq(userLocation.route, route),
           eq(userLocation.locationType, "home-location"),
           eq(userLocation.isApproved, true)
