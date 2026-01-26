@@ -132,16 +132,14 @@ const PurePreviewMessage = ({
                 const trimmedText = text.trimStart();
                 const slashMatch =
                   message.role === "user" && parseSlashAction(trimmedText)
-                    ? trimmedText.match(/^\/[^/]+\/\s*/)
+                    ? text.match(/^\s*\/[^/]+\/\s*/)
                     : null;
                 const slashPrefix = slashMatch
                   ? slashMatch[0].replace(/\s+$/, "")
                   : null;
                 const slashSpacing = slashMatch?.slice(slashPrefix?.length ?? 0);
                 const slashRemainder = slashMatch
-                  ? `${slashSpacing ?? ""}${trimmedText.slice(
-                      slashMatch[0].length
-                    )}`
+                  ? `${slashSpacing ?? ""}${text.slice(slashMatch[0].length)}`
                   : text;
 
                 return (
@@ -160,18 +158,18 @@ const PurePreviewMessage = ({
                           : undefined
                       }
                     >
-                      <Response>
-                        {slashPrefix ? (
-                          <>
-                            <span className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground">
-                              {sanitizeText(slashPrefix)}
-                            </span>
+                      {slashPrefix ? (
+                        <>
+                          <span className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground">
+                            {sanitizeText(slashPrefix)}
+                          </span>
+                          <Response className="inline [&_p]:inline">
                             {sanitizeText(slashRemainder)}
-                          </>
-                        ) : (
-                          sanitizeText(text)
-                        )}
-                      </Response>
+                          </Response>
+                        </>
+                      ) : (
+                        <Response>{sanitizeText(text)}</Response>
+                      )}
                     </MessageContent>
                   </div>
                 );
