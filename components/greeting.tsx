@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { motion, motionValue } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listAgentConfigs } from "@/lib/ai/agents/registry";
 
 type GreetingProps = {
@@ -76,60 +76,161 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
   const cloudStyles = useMemo(
     () => [
-      { transform: "translateY(0px)", minWidth: "10.5rem" },
-      { transform: "translateY(6px)", minWidth: "9.75rem" },
-      { transform: "translateY(-6px)", minWidth: "10rem" },
-      { transform: "translateY(10px)", minWidth: "9.5rem" },
-      { transform: "translateY(-10px)", minWidth: "10.75rem" },
-      { transform: "translateY(4px)", minWidth: "9.25rem" },
-      { transform: "translateY(-4px)", minWidth: "10.25rem" },
-      { transform: "translateY(8px)", minWidth: "9.75rem" },
-      { transform: "translateY(-8px)", minWidth: "10rem" },
+      { offsetY: 0, minWidth: "10.5rem" },
+      { offsetY: 6, minWidth: "9.75rem" },
+      { offsetY: -6, minWidth: "10rem" },
+      { offsetY: 10, minWidth: "9.5rem" },
+      { offsetY: -10, minWidth: "10.75rem" },
+      { offsetY: 4, minWidth: "9.25rem" },
+      { offsetY: -4, minWidth: "10.25rem" },
+      { offsetY: 8, minWidth: "9.75rem" },
+      { offsetY: -8, minWidth: "10rem" },
     ],
     []
   );
 
+  const cloudLayerRef = useRef<HTMLDivElement | null>(null);
+  const cloudRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const cloudMotionValues = useMemo(
+    () =>
+      suggestedFolders.map((_, index) => {
+        const style = cloudStyles[index % cloudStyles.length];
+        return {
+          x: motionValue(0),
+          y: motionValue(style.offsetY),
+        };
+      }),
+    [cloudStyles, suggestedFolders]
+  );
+
+  const clampCloudToLayer = (index: number) => {
+    const cloud = cloudRefs.current[index];
+    const layer = cloudLayerRef.current;
+    if (!cloud || !layer) {
+      return;
+    }
+
+    const layerRect = layer.getBoundingClientRect();
+    const cloudRect = cloud.getBoundingClientRect();
+    const motionValues = cloudMotionValues[index];
+    let nextX = motionValues.x.get();
+    let nextY = motionValues.y.get();
+
+    if (cloudRect.left < layerRect.left) {
+      nextX += layerRect.left - cloudRect.left;
+    }
+    if (cloudRect.right > layerRect.right) {
+      nextX -= cloudRect.right - layerRect.right;
+    }
+    if (cloudRect.top < layerRect.top) {
+      nextY += layerRect.top - cloudRect.top;
+    }
+    if (cloudRect.bottom > layerRect.bottom) {
+      nextY -= cloudRect.bottom - layerRect.bottom;
+    }
+
+    motionValues.x.set(nextX);
+    motionValues.y.set(nextY);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      cloudMotionValues.forEach((_, index) => clampCloudToLayer(index));
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [cloudMotionValues]);
+
+  const bumpOverlappingClouds = (activeIndex: number) => {
+    const activeCloud = cloudRefs.current[activeIndex];
+    if (!activeCloud) {
+      return;
+    }
+
+    const activeRect = activeCloud.getBoundingClientRect();
+    const activeCenterX = activeRect.left + activeRect.width / 2;
+    const activeCenterY = activeRect.top + activeRect.height / 2;
+    const bumpDistance = 18;
+    const maxOffset = 120;
+
+    cloudRefs.current.forEach((cloud, index) => {
+      if (!cloud || index === activeIndex) {
+        return;
+      }
+
+      const rect = cloud.getBoundingClientRect();
+      const isOverlapping =
+        activeRect.left < rect.right &&
+        activeRect.right > rect.left &&
+        activeRect.top < rect.bottom &&
+        activeRect.bottom > rect.top;
+
+      if (!isOverlapping) {
+        return;
+      }
+
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const directionX = activeCenterX >= centerX ? -1 : 1;
+      const directionY = activeCenterY >= centerY ? -1 : 1;
+      const motionValues = cloudMotionValues[index];
+
+      const nextX = Math.min(
+        maxOffset,
+        Math.max(-maxOffset, motionValues.x.get() + directionX * bumpDistance)
+      );
+      const nextY = Math.min(
+        maxOffset,
+        Math.max(-maxOffset, motionValues.y.get() + directionY * bumpDistance)
+      );
+
+      motionValues.x.set(nextX);
+      motionValues.y.set(nextY);
+      clampCloudToLayer(index);
+    });
+  };
+
   return (
     <div
-      className="relative mx-auto mt-2 flex size-full max-w-xl flex-col items-center justify-center gap-2.5 px-4 py-6 text-center sm:mt-4 sm:max-w-2xl sm:px-6 sm:py-8 md:mt-12 md:px-10 md:py-10"
+      className="relative mx-auto mt-2 flex size-full w-full items-center justify-center px-4 py-6 sm:mt-4 sm:px-6 sm:py-8 md:mt-12 md:px-10 md:py-10"
       key="overview"
     >
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="text-balance font-semibold text-xl leading-tight text-foreground sm:text-2xl md:text-3xl"
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 10 }}
-        transition={{ delay: 0.5 }}
+      <div
+        className="pointer-events-auto absolute inset-0 z-0 flex w-full flex-wrap content-center justify-center gap-3"
+        ref={cloudLayerRef}
       >
-        <span className="font-pixel">/Brooks AI HUB/</span>
-      </motion.div>
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs md:text-sm"
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 10 }}
-        transition={{ delay: 0.6 }}
-      >
-        {formattedNow}
-      </motion.div>
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-3 w-full text-xs leading-relaxed sm:text-sm md:mt-5"
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 10 }}
-        transition={{ delay: 0.7 }}
-      >
-        <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
-          all ATO App Folder Clouds
-        </div>
-        <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
-          {suggestedFolders.map((folder, index) => (
-            <button
+        {suggestedFolders.map((folder, index) => {
+          const style = cloudStyles[index % cloudStyles.length];
+          const motionValues = cloudMotionValues[index];
+
+          return (
+            <motion.button
               className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
+              drag
+              dragConstraints={cloudLayerRef}
+              dragElastic={0.2}
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
+              onDrag={() => {
+                bumpOverlappingClouds(index);
+                clampCloudToLayer(index);
+              }}
+              onDragEnd={() => {
+                bumpOverlappingClouds(index);
+                clampCloudToLayer(index);
+              }}
+              ref={(node) => {
+                cloudRefs.current[index] = node;
+              }}
+              style={{
+                minWidth: style.minWidth,
+                x: motionValues.x,
+                y: motionValues.y,
+              }}
               type="button"
-              style={cloudStyles[index % cloudStyles.length]}
             >
               <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
                 <span className="text-xs font-medium leading-snug sm:text-sm">
@@ -148,10 +249,41 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   {folder.folder}
                 </span>
               </span>
-            </button>
-          ))}
-        </div>
-      </motion.div>
+            </motion.button>
+          );
+        })}
+      </div>
+      <div className="relative z-10 flex w-full max-w-xl flex-col items-center justify-center gap-2.5 text-center pointer-events-none sm:max-w-2xl">
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="text-balance font-semibold text-xl leading-tight text-foreground sm:text-2xl md:text-3xl"
+          exit={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.5 }}
+        >
+          <span className="font-pixel">/Brooks AI HUB/</span>
+        </motion.div>
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs md:text-sm"
+          exit={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.6 }}
+        >
+          {formattedNow}
+        </motion.div>
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 w-full text-xs leading-relaxed sm:text-sm md:mt-5"
+          exit={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.7 }}
+        >
+          <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
+            all ATO App Folder Clouds
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
