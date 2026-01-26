@@ -1,17 +1,21 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { auth } from "@/app/(auth)/auth";
 
-export const dynamic = "force-dynamic";
+export default function WelcomePage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-export default async function WelcomePage() {
-  const session = await auth();
-
-  if (session?.user) {
-    redirect("/brooks-ai-hub/");
-  }
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      router.replace("/brooks-ai-hub/");
+    }
+  }, [router, session?.user, status]);
 
   return (
     <div className="flex h-dvh w-screen items-start justify-center bg-background pt-12 md:items-center md:pt-0">
