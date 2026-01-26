@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const NEWS_API_KEY = process.env.NEWS_API_KEY;
+const getNewsApiKey = () =>
+  typeof process !== "undefined" ? process.env.NEWS_API_KEY : undefined;
 
 const resolveCityFromCoords = async (latitude: number, longitude: number) => {
   const response = await fetch(
@@ -42,7 +43,8 @@ export const getLocalNews = tool({
   }),
   needsApproval: true,
   execute: async ({ city, latitude, longitude, topic }) => {
-    if (!NEWS_API_KEY) {
+    const newsApiKey = getNewsApiKey();
+    if (!newsApiKey) {
       return { error: "Missing NEWS_API_KEY environment variable." };
     }
 
@@ -63,7 +65,7 @@ export const getLocalNews = tool({
       : `${resolvedCity} local news`;
 
     const params = new URLSearchParams({
-      apiKey: NEWS_API_KEY,
+      apiKey: newsApiKey,
       q: query,
       language: "en",
       sortBy: "publishedAt",

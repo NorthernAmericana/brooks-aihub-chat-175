@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const getGoogleMapsApiKey = () =>
+  typeof process !== "undefined" ? process.env.GOOGLE_MAPS_API_KEY : undefined;
 
 export const getTraffic = tool({
   description:
@@ -15,7 +16,8 @@ export const getTraffic = tool({
   }),
   needsApproval: true,
   execute: async ({ origin, destination, trafficModel }) => {
-    if (!GOOGLE_MAPS_API_KEY) {
+    const googleMapsApiKey = getGoogleMapsApiKey();
+    if (!googleMapsApiKey) {
       return { error: "Missing GOOGLE_MAPS_API_KEY environment variable." };
     }
 
@@ -24,7 +26,7 @@ export const getTraffic = tool({
       destinations: destination,
       mode: "driving",
       departure_time: "now",
-      key: GOOGLE_MAPS_API_KEY,
+      key: googleMapsApiKey,
     });
 
     if (trafficModel) {

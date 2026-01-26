@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const getGoogleMapsApiKey = () =>
+  typeof process !== "undefined" ? process.env.GOOGLE_MAPS_API_KEY : undefined;
 
 const buildPlaceUrl = (query: string) => {
   const params = new URLSearchParams({ api: "1", query });
@@ -26,13 +27,14 @@ export const searchPlaces = tool({
   }),
   needsApproval: true,
   execute: async ({ query, location, radiusMeters }) => {
-    if (!GOOGLE_MAPS_API_KEY) {
+    const googleMapsApiKey = getGoogleMapsApiKey();
+    if (!googleMapsApiKey) {
       return { error: "Missing GOOGLE_MAPS_API_KEY environment variable." };
     }
 
     const params = new URLSearchParams({
       query,
-      key: GOOGLE_MAPS_API_KEY,
+      key: googleMapsApiKey,
     });
 
     if (location) {

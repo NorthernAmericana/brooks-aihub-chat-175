@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const getGoogleMapsApiKey = () =>
+  typeof process !== "undefined" ? process.env.GOOGLE_MAPS_API_KEY : undefined;
 
 const toPipeList = (values: string[]) => values.join("|");
 
@@ -27,14 +28,15 @@ export const getDistanceMatrix = tool({
   }),
   needsApproval: true,
   execute: async ({ origins, destinations, mode, departureTime }) => {
-    if (!GOOGLE_MAPS_API_KEY) {
+    const googleMapsApiKey = getGoogleMapsApiKey();
+    if (!googleMapsApiKey) {
       return { error: "Missing GOOGLE_MAPS_API_KEY environment variable." };
     }
 
     const params = new URLSearchParams({
       origins: toPipeList(origins),
       destinations: toPipeList(destinations),
-      key: GOOGLE_MAPS_API_KEY,
+      key: googleMapsApiKey,
     });
 
     if (mode) {
