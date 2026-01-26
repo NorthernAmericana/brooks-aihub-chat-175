@@ -4,6 +4,7 @@ import type { ToolUIPart } from "ai";
 import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { parseSlashAction } from "@/lib/suggested-actions";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
@@ -127,6 +128,22 @@ const PurePreviewMessage = ({
 
             if (type === "text") {
               if (mode === "view") {
+                const text = part.text ?? "";
+                const trimmedText = text.trimStart();
+                const slashMatch =
+                  message.role === "user" && parseSlashAction(trimmedText)
+                    ? trimmedText.match(/^\/[^/]+\/\s*/)
+                    : null;
+                const slashPrefix = slashMatch
+                  ? slashMatch[0].replace(/\s+$/, "")
+                  : null;
+                const slashSpacing = slashMatch?.slice(slashPrefix?.length ?? 0);
+                const slashRemainder = slashMatch
+                  ? `${slashSpacing ?? ""}${trimmedText.slice(
+                      slashMatch[0].length
+                    )}`
+                  : text;
+
                 return (
                   <div key={key}>
                     <MessageContent
@@ -143,7 +160,18 @@ const PurePreviewMessage = ({
                           : undefined
                       }
                     >
-                      <Response>{sanitizeText(part.text)}</Response>
+                      <Response>
+                        {slashPrefix ? (
+                          <>
+                            <span className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground">
+                              {sanitizeText(slashPrefix)}
+                            </span>
+                            {sanitizeText(slashRemainder)}
+                          </>
+                        ) : (
+                          sanitizeText(text)
+                        )}
+                      </Response>
                     </MessageContent>
                   </div>
                 );
