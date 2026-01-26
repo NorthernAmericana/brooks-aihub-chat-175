@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/app/(auth)/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function WelcomePage() {
   const session = await auth();
 
