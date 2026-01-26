@@ -251,11 +251,11 @@ const agentRegistry: AgentConfig[] = [
     label: "My Car Mind ATO",
     slash: "MyCarMindATO",
     tools: [
+      "getDirections",
       "createDocument",
       "updateDocument",
       "requestSuggestions",
       "saveMemory",
-      "getDirections",
       "saveHomeLocation",
     ],
     systemPromptOverride: myCarMindPrompt,
