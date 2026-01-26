@@ -144,7 +144,7 @@ function PureSuggestedActions({
 
   return (
     <div
-      className="grid w-full gap-2 sm:grid-cols-2"
+      className="grid w-full gap-1 sm:grid-cols-2"
       data-testid="suggested-actions"
     >
       {suggestedActions.map((suggestedAction, index) => (
@@ -156,7 +156,7 @@ function PureSuggestedActions({
           transition={{ delay: 0.05 * index }}
         >
           <Suggestion
-            className="h-auto w-full whitespace-normal p-3 text-left"
+            className="h-auto w-full whitespace-normal px-2 py-1 text-left text-[0.65rem]"
             onClick={(suggestion) => {
               const parsed = parseSlashAction(suggestion, agentConfigs);
               if (parsed) {
