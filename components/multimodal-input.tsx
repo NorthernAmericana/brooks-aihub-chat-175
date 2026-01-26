@@ -153,6 +153,10 @@ function PureMultimodalInput({
     setLocalStorageInput(input);
   }, [input, setLocalStorageInput]);
 
+  const slashPrefixMatch = input.match(/^\/[^/]+\//);
+  const slashPrefix = slashPrefixMatch?.[0] ?? "";
+  const slashRemainder = slashPrefix ? input.slice(slashPrefix.length) : input;
+
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
   };
@@ -163,6 +167,7 @@ function PureMultimodalInput({
   const [_recordedText, setRecordedText] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
     currentRoute: string;
@@ -675,18 +680,42 @@ function PureMultimodalInput({
           </div>
         )}
         <div className="flex flex-row items-start gap-1 sm:gap-2">
-          <PromptInputTextarea
-            className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
-            data-testid="multimodal-input"
-            disableAutoResize={true}
-            maxHeight={200}
-            minHeight={44}
-            onChange={handleInput}
-            placeholder="Send a message..."
-            ref={textareaRef}
-            rows={1}
-            value={input}
-          />
+          <div className="relative grow">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 overflow-auto p-2 text-base text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [white-space:pre-wrap] [word-break:break-word] [&::-webkit-scrollbar]:hidden"
+              ref={overlayRef}
+            >
+              {slashPrefix ? (
+                <>
+                  <span className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground">
+                    {slashPrefix}
+                  </span>
+                  <span>{slashRemainder}</span>
+                </>
+              ) : (
+                <span>{input}</span>
+              )}
+            </div>
+            <PromptInputTextarea
+              className="grow resize-none border-0! border-none! bg-transparent p-2 text-base text-transparent caret-foreground outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+              data-testid="multimodal-input"
+              disableAutoResize={true}
+              maxHeight={200}
+              minHeight={44}
+              onChange={handleInput}
+              onScroll={(event) => {
+                if (overlayRef.current) {
+                  overlayRef.current.scrollTop = event.currentTarget.scrollTop;
+                  overlayRef.current.scrollLeft = event.currentTarget.scrollLeft;
+                }
+              }}
+              placeholder="Send a message..."
+              ref={textareaRef}
+              rows={1}
+              value={input}
+            />
+          </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">
