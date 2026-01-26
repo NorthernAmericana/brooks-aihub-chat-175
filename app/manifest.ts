@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Brooks AI HUB",
     short_name: "Brooks AI HUB",
     description: "Brooks AI HUB assistant experience.",
-    start_url: "/",
+    start_url: "/welcome",
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",
