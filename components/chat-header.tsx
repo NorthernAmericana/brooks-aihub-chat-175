@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/toast";
+import { getRouteKey } from "@/lib/voice";
 import { PhoneIcon, PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { useSidebar } from "./ui/sidebar";
@@ -37,12 +38,14 @@ function PureChatHeader({
   selectedVisibilityType,
   isReadonly,
   routeKey,
+  chatTitle,
 }: {
   chatId: string;
   newMemoriesCount?: number;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   routeKey?: string | null;
+  chatTitle?: string;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -54,14 +57,19 @@ function PureChatHeader({
   const memoriesLabel =
     newMemoriesCount > 0 ? `${newMemoriesCount} new memories` : "Memories";
 
+  const resolvedRouteKey = useMemo(
+    () => routeKey ?? (chatTitle ? getRouteKey(chatTitle) : null),
+    [chatTitle, routeKey]
+  );
+
   const isBrooksBearsRoute = useMemo(() => {
-    const normalizedRoute = routeKey?.toLowerCase();
+    const normalizedRoute = resolvedRouteKey?.toLowerCase();
     return (
       normalizedRoute === "brooks-bears" ||
       normalizedRoute === "brooksbears" ||
       normalizedRoute === "brooks-bears-benjamin"
     );
-  }, [routeKey]);
+  }, [resolvedRouteKey]);
 
   const resetCallFlow = () => {
     setCallStep(null);

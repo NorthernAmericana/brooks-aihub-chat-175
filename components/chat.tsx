@@ -222,6 +222,7 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
+          chatTitle={initialChatTitle}
           routeKey={initialRouteKey}
           selectedVisibilityType={initialVisibilityType}
         />
