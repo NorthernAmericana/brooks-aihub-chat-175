@@ -6,6 +6,12 @@
       "path": "data/myflowerai/strains.ndjson",
       "format": "ndjson",
       "content_type": "strains"
+    },
+    {
+      "app_namespace": "mycarmindato",
+      "path": "data/mycarmindato/season-1-cities.json",
+      "format": "json",
+      "content_type": "cities"
     }
   ]
 }
