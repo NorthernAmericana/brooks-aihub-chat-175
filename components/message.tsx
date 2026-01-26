@@ -25,6 +25,8 @@ import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
 
+const SLASH_PREFIX_REGEX = /^\/(.+)\/\s*/;
+
 const PurePreviewMessage = ({
   addToolApprovalResponse,
   chatId,
@@ -132,14 +134,17 @@ const PurePreviewMessage = ({
                 const trimmedText = text.trimStart();
                 const slashMatch =
                   message.role === "user" && parseSlashAction(trimmedText)
-                    ? text.match(/^\s*\/[^/]+\/\s*/)
+                    ? trimmedText.match(SLASH_PREFIX_REGEX)
                     : null;
+                const matchText = slashMatch?.[0] ?? "";
                 const slashPrefix = slashMatch
-                  ? slashMatch[0].replace(/\s+$/, "")
+                  ? matchText.replace(/\s+$/, "")
                   : null;
-                const slashSpacing = slashMatch?.slice(slashPrefix?.length ?? 0);
+                const slashSpacing = slashMatch
+                  ? matchText.slice(slashPrefix.length)
+                  : "";
                 const slashRemainder = slashMatch
-                  ? `${slashSpacing ?? ""}${text.slice(slashMatch[0].length)}`
+                  ? `${slashSpacing}${trimmedText.slice(matchText.length)}`
                   : text;
 
                 return (
