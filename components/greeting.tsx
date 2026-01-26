@@ -23,6 +23,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     const desiredOrder = [
       { slash: "Brooks AI HUB", foundersOnly: false },
       { slash: "BrooksBears", foundersOnly: false },
+      { slash: "BrooksBears/BenjaminBear", foundersOnly: true },
       { slash: "MyCarMindATO", foundersOnly: false },
       { slash: "MyFlowerAI", foundersOnly: false },
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
@@ -106,10 +107,10 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           Suggested folders
         </div>
-        <div className="mt-3 flex flex-wrap justify-center gap-3">
+        <div className="mt-3 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {suggestedFolders.map((folder) => (
             <button
-              className="rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2 sm:text-sm md:text-base"
+              className="flex h-full rounded-2xl border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2 sm:text-sm md:text-base"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               type="button"
