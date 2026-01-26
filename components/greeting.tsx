@@ -125,7 +125,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
           {suggestedFolders.map((folder, index) => (
             <button
-              className="flex h-full rounded-full border border-border bg-muted/30 px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
+              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               type="button"
