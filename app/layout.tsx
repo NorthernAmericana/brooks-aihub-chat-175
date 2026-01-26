@@ -8,10 +8,15 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-const isPreview = process.env.VERCEL_ENV === "preview";
+const deploymentHost =
+  process.env.VERCEL_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL;
+const deploymentUrl = deploymentHost ? `https://${deploymentHost}` : undefined;
 const isDevelopment = process.env.NODE_ENV === "development";
+const metadataBaseCandidate = deploymentUrl ?? siteUrl;
 const metadataBase =
-  siteUrl && !isPreview && !isDevelopment ? new URL(siteUrl) : undefined;
+  !isDevelopment && metadataBaseCandidate && URL.canParse(metadataBaseCandidate)
+    ? new URL(metadataBaseCandidate)
+    : undefined;
 
 export const metadata: Metadata = {
   ...(metadataBase ? { metadataBase } : {}),

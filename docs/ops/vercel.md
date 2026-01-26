@@ -4,6 +4,8 @@
 
 Review the required environment variables in [`.env.example`](../../.env.example). Keep this file as your single source of truth for everything you need to configure before deploying.
 
+**Metadata base URL:** Production metadata uses the deployment URL provided by Vercel (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL`). Ensure the project is deployed on Vercel so these values are injected automatically. For non-Vercel deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
+
 ## Vercel configuration files
 
 - [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that Vercel applies to every deployment.
