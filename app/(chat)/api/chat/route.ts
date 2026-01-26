@@ -22,6 +22,7 @@ import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { getDirections } from "@/lib/ai/tools/get-directions";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
@@ -379,6 +380,7 @@ export async function POST(request: Request) {
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
         type ToolDefinition =
+          | typeof getDirections
           | typeof getWeather
           | ReturnType<typeof createDocument>
           | ReturnType<typeof updateDocument>
@@ -387,6 +389,7 @@ export async function POST(request: Request) {
           | ReturnType<typeof saveHomeLocation>;
 
         const toolImplementations: Record<AgentToolId, ToolDefinition> = {
+          getDirections,
           getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),

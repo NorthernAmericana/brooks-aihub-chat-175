@@ -1,5 +1,6 @@
 export type AgentToolId =
   | "getWeather"
+  | "getDirections"
   | "createDocument"
   | "updateDocument"
   | "requestSuggestions"
@@ -201,6 +202,7 @@ const agentRegistry: AgentConfig[] = [
     slash: "Brooks AI HUB",
     tools: [
       "getWeather",
+      "getDirections",
       "createDocument",
       "updateDocument",
       "requestSuggestions",
@@ -253,6 +255,7 @@ const agentRegistry: AgentConfig[] = [
       "updateDocument",
       "requestSuggestions",
       "saveMemory",
+      "getDirections",
       "saveHomeLocation",
     ],
     systemPromptOverride: myCarMindPrompt,
