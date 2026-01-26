@@ -416,6 +416,47 @@
   }
 }
 
+@layer utilities {
+  .cloud-button {
+    position: relative;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fde6ef 0%, #f8cddc 100%);
+    box-shadow:
+      0 10px 20px rgba(248, 205, 220, 0.4),
+      inset 0 -2px 6px rgba(255, 255, 255, 0.7);
+  }
+
+  .cloud-button::before,
+  .cloud-button::after {
+    content: "";
+    position: absolute;
+    top: -35%;
+    width: 45%;
+    height: 70%;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #fde6ef 0%, #f8cddc 100%);
+    box-shadow:
+      0 8px 14px rgba(248, 205, 220, 0.35),
+      inset 0 -2px 6px rgba(255, 255, 255, 0.7);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .cloud-button::before {
+    left: 8%;
+  }
+
+  .cloud-button::after {
+    right: 10%;
+  }
+
+  .cloud-button > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
