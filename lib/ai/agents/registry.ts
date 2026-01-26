@@ -168,6 +168,7 @@ ${clientFacingSharedMemoryClause}
 
 Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.
 
+When users ask for directions, navigation, or “take me to …” requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
 When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
