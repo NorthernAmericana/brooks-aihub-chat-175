@@ -76,15 +76,15 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
   const cloudStyles = useMemo(
     () => [
-      { offsetY: 0, minWidth: "10.5rem" },
-      { offsetY: 6, minWidth: "9.75rem" },
-      { offsetY: -6, minWidth: "10rem" },
-      { offsetY: 10, minWidth: "9.5rem" },
-      { offsetY: -10, minWidth: "10.75rem" },
-      { offsetY: 4, minWidth: "9.25rem" },
-      { offsetY: -4, minWidth: "10.25rem" },
-      { offsetY: 8, minWidth: "9.75rem" },
-      { offsetY: -8, minWidth: "10rem" },
+      { offsetY: 0, minWidth: "clamp(7.5rem, 38vw, 10.5rem)" },
+      { offsetY: 6, minWidth: "clamp(7.25rem, 36vw, 9.75rem)" },
+      { offsetY: -6, minWidth: "clamp(7.25rem, 37vw, 10rem)" },
+      { offsetY: 10, minWidth: "clamp(7rem, 35vw, 9.5rem)" },
+      { offsetY: -10, minWidth: "clamp(7.5rem, 40vw, 10.75rem)" },
+      { offsetY: 4, minWidth: "clamp(7rem, 34vw, 9.25rem)" },
+      { offsetY: -4, minWidth: "clamp(7.25rem, 36vw, 10.25rem)" },
+      { offsetY: 8, minWidth: "clamp(7.25rem, 36vw, 9.75rem)" },
+      { offsetY: -8, minWidth: "clamp(7.25rem, 37vw, 10rem)" },
     ],
     []
   );
@@ -117,17 +117,23 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     let nextX = motionValues.x.get();
     let nextY = motionValues.y.get();
 
-    if (cloudRect.left < layerRect.left) {
-      nextX += layerRect.left - cloudRect.left;
+    const padding = 8;
+    const leftLimit = layerRect.left + padding;
+    const rightLimit = layerRect.right - padding;
+    const topLimit = layerRect.top + padding;
+    const bottomLimit = layerRect.bottom - padding;
+
+    if (cloudRect.left < leftLimit) {
+      nextX += leftLimit - cloudRect.left;
     }
-    if (cloudRect.right > layerRect.right) {
-      nextX -= cloudRect.right - layerRect.right;
+    if (cloudRect.right > rightLimit) {
+      nextX -= cloudRect.right - rightLimit;
     }
-    if (cloudRect.top < layerRect.top) {
-      nextY += layerRect.top - cloudRect.top;
+    if (cloudRect.top < topLimit) {
+      nextY += topLimit - cloudRect.top;
     }
-    if (cloudRect.bottom > layerRect.bottom) {
-      nextY -= cloudRect.bottom - layerRect.bottom;
+    if (cloudRect.bottom > bottomLimit) {
+      nextY -= cloudRect.bottom - bottomLimit;
     }
 
     motionValues.x.set(nextX);
@@ -139,9 +145,12 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       cloudMotionValues.forEach((_, index) => clampCloudToLayer(index));
     };
 
-    handleResize();
+    const resizeTimer = window.setTimeout(handleResize, 120);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [cloudMotionValues]);
 
   const bumpOverlappingClouds = (activeIndex: number) => {
@@ -199,7 +208,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       key="overview"
     >
       <div
-        className="pointer-events-auto absolute inset-0 z-0 flex w-full flex-wrap content-center justify-center gap-3"
+        className="pointer-events-auto absolute inset-3 z-0 flex w-full flex-wrap content-center justify-center gap-3 overflow-hidden sm:inset-6"
         ref={cloudLayerRef}
       >
         {suggestedFolders.map((folder, index) => {
@@ -208,10 +217,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
           return (
             <motion.button
-              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
+              className="cloud-button flex h-full max-w-[44vw] px-3 py-2 text-[0.65rem] text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:max-w-none sm:px-4 sm:py-2.5 sm:text-sm"
               drag
               dragConstraints={cloudLayerRef}
-              dragElastic={0.2}
+              dragElastic={0.08}
+              dragMomentum={false}
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               onDrag={() => {
