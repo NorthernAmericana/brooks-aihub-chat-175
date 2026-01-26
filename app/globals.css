@@ -48,6 +48,16 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
+  --cloud-bg-start: hsl(340 100% 96%);
+  --cloud-bg-end: hsl(330 85% 90%);
+  --cloud-border: hsl(330 45% 88%);
+  --cloud-shadow:
+    0 12px 28px rgba(244, 188, 206, 0.35),
+    0 4px 10px rgba(248, 205, 220, 0.25);
+  --cloud-shadow-inner:
+    inset 0 2px 6px rgba(255, 255, 255, 0.85),
+    inset 0 -3px 8px rgba(244, 188, 206, 0.3);
+  --cloud-text: var(--foreground);
 }
 
 /* define design tokens (dark mode) */
@@ -85,6 +95,16 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
+  --cloud-bg-start: hsl(240 20% 22%);
+  --cloud-bg-end: hsl(240 25% 16%);
+  --cloud-border: hsl(240 20% 30%);
+  --cloud-shadow:
+    0 14px 30px rgba(12, 16, 24, 0.6),
+    0 4px 12px rgba(20, 24, 36, 0.5);
+  --cloud-shadow-inner:
+    inset 0 2px 8px rgba(255, 255, 255, 0.12),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.45);
+  --cloud-text: var(--foreground);
 }
 
 /* define theme */
@@ -420,11 +440,13 @@
   .cloud-button {
     position: relative;
     border-radius: 9999px;
-    border: 1px solid var(--border);
-    background: linear-gradient(180deg, #fde6ef 0%, #f8cddc 100%);
-    box-shadow:
-      0 10px 20px rgba(248, 205, 220, 0.4),
-      inset 0 -2px 6px rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--cloud-border);
+    background: linear-gradient(
+      180deg,
+      var(--cloud-bg-start) 0%,
+      var(--cloud-bg-end) 100%
+    );
+    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
   }
 
   .cloud-button::before,
@@ -435,10 +457,12 @@
     width: 45%;
     height: 70%;
     border-radius: 9999px;
-    background: linear-gradient(180deg, #fde6ef 0%, #f8cddc 100%);
-    box-shadow:
-      0 8px 14px rgba(248, 205, 220, 0.35),
-      inset 0 -2px 6px rgba(255, 255, 255, 0.7);
+    background: linear-gradient(
+      180deg,
+      var(--cloud-bg-start) 0%,
+      var(--cloud-bg-end) 100%
+    );
+    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
     z-index: 0;
     pointer-events: none;
   }
@@ -454,6 +478,7 @@
   .cloud-button > * {
     position: relative;
     z-index: 1;
+    color: var(--cloud-text);
   }
 }
 
