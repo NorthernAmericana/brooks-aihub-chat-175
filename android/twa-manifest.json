@@ -1,0 +1,21 @@
+{
+  "packageId": "com.brooks.aihub.chat",
+  "host": "chat.vercel.ai",
+  "name": "Brooks AI HUB",
+  "launcherName": "Brooks AI HUB",
+  "themeColor": "#ffffff",
+  "backgroundColor": "#ffffff",
+  "startUrl": "/welcome",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "iconUrl": "https://chat.vercel.ai/icons/icon-512.png",
+  "signingKey": {
+    "path": "keystore/brooks-aihub.keystore",
+    "alias": "brooks-aihub",
+    "storePassword": "${TWA_KEYSTORE_PASSWORD}",
+    "keyPassword": "${TWA_KEY_PASSWORD}"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0"
+}
