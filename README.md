@@ -123,6 +123,19 @@ The PWA functionality is implemented using:
 
 3. **Service Worker Registration** (`components/pwa-register.tsx`): Registers the service worker on client load
 
+### TWA alignment
+
+The Trusted Web Activity wrapper reads its navigation defaults from `android/twa-manifest.json`.
+Keep the following values in sync with the web manifest so install behavior matches across PWA
+and TWA builds:
+
+- `app/manifest.ts`: `id`, `start_url`, and `scope`
+- `android/twa-manifest.json`: `startUrl` and `scope`
+
+The Android package name used for Digital Asset Links must also match the TWA package in
+`public/.well-known/assetlinks.json` (currently `com.brooks.aihub.chat175`). If you change
+the package in the Android wrapper, update the asset links file at the same time.
+
 ### Testing Installability
 
 #### Using Chrome DevTools
