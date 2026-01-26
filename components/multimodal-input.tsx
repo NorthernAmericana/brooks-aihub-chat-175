@@ -164,12 +164,42 @@ function PureMultimodalInput({
     }
 
     const bubble = slashPrefixRef.current;
-    if (!bubble) {
+    const textarea = textareaRef.current;
+    if (!bubble || !textarea) {
       return;
     }
 
+    const measurePrefixTextWidth = () => {
+      const computed = window.getComputedStyle(textarea);
+      const font = [
+        computed.fontStyle,
+        computed.fontVariant,
+        computed.fontWeight,
+        computed.fontSize,
+        computed.lineHeight,
+        computed.fontFamily,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return 0;
+      }
+      context.font = font;
+      const baseWidth = context.measureText(slashPrefix).width;
+      const letterSpacing = Number.parseFloat(computed.letterSpacing || "0");
+      if (Number.isNaN(letterSpacing) || slashPrefix.length <= 1) {
+        return baseWidth;
+      }
+      return baseWidth + letterSpacing * (slashPrefix.length - 1);
+    };
+
     const updateIndent = () => {
-      setSlashPrefixIndent(bubble.getBoundingClientRect().width);
+      const bubbleWidth = bubble.getBoundingClientRect().width;
+      const prefixTextWidth = measurePrefixTextWidth();
+      const indent = Math.max(0, bubbleWidth - prefixTextWidth);
+      setSlashPrefixIndent(indent);
     };
 
     updateIndent();
