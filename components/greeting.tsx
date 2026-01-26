@@ -124,12 +124,19 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         </div>
         <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
           {suggestedFolders.map((folder, index) => (
-            <button
+            <motion.button
               className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
+              drag
+              dragElastic={0.45}
+              dragMomentum
+              dragTransition={{ stiffness: 240, damping: 18, mass: 0.6 }}
               key={folder.folder}
-              onClick={() => onSelectFolder?.(folder.folder)}
+              onTap={() => onSelectFolder?.(folder.folder)}
+              style={{
+                ...cloudStyles[index % cloudStyles.length],
+                touchAction: "none",
+              }}
               type="button"
-              style={cloudStyles[index % cloudStyles.length]}
             >
               <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
                 <span className="text-xs font-medium leading-snug sm:text-sm">
@@ -148,7 +155,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   {folder.folder}
                 </span>
               </span>
-            </button>
+            </motion.button>
           ))}
         </div>
       </motion.div>
