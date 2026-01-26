@@ -210,6 +210,7 @@ export const userLocation = pgTable("UserLocation", {
   ownerId: uuid("ownerId")
     .notNull()
     .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
   route: varchar("route", { length: 128 }).notNull(),
   locationType: varchar("locationType", {
     enum: ["home-location"],

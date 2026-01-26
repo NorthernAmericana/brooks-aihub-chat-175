@@ -162,6 +162,16 @@ function isDocumentSuggestionRequest(text: string | null): boolean {
   );
 }
 
+function isHomeLocationRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /(\b(save|set|store|remember)\b[\s\S]*\b(home|house)\b[\s\S]*\b(location|address)\b)|(\bmy home is\b)|(\bhome location\b)/i.test(
+    text
+  );
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -354,6 +364,7 @@ export async function POST(request: Request) {
     const homeLocation = isMyCarMindAgent
       ? await getHomeLocationByUserId({
           userId: session.user.id,
+          chatId: id,
           // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
           route: MY_CAR_MIND_ROUTE,
         })
@@ -380,6 +391,9 @@ export async function POST(request: Request) {
           isNamcAgent && isDocumentRequest(lastUserText);
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
+        const isHomeLocationSaveRequest =
+          selectedAgent.id === "my-car-mind" &&
+          isHomeLocationRequest(lastUserText);
         type ToolDefinition =
           | typeof getDirections
           | typeof getWeather
@@ -396,7 +410,7 @@ export async function POST(request: Request) {
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
-          saveHomeLocation: saveHomeLocation({ session }),
+          saveHomeLocation: saveHomeLocation({ session, chatId: id }),
         } satisfies Record<AgentToolId, ToolDefinition>;
 
         const namcDocumentTools: AgentToolId[] = [
@@ -450,7 +464,11 @@ export async function POST(request: Request) {
             });
           }
           dataStream.write({ type: "text-end", id: responseId });
-        } else if (selectedAgent.id === "my-car-mind") {
+        } else if (
+          selectedAgent.id === "my-car-mind" &&
+          !isToolApprovalFlow &&
+          !isHomeLocationSaveRequest
+        ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
             memoryContext,

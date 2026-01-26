@@ -7,9 +7,10 @@ const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
 
 type SaveHomeLocationProps = {
   session: Session;
+  chatId: string;
 };
 
-export const saveHomeLocation = ({ session }: SaveHomeLocationProps) =>
+export const saveHomeLocation = ({ session, chatId }: SaveHomeLocationProps) =>
   tool({
     description:
       "Save the user's home location for MyCarMindATO. Use only after the user explicitly approves.",
@@ -30,6 +31,7 @@ export const saveHomeLocation = ({ session }: SaveHomeLocationProps) =>
 
       const record = await createHomeLocationRecord({
         ownerId: session.user.id,
+        chatId,
         route: MY_CAR_MIND_ROUTE,
         rawText,
         normalizedText,
