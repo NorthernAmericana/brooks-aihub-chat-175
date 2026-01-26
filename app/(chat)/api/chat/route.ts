@@ -388,7 +388,7 @@ export async function POST(request: Request) {
           | ReturnType<typeof saveMemory>
           | ReturnType<typeof saveHomeLocation>;
 
-        const toolImplementations: Record<AgentToolId, ToolDefinition> = {
+        const toolImplementations = {
           getDirections,
           getWeather,
           createDocument: createDocument({ session, dataStream }),
@@ -396,7 +396,7 @@ export async function POST(request: Request) {
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
           saveHomeLocation: saveHomeLocation({ session }),
-        };
+        } satisfies Record<AgentToolId, ToolDefinition>;
 
         const namcDocumentTools: AgentToolId[] = [
           "createDocument",

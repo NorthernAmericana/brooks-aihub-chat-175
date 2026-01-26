@@ -5,6 +5,7 @@ import type { createDocument } from "./ai/tools/create-document";
 import type { getDirections } from "./ai/tools/get-directions";
 import type { getWeather } from "./ai/tools/get-weather";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
+import type { saveHomeLocation } from "./ai/tools/save-home-location";
 import type { saveMemory } from "./ai/tools/save-memory";
 import type { updateDocument } from "./ai/tools/update-document";
 import type { Suggestion } from "./db/schema";
@@ -24,6 +25,7 @@ type updateDocumentTool = InferUITool<ReturnType<typeof updateDocument>>;
 type requestSuggestionsTool = InferUITool<
   ReturnType<typeof requestSuggestions>
 >;
+type saveHomeLocationTool = InferUITool<ReturnType<typeof saveHomeLocation>>;
 type saveMemoryTool = InferUITool<ReturnType<typeof saveMemory>>;
 
 export type ChatTools = {
@@ -32,6 +34,7 @@ export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
+  saveHomeLocation: saveHomeLocationTool;
   saveMemory: saveMemoryTool;
 };
 
