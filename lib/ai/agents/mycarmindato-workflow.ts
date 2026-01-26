@@ -5,11 +5,19 @@ import {
   Runner,
   withTrace,
 } from "@openai/agents";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import type { ChatMessage } from "@/lib/types";
 
 // Configuration constants
 const VECTOR_STORE_ID = "vs_6974e57c3a5881919e2885d8126a65e3";
 const WORKFLOW_ID = "wf_6974e4382f648190bbf27540ee7e1d7f045c011c8d8effe6";
+const CITIES_FILE_PATH = path.join(
+  process.cwd(),
+  "data",
+  "mycarmindato",
+  "season-1-cities.json"
+);
 
 // Tool definitions - using file search
 // Note: Vector store ID should be configured for MyCarMindATO specific data
@@ -119,6 +127,108 @@ const mycarmindatoDrivingMode = new Agent({
 
 type WorkflowInput = { input_as_text: string };
 
+type CityRecord = {
+  city?: string;
+  sub_areas?: Array<{ name?: string; description?: string }>;
+  identity_vibe_tags?: string[];
+  community_vibe?: string;
+  travel_logic?: {
+    best_seasons?: string;
+    safety?: string;
+    transportation?: string;
+    parking?: string;
+  };
+  anchors?: string[];
+};
+
+let cityDataCache: CityRecord[] | null = null;
+
+const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
+
+const loadCityData = async () => {
+  if (cityDataCache) {
+    return cityDataCache;
+  }
+
+  const fileContents = await readFile(CITIES_FILE_PATH, "utf8");
+  const parsed = JSON.parse(fileContents) as CityRecord[];
+  cityDataCache = parsed;
+  return parsed;
+};
+
+const selectMatchingCities = (
+  cities: CityRecord[],
+  queries: string[]
+): CityRecord[] => {
+  const normalizedQueries = queries
+    .map((query) => normalizeQueryValue(query))
+    .filter(Boolean);
+
+  if (!normalizedQueries.length) {
+    return [];
+  }
+
+  const matches: CityRecord[] = [];
+
+  for (const city of cities) {
+    const cityName = normalizeQueryValue(city.city ?? "");
+    if (!cityName) {
+      continue;
+    }
+
+    const isMatch = normalizedQueries.some(
+      (query) =>
+        (query && cityName.includes(query)) ||
+        (query && query.includes(cityName))
+    );
+
+    if (isMatch) {
+      matches.push(city);
+    }
+
+    if (matches.length >= 3) {
+      break;
+    }
+  }
+
+  return matches;
+};
+
+const formatCitySummary = (city: CityRecord) => {
+  const subAreaNames =
+    city.sub_areas?.map((area) => area.name).filter(Boolean).slice(0, 4) ?? [];
+  const vibeTags = city.identity_vibe_tags?.slice(0, 6) ?? [];
+  const anchors = city.anchors?.slice(0, 2) ?? [];
+  const travelLogic = city.travel_logic ?? {};
+
+  return [
+    `City: ${city.city ?? "Unknown"}`,
+    subAreaNames.length ? `Sub-areas: ${subAreaNames.join(", ")}` : null,
+    vibeTags.length ? `Vibe tags: ${vibeTags.join(", ")}` : null,
+    city.community_vibe ? `Community vibe: ${city.community_vibe}` : null,
+    travelLogic.best_seasons
+      ? `Best seasons: ${travelLogic.best_seasons}`
+      : null,
+    travelLogic.transportation
+      ? `Transportation: ${travelLogic.transportation}`
+      : null,
+    travelLogic.safety ? `Safety: ${travelLogic.safety}` : null,
+    travelLogic.parking ? `Parking: ${travelLogic.parking}` : null,
+    anchors.length ? `Anchors: ${anchors.join(" | ")}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+};
+
+const buildRepoCityContext = (cities: CityRecord[]) => {
+  if (!cities.length) {
+    return "Repo City Data: No matching city entries found.";
+  }
+
+  const summaries = cities.map((city) => formatCitySummary(city));
+  return `Repo City Data:\n${summaries.join("\n\n")}`;
+};
+
 // Build conversation history from ChatMessage format
 const buildConversationHistory = (
   messages: ChatMessage[],
@@ -169,9 +279,11 @@ const buildConversationHistory = (
 export const runMyCarMindAtoWorkflow = async ({
   messages,
   memoryContext,
+  homeLocationText,
 }: {
   messages: ChatMessage[];
   memoryContext?: string | null;
+  homeLocationText?: string | null;
 }): Promise<string> => {
   return await withTrace("MyCarMindATO", async () => {
     const lastUserMessage = [...messages]
@@ -188,10 +300,30 @@ export const runMyCarMindAtoWorkflow = async ({
       input_as_text: inputText,
     };
 
+    const cityData = await loadCityData();
+    const matchingCities = selectMatchingCities(cityData, [
+      workflow.input_as_text,
+      homeLocationText ?? "",
+    ]);
+    const repoCityContext = buildRepoCityContext(matchingCities);
+    const homeContext = homeLocationText
+      ? `Home Location:\n${homeLocationText}`
+      : "Home Location: Not provided.";
+
     const conversationHistory = buildConversationHistory(
       messages,
       memoryContext ?? undefined
     );
+    const contextMessages: AgentInputItem[] = [
+      {
+        role: "system",
+        content: [{ type: "input_text", text: homeContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: repoCityContext }],
+      },
+    ];
 
     const runner = new Runner({
       traceMetadata: {
@@ -219,7 +351,7 @@ export const runMyCarMindAtoWorkflow = async ({
     if (classifyCategory === "Driving/Talk Mode") {
       const mycarmindatoDrivingModeResultTemp = await runner.run(
         mycarmindatoDrivingMode,
-        [...conversationHistory]
+        [...contextMessages, ...conversationHistory]
       );
 
       if (!mycarmindatoDrivingModeResultTemp.finalOutput) {
@@ -232,7 +364,7 @@ export const runMyCarMindAtoWorkflow = async ({
     if (classifyCategory === "Text Mode") {
       const mycarmindatoTextingModeResultTemp = await runner.run(
         mycarmindatoTextingMode,
-        [...conversationHistory]
+        [...contextMessages, ...conversationHistory]
       );
 
       if (!mycarmindatoTextingModeResultTemp.finalOutput) {
@@ -245,7 +377,7 @@ export const runMyCarMindAtoWorkflow = async ({
     // Default to texting mode for "Saving a Memory" and any other category
     const mycarmindatoTextingModeResultTemp = await runner.run(
       mycarmindatoTextingMode,
-      [...conversationHistory]
+      [...contextMessages, ...conversationHistory]
     );
 
     if (!mycarmindatoTextingModeResultTemp.finalOutput) {

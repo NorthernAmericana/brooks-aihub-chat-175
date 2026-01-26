@@ -454,6 +454,7 @@ export async function POST(request: Request) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
             memoryContext,
+            homeLocationText: homeLocation?.rawText ?? null,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
