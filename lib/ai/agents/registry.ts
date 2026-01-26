@@ -233,6 +233,18 @@ const agentRegistry: AgentConfig[] = [
     systemPromptOverride: brooksBearsPrompt,
   },
   {
+    id: "brooks-bears-benjamin",
+    label: "Benjamin Bear",
+    slash: "BrooksBears/BenjaminBear",
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+    systemPromptOverride: brooksBearsPrompt,
+  },
+  {
     id: "my-car-mind",
     label: "My Car Mind ATO",
     slash: "MyCarMindATO",

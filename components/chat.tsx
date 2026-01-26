@@ -23,6 +23,7 @@ import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
+import { getChatRouteKey } from "@/lib/voice";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
@@ -56,6 +57,11 @@ export function Chat({
   const { visibilityType } = useChatVisibility({
     chatId: id,
     initialVisibilityType,
+  });
+
+  const chatRouteKey = getChatRouteKey({
+    routeKey: initialRouteKey,
+    title: initialChatTitle,
   });
 
   const { mutate } = useSWRConfig();
@@ -222,6 +228,7 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
+          routeKey={chatRouteKey}
           selectedVisibilityType={initialVisibilityType}
         />
 

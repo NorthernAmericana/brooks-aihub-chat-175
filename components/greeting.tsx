@@ -23,6 +23,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     const desiredOrder = [
       { slash: "Brooks AI HUB", foundersOnly: false },
       { slash: "BrooksBears", foundersOnly: false },
+      { slash: "BrooksBears/BenjaminBear", foundersOnly: true },
       { slash: "MyCarMindATO", foundersOnly: false },
       { slash: "MyFlowerAI", foundersOnly: false },
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
@@ -73,6 +74,21 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     [now]
   );
 
+  const cloudStyles = useMemo(
+    () => [
+      { transform: "translateY(0px)", minWidth: "10.5rem" },
+      { transform: "translateY(6px)", minWidth: "9.75rem" },
+      { transform: "translateY(-6px)", minWidth: "10rem" },
+      { transform: "translateY(10px)", minWidth: "9.5rem" },
+      { transform: "translateY(-10px)", minWidth: "10.75rem" },
+      { transform: "translateY(4px)", minWidth: "9.25rem" },
+      { transform: "translateY(-4px)", minWidth: "10.25rem" },
+      { transform: "translateY(8px)", minWidth: "9.75rem" },
+      { transform: "translateY(-8px)", minWidth: "10rem" },
+    ],
+    []
+  );
+
   return (
     <div
       className="relative mx-auto mt-2 flex size-full max-w-xl flex-col items-center justify-center gap-2.5 px-4 py-6 text-center sm:mt-4 sm:max-w-2xl sm:px-6 sm:py-8 md:mt-12 md:px-10 md:py-10"
@@ -106,28 +122,29 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           Suggested folders
         </div>
-        <div className="mt-3 flex flex-wrap justify-center gap-3">
-          {suggestedFolders.map((folder) => (
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
+          {suggestedFolders.map((folder, index) => (
             <button
-              className="rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2 sm:text-sm md:text-base"
+              className="flex h-full rounded-full border border-border bg-muted/30 px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               type="button"
+              style={cloudStyles[index % cloudStyles.length]}
             >
-              <span className="flex flex-col gap-0.5 text-left leading-tight">
-                <span className="text-xs font-semibold sm:text-sm md:text-base">
+              <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
+                <span className="text-xs font-semibold sm:text-sm">
                   {folder.label}
                   {folder.foundersOnly ? (
                     <span
                       aria-label="Founders access only"
-                      className="ml-1 inline-flex align-middle text-base"
+                      className="ml-1 inline-flex align-middle text-sm"
                       title="Founders access only"
                     >
                       💎
                     </span>
                   ) : null}
                 </span>
-                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem] md:text-xs">
+                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem]">
                   {folder.folder}
                 </span>
               </span>
