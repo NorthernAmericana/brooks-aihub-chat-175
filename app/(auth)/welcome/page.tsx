@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { auth } from "@/app/(auth)/auth";
 
-export default function WelcomePage() {
+export default async function WelcomePage() {
+  const session = await auth();
+
+  if (session?.user) {
+    redirect("/brooks-ai-hub/");
+  }
+
   return (
     <div className="flex h-dvh w-screen items-start justify-center bg-background pt-12 md:items-center md:pt-0">
       <div className="flex w-full max-w-md flex-col gap-10 overflow-hidden rounded-2xl">
