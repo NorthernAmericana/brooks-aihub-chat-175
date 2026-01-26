@@ -204,11 +204,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
   return (
     <div
-      className="relative mx-auto mt-2 flex size-full w-full items-center justify-center px-4 py-6 sm:mt-4 sm:px-6 sm:py-8 md:mt-12 md:px-10 md:py-10"
+      className="relative mx-auto mt-2 flex min-h-[60svh] w-full items-center justify-center px-4 py-6 sm:mt-4 sm:min-h-[65svh] sm:px-6 sm:py-8 md:mt-12 md:min-h-[70svh] md:px-10 md:py-10"
       key="overview"
     >
       <div
-        className="pointer-events-auto absolute inset-3 z-0 flex w-full flex-wrap content-center justify-center gap-3 overflow-hidden sm:inset-6"
+        className="pointer-events-auto absolute inset-0 z-0 flex w-full flex-wrap content-center justify-center gap-3 overflow-hidden px-3 py-4 sm:px-6 sm:py-6"
         ref={cloudLayerRef}
       >
         {suggestedFolders.map((folder, index) => {
@@ -217,7 +217,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
           return (
             <motion.button
-              className="cloud-button flex h-full max-w-[44vw] px-3 py-2 text-[0.65rem] text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:max-w-none sm:px-4 sm:py-2.5 sm:text-sm"
+              className="cloud-button flex h-full max-w-[46vw] px-3 py-2 text-[0.65rem] text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:max-w-none sm:px-4 sm:py-2.5 sm:text-sm"
               drag
               dragConstraints={cloudLayerRef}
               dragElastic={0.08}
