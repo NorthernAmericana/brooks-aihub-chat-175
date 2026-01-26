@@ -39,6 +39,10 @@ Run these checks against the production URL **https://chat.vercel.ai/** after ea
    - **URL**: https://chat.vercel.ai/
    - **How**: Chrome DevTools → Application → Service Workers → check **Offline**, then refresh.
    - **Expected outcome**: The app serves a cached/offline experience instead of a network error.
+5. **PWA manifest/installability script**
+   - **How**: Run the repo check with the production base URL to validate manifest settings and confirm `/welcome` does not redirect or fail.
+   - **Command**: `PWA_CHECK_BASE_URL=https://chat.vercel.ai pnpm check:pwa`
+   - **Expected outcome**: Script exits successfully with "PWA installability checks passed."
 
 ## Mobile installability notes
 
