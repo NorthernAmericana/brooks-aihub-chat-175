@@ -89,8 +89,12 @@ export function SlashSuggestions({
               onClick={() => onSelect(agent.slash)}
               variant="ghost"
             >
-              <span className="font-mono text-primary">/{agent.slash}/</span>
-              <span className="ml-2 text-muted-foreground">{agent.label}</span>
+              <span className="font-mono text-primary/90 tracking-[0.04em]">
+                /{agent.slash}/
+              </span>
+              <span className="ml-2 text-muted-foreground">
+                {agent.label}
+              </span>
             </Button>
           ))
         ) : (

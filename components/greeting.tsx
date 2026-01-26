@@ -132,7 +132,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
               style={cloudStyles[index % cloudStyles.length]}
             >
               <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
-                <span className="text-xs font-semibold sm:text-sm">
+                <span className="text-xs font-medium leading-snug sm:text-sm">
                   {folder.label}
                   {folder.foundersOnly ? (
                     <span
@@ -144,7 +144,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                     </span>
                   ) : null}
                 </span>
-                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem]">
+                <span className="text-[0.6rem] uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[0.65rem]">
                   {folder.folder}
                 </span>
               </span>
