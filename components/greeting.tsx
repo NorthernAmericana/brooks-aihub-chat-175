@@ -120,7 +120,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         transition={{ delay: 0.7 }}
       >
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
-          Suggested folders
+          all ATO App Folder Clouds
         </div>
         <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
           {suggestedFolders.map((folder, index) => (
