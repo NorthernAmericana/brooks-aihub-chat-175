@@ -127,9 +127,7 @@ export default function ImageGenPage() {
 
         // Load presets
         try {
-          const presetsRes = await fetch(
-            "/data/myflowerai/image-presets.json"
-          );
+          const presetsRes = await fetch("/api/myflowerai/presets");
           if (presetsRes.ok) {
             const presetsData = await presetsRes.json();
             if (presetsData?.presets && Array.isArray(presetsData.presets)) {
