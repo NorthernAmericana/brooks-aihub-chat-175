@@ -57,11 +57,13 @@ export async function POST(request: NextRequest) {
     // Load persona data if provided
     let personaProfile: PersonaProfile | undefined;
     if (persona_id) {
-      personaProfile = await loadPersonaData(persona_id);
-      if (!personaProfile) {
+      const loadedPersona = await loadPersonaData(persona_id);
+      if (!loadedPersona) {
         console.warn(
           `Persona not found: ${persona_id}, continuing without persona`
         );
+      } else {
+        personaProfile = loadedPersona;
       }
     }
 
