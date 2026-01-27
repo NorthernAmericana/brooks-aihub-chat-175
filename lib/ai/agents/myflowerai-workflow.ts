@@ -143,7 +143,12 @@ const buildConversationHistory = (messages: ChatMessage[]): AgentInputItem[] =>
     })
     .filter((item): item is AgentInputItem => item !== null);
 
-const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
+const normalizeQueryValue = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 
 const loadStrains = async () => {
   const fileContents = await readFile(STRAINS_FILE_PATH, "utf8");
@@ -180,6 +185,7 @@ const selectMatchingStrains = (
   strains: Array<{ id?: string; strain?: { name?: string } }>,
   query: string
 ) => {
+  // Normalization check: "Blue-Dream#1" => "blue dream 1", "  OG   Kush " => "og kush".
   const normalizedQuery = normalizeQueryValue(query);
   const isGenericQuery =
     !normalizedQuery || isGenericStrainQuery(normalizedQuery);
