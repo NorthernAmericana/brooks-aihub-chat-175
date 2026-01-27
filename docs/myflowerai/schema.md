@@ -151,6 +151,29 @@ The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to
 - Privacy: User session logs (answers to these questions) are stored in PRIVATE storage, never in public strain files
 - See `/docs/myflowerai/session-logging.md` for complete session logging documentation
 
+##### `freshness_guidance` (optional, added in v1.2)
+- Type: `object`
+- Public guidance on cannabis freshness and storage best practices
+- **NOTE**: This is PUBLIC data providing general guidance, NOT user-specific inventory
+- Fields:
+  - `best_storage`: Natural language description of optimal storage conditions (temperature, humidity, container type, light exposure)
+  - `typical_shelf_life_days`: Expected shelf life in days under optimal storage conditions (unopened)
+  - `notes`: Additional context about freshness degradation, terpene preservation, or usage recommendations
+  - `do_not_store_in_public`: Array of field names that should NEVER be added to public strain files (documentation/reminder)
+- Purpose: Helps AI agents provide consistent, strain-appropriate storage and freshness advice
+- Privacy: User inventory records (opened dates, remaining amounts, purchase dates) are stored in PRIVATE storage, never in public strain files
+- See `/docs/myflowerai/inventory-management.md` for complete inventory and freshness documentation
+
+##### `packaging` (optional, added in v1.2)
+- Type: `object`
+- Public recommendations for cannabis storage containers and accessories
+- **NOTE**: This is PUBLIC data providing general recommendations
+- Fields:
+  - `container_type_suggestions`: Array of recommended container types for optimal storage (e.g., `["Glass jar with airtight seal", "CVault container"]`)
+  - `humidipack_recommended`: Boolean indicating whether a humidity control pack (like Boveda) is recommended
+- Purpose: Helps AI agents recommend appropriate storage solutions
+- See `/docs/myflowerai/inventory-management.md` for complete documentation
+
 #### Removed Fields (from v1.0)
 
 The following fields are **removed** in v1.1 as they contain private/purchase metadata:
@@ -169,10 +192,20 @@ The following fields are **explicitly prohibited** in public strain files to mai
 1. **`sessions`**: User session logs array - PRIVACY VIOLATION
 2. **`session_logs`**: User session logs array - PRIVACY VIOLATION  
 3. **`user_sessions`**: User session logs array - PRIVACY VIOLATION
-4. Any field containing personally identifying information
-5. Any field containing user consumption history
+4. **`inventory`**: User inventory records array - PRIVACY VIOLATION
+5. **`user_inventory`**: User inventory records array - PRIVACY VIOLATION
+6. **`opened_date`**: Date when product was opened - PRIVACY VIOLATION
+7. **`remaining_g`**: Exact grams remaining - PRIVACY VIOLATION
+8. **`purchase_date`**: Date of purchase - PRIVACY VIOLATION
+9. **`purchase_location`**: Store address or GPS coordinates - PRIVACY VIOLATION
+10. **`user_stash_amount`**: User's stash amount - PRIVACY VIOLATION
+11. Any field containing personally identifying information
+12. Any field containing user consumption history
+13. Any field containing exact purchase or inventory amounts
 
-**Note**: User session data must be stored in private per-user storage (Supabase, local encrypted, or private namespace). See `/docs/myflowerai/session-logging.md` for proper session logging implementation.
+**Note**: 
+- User session data must be stored in private per-user storage (Supabase, local encrypted, or private namespace). See `/docs/myflowerai/session-logging.md` for proper session logging implementation.
+- User inventory data must be stored in private per-user storage. See `/docs/myflowerai/inventory-management.md` for proper inventory tracking implementation.
 
 The validation script will automatically reject any strain file containing these prohibited fields.
 
