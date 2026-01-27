@@ -263,7 +263,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-flower-ai",
-    label: "My Flower AI",
+    label: "MyFlowerAI",
     slash: "MyFlowerAI",
     tools: ["requestSuggestions", "saveMemory"],
     systemPromptOverride: myFlowerAiPrompt,

@@ -76,15 +76,15 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
   const cloudStyles = useMemo(
     () => [
-      { transform: "translateY(0px)", minWidth: "10.5rem" },
-      { transform: "translateY(6px)", minWidth: "9.75rem" },
-      { transform: "translateY(-6px)", minWidth: "10rem" },
-      { transform: "translateY(10px)", minWidth: "9.5rem" },
-      { transform: "translateY(-10px)", minWidth: "10.75rem" },
-      { transform: "translateY(4px)", minWidth: "9.25rem" },
-      { transform: "translateY(-4px)", minWidth: "10.25rem" },
-      { transform: "translateY(8px)", minWidth: "9.75rem" },
-      { transform: "translateY(-8px)", minWidth: "10rem" },
+      { transform: "translateY(0px)", minWidth: "10.75rem" },
+      { transform: "translateY(2px)", minWidth: "10rem" },
+      { transform: "translateY(-2px)", minWidth: "10.5rem" },
+      { transform: "translateY(3px)", minWidth: "9.75rem" },
+      { transform: "translateY(-3px)", minWidth: "10.25rem" },
+      { transform: "translateY(1px)", minWidth: "9.75rem" },
+      { transform: "translateY(-1px)", minWidth: "10.5rem" },
+      { transform: "translateY(2px)", minWidth: "10rem" },
+      { transform: "translateY(-2px)", minWidth: "10.25rem" },
     ],
     []
   );
@@ -122,10 +122,10 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           all ATO App Folder Clouds
         </div>
-        <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
           {suggestedFolders.map((folder, index) => (
             <button
-              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2.5 sm:text-sm"
+              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-3 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               type="button"

@@ -166,7 +166,7 @@ const PurePreviewMessage = ({
                     >
                       {slashPrefix ? (
                         <>
-                          <span className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground">
+                          <span className="cloud-button cloud-button--inline inline-flex items-center px-2 py-0.5 text-foreground">
                             {sanitizeText(slashPrefix)}
                           </span>
                           <Response className="inline [&_p]:inline">

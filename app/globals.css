@@ -48,16 +48,17 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
-  --cloud-bg-start: hsl(340 100% 96%);
-  --cloud-bg-end: hsl(330 85% 90%);
-  --cloud-border: hsl(330 45% 88%);
+  --cloud-bg-start: hsl(336 95% 85%);
+  --cloud-bg-end: hsl(332 88% 72%);
+  --cloud-border: hsl(332 60% 76%);
   --cloud-shadow:
-    0 12px 28px rgba(244, 188, 206, 0.35),
-    0 4px 10px rgba(248, 205, 220, 0.25);
+    0 14px 32px rgba(246, 162, 190, 0.45),
+    0 6px 14px rgba(255, 198, 218, 0.35);
   --cloud-shadow-inner:
-    inset 0 2px 6px rgba(255, 255, 255, 0.85),
-    inset 0 -3px 8px rgba(244, 188, 206, 0.3);
-  --cloud-text: var(--foreground);
+    inset 0 3px 10px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 12px rgba(246, 162, 190, 0.3);
+  --cloud-text: hsl(0 0% 100%);
+  --cloud-text-muted: rgba(255, 255, 255, 0.75);
 }
 
 /* define design tokens (dark mode) */
@@ -95,16 +96,17 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
-  --cloud-bg-start: hsl(240 20% 22%);
-  --cloud-bg-end: hsl(240 25% 16%);
-  --cloud-border: hsl(240 20% 30%);
+  --cloud-bg-start: hsl(336 95% 78%);
+  --cloud-bg-end: hsl(332 90% 64%);
+  --cloud-border: hsl(332 65% 70%);
   --cloud-shadow:
-    0 14px 30px rgba(12, 16, 24, 0.6),
-    0 4px 12px rgba(20, 24, 36, 0.5);
+    0 16px 32px rgba(246, 144, 179, 0.55),
+    0 6px 16px rgba(255, 192, 214, 0.4);
   --cloud-shadow-inner:
-    inset 0 2px 8px rgba(255, 255, 255, 0.12),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.45);
-  --cloud-text: var(--foreground);
+    inset 0 3px 10px rgba(255, 255, 255, 0.7),
+    inset 0 -5px 14px rgba(246, 144, 179, 0.35);
+  --cloud-text: hsl(0 0% 100%);
+  --cloud-text-muted: rgba(255, 255, 255, 0.75);
 }
 
 /* define theme */
@@ -447,15 +449,17 @@
       var(--cloud-bg-end) 100%
     );
     box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
+    isolation: isolate;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   }
 
   .cloud-button::before,
   .cloud-button::after {
     content: "";
     position: absolute;
-    top: -35%;
-    width: 45%;
-    height: 70%;
+    top: -25%;
+    width: 55%;
+    height: 75%;
     border-radius: 9999px;
     background: linear-gradient(
       180deg,
@@ -468,17 +472,32 @@
   }
 
   .cloud-button::before {
-    left: 8%;
+    left: 4%;
   }
 
   .cloud-button::after {
-    right: 10%;
+    right: 6%;
   }
 
   .cloud-button > * {
     position: relative;
     z-index: 1;
     color: var(--cloud-text);
+  }
+
+  .cloud-button .text-muted-foreground {
+    color: var(--cloud-text-muted);
+  }
+
+  .cloud-button--inline {
+    padding-block: 0.35rem;
+  }
+
+  .cloud-button--inline::before,
+  .cloud-button--inline::after {
+    top: -15%;
+    width: 48%;
+    height: 60%;
   }
 }
 
