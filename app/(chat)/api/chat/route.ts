@@ -10,15 +10,15 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
+import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
+import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
   type AgentToolId,
   getAgentConfigById,
   getAgentConfigBySlash,
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
-import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
-import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
-import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -33,16 +33,16 @@ import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
-  getApprovedMemoriesByUserIdAndRoute,
   getApprovedMemoriesByUserId,
+  getApprovedMemoriesByUserIdAndRoute,
   getChatById,
   getEnabledAtoFilesByAtoId,
   getHomeLocationByUserId,
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
-  getUserEntitlements,
   getUserById,
+  getUserEntitlements,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -296,7 +296,10 @@ export async function POST(request: Request) {
       : undefined;
     const uiMessages = isToolApprovalFlow
       ? (messages as ChatMessage[]).map((current) => filterParts(current))
-      : [...convertToUIMessages(messagesFromDb), ...(sanitizedMessage ? [sanitizedMessage] : [])];
+      : [
+          ...convertToUIMessages(messagesFromDb),
+          ...(sanitizedMessage ? [sanitizedMessage] : []),
+        ];
 
     const { longitude, latitude, city, country } = geolocation(request);
 

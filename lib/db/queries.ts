@@ -19,23 +19,23 @@ import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
 import {
+  atoFile,
   type Chat,
   chat,
   type DBMessage,
   document,
   entitlement,
-  atoFile,
   memory,
   message,
   redemption,
   redemptionCode,
-  unofficialAto,
   type Suggestion,
   stream,
   suggestion,
   type User,
-  user,
   type UserLocation,
+  unofficialAto,
+  user,
   userLocation,
   vote,
 } from "./schema";
@@ -333,7 +333,10 @@ export async function getUnofficialAtoById({
       .select()
       .from(unofficialAto)
       .where(
-        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
       );
 
     return record ?? null;
@@ -412,7 +415,10 @@ export async function updateUnofficialAtoSettings({
       .update(unofficialAto)
       .set(updateValues)
       .where(
-        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
       )
       .returning();
 
@@ -474,7 +480,9 @@ export async function getAtoFilesByAtoId({
     return await db
       .select()
       .from(atoFile)
-      .where(and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId)))
+      .where(
+        and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId))
+      )
       .orderBy(desc(atoFile.createdAt));
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get ATO files");
@@ -534,10 +542,7 @@ export async function updateAtoFileEnabled({
 
     return record ?? null;
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to update ATO file"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to update ATO file");
   }
 }
 
@@ -1258,7 +1263,12 @@ export async function updateEntitlementProgress({
     const [existing] = await db
       .select()
       .from(entitlement)
-      .where(and(eq(entitlement.userId, userId), eq(entitlement.productId, productId)))
+      .where(
+        and(
+          eq(entitlement.userId, userId),
+          eq(entitlement.productId, productId)
+        )
+      )
       .orderBy(desc(entitlement.grantedAt))
       .limit(1);
 

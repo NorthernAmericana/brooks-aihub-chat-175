@@ -75,7 +75,9 @@ function normalizeChapter(value: unknown): number | undefined {
   return undefined;
 }
 
-function normalizeSpoilerAccess(value: unknown): SpoilerAccessLevel | undefined {
+function normalizeSpoilerAccess(
+  value: unknown
+): SpoilerAccessLevel | undefined {
   if (value === "none" || value === "light" || value === "full") {
     return value;
   }
@@ -125,17 +127,29 @@ function mergeProgress(
   }
   return {
     spoilerAccess: incoming.spoilerAccess
-      ? getHigherSpoilerAccess(base.spoilerAccess ?? "none", incoming.spoilerAccess)
+      ? getHigherSpoilerAccess(
+          base.spoilerAccess ?? "none",
+          incoming.spoilerAccess
+        )
       : base.spoilerAccess,
     game: {
-      percent: Math.max(base.game?.percent ?? 0, incoming.game?.percent ?? 0) || undefined,
-      chapter: Math.max(base.game?.chapter ?? 0, incoming.game?.chapter ?? 0) || undefined,
+      percent:
+        Math.max(base.game?.percent ?? 0, incoming.game?.percent ?? 0) ||
+        undefined,
+      chapter:
+        Math.max(base.game?.chapter ?? 0, incoming.game?.chapter ?? 0) ||
+        undefined,
       completed: base.game?.completed || incoming.game?.completed || undefined,
     },
     novel: {
-      percent: Math.max(base.novel?.percent ?? 0, incoming.novel?.percent ?? 0) || undefined,
-      chapter: Math.max(base.novel?.chapter ?? 0, incoming.novel?.chapter ?? 0) || undefined,
-      completed: base.novel?.completed || incoming.novel?.completed || undefined,
+      percent:
+        Math.max(base.novel?.percent ?? 0, incoming.novel?.percent ?? 0) ||
+        undefined,
+      chapter:
+        Math.max(base.novel?.chapter ?? 0, incoming.novel?.chapter ?? 0) ||
+        undefined,
+      completed:
+        base.novel?.completed || incoming.novel?.completed || undefined,
     },
   };
 }
@@ -205,7 +219,10 @@ export function getSpoilerAccessSummary(
     reasons.push("base entitlement access");
   }
 
-  if (level === "light" && (progress?.game?.percent || progress?.novel?.percent)) {
+  if (
+    level === "light" &&
+    (progress?.game?.percent || progress?.novel?.percent)
+  ) {
     reasons.push("active story progress");
   }
 
@@ -220,7 +237,9 @@ export function getSpoilerAccessSummary(
   };
 }
 
-export function formatSpoilerAccessContext(summary: SpoilerAccessSummary): string {
+export function formatSpoilerAccessContext(
+  summary: SpoilerAccessSummary
+): string {
   const lines = [
     "SPOILER ACCESS",
     `Level: ${summary.level}`,
@@ -280,7 +299,9 @@ export function checkFeatureAccess(
     case "spoiler_content_full":
       return spoilerSummary.level === "full";
     case "spoiler_content_light":
-      return spoilerSummary.level === "light" || spoilerSummary.level === "full";
+      return (
+        spoilerSummary.level === "light" || spoilerSummary.level === "full"
+      );
     case "founders_perks":
       return rules.hasFoundersAccess;
     default:

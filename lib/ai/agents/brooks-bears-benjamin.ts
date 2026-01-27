@@ -7,8 +7,8 @@ import {
   withTrace,
 } from "@openai/agents";
 import { runGuardrails } from "@openai/guardrails";
-import { OpenAI } from "@/lib/openai/client";
 import { z } from "zod";
+import { OpenAI } from "@/lib/openai/client";
 
 // Tool definitions
 const fileSearch = fileSearchTool(["vs_6974dae1d36081918240bccbdcd3cfdc"]);

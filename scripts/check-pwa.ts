@@ -43,7 +43,9 @@ if (!Array.isArray(manifestData.icons) || manifestData.icons.length === 0) {
   );
 
   if (invalidIcon) {
-    errors.push("Manifest icons must use relative src paths starting with '/'.");
+    errors.push(
+      "Manifest icons must use relative src paths starting with '/'."
+    );
   }
 }
 
@@ -60,9 +62,7 @@ const run = async () => {
     if (isRedirect) {
       const location = firstResponse.headers.get("location");
 
-      if (!location) {
-        errors.push("/welcome redirect is missing a Location header.");
-      } else {
+      if (location) {
         const redirectUrl = new URL(location, welcomeUrl);
         const secondResponse = await fetch(redirectUrl, { redirect: "manual" });
 
@@ -73,6 +73,8 @@ const run = async () => {
             `/welcome redirect target returned ${secondResponse.status}.`
           );
         }
+      } else {
+        errors.push("/welcome redirect is missing a Location header.");
       }
     } else if (!firstResponse.ok) {
       errors.push(`/welcome returned ${firstResponse.status}.`);

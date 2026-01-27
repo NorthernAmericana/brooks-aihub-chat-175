@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PlusIcon, PhoneIcon } from "./icons";
+import { PhoneIcon, PlusIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { toast } from "./toast";
 import { useSidebar } from "./ui/sidebar";

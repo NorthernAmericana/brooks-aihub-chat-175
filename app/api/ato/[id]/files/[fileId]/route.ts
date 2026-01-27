@@ -33,7 +33,10 @@ export async function PATCH(
   }
 
   if (typeof payload.enabled !== "boolean") {
-    return NextResponse.json({ error: "enabled is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "enabled is required." },
+      { status: 400 }
+    );
   }
 
   const ato = await getUnofficialAtoById({

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -175,7 +175,10 @@ export default function EditAtoPage() {
         body: JSON.stringify({ enabled }),
       });
 
-      const data = (await response.json()) as { file?: AtoFile; error?: string };
+      const data = (await response.json()) as {
+        file?: AtoFile;
+        error?: string;
+      };
 
       if (!response.ok || !data.file) {
         throw new Error(data.error ?? "Unable to update file setting.");
@@ -193,9 +196,7 @@ export default function EditAtoPage() {
     } catch (error) {
       console.error(error);
       setAtoFiles((previous) =>
-        previous.map((current) =>
-          current.id === file.id ? file : current
-        )
+        previous.map((current) => (current.id === file.id ? file : current))
       );
       setFilesFeedback({
         type: "error",
@@ -397,7 +398,10 @@ export default function EditAtoPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1 text-xs text-muted-foreground">
             <p>Changes apply immediately to your unofficial ATO.</p>
-            <p>File uploads: Free plans allow up to 5 files per ATO; Founders up to 10.</p>
+            <p>
+              File uploads: Free plans allow up to 5 files per ATO; Founders up
+              to 10.
+            </p>
           </div>
           <Button disabled={isLoading || isSubmitting} type="submit">
             {isSubmitting ? "Saving..." : "Save changes"}

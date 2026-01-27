@@ -128,8 +128,8 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
               className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-3 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
-              type="button"
               style={cloudStyles[index % cloudStyles.length]}
+              type="button"
             >
               <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
                 <span className="text-xs font-medium leading-snug sm:text-sm">

@@ -1,0 +1,242 @@
+# MyFlowerAI Strain Data Schema
+
+## Schema Version 1.1 (Current)
+
+### Overview
+
+The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to provide cannabis strain information that is safe for public consumption. This version removes all private metadata, purchase information, and exact location/timestamp data that should not be exposed to end users.
+
+### Design Principles
+
+1. **Client-Safe Data Only**: No personally identifying information, exact store addresses, or precise timestamps
+2. **Analysis-Focused**: Retains all data useful for strain comparison and user decision-making
+3. **Privacy-First**: Sensitive operational data belongs in separate internal-only schemas
+4. **Versioned**: Explicit `schema_version` field enables graceful evolution
+
+### Schema Structure
+
+#### Top-Level Fields
+
+```typescript
+{
+  schema_version: "1.1",
+  visibility: {
+    client_safe: boolean,
+    excluded_fields: string[]
+  },
+  id: string,
+  app_namespace: string,
+  strain: { ... },
+  product: { ... },
+  stats: { ... },
+  description: { ... },
+  coa: { ... },
+  tags: string[],
+  your_notes: { ... }
+}
+```
+
+#### Field Definitions
+
+##### `schema_version` (required)
+- Type: `string`
+- Value: `"1.1"`
+- Purpose: Enables version detection and backward compatibility
+
+##### `visibility` (required)
+- Type: `object`
+- Fields:
+  - `client_safe`: `true` (always true for v1.1 files)
+  - `excluded_fields`: Array of field names removed from v1.0 for privacy
+- Purpose: Documents what data must never be stored in client-facing files
+
+##### `id` (required)
+- Type: `string`
+- Example: `"trulieve-modern-flower-seed-junky-juicy-jane-3p5g"`
+- Purpose: Unique identifier (timestamps removed from v1.0)
+
+##### `app_namespace` (required)
+- Type: `string`
+- Value: `"myflowerai"`
+- Purpose: Identifies data source application
+
+##### `strain` (required)
+- Type: `object`
+- Fields:
+  - `name`: Strain name (e.g., "Juicy Jane")
+  - `type`: Strain type ("indica" | "sativa" | "hybrid")
+  - `brand`: Brand or breeder name
+  - `lineage`: Array of parent strain names
+
+##### `product` (required)
+- Type: `object`
+- Fields retained from v1.0:
+  - `dispensary`: Dispensary name (not exact location)
+  - `category`: Product category (e.g., "flower")
+  - `form`: Product form (e.g., "3.5g Whole Flower")
+  - `size_g`: Size in grams
+  - `sku`: Product SKU
+  - `in_stock`: Boolean availability status
+- **Removed from v1.0**:
+  - `location`: Exact store address (privacy concern)
+  - `price_current_usd`: Current price (purchase metadata)
+  - `price_original_usd`: Original price (purchase metadata)
+
+##### `stats` (required)
+- Type: `object`
+- Complete cannabinoid and terpene analysis
+- Fields:
+  - `total_thc_percent`: Total THC percentage
+  - `total_cbd_percent`: Total CBD percentage
+  - `total_cannabinoids_percent`: Total cannabinoids
+  - `total_terpenes_percent`: Total terpenes
+  - `top_terpenes`: Array of terpene objects with `name` and `percent`
+  - `potency_breakdown_percent`: Detailed cannabinoid breakdown
+  - `potency_breakdown_mg`: Cannabinoid content in milligrams
+
+##### `description` (required)
+- Type: `object`
+- Marketing and experiential descriptions
+- Fields:
+  - `dispensary_bio`: Dispensary's strain description
+  - `vibes_like`: Array of use-case descriptions
+  - `product_positioning`: Product marketing copy
+  - `brand_info`: Brand background information
+
+##### `coa` (required)
+- Type: `object`
+- Certificate of Analysis summary (operational dates made less precise)
+- Fields retained:
+  - `status`: Test result status (e.g., "passed")
+  - `lab`: Laboratory name
+  - `laboratory_id`: Lab report ID
+  - `sample_matrix`: Sample type
+  - `admin_route`: Administration route
+  - `product_name_on_coa`: Product name on COA
+  - `cultivar_on_coa`: Cultivar name on COA
+  - `batch_unit_size_g`: Unit size
+  - `cultivation_facility`: Cultivation location
+  - `processing_facility`: Processing location
+  - `seed_to_sale_id`: Tracking ID
+  - `qa_sample_id`: QA sample ID
+  - `batch_size_g`: Batch size
+  - `units_sampled`: Number of units sampled
+  - `total_amt_sampled_g`: Total amount sampled
+- **Modified from v1.0**:
+  - Date fields (`completed_at`, `received_at`, `sample_date`, `batch_date`) retained but not required to be exact timestamps
+
+##### `tags` (required)
+- Type: `string[]`
+- User-friendly tags for search and filtering
+- Examples: `["hybrid", "fruit-forward", "balanced", "social", "daytime"]`
+
+##### `your_notes` (required)
+- Type: `object`
+- User-editable personal notes section
+- Fields:
+  - `rating_1to10`: User rating (nullable)
+  - `felt_like`: Array of effect descriptions
+  - `avoid_if`: Array of warnings
+  - `session_notes`: Freeform notes
+
+#### Removed Fields (from v1.0)
+
+The following fields are **removed** in v1.1 as they contain private/purchase metadata:
+
+1. **`product.location`**: Exact store address (replaced with dispensary name only)
+2. **`product.price_current_usd`**: Current price (purchase metadata)
+3. **`product.price_original_usd`**: Original price (purchase metadata)
+4. **`sources`**: Array containing `retrieved_at` timestamps (operational metadata)
+5. **`created_at`**: Record creation timestamp (operational metadata)
+6. **`updated_at`**: Record update timestamp (operational metadata)
+
+### Migration from v1.0 to v1.1
+
+A migration script (`scripts/migrate-myflowerai-schema.ts`) is provided to convert v1.0 NDJSON files to v1.1 individual JSON files:
+
+```bash
+pnpm tsx scripts/migrate-myflowerai-schema.ts
+```
+
+The migration:
+1. Removes all private/purchase metadata fields
+2. Adds `schema_version: "1.1"`
+3. Adds `visibility` section
+4. Removes date suffixes from IDs
+5. Outputs individual JSON files per strain
+
+### Validation
+
+Schema validation is provided via Zod schema in `lib/validation/myflowerai-schema.ts`.
+
+Run validation:
+```bash
+pnpm validate:myflowerai
+```
+
+This will validate all JSON files in `data/myflowerai/strains/` against the v1.1 schema.
+
+### Backward Compatibility
+
+The loader code in `lib/ai/agents/myflowerai-workflow.ts` supports both v1.0 and v1.1 formats:
+
+- **v1.1 files**: Read directly from `data/myflowerai/strains/*.json`
+- **v1.0 files**: Read from `data/myflowerai/strains.ndjson` with automatic field mapping
+- **Fallback logic**: If a v1.0 field is accessed but not present in v1.1, gracefully handle with defaults
+
+### Internal-Only Data
+
+For operations requiring private metadata (pricing, exact locations, timestamps), create separate internal schemas:
+
+- **File location**: `data/myflowerai/internal/` (not committed to repo)
+- **Schema**: Design as needed for operational requirements
+- **Access**: Never expose through client-facing APIs
+
+### Usage Guidelines
+
+**DO:**
+- Use v1.1 schema for all client-facing strain data
+- Validate all new strain files before committing
+- Update internal tools to use v1.1 format
+- Keep v1.0 NDJSON for historical reference (not client-facing)
+
+**DON'T:**
+- Add personally identifying user information
+- Include exact store addresses or GPS coordinates
+- Store precise timestamps (dates are acceptable, exact times are not)
+- Add purchase prices or financial metadata
+- Expose data that could identify individual users or transactions
+
+### Schema Evolution
+
+Future schema changes should:
+1. Increment `schema_version` (e.g., "1.2", "2.0")
+2. Document all changes in this file
+3. Update Zod validation schema
+4. Update migration scripts
+5. Maintain backward compatibility in loader code
+
+---
+
+## Schema Version 1.0 (Legacy)
+
+The original v1.0 schema was an NDJSON format with mixed client and operational data.
+
+### Key Differences from v1.1
+
+| Field | v1.0 | v1.1 |
+|-------|------|------|
+| `schema_version` | Not present | `"1.1"` (required) |
+| `visibility` | Not present | Required object |
+| `product.location` | Exact address | Removed (privacy) |
+| `product.price_*` | Included | Removed (purchase data) |
+| `sources[].retrieved_at` | Exact timestamp | Removed (operational) |
+| `created_at` | Exact timestamp | Removed (operational) |
+| `updated_at` | Exact timestamp | Removed (operational) |
+| `id` | Date suffix | Date suffix removed |
+
+### Migration Notes
+
+- v1.0 files remain in `data/myflowerai/strains.ndjson` for historical reference
+- Loader supports reading v1.0 for backward compatibility
+- All new data should use v1.1 format

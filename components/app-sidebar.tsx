@@ -182,10 +182,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             </Button>
             <Button
               className="justify-start"
+              disabled={loadingCheckout}
+              onClick={handleFoundersAccess}
               size="sm"
               variant="outline"
-              onClick={handleFoundersAccess}
-              disabled={loadingCheckout}
             >
               {loadingCheckout ? "Loading..." : "Founders Edition • $4.99"}
             </Button>

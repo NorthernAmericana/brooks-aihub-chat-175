@@ -149,8 +149,8 @@ export const VoiceSettingsPanel = ({ chats }: VoiceSettingsPanelProps) => {
               <div>
                 <p className="font-medium">{chat.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  Route: {getRouteDisplayName(routeKey)} •
-                  Default: {defaultVoice.label}
+                  Route: {getRouteDisplayName(routeKey)} • Default:{" "}
+                  {defaultVoice.label}
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">

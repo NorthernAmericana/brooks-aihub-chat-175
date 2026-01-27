@@ -95,7 +95,8 @@ export async function POST(request: Request) {
     if (monthlyCount >= 10) {
       return NextResponse.json(
         {
-          error: "Founders members can create up to 10 unofficial ATOs per month.",
+          error:
+            "Founders members can create up to 10 unofficial ATOs per month.",
         },
         { status: 403 }
       );
@@ -148,7 +149,9 @@ export async function POST(request: Request) {
         : null,
     intelligenceMode: payload.intelligenceMode,
     defaultVoiceId:
-      typeof payload.defaultVoiceId === "string" ? payload.defaultVoiceId : null,
+      typeof payload.defaultVoiceId === "string"
+        ? payload.defaultVoiceId
+        : null,
     defaultVoiceLabel:
       typeof payload.defaultVoiceLabel === "string"
         ? payload.defaultVoiceLabel
