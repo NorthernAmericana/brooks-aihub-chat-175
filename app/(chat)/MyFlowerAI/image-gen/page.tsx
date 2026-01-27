@@ -28,6 +28,14 @@ interface PersonaOption {
   display_name: string;
 }
 
+interface PresetOption {
+  id: string;
+  name: string;
+  description: string;
+  style_keywords: string[];
+  vibe_settings: VibeSettings;
+}
+
 interface VibeSettings {
   intensity: number;
   neon: number;
@@ -39,8 +47,10 @@ interface VibeSettings {
 export default function ImageGenPage() {
   const [strains, setStrains] = useState<StrainOption[]>([]);
   const [personas, setPersonas] = useState<PersonaOption[]>([]);
+  const [presets, setPresets] = useState<PresetOption[]>([]);
   const [selectedStrain, setSelectedStrain] = useState<string>("");
   const [selectedPersona, setSelectedPersona] = useState<string>("");
+  const [selectedPreset, setSelectedPreset] = useState<string>("");
   const [userVibeText, setUserVibeText] = useState<string>("");
   const [vibeSettings, setVibeSettings] = useState<VibeSettings>({
     intensity: 5,
@@ -115,6 +125,13 @@ export default function ImageGenPage() {
           ]);
         }
 
+        // Load presets
+        const presetsRes = await fetch("/data/myflowerai/image-presets.json");
+        if (presetsRes.ok) {
+          const presetsData = await presetsRes.json();
+          setPresets(presetsData.presets);
+        }
+
         setLoadingData(false);
       } catch (err) {
         console.error("Error loading data:", err);
@@ -128,6 +145,16 @@ export default function ImageGenPage() {
 
   const handleSliderChange = (key: keyof VibeSettings, value: number) => {
     setVibeSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    if (presetId) {
+      const preset = presets.find((p) => p.id === presetId);
+      if (preset) {
+        setVibeSettings(preset.vibe_settings);
+      }
+    }
   };
 
   const handleGenerate = async () => {
@@ -150,6 +177,7 @@ export default function ImageGenPage() {
         body: JSON.stringify({
           strain_id: selectedStrain,
           persona_id: selectedPersona || undefined,
+          preset_id: selectedPreset || undefined,
           vibe_settings: vibeSettings,
           user_vibe_text: userVibeText || undefined,
         }),
@@ -224,6 +252,28 @@ export default function ImageGenPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Trip Mode Preset Selector */}
+          <div className="space-y-2">
+            <Label htmlFor="preset">Trip Mode Preset</Label>
+            <select
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              id="preset"
+              onChange={(e) => handlePresetChange(e.target.value)}
+              value={selectedPreset}
+            >
+              <option value="">No preset (custom settings)</option>
+              {presets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name} - {preset.description}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Choose a preset to automatically set style and vibe settings, or
+              customize manually below
+            </p>
           </div>
 
           {/* Persona Selector (Optional) */}

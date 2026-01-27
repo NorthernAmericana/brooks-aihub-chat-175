@@ -1,0 +1,99 @@
+{
+  "presets": [
+    {
+      "id": "neon-forest",
+      "name": "Neon Forest",
+      "description": "Vibrant glowing patterns with organic natural forms",
+      "style_keywords": [
+        "neon glowing colors",
+        "luminous forest patterns",
+        "electric green and cyan hues",
+        "organic flowing branches",
+        "bioluminescent woodland vibes"
+      ],
+      "vibe_settings": {
+        "intensity": 8,
+        "neon": 9,
+        "nature": 9,
+        "surreal": 6,
+        "chaos": 5
+      }
+    },
+    {
+      "id": "candy-gelato-dream",
+      "name": "Candy Gelato Dream",
+      "description": "Soft pastel swirls with dreamy sweet aesthetics",
+      "style_keywords": [
+        "pastel dreamy clouds",
+        "soft pink and lavender gradients",
+        "creamy smooth textures",
+        "sweet ethereal atmosphere",
+        "gentle flowing ribbons"
+      ],
+      "vibe_settings": {
+        "intensity": 6,
+        "neon": 2,
+        "nature": 4,
+        "surreal": 8,
+        "chaos": 3
+      }
+    },
+    {
+      "id": "cosmic-citrus",
+      "name": "Cosmic Citrus",
+      "description": "Bright celestial bursts with zesty energy",
+      "style_keywords": [
+        "bright yellow-orange cosmic bursts",
+        "radiating star patterns",
+        "vibrant citrus-inspired spheres",
+        "galactic swirling energy",
+        "luminous celestial bodies"
+      ],
+      "vibe_settings": {
+        "intensity": 9,
+        "neon": 7,
+        "nature": 3,
+        "surreal": 8,
+        "chaos": 7
+      }
+    },
+    {
+      "id": "analog-vhs-mirage",
+      "name": "Analog VHS Mirage",
+      "description": "Retro glitch aesthetics with nostalgic distortion",
+      "style_keywords": [
+        "retro color distortion",
+        "analog video glitch patterns",
+        "nostalgic warm scan lines",
+        "chromatic aberration effects",
+        "vintage visual noise"
+      ],
+      "vibe_settings": {
+        "intensity": 7,
+        "neon": 5,
+        "nature": 2,
+        "surreal": 7,
+        "chaos": 6
+      }
+    },
+    {
+      "id": "warm-cabin-glow",
+      "name": "Warm Cabin Glow",
+      "description": "Cozy amber tones with peaceful earthy warmth",
+      "style_keywords": [
+        "warm golden amber glow",
+        "soft firelight gradients",
+        "cozy earth tone palette",
+        "gentle organic textures",
+        "peaceful rustic atmosphere"
+      ],
+      "vibe_settings": {
+        "intensity": 5,
+        "neon": 0,
+        "nature": 8,
+        "surreal": 4,
+        "chaos": 2
+      }
+    }
+  ]
+}
