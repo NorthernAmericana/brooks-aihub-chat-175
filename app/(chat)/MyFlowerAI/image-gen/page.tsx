@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StrainOption {
@@ -53,7 +60,7 @@ export default function ImageGenPage() {
     async function loadData() {
       try {
         setLoadingData(true);
-        
+
         // Load strains
         const strainsRes = await fetch("/data/myflowerai/strains.json");
         if (strainsRes.ok) {
@@ -91,14 +98,23 @@ export default function ImageGenPage() {
         } else {
           // Fallback to static list
           setPersonas([
-            { persona_id: "balanced-harmonizer", display_name: "Balanced Harmonizer" },
+            {
+              persona_id: "balanced-harmonizer",
+              display_name: "Balanced Harmonizer",
+            },
             { persona_id: "creative-fire", display_name: "Creative Fire" },
             { persona_id: "forest-wanderer", display_name: "Forest Wanderer" },
-            { persona_id: "neon-arcade-brain", display_name: "Neon Arcade Brain" },
-            { persona_id: "night-owl-dreamer", display_name: "Night Owl Dreamer" },
+            {
+              persona_id: "neon-arcade-brain",
+              display_name: "Neon Arcade Brain",
+            },
+            {
+              persona_id: "night-owl-dreamer",
+              display_name: "Night Owl Dreamer",
+            },
           ]);
         }
-        
+
         setLoadingData(false);
       } catch (err) {
         console.error("Error loading data:", err);
@@ -186,7 +202,8 @@ export default function ImageGenPage() {
         <CardHeader>
           <CardTitle>Choose Your Strain</CardTitle>
           <CardDescription>
-            Select a strain to generate abstract art based on its terpene profile and effects
+            Select a strain to generate abstract art based on its terpene
+            profile and effects
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -194,15 +211,16 @@ export default function ImageGenPage() {
           <div className="space-y-2">
             <Label htmlFor="strain">Strain</Label>
             <select
-              id="strain"
-              value={selectedStrain}
-              onChange={(e) => setSelectedStrain(e.target.value)}
               className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              id="strain"
+              onChange={(e) => setSelectedStrain(e.target.value)}
+              value={selectedStrain}
             >
               <option value="">Select a strain...</option>
               {strains.map((strain) => (
                 <option key={strain.id} value={strain.id}>
-                  {strain.name} ({strain.type}) {strain.brand ? `- ${strain.brand}` : ""}
+                  {strain.name} ({strain.type}){" "}
+                  {strain.brand ? `- ${strain.brand}` : ""}
                 </option>
               ))}
             </select>
@@ -212,10 +230,10 @@ export default function ImageGenPage() {
           <div className="space-y-2">
             <Label htmlFor="persona">Persona Style (Optional)</Label>
             <select
-              id="persona"
-              value={selectedPersona}
-              onChange={(e) => setSelectedPersona(e.target.value)}
               className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              id="persona"
+              onChange={(e) => setSelectedPersona(e.target.value)}
+              value={selectedPersona}
             >
               <option value="">No persona (default style)</option>
               {personas.map((persona) => (
@@ -229,20 +247,24 @@ export default function ImageGenPage() {
           {/* Vibe Sliders */}
           <div className="space-y-4">
             <h3 className="font-semibold">Vibe Settings</h3>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Intensity</Label>
-                <span className="text-sm text-muted-foreground">{vibeSettings.intensity}</span>
+                <span className="text-sm text-muted-foreground">
+                  {vibeSettings.intensity}
+                </span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={vibeSettings.intensity}
-                onChange={(e) => handleSliderChange("intensity", Number(e.target.value))}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                max="10"
+                min="0"
+                onChange={(e) =>
+                  handleSliderChange("intensity", Number(e.target.value))
+                }
+                step="1"
+                type="range"
+                value={vibeSettings.intensity}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Subtle</span>
@@ -253,16 +275,20 @@ export default function ImageGenPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Neon Glow</Label>
-                <span className="text-sm text-muted-foreground">{vibeSettings.neon}</span>
+                <span className="text-sm text-muted-foreground">
+                  {vibeSettings.neon}
+                </span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={vibeSettings.neon}
-                onChange={(e) => handleSliderChange("neon", Number(e.target.value))}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                max="10"
+                min="0"
+                onChange={(e) =>
+                  handleSliderChange("neon", Number(e.target.value))
+                }
+                step="1"
+                type="range"
+                value={vibeSettings.neon}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>None</span>
@@ -273,16 +299,20 @@ export default function ImageGenPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Nature</Label>
-                <span className="text-sm text-muted-foreground">{vibeSettings.nature}</span>
+                <span className="text-sm text-muted-foreground">
+                  {vibeSettings.nature}
+                </span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={vibeSettings.nature}
-                onChange={(e) => handleSliderChange("nature", Number(e.target.value))}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                max="10"
+                min="0"
+                onChange={(e) =>
+                  handleSliderChange("nature", Number(e.target.value))
+                }
+                step="1"
+                type="range"
+                value={vibeSettings.nature}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Geometric</span>
@@ -293,16 +323,20 @@ export default function ImageGenPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Surreal</Label>
-                <span className="text-sm text-muted-foreground">{vibeSettings.surreal}</span>
+                <span className="text-sm text-muted-foreground">
+                  {vibeSettings.surreal}
+                </span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={vibeSettings.surreal}
-                onChange={(e) => handleSliderChange("surreal", Number(e.target.value))}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                max="10"
+                min="0"
+                onChange={(e) =>
+                  handleSliderChange("surreal", Number(e.target.value))
+                }
+                step="1"
+                type="range"
+                value={vibeSettings.surreal}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Structured</span>
@@ -313,16 +347,20 @@ export default function ImageGenPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Energy</Label>
-                <span className="text-sm text-muted-foreground">{vibeSettings.chaos}</span>
+                <span className="text-sm text-muted-foreground">
+                  {vibeSettings.chaos}
+                </span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={vibeSettings.chaos}
-                onChange={(e) => handleSliderChange("chaos", Number(e.target.value))}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                max="10"
+                min="0"
+                onChange={(e) =>
+                  handleSliderChange("chaos", Number(e.target.value))
+                }
+                step="1"
+                type="range"
+                value={vibeSettings.chaos}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Calm</span>
@@ -336,11 +374,11 @@ export default function ImageGenPage() {
             <Label htmlFor="vibe-text">Additional Vibe (Optional)</Label>
             <Input
               id="vibe-text"
-              type="text"
-              placeholder="e.g., cosmic space vibes, underwater dreams..."
-              value={userVibeText}
-              onChange={(e) => setUserVibeText(e.target.value)}
               maxLength={200}
+              onChange={(e) => setUserVibeText(e.target.value)}
+              placeholder="e.g., cosmic space vibes, underwater dreams..."
+              type="text"
+              value={userVibeText}
             />
             <p className="text-xs text-muted-foreground">
               Add a short description to further customize the art style
@@ -355,9 +393,9 @@ export default function ImageGenPage() {
         </CardContent>
         <CardFooter>
           <Button
-            onClick={handleGenerate}
-            disabled={loading || !selectedStrain}
             className="w-full"
+            disabled={loading || !selectedStrain}
+            onClick={handleGenerate}
           >
             {loading ? "Generating..." : "Generate Image"}
           </Button>
@@ -374,25 +412,27 @@ export default function ImageGenPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted">
-              <img
-                src={generatedImage}
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
+              <Image
                 alt={imageTitle || "Generated art"}
-                className="w-full h-full object-contain"
+                className="size-full object-contain"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                src={generatedImage}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <Button
-              variant="outline"
               className="w-full"
               onClick={() => window.open(generatedImage, "_blank")}
+              variant="outline"
             >
               Open in New Tab
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              This image was generated by AI and is for entertainment purposes only.
-              No medical claims are made or implied.
+              This image was generated by AI and is for entertainment purposes
+              only. No medical claims are made or implied.
             </p>
           </CardFooter>
         </Card>
@@ -405,12 +445,14 @@ export default function ImageGenPage() {
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-2">
           <p>
-            This tool generates abstract psychedelic art inspired by cannabis strain profiles.
-            All generated images are purely artistic interpretations with no medical claims or advice.
+            This tool generates abstract psychedelic art inspired by cannabis
+            strain profiles. All generated images are purely artistic
+            interpretations with no medical claims or advice.
           </p>
           <p>
-            Images will not contain: people, faces, branding, product packaging, realistic plants,
-            or any illegal content. User input is filtered for safety.
+            Images will not contain: people, faces, branding, product packaging,
+            realistic plants, or any illegal content. User input is filtered for
+            safety.
           </p>
         </CardContent>
       </Card>

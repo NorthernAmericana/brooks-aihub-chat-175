@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { composeImagePrompt, generateImageTitle, type VibeSettings, type PersonaProfile } from "@/lib/myflowerai/image/promptComposer";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import {
+  composeImagePrompt,
+  generateImageTitle,
+  type PersonaProfile,
+} from "@/lib/myflowerai/image/prompt-composer";
 import { validateVibeText } from "@/lib/myflowerai/image/safety";
-import { promises as fs } from "fs";
-import path from "path";
 
 /**
  * API route for MyFlowerAI strain-based image generation
- * 
+ *
  * POST /api/myflowerai/generate-image
  * Body: {
  *   strain_id: string,
@@ -42,7 +47,9 @@ export async function POST(request: NextRequest) {
     if (persona_id) {
       personaProfile = await loadPersonaData(persona_id);
       if (!personaProfile) {
-        console.warn(`Persona not found: ${persona_id}, continuing without persona`);
+        console.warn(
+          `Persona not found: ${persona_id}, continuing without persona`
+        );
       }
     }
 
@@ -52,10 +59,10 @@ export async function POST(request: NextRequest) {
       const validation = validateVibeText(user_vibe_text);
       if (!validation.isValid) {
         return NextResponse.json(
-          { 
-            error: "Invalid vibe text", 
+          {
+            error: "Invalid vibe text",
             reason: validation.reason,
-            using_fallback: true
+            using_fallback: true,
           },
           { status: 400 }
         );
@@ -83,36 +90,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
-        response_format: "url",
-      }),
-    });
+    const openaiResponse = await fetch(
+      "https://api.openai.com/v1/images/generations",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "dall-e-3",
+          prompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard",
+          response_format: "url",
+        }),
+      }
+    );
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.json();
       console.error("OpenAI API error:", errorData);
       return NextResponse.json(
-        { 
-          error: "Image generation failed", 
-          details: errorData.error?.message || "Unknown error" 
+        {
+          error: "Image generation failed",
+          details: errorData.error?.message || "Unknown error",
         },
         { status: openaiResponse.status }
       );
     }
 
     const data = await openaiResponse.json();
-    
+
     // Return the result
     return NextResponse.json({
       success: true,
@@ -124,18 +134,19 @@ export async function POST(request: NextRequest) {
         name: strainData.strain.name,
         type: strainData.strain.type,
       },
-      persona: personaProfile ? {
-        id: persona_id,
-        name: personaProfile.display_name,
-      } : undefined,
+      persona: personaProfile
+        ? {
+            id: persona_id,
+            name: personaProfile.display_name,
+          }
+        : undefined,
     });
-
   } catch (error) {
     console.error("Error in generate-image API:", error);
     return NextResponse.json(
-      { 
-        error: "Internal server error", 
-        details: error instanceof Error ? error.message : "Unknown error" 
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
@@ -147,12 +158,17 @@ export async function POST(request: NextRequest) {
  */
 async function loadStrainData(strainId: string) {
   try {
-    const strainsDir = path.join(process.cwd(), "data", "myflowerai", "strains");
+    const strainsDir = path.join(
+      process.cwd(),
+      "data",
+      "myflowerai",
+      "strains"
+    );
     const filePath = path.join(strainsDir, `${strainId}.json`);
-    
+
     const fileContent = await fs.readFile(filePath, "utf-8");
     const strainData = JSON.parse(fileContent);
-    
+
     return strainData;
   } catch (error) {
     console.error(`Error loading strain ${strainId}:`, error);
@@ -163,14 +179,21 @@ async function loadStrainData(strainId: string) {
 /**
  * Load persona data from file system
  */
-async function loadPersonaData(personaId: string): Promise<PersonaProfile | null> {
+async function loadPersonaData(
+  personaId: string
+): Promise<PersonaProfile | null> {
   try {
-    const personasDir = path.join(process.cwd(), "data", "myflowerai", "personas");
+    const personasDir = path.join(
+      process.cwd(),
+      "data",
+      "myflowerai",
+      "personas"
+    );
     const filePath = path.join(personasDir, `${personaId}.json`);
-    
+
     const fileContent = await fs.readFile(filePath, "utf-8");
     const personaData = JSON.parse(fileContent);
-    
+
     return personaData;
   } catch (error) {
     console.error(`Error loading persona ${personaId}:`, error);

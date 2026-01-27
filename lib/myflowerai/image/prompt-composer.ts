@@ -49,7 +49,7 @@ export interface StrainData {
  */
 function vibeSettingsToText(settings: VibeSettings): string {
   const parts: string[] = [];
-  
+
   // Intensity
   const intensity = settings.intensity ?? 5;
   if (intensity <= 3) {
@@ -59,7 +59,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
   } else {
     parts.push("balanced");
   }
-  
+
   // Neon
   const neon = settings.neon ?? 0;
   if (neon >= 7) {
@@ -67,7 +67,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
   } else if (neon >= 4) {
     parts.push("luminous accents");
   }
-  
+
   // Nature
   const nature = settings.nature ?? 5;
   if (nature >= 7) {
@@ -77,7 +77,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
   } else {
     parts.push("flowing organic patterns");
   }
-  
+
   // Surreal
   const surreal = settings.surreal ?? 5;
   if (surreal >= 7) {
@@ -87,7 +87,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
   } else {
     parts.push("artistic interpretation");
   }
-  
+
   // Chaos vs Calm
   const chaos = settings.chaos ?? 5;
   if (chaos >= 7) {
@@ -97,7 +97,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
   } else {
     parts.push("harmonious balance");
   }
-  
+
   return parts.join(", ");
 }
 
@@ -117,10 +117,10 @@ export function composeImagePrompt(
   userVibeText?: string
 ): string {
   const parts: string[] = [];
-  
+
   // Start with art style constraint
   parts.push("Abstract psychedelic art:");
-  
+
   // Add strain type influence
   const strainType = strainData.strain.type.toLowerCase();
   if (strainType === "sativa") {
@@ -130,9 +130,12 @@ export function composeImagePrompt(
   } else {
     parts.push("balanced harmonious composition");
   }
-  
+
   // Add aroma/flavor visual representations
-  if (strainData.meaning?.aroma_flavor_tags && strainData.meaning.aroma_flavor_tags.length > 0) {
+  if (
+    strainData.meaning?.aroma_flavor_tags &&
+    strainData.meaning.aroma_flavor_tags.length > 0
+  ) {
     const aromas = strainData.meaning.aroma_flavor_tags.slice(0, 3);
     const aromaDescriptions = aromas.map((tag) => {
       // Map aroma tags to visual concepts (no literal items)
@@ -157,9 +160,12 @@ export function composeImagePrompt(
     });
     parts.push(aromaDescriptions.join(", "));
   }
-  
+
   // Add effect-based mood
-  if (strainData.meaning?.effect_tags && strainData.meaning.effect_tags.length > 0) {
+  if (
+    strainData.meaning?.effect_tags &&
+    strainData.meaning.effect_tags.length > 0
+  ) {
     const effects = strainData.meaning.effect_tags.slice(0, 3);
     const effectDescriptions = effects.map((tag) => {
       // Map effect tags to visual moods (no medical claims)
@@ -179,25 +185,28 @@ export function composeImagePrompt(
     });
     parts.push(effectDescriptions.join(", "));
   }
-  
+
   // Add persona style if provided
-  if (personaProfile?.image_style_keywords && personaProfile.image_style_keywords.length > 0) {
+  if (
+    personaProfile?.image_style_keywords &&
+    personaProfile.image_style_keywords.length > 0
+  ) {
     const keywords = personaProfile.image_style_keywords.slice(0, 2);
     parts.push(keywords.join(", "));
   }
-  
+
   // Add vibe settings
   if (vibeSettings) {
     const vibeText = vibeSettingsToText(vibeSettings);
     parts.push(vibeText);
   }
-  
+
   // Add sanitized user vibe text
   if (userVibeText) {
     const sanitized = scrubVibeText(userVibeText);
     parts.push(sanitized);
   }
-  
+
   // Add mandatory art-only constraints
   const constraints = [
     "No text, no labels, no branding",
@@ -207,16 +216,16 @@ export function composeImagePrompt(
     "Pure abstract art only",
   ];
   parts.push(constraints.join(". "));
-  
+
   // Join all parts
   const prompt = parts.join(". ");
-  
+
   // Ensure prompt doesn't exceed reasonable length (OpenAI has limits)
   const maxLength = 1000;
   if (prompt.length > maxLength) {
-    return prompt.substring(0, maxLength).trim() + "...";
+    return `${prompt.substring(0, maxLength).trim()}...`;
   }
-  
+
   return prompt;
 }
 
@@ -233,11 +242,11 @@ export function generateImageTitle(
 ): string {
   const strainName = strainData.strain.name;
   const strainType = strainData.strain.type;
-  
+
   if (personaProfile) {
     return `${strainName} (${strainType}) - ${personaProfile.display_name} Vibe`;
   }
-  
+
   return `${strainName} (${strainType}) - Abstract Art`;
 }
 
@@ -252,22 +261,38 @@ export function validatePrompt(prompt: string): {
   issues: string[];
 } {
   const issues: string[] = [];
-  
+
   // Check for forbidden content patterns
   const forbiddenPatterns = [
-    { pattern: /\b(person|people|face|man|woman|child|kid)\b/i, issue: "Contains references to people" },
-    { pattern: /\b(bottle|package|container|box|jar|bag)\b/i, issue: "Contains product packaging references" },
-    { pattern: /\b(cannabis|marijuana|weed|pot|bud|flower)\s+(plant|leaf|leaves)\b/i, issue: "Contains realistic plant references" },
-    { pattern: /\b(brand|logo|trademark|company)\b/i, issue: "Contains branding references" },
-    { pattern: /\b(cure|treat|medicine|medical|prescription)\b/i, issue: "Contains medical claims" },
+    {
+      pattern: /\b(person|people|face|man|woman|child|kid)\b/i,
+      issue: "Contains references to people",
+    },
+    {
+      pattern: /\b(bottle|package|container|box|jar|bag)\b/i,
+      issue: "Contains product packaging references",
+    },
+    {
+      pattern:
+        /\b(cannabis|marijuana|weed|pot|bud|flower)\s+(plant|leaf|leaves)\b/i,
+      issue: "Contains realistic plant references",
+    },
+    {
+      pattern: /\b(brand|logo|trademark|company)\b/i,
+      issue: "Contains branding references",
+    },
+    {
+      pattern: /\b(cure|treat|medicine|medical|prescription)\b/i,
+      issue: "Contains medical claims",
+    },
   ];
-  
+
   for (const { pattern, issue } of forbiddenPatterns) {
     if (pattern.test(prompt)) {
       issues.push(issue);
     }
   }
-  
+
   return {
     isValid: issues.length === 0,
     issues,
