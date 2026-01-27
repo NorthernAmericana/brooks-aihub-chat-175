@@ -1,0 +1,18 @@
+{
+  "persona_id": "social-butterfly",
+  "display_name": "Social Butterfly",
+  "vibe_summary": "You light up in social settings. Whether hosting dinner parties, hitting up concerts, or just hanging with your crew, you thrive on connection and shared experiences. You need strains that enhance your naturally social nature, boost conversation, and keep the good vibes flowing without making you foggy or antisocial.",
+  "tag_profile": {
+    "primary_tags": ["social", "uplifting", "euphoric", "giggly"],
+    "secondary_tags": ["mood-enhancing", "energizing", "creative"],
+    "avoid_tags": ["introspective", "couch-lock", "antisocial", "sedating"]
+  },
+  "image_style_keywords": [
+    "bright social gathering",
+    "laughter and connection",
+    "vibrant party atmosphere",
+    "warm group energy",
+    "colorful social scene",
+    "joyful interaction"
+  ]
+}

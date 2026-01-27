@@ -1,0 +1,18 @@
+{
+  "persona_id": "sensory-explorer",
+  "display_name": "Sensory Explorer",
+  "vibe_summary": "You experience the world through your senses. Music sounds richer, food tastes better, textures feel more interesting, and colors appear more vivid. You seek strains that heighten sensory perception and make ordinary experiences extraordinary. Perfect for concerts, cooking, art appreciation, or simply savoring life's pleasures.",
+  "tag_profile": {
+    "primary_tags": ["sensory-enhancing", "euphoric", "creative", "mood-enhancing"],
+    "secondary_tags": ["uplifting", "social", "balanced"],
+    "avoid_tags": ["foggy", "numbing", "heavy-sedation"]
+  },
+  "image_style_keywords": [
+    "rich sensory details",
+    "vibrant colors and textures",
+    "synesthetic visuals",
+    "layered sensations",
+    "immersive experience",
+    "heightened perception"
+  ]
+}
