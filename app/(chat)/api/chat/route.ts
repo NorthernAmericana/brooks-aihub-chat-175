@@ -397,8 +397,14 @@ export async function POST(request: Request) {
     // 3. For standalone MyCarMindATO: use exact route memories
     // 4. For other agents: use all user memories
     let approvedMemories;
-    if (isMyCarMindProject || isBrooksBearsProject) {
-      // Project-level memory sharing for subroutes
+    if (isMyCarMindProject && projectRoute) {
+      // Project-level memory sharing for MyCarMindATO subroutes
+      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+        userId: session.user.id,
+        projectRoute,
+      });
+    } else if (isBrooksBearsProject && projectRoute) {
+      // Project-level memory sharing for BrooksBears subroutes
       approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
         userId: session.user.id,
         projectRoute,
