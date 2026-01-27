@@ -174,6 +174,24 @@ The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to
 - Purpose: Helps AI agents recommend appropriate storage solutions
 - See `/docs/myflowerai/inventory-management.md` for complete documentation
 
+##### `use_cases` (optional, added in v1.4)
+- Type: `object`
+- Public generic use case tags for strain guidance (NON-MEDICAL)
+- **NOTE**: This is PUBLIC data with generic tags, NOT personalized recommendations
+- Fields:
+  - `best_for_tags`: Array of generic, non-medical use case tags (e.g., `["creative", "social", "daytime", "relaxation", "focus", "outdoor_activities"]`)
+  - `avoid_if_tags`: Array of generic caution tags (non-medical) (e.g., `["too_strong_for_newbies", "intense_effects", "may_cause_drowsiness"]`)
+- Purpose: Provides generic guidance on common use patterns and considerations
+- **CRITICAL**: These are NOT personalized medical recommendations. Personal user preferences go in PRIVATE `personal_fit` table
+- Example:
+  ```json
+  "use_cases": {
+    "best_for_tags": ["creative", "social", "daytime", "relaxation"],
+    "avoid_if_tags": ["too_strong_for_newbies", "intense_effects"]
+  }
+  ```
+- See `/docs/myflowerai/personal-fit.md` for personal fit tracking and the distinction between public use cases and private personal fit data
+
 #### Removed Fields (from v1.0)
 
 The following fields are **removed** in v1.1 as they contain private/purchase metadata:
@@ -199,13 +217,18 @@ The following fields are **explicitly prohibited** in public strain files to mai
 8. **`purchase_date`**: Date of purchase - PRIVACY VIOLATION
 9. **`purchase_location`**: Store address or GPS coordinates - PRIVACY VIOLATION
 10. **`user_stash_amount`**: User's stash amount - PRIVACY VIOLATION
-11. Any field containing personally identifying information
-12. Any field containing user consumption history
-13. Any field containing exact purchase or inventory amounts
+11. **`personal_fit`**: Per-user fit data - PRIVACY VIOLATION (belongs in private personal_fit table)
+12. **`rating_1to10`**: User-specific rating - PRIVACY VIOLATION (belongs in private personal_fit table)
+13. **`repeat_probability`**: User-specific reuse likelihood - PRIVACY VIOLATION (belongs in private personal_fit table)
+14. Any field containing personally identifying information
+15. Any field containing user consumption history
+16. Any field containing exact purchase or inventory amounts
+17. Any field containing personalized medical advice or recommendations
 
 **Note**: 
 - User session data must be stored in private per-user storage (Supabase, local encrypted, or private namespace). See `/docs/myflowerai/session-logging.md` for proper session logging implementation.
 - User inventory data must be stored in private per-user storage. See `/docs/myflowerai/inventory-management.md` for proper inventory tracking implementation.
+- User personal fit data must be stored in private per-user storage. See `/docs/myflowerai/personal-fit.md` for proper personal fit tracking implementation.
 
 The validation script will automatically reject any strain file containing these prohibited fields.
 

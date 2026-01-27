@@ -1,9 +1,103 @@
 {
-  "id": "a1b2c3d4-186f-4358-8e7f-14ecd08580ff",
-  "prevId": "dbec80a8-186f-4358-8e7f-14ecd08580ff",
+  "id": "87046126-f550-4dab-942e-4b503874b6d2",
+  "prevId": "5c5532bc-7dae-446f-93f8-d1185d0d2af3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.AtoFile": {
+      "name": "AtoFile",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "atoId": {
+          "name": "atoId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerUserId": {
+          "name": "ownerUserId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blobUrl": {
+          "name": "blobUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blobPathname": {
+          "name": "blobPathname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contentType": {
+          "name": "contentType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "AtoFile_atoId_UnofficialAto_id_fk": {
+          "name": "AtoFile_atoId_UnofficialAto_id_fk",
+          "tableFrom": "AtoFile",
+          "tableTo": "UnofficialAto",
+          "columnsFrom": [
+            "atoId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "AtoFile_ownerUserId_User_id_fk": {
+          "name": "AtoFile_ownerUserId_User_id_fk",
+          "tableFrom": "AtoFile",
+          "tableTo": "User",
+          "columnsFrom": [
+            "ownerUserId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "public.Chat": {
       "name": "Chat",
       "schema": "",
@@ -72,8 +166,12 @@
           "name": "Chat_userId_User_id_fk",
           "tableFrom": "Chat",
           "tableTo": "User",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -130,8 +228,12 @@
           "name": "Document_userId_User_id_fk",
           "tableFrom": "Document",
           "tableTo": "User",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -139,7 +241,10 @@
       "compositePrimaryKeys": {
         "Document_id_createdAt_pk": {
           "name": "Document_id_createdAt_pk",
-          "columns": ["id", "createdAt"]
+          "columns": [
+            "id",
+            "createdAt"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -199,8 +304,12 @@
           "name": "Entitlement_userId_User_id_fk",
           "tableFrom": "Entitlement",
           "tableTo": "User",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -328,8 +437,12 @@
           "name": "Memory_ownerId_User_id_fk",
           "tableFrom": "Memory",
           "tableTo": "User",
-          "columnsFrom": ["ownerId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ownerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -385,8 +498,12 @@
           "name": "Message_v2_chatId_Chat_id_fk",
           "tableFrom": "Message_v2",
           "tableTo": "Chat",
-          "columnsFrom": ["chatId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -436,14 +553,141 @@
           "name": "Message_chatId_Chat_id_fk",
           "tableFrom": "Message",
           "tableTo": "Chat",
-          "columnsFrom": ["chatId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
+    },
+    "public.personal_fit": {
+      "name": "personal_fit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1.0'"
+        },
+        "personal_fit_id": {
+          "name": "personal_fit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "strain_id": {
+          "name": "strain_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_location": {
+          "name": "storage_location",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'database_user_private'"
+        },
+        "user_consent": {
+          "name": "user_consent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "rating_1to10": {
+          "name": "rating_1to10",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "best_for": {
+          "name": "best_for",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avoid_for": {
+          "name": "avoid_for",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeat_probability_0to1": {
+          "name": "repeat_probability_0to1",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "personal_fit_user_id_User_id_fk": {
+          "name": "personal_fit_user_id_User_id_fk",
+          "tableFrom": "personal_fit",
+          "tableTo": "User",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "personal_fit_personal_fit_id_unique": {
+          "name": "personal_fit_personal_fit_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "personal_fit_id"
+          ]
+        }
+      }
     },
     "public.Redemption": {
       "name": "Redemption",
@@ -482,8 +726,12 @@
           "name": "Redemption_codeId_RedemptionCode_id_fk",
           "tableFrom": "Redemption",
           "tableTo": "RedemptionCode",
-          "columnsFrom": ["codeId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "codeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -491,8 +739,12 @@
           "name": "Redemption_userId_User_id_fk",
           "tableFrom": "Redemption",
           "tableTo": "User",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -571,7 +823,9 @@
         "RedemptionCode_code_unique": {
           "name": "RedemptionCode_code_unique",
           "nullsNotDistinct": false,
-          "columns": ["code"]
+          "columns": [
+            "code"
+          ]
         }
       }
     },
@@ -605,8 +859,12 @@
           "name": "Stream_chatId_Chat_id_fk",
           "tableFrom": "Stream",
           "tableTo": "Chat",
-          "columnsFrom": ["chatId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -614,7 +872,9 @@
       "compositePrimaryKeys": {
         "Stream_id_pk": {
           "name": "Stream_id_pk",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -686,8 +946,12 @@
           "name": "Suggestion_userId_User_id_fk",
           "tableFrom": "Suggestion",
           "tableTo": "User",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -695,8 +959,14 @@
           "name": "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk",
           "tableFrom": "Suggestion",
           "tableTo": "Document",
-          "columnsFrom": ["documentId", "documentCreatedAt"],
-          "columnsTo": ["id", "createdAt"],
+          "columnsFrom": [
+            "documentId",
+            "documentCreatedAt"
+          ],
+          "columnsTo": [
+            "id",
+            "createdAt"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -704,165 +974,9 @@
       "compositePrimaryKeys": {
         "Suggestion_id_pk": {
           "name": "Suggestion_id_pk",
-          "columns": ["id"]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.User": {
-      "name": "User",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "password": {
-          "name": "password",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stripeCustomerId": {
-          "name": "stripeCustomerId",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stripeSubscriptionId": {
-          "name": "stripeSubscriptionId",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "foundersAccess": {
-          "name": "foundersAccess",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "foundersAccessGrantedAt": {
-          "name": "foundersAccessGrantedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.Vote_v2": {
-      "name": "Vote_v2",
-      "schema": "",
-      "columns": {
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messageId": {
-          "name": "messageId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "isUpvoted": {
-          "name": "isUpvoted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Vote_v2_chatId_Chat_id_fk": {
-          "name": "Vote_v2_chatId_Chat_id_fk",
-          "tableFrom": "Vote_v2",
-          "tableTo": "Chat",
-          "columnsFrom": ["chatId"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "Vote_v2_messageId_Message_v2_id_fk": {
-          "name": "Vote_v2_messageId_Message_v2_id_fk",
-          "tableFrom": "Vote_v2",
-          "tableTo": "Message_v2",
-          "columnsFrom": ["messageId"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Vote_v2_chatId_messageId_pk": {
-          "name": "Vote_v2_chatId_messageId_pk",
-          "columns": ["chatId", "messageId"]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.Vote": {
-      "name": "Vote",
-      "schema": "",
-      "columns": {
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messageId": {
-          "name": "messageId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "isUpvoted": {
-          "name": "isUpvoted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Vote_chatId_Chat_id_fk": {
-          "name": "Vote_chatId_Chat_id_fk",
-          "tableFrom": "Vote",
-          "tableTo": "Chat",
-          "columnsFrom": ["chatId"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "Vote_messageId_Message_id_fk": {
-          "name": "Vote_messageId_Message_id_fk",
-          "tableFrom": "Vote",
-          "tableTo": "Message",
-          "columnsFrom": ["messageId"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Vote_chatId_messageId_pk": {
-          "name": "Vote_chatId_messageId_pk",
-          "columns": ["chatId", "messageId"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -981,8 +1095,12 @@
           "name": "UnofficialAto_ownerUserId_User_id_fk",
           "tableFrom": "UnofficialAto",
           "tableTo": "User",
-          "columnsFrom": ["ownerUserId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ownerUserId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -990,8 +1108,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.AtoFile": {
-      "name": "AtoFile",
+    "public.User": {
+      "name": "User",
       "schema": "",
       "columns": {
         "id": {
@@ -1001,51 +1119,158 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "atoId": {
-          "name": "atoId",
+        "email": {
+          "name": "email",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripeCustomerId": {
+          "name": "stripeCustomerId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripeSubscriptionId": {
+          "name": "stripeSubscriptionId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "foundersAccess": {
+          "name": "foundersAccess",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "foundersAccessGrantedAt": {
+          "name": "foundersAccessGrantedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.user_inventory": {
+      "name": "user_inventory",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "ownerUserId": {
-          "name": "ownerUserId",
+        "schema_version": {
+          "name": "schema_version",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1.0'"
+        },
+        "inventory_id": {
+          "name": "inventory_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
-        "filename": {
-          "name": "filename",
-          "type": "text",
+        "strain_id": {
+          "name": "strain_id",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "blobUrl": {
-          "name": "blobUrl",
-          "type": "text",
+        "storage_location": {
+          "name": "storage_location",
+          "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'database_user_private'"
         },
-        "blobPathname": {
-          "name": "blobPathname",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "contentType": {
-          "name": "contentType",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "enabled": {
-          "name": "enabled",
+        "user_consent": {
+          "name": "user_consent",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
-        "createdAt": {
-          "name": "createdAt",
+        "acquired_month": {
+          "name": "acquired_month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opened": {
+          "name": "opened",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "remaining_estimate": {
+          "name": "remaining_estimate",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage_type": {
+          "name": "storage_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_humidipack": {
+          "name": "has_humidipack",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage_location_type": {
+          "name": "storage_location_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quality_notes": {
+          "name": "quality_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1054,26 +1279,262 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "AtoFile_atoId_UnofficialAto_id_fk": {
-          "name": "AtoFile_atoId_UnofficialAto_id_fk",
-          "tableFrom": "AtoFile",
-          "tableTo": "UnofficialAto",
-          "columnsFrom": ["atoId"],
-          "columnsTo": ["id"],
+        "user_inventory_user_id_User_id_fk": {
+          "name": "user_inventory_user_id_User_id_fk",
+          "tableFrom": "user_inventory",
+          "tableTo": "User",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_inventory_inventory_id_unique": {
+          "name": "user_inventory_inventory_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "inventory_id"
+          ]
+        }
+      }
+    },
+    "public.UserLocation": {
+      "name": "UserLocation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "route": {
+          "name": "route",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locationType": {
+          "name": "locationType",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rawText": {
+          "name": "rawText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalizedText": {
+          "name": "normalizedText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isApproved": {
+          "name": "isApproved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "approvedAt": {
+          "name": "approvedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "UserLocation_ownerId_User_id_fk": {
+          "name": "UserLocation_ownerId_User_id_fk",
+          "tableFrom": "UserLocation",
+          "tableTo": "User",
+          "columnsFrom": [
+            "ownerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "AtoFile_ownerUserId_User_id_fk": {
-          "name": "AtoFile_ownerUserId_User_id_fk",
-          "tableFrom": "AtoFile",
-          "tableTo": "User",
-          "columnsFrom": ["ownerUserId"],
-          "columnsTo": ["id"],
+        "UserLocation_chatId_Chat_id_fk": {
+          "name": "UserLocation_chatId_Chat_id_fk",
+          "tableFrom": "UserLocation",
+          "tableTo": "Chat",
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.Vote_v2": {
+      "name": "Vote_v2",
+      "schema": "",
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Vote_v2_chatId_Chat_id_fk": {
+          "name": "Vote_v2_chatId_Chat_id_fk",
+          "tableFrom": "Vote_v2",
+          "tableTo": "Chat",
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Vote_v2_messageId_Message_v2_id_fk": {
+          "name": "Vote_v2_messageId_Message_v2_id_fk",
+          "tableFrom": "Vote_v2",
+          "tableTo": "Message_v2",
+          "columnsFrom": [
+            "messageId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Vote_v2_chatId_messageId_pk": {
+          "name": "Vote_v2_chatId_messageId_pk",
+          "columns": [
+            "chatId",
+            "messageId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.Vote": {
+      "name": "Vote",
+      "schema": "",
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Vote_chatId_Chat_id_fk": {
+          "name": "Vote_chatId_Chat_id_fk",
+          "tableFrom": "Vote",
+          "tableTo": "Chat",
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Vote_messageId_Message_id_fk": {
+          "name": "Vote_messageId_Message_id_fk",
+          "tableFrom": "Vote",
+          "tableTo": "Message",
+          "columnsFrom": [
+            "messageId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Vote_chatId_messageId_pk": {
+          "name": "Vote_chatId_messageId_pk",
+          "columns": [
+            "chatId",
+            "messageId"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     }
   },

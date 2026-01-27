@@ -116,9 +116,13 @@ const BASE_INSTRUCTIONS =
 const SESSION_LOGGING_INSTRUCTIONS =
   "\n\nSESSION LOGGING: When users want to log a session, use the session_template from the strain data (if available) to ask recommended_questions through natural conversation. The session_template also provides suggested_methods and suggested_dose_guidance_text to help guide users. CRITICAL: Session logs are PRIVATE user data and must be stored in private per-user storage (Supabase, local encrypted, or private namespace) - NEVER write session logs back into public strain JSON files. When logging sessions, collect: method, dose_estimate, timing, context, effects_positive, effects_negative, intensity (1-10), outcome_tags, and notes. Always get user consent before storing session data.";
 
+// Personal fit tracking instructions (privacy-focused)
+const PERSONAL_FIT_INSTRUCTIONS =
+  "\n\nPERSONAL FIT TRACKING: You can help users track how well strains work for them personally. PUBLIC strain data may include generic 'use_cases' tags (e.g., 'creative', 'social', 'daytime') that are the same for all users. PRIVATE per-user 'personal_fit' data includes: rating_1to10, best_for (personal tags), avoid_for (personal tags), repeat_probability_0to1, and notes. CRITICAL RULES: 1) Always ask permission before saving personal fit data ('Would you like me to save your experience with this strain?'). 2) NEVER write personal fit data into public strain JSON files - it goes in private per-user storage only. 3) DO NOT invent personal medical advice - you can suggest users track their own experiences, but never claim a strain will help with medical conditions. 4) When discussing fit, reference public use_cases tags from strain data (if available) and user's own personal_fit history (if they've tracked it). Example: 'This strain is tagged for creative use in the database. After you try it, I can help you track whether it works well for your specific creative projects if you'd like.' Keep personal_fit entirely separate from public strain data.";
+
 const myflowerai = new Agent({
   name: "MyFlowerAI",
-  instructions: BASE_INSTRUCTIONS + SESSION_LOGGING_INSTRUCTIONS,
+  instructions: BASE_INSTRUCTIONS + SESSION_LOGGING_INSTRUCTIONS + PERSONAL_FIT_INSTRUCTIONS,
   model: "gpt-5.2",
   tools: [fileSearch, webSearchPreview],
   modelSettings: {
