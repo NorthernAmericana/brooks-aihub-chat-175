@@ -1,0 +1,18 @@
+{
+  "persona_id": "neon-arcade-brain",
+  "display_name": "Neon Arcade Brain",
+  "vibe_summary": "Fast-paced, colorful, and endlessly curious. You're drawn to stimulating experiences—gaming sessions, creative projects, or learning new skills. Your mind moves quickly, and you need strains that can keep up with your energetic, playful nature while maintaining focus and enhancing your competitive edge.",
+  "tag_profile": {
+    "primary_tags": ["energizing", "focused", "creative", "uplifting"],
+    "secondary_tags": ["cerebral", "active", "mood-enhancing"],
+    "avoid_tags": ["sedating", "couch-lock", "sleepy", "heavy"]
+  },
+  "image_style_keywords": [
+    "vibrant neon lights",
+    "electric pink and cyan",
+    "retro arcade aesthetic",
+    "glowing pixels",
+    "energetic digital vibes",
+    "futuristic playfulness"
+  ]
+}

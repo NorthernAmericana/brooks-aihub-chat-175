@@ -1,0 +1,18 @@
+{
+  "persona_id": "golden-hour-optimist",
+  "display_name": "Golden Hour Optimist",
+  "vibe_summary": "You're all about those warm, uplifting vibes. Like the perfect sunset glow, you bring positive energy wherever you go. You thrive during transitions—morning coffee creativity or evening wind-down moments. Your ideal strains enhance mood, inspire gratitude, and help you see the beauty in everyday moments.",
+  "tag_profile": {
+    "primary_tags": ["uplifting", "mood-enhancing", "energizing", "creative"],
+    "secondary_tags": ["social", "focused", "balanced"],
+    "avoid_tags": ["heavy-sedation", "couch-lock"]
+  },
+  "image_style_keywords": [
+    "warm golden light",
+    "sunset glow",
+    "soft orange and yellow tones",
+    "hopeful atmosphere",
+    "gentle rays of light",
+    "peaceful optimism"
+  ]
+}

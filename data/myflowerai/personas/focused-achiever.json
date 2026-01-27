@@ -1,0 +1,18 @@
+{
+  "persona_id": "focused-achiever",
+  "display_name": "Focused Achiever",
+  "vibe_summary": "Goals, tasks, productivity—you thrive on accomplishment. Whether tackling work projects, organizing your space, or checking off your to-do list, you seek strains that enhance focus and motivation without causing anxiety or distraction. Your ideal experience is clear-headed productivity with just enough enhancement to make tasks enjoyable.",
+  "tag_profile": {
+    "primary_tags": ["focused", "energizing", "motivated", "clear-headed"],
+    "secondary_tags": ["uplifting", "active", "cerebral"],
+    "avoid_tags": ["foggy", "confused", "couch-lock", "unmotivated"]
+  },
+  "image_style_keywords": [
+    "clean workspace",
+    "bright focused light",
+    "organized efficiency",
+    "sharp clarity",
+    "productive atmosphere",
+    "energetic momentum"
+  ]
+}

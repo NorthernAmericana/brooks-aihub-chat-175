@@ -1,0 +1,18 @@
+{
+  "persona_id": "creative-fire",
+  "display_name": "Creative Fire",
+  "vibe_summary": "Art, music, writing, design—you're driven by creative expression. You seek that perfect mental state where ideas flow freely and inspiration strikes. Your ideal strains unlock creative thinking, enhance artistic perception, and help you access that elusive flow state where time disappears and masterpieces emerge.",
+  "tag_profile": {
+    "primary_tags": ["creative", "inspiring", "focused", "cerebral"],
+    "secondary_tags": ["uplifting", "energizing", "mood-enhancing"],
+    "avoid_tags": ["foggy", "confused", "lethargic", "unmotivated"]
+  },
+  "image_style_keywords": [
+    "artistic studio lighting",
+    "splashes of color",
+    "creative chaos",
+    "inspired energy",
+    "flowing paint and ideas",
+    "vibrant artistic expression"
+  ]
+}

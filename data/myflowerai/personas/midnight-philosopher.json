@@ -1,0 +1,18 @@
+{
+  "persona_id": "midnight-philosopher",
+  "display_name": "Midnight Philosopher",
+  "vibe_summary": "Deep thoughts, deep nights. You're drawn to introspective moments when the world quiets down. Whether pondering life's mysteries or having profound conversations, you seek strains that encourage contemplation without overwhelming sedation. Perfect for late-night journaling, meaningful dialogue, or simply sitting with your thoughts.",
+  "tag_profile": {
+    "primary_tags": ["relaxing", "creative", "introspective", "focused"],
+    "secondary_tags": ["cerebral", "mood-enhancing", "calming"],
+    "avoid_tags": ["high-energy", "racy", "anxious"]
+  },
+  "image_style_keywords": [
+    "deep blue night sky",
+    "starlight",
+    "candlelit room",
+    "contemplative mood",
+    "moonlit shadows",
+    "quiet wisdom"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "persona_id": "forest-wanderer",
+  "display_name": "Forest Wanderer",
+  "vibe_summary": "Nature is your sanctuary. You crave the earthy, grounding experience that comes from connecting with the outdoors. Hiking trails, camping trips, or simply tending to your garden—you seek strains that enhance your appreciation for nature's beauty while keeping you active and present in the moment.",
+  "tag_profile": {
+    "primary_tags": ["active", "adventurous", "earthy", "grounding"],
+    "secondary_tags": ["uplifting", "focused", "energizing"],
+    "avoid_tags": ["couch-lock", "heavy-sedation", "sleepy"]
+  },
+  "image_style_keywords": [
+    "lush green forest",
+    "dappled sunlight through trees",
+    "moss-covered paths",
+    "natural earth tones",
+    "woodland atmosphere",
+    "organic textures"
+  ]
+}
