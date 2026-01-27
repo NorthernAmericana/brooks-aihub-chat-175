@@ -48,6 +48,28 @@ const inventory = UserInventorySchemaV1_0.parse(data);
 
 **Documentation**: See `/docs/myflowerai/inventory-management.md` for complete documentation.
 
+### Personal Fit Schema v1.0
+**File**: `personal-fit-v1.schema.json`
+
+**Purpose**: Defines the structure for PRIVATE per-user personal fit tracking. This data tracks how well a specific strain works for an individual user, including ratings, personal use case tags, and preferences.
+
+**Storage**: Personal fit records MUST be stored in private per-user storage:
+- Supabase user-private tables (recommended)
+- Local encrypted storage
+- Private JSON namespace (not committed to repo)
+
+**Privacy**: Personal fit records contain user preferences and personal usage patterns. They must NEVER be stored in public strain JSON files. This is separate from public `use_cases` tags in strain data.
+
+**Usage**:
+```typescript
+import { PersonalFitSchemaV1_0 } from '@/lib/validation/personal-fit-schema';
+
+// Validate a personal fit record
+const personalFit = PersonalFitSchemaV1_0.parse(data);
+```
+
+**Documentation**: See `/docs/myflowerai/personal-fit.md` for complete documentation.
+
 ---
 
 ## Schema Validation

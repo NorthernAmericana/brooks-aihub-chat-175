@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.com/schemas/myflowerai/personal-fit-v1.schema.json",
+  "title": "MyFlowerAI Personal Fit Schema v1.0",
+  "description": "Schema for PRIVATE per-user personal fit tracking. This data tracks how well a specific strain works for an individual user. This data MUST be stored in per-user private storage (Supabase with RLS, local encrypted, or private namespace). NEVER commit personal fit data to public repository or strain JSON files.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "personal_fit_id",
+    "strain_id",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version identifier"
+    },
+    "personal_fit_id": {
+      "type": "string",
+      "description": "Unique identifier for this personal fit record (UUID recommended)"
+    },
+    "strain_id": {
+      "type": "string",
+      "description": "Reference to public strain data ID"
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["storage_location", "user_consent"],
+      "properties": {
+        "storage_location": {
+          "type": "string",
+          "enum": ["database_user_private", "local_encrypted", "private_namespace"],
+          "description": "Where this personal fit data is stored"
+        },
+        "user_consent": {
+          "type": "boolean",
+          "description": "Whether user has consented to personal fit tracking"
+        }
+      }
+    },
+    "rating_1to10": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "User's overall rating of how well this strain works for them (1 = not good, 10 = perfect fit)"
+    },
+    "best_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User's personal tags for what this strain works best for them (e.g., 'morning creativity', 'evening relaxation', 'social events')"
+    },
+    "avoid_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User's personal tags for situations to avoid this strain (e.g., 'work meetings', 'mornings', 'when anxious')"
+    },
+    "repeat_probability_0to1": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability that user would use this strain again (0 = never, 1 = definitely)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Freeform personal notes about fit and preferences"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this personal fit record was created (ISO 8601)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this personal fit record was last updated (ISO 8601)"
+    }
+  }
+}

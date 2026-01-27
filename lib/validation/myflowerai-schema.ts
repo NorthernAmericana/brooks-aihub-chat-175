@@ -161,6 +161,20 @@ const MeaningSchema = z.object({
     ),
 });
 
+// Use cases section (v1.4+) - Generic, non-medical use guidance
+const UseCasesSchema = z.object({
+  best_for_tags: z
+    .array(z.string())
+    .describe(
+      "Generic use case tags (non-medical): creative, social, daytime, nighttime, relaxation, focus, etc."
+    ),
+  avoid_if_tags: z
+    .array(z.string())
+    .describe(
+      "Generic caution tags (non-medical): too_strong_for_newbies, intense_effects, etc."
+    ),
+});
+
 // Visibility metadata
 const VisibilitySchema = z.object({
   client_safe: z.literal(true),
@@ -188,6 +202,7 @@ export const MyFlowerAIStrainSchemaV1_1 = z.object({
   freshness_guidance: FreshnessGuidanceSchema.optional(),
   packaging: PackagingSchema.optional(),
   meaning: MeaningSchema.optional(),
+  use_cases: UseCasesSchema.optional(),
 });
 
 export type MyFlowerAIStrainV1_1 = z.infer<typeof MyFlowerAIStrainSchemaV1_1>;

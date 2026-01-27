@@ -346,3 +346,33 @@ export const userInventory = pgTable("user_inventory", {
 });
 
 export type UserInventory = InferSelectModel<typeof userInventory>;
+
+// Personal Fit table for privacy-safe personal strain fit tracking
+// See: /docs/myflowerai/personal-fit.md
+export const personalFit = pgTable("personal_fit", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  personalFitId: uuid("personal_fit_id").notNull().unique().defaultRandom(),
+  strainId: varchar("strain_id", { length: 255 }).notNull(),
+  
+  // Privacy metadata
+  storageLocation: varchar("storage_location", { length: 50 })
+    .notNull()
+    .default("database_user_private"),
+  userConsent: boolean("user_consent").notNull().default(false),
+  
+  // Personal fit details
+  rating1to10: varchar("rating_1to10", { length: 10 }), // Stored as string to allow null/optional
+  bestFor: text("best_for").array(), // User's personal tags for what this works best for
+  avoidFor: text("avoid_for").array(), // User's personal tags for when to avoid
+  repeatProbability0to1: varchar("repeat_probability_0to1", { length: 10 }), // Stored as string to allow null/optional
+  notes: text("notes"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type PersonalFit = InferSelectModel<typeof personalFit>;
