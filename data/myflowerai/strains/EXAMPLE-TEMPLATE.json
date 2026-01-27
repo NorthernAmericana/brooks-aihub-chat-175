@@ -30,6 +30,16 @@
     "sku": "SKU123",
     "in_stock": true
   },
+  "normalized": {
+    "canonical_strain_name": "example strain",
+    "canonical_brand": "example brand",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "98bcf39df3220fe1",
+      "product_key": "5caa5d6a01419629"
+    }
+  },
   "stats": {
     "total_thc_percent": 25,
     "total_cbd_percent": 0.5,

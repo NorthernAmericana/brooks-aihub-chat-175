@@ -207,5 +207,15 @@
       "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
       "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
     ]
+  },
+  "normalized": {
+    "canonical_strain_name": "white sunshine",
+    "canonical_brand": "sunshine cannabis",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "a5cf1b087d554dc2",
+      "product_key": "7960325b6402e35e"
+    }
   }
 }
