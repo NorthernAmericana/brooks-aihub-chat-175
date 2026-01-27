@@ -21,10 +21,7 @@ export async function POST(request: NextRequest) {
     const progress = body?.progress;
 
     if (typeof productId !== "string" || !allowedProducts.has(productId)) {
-      return NextResponse.json(
-        { error: "Invalid productId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid productId" }, { status: 400 });
     }
 
     if (!progress || typeof progress !== "object") {

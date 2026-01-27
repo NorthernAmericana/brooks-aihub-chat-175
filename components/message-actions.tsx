@@ -7,7 +7,13 @@ import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, SpeakerIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import {
+  CopyIcon,
+  PencilEditIcon,
+  SpeakerIcon,
+  ThumbDownIcon,
+  ThumbUpIcon,
+} from "./icons";
 
 export function PureMessageActions({
   chatId,
@@ -115,7 +121,7 @@ export function PureMessageActions({
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
-      
+
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -127,7 +133,7 @@ export function PureMessageActions({
         setIsPlaying(false);
         audioRef.current = null;
       });
-      
+
       audio.addEventListener("error", () => {
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
@@ -186,10 +192,10 @@ export function PureMessageActions({
         <CopyIcon />
       </Action>
 
-      <Action 
-        onClick={handleSpeak} 
-        tooltip={isPlaying ? "Stop playback" : "Read aloud"}
+      <Action
         data-testid="message-speak"
+        onClick={handleSpeak}
+        tooltip={isPlaying ? "Stop playback" : "Read aloud"}
       >
         <SpeakerIcon />
       </Action>

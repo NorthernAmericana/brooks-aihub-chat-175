@@ -29,6 +29,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import { useEntitlements } from "@/hooks/use-entitlements";
 import {
   getAgentConfigById,
   getAgentConfigBySlash,
@@ -38,7 +39,6 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import { useEntitlements } from "@/hooks/use-entitlements";
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher } from "@/lib/utils";
@@ -240,7 +240,9 @@ function PureMultimodalInput({
     atoId ? `/api/ato/${atoId}` : null,
     fetcher
   );
-  const canUploadFiles = atoId ? Boolean(atoData?.ato?.fileSearchEnabled) : true;
+  const canUploadFiles = atoId
+    ? Boolean(atoData?.ato?.fileSearchEnabled)
+    : true;
   const isAtoUpload = Boolean(atoId);
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
@@ -299,7 +301,8 @@ function PureMultimodalInput({
       };
 
       mediaRecorder.onstop = async () => {
-        const rawType = supportedMimeType || audioChunks[0]?.type || "audio/webm";
+        const rawType =
+          supportedMimeType || audioChunks[0]?.type || "audio/webm";
         const normalizedType = rawType.split(";")[0] || "audio/webm";
         const audioBlob = new Blob(audioChunks, { type: normalizedType });
 
@@ -434,8 +437,7 @@ function PureMultimodalInput({
   ]);
 
   const isPdfFile = (file: File) =>
-    file.type === "application/pdf" ||
-    file.name.toLowerCase().endsWith(".pdf");
+    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   const isImageFile = (file: File) => file.type.startsWith("image/");
   const isVideoFile = (file: File) => file.type.startsWith("video/");
   const isChatMediaFile = (file: File) =>
@@ -466,7 +468,9 @@ function PureMultimodalInput({
           return;
         }
       } else if (!isChatMediaFile(file)) {
-        toast.error("Only images, videos, or PDFs are accepted in chat uploads.");
+        toast.error(
+          "Only images, videos, or PDFs are accepted in chat uploads."
+        );
         return;
       }
 
@@ -626,7 +630,9 @@ function PureMultimodalInput({
         return;
       }
 
-      const fileItems = Array.from(items).filter((item) => item.kind === "file");
+      const fileItems = Array.from(items).filter(
+        (item) => item.kind === "file"
+      );
 
       if (fileItems.length === 0) {
         return;
@@ -676,9 +682,7 @@ function PureMultimodalInput({
 
       <input
         accept={
-          isAtoUpload
-            ? "application/pdf"
-            : "image/*,video/*,application/pdf"
+          isAtoUpload ? "application/pdf" : "image/*,video/*,application/pdf"
         }
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         disabled={!canUploadFiles}
@@ -767,7 +771,8 @@ function PureMultimodalInput({
               onScroll={(event) => {
                 if (overlayRef.current) {
                   overlayRef.current.scrollTop = event.currentTarget.scrollTop;
-                  overlayRef.current.scrollLeft = event.currentTarget.scrollLeft;
+                  overlayRef.current.scrollLeft =
+                    event.currentTarget.scrollLeft;
                 }
               }}
               placeholder="Send a message..."

@@ -52,8 +52,7 @@
   --cloud-bg-end: hsl(332 88% 72%);
   --cloud-border: hsl(332 60% 76%);
   --cloud-shadow:
-    0 14px 32px rgba(246, 162, 190, 0.45),
-    0 6px 14px rgba(255, 198, 218, 0.35);
+    0 14px 32px rgba(246, 162, 190, 0.45), 0 6px 14px rgba(255, 198, 218, 0.35);
   --cloud-shadow-inner:
     inset 0 3px 10px rgba(255, 255, 255, 0.9),
     inset 0 -4px 12px rgba(246, 162, 190, 0.3);
@@ -100,8 +99,7 @@
   --cloud-bg-end: hsl(332 90% 64%);
   --cloud-border: hsl(332 65% 70%);
   --cloud-shadow:
-    0 16px 32px rgba(246, 144, 179, 0.55),
-    0 6px 16px rgba(255, 192, 214, 0.4);
+    0 16px 32px rgba(246, 144, 179, 0.55), 0 6px 16px rgba(255, 192, 214, 0.4);
   --cloud-shadow-inner:
     inset 0 3px 10px rgba(255, 255, 255, 0.7),
     inset 0 -5px 14px rgba(246, 144, 179, 0.35);

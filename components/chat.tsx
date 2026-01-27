@@ -23,8 +23,8 @@ import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
-import { getChatRouteKey } from "@/lib/voice";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { getChatRouteKey } from "@/lib/voice";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
@@ -250,13 +250,13 @@ export function Chat({
         <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
           {!isReadonly && (
             <MultimodalInput
+              atoId={atoId}
               attachments={attachments}
               chatId={id}
               chatRouteKey={initialRouteKey}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
-              atoId={atoId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}

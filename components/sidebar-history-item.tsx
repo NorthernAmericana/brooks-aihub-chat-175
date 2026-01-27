@@ -3,11 +3,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
-import {
-  getChatRouteKey,
-  getDefaultVoice,
-  getVoiceOptions,
-} from "@/lib/voice";
+import { getChatRouteKey, getDefaultVoice, getVoiceOptions } from "@/lib/voice";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -241,11 +237,13 @@ const PureChatItem = ({
                   <SelectItem value={defaultVoice.id}>
                     {defaultVoice.label} (Route official)
                   </SelectItem>
-                  {voiceOptions.filter(v => v.id !== defaultVoice.id).map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.label}
-                    </SelectItem>
-                  ))}
+                  {voiceOptions
+                    .filter((v) => v.id !== defaultVoice.id)
+                    .map((voice) => (
+                      <SelectItem key={voice.id} value={voice.id}>
+                        {voice.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

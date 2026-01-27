@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   Agent,
   type AgentInputItem,
@@ -5,8 +7,6 @@ import {
   Runner,
   withTrace,
 } from "@openai/agents";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type { ChatMessage } from "@/lib/types";
 
 // Configuration constants
@@ -196,7 +196,10 @@ const selectMatchingCities = (
 
 const formatCitySummary = (city: CityRecord) => {
   const subAreaNames =
-    city.sub_areas?.map((area) => area.name).filter(Boolean).slice(0, 4) ?? [];
+    city.sub_areas
+      ?.map((area) => area.name)
+      .filter(Boolean)
+      .slice(0, 4) ?? [];
   const vibeTags = city.identity_vibe_tags?.slice(0, 6) ?? [];
   const anchors = city.anchors?.slice(0, 2) ?? [];
   const travelLogic = city.travel_logic ?? {};

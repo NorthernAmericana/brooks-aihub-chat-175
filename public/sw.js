@@ -30,16 +30,18 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
       // Clean up old caches
-      caches.keys().then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => ![STATIC_CACHE, RUNTIME_CACHE].includes(key))
-            .map((key) => {
-              console.log("Deleting old cache:", key);
-              return caches.delete(key);
-            })
-        )
-      ),
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => ![STATIC_CACHE, RUNTIME_CACHE].includes(key))
+              .map((key) => {
+                console.log("Deleting old cache:", key);
+                return caches.delete(key);
+              })
+          )
+        ),
       self.clients.claim(),
     ])
   );
@@ -70,26 +72,24 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => {
           // Try to serve from static cache first, then runtime cache, then offline page
-          return caches
-            .match(request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Fallback to offline page
+            return caches.match("/offline").then((offlineResponse) => {
+              if (offlineResponse) {
+                return offlineResponse;
               }
-              // Fallback to offline page
-              return caches.match("/offline").then((offlineResponse) => {
-                if (offlineResponse) {
-                  return offlineResponse;
+              // If offline page is not cached, return a basic response
+              return new Response(
+                "<html><body><h1>Offline</h1><p>You are offline and this page is not cached.</p></body></html>",
+                {
+                  headers: { "Content-Type": "text/html" },
                 }
-                // If offline page is not cached, return a basic response
-                return new Response(
-                  "<html><body><h1>Offline</h1><p>You are offline and this page is not cached.</p></body></html>",
-                  {
-                    headers: { "Content-Type": "text/html" },
-                  }
-                );
-              });
+              );
             });
+          });
         })
     );
     return;

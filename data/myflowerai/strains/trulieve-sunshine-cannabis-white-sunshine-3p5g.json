@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "trulieve-sunshine-cannabis-white-sunshine-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "White Sunshine",
+    "type": "hybrid",
+    "brand": "Sunshine Cannabis",
+    "lineage": ["The White", "Sunshine Daydream"]
+  },
+  "product": {
+    "dispensary": "Trulieve",
+    "category": "flower",
+    "form": "3.5g Whole Flower",
+    "size_g": 3.5,
+    "sku": "24134_0007653191",
+    "in_stock": true
+  },
+  "stats": {
+    "total_thc_percent": 27.5,
+    "total_cbd_percent": 0.0573,
+    "total_cannabinoids_percent": 32,
+    "total_terpenes_percent": 1.89,
+    "top_terpenes": [
+      {
+        "name": "d-Limonene",
+        "percent": 0.466
+      },
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.325
+      },
+      {
+        "name": "beta-Myrcene",
+        "percent": 0.262
+      },
+      {
+        "name": "Linalool",
+        "percent": 0.233
+      },
+      {
+        "name": "alpha-Humulene",
+        "percent": 0.111
+      },
+      {
+        "name": "trans-Nerolidol",
+        "percent": 0.1
+      },
+      {
+        "name": "alpha-Bisabolol",
+        "percent": 0.0881
+      },
+      {
+        "name": "Fenchyl Alcohol",
+        "percent": 0.0719
+      },
+      {
+        "name": "(+)-Borneol",
+        "percent": 0.0562
+      },
+      {
+        "name": "alpha-Terpineol",
+        "percent": 0.0559
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 30.1,
+      "delta9_thc": 1.09,
+      "cbga": 0.624,
+      "cbg": 0.14,
+      "cbda": 0.0653,
+      "cbn": 0.00945,
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 1050,
+      "delta9_thc_mg": 38.2,
+      "cbga_mg": 21.8,
+      "cbg_mg": 4.9,
+      "cbda_mg": 2.29,
+      "cbn_mg": 0.331
+    }
+  },
+  "description": {
+    "dispensary_bio": "Beaming with sweet pine, gas, and skunky flavors, this loud hybrid lightens and brightens the mood with a blissful energy that shines from the first hit to the last.",
+    "vibes_like": [
+      "Finding your balance between sunrise and sunset",
+      "Blending easy calm with bright, balanced clarity",
+      "Transforming any time of day into the golden hour"
+    ],
+    "product_positioning": "Sunshine Cannabis Flower in the 3.5g size is beautifully cured whole buds in the perfect quantity for everyday enjoyment. Each vibrant strain is grown indoors with care, ensuring bright flavors and consistent quality you can count on. Enjoy freely and savor the sunshine in every session, knowing your flower was cultivated with dedication to freshness, flavor, and feel-good vibes.",
+    "brand_info": "Sunshine Cannabis, founded in 2013, is a multiple award-winning cannabis company and the first brand partner of Trulieve. Together, they provide Florida patients with legendary heirloom strains known for their rich flavors and carefully selected terpene profiles. Committed to delivering consistent, reliable, and potent effects, every product is tested by trusted third-party labs to ensure purity and quality."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Modern Canna (MCS)",
+    "laboratory_id": "KA02002-02",
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "SUNSHINE CANNABIS - Hybrid - Whole Flower",
+    "cultivar_on_coa": "White Sunshine",
+    "completed_at": "2026-01-07 10:40",
+    "received_at": "2026-01-02 16:20",
+    "sample_date": "2026-01-02",
+    "batch_date": "2025-12-29",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Quincy",
+    "processing_facility": "Midway",
+    "seed_to_sale_id": "6887460261079379",
+    "qa_sample_id": "4981079471478334",
+    "batch_size_g": 18795,
+    "units_sampled": 23,
+    "total_amt_sampled_g": 80.5
+  },
+  "tags": ["hybrid", "pine", "skunky", "uplifting", "daytime"],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  }
+}

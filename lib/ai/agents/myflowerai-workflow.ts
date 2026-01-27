@@ -1,3 +1,5 @@
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   Agent,
   type AgentInputItem,
@@ -6,20 +8,25 @@ import {
   webSearchTool,
   withTrace,
 } from "@openai/agents";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { OpenAI } from "@/lib/openai/client";
 import { z } from "zod";
+import { OpenAI } from "@/lib/openai/client";
 import type { ChatMessage } from "@/lib/types";
+import type { MyFlowerAIStrain } from "@/lib/validation/myflowerai-schema";
 
 // Configuration constants
 const VECTOR_STORE_ID = "vs_6974ec32d5048191b7cba6c11cc3efb2";
 const WORKFLOW_ID = "wf_6974ec1e5d348190a3ebd25e3984fb8903dfa08e21a58075";
-const STRAINS_FILE_PATH = path.join(
+const STRAINS_FILE_PATH_V1_0 = path.join(
   process.cwd(),
   "data",
   "myflowerai",
   "strains.ndjson"
+);
+const STRAINS_DIR_V1_1 = path.join(
+  process.cwd(),
+  "data",
+  "myflowerai",
+  "strains"
 );
 
 // Tool definitions
@@ -168,7 +175,37 @@ type StrainRecord = {
 };
 
 const loadStrains = async (): Promise<StrainRecord[]> => {
-  const fileContents = await readFile(STRAINS_FILE_PATH, "utf8");
+  try {
+    // Try loading v1.1 format (individual JSON files)
+    const files = await readdir(STRAINS_DIR_V1_1);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    if (jsonFiles.length > 0) {
+      const strains: StrainRecord[] = [];
+
+      for (const file of jsonFiles) {
+        const filepath = path.join(STRAINS_DIR_V1_1, file);
+        const contents = await readFile(filepath, "utf8");
+        const strain = JSON.parse(contents) as MyFlowerAIStrain;
+
+        // Convert to StrainRecord format (compatible with both v1.0 and v1.1)
+        strains.push({
+          id: strain.id,
+          strain: strain.strain,
+          stats: strain.stats,
+          description: strain.description,
+        });
+      }
+
+      return strains;
+    }
+  } catch (_error) {
+    // Fall back to v1.0 if v1.1 directory doesn't exist or is empty
+    console.log("Loading v1.0 format (fallback)");
+  }
+
+  // Fallback: Load v1.0 format (NDJSON)
+  const fileContents = await readFile(STRAINS_FILE_PATH_V1_0, "utf8");
   return fileContents
     .split(/\r?\n/)
     .map((line) => line.trim())
