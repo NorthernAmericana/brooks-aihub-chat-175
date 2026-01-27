@@ -127,6 +127,20 @@ const PackagingSchema = z.object({
     .describe("Whether a humidity control pack is recommended"),
 });
 
+// Meaning section (v1.3+)
+const MeaningSchema = z.object({
+  aroma_flavor_tags: z.array(z.string())
+    .describe("Aroma and flavor characteristics commonly associated with the terpene profile"),
+  effect_tags: z.array(z.string())
+    .describe("Effects commonly associated with the terpene and cannabinoid profile"),
+  dominant_terpenes: z.array(z.string())
+    .describe("Primary terpenes present above threshold levels"),
+  minor_cannabinoids_present: z.array(z.string())
+    .describe("Minor cannabinoids detected above threshold levels"),
+  disclaimers: z.array(z.string())
+    .describe("General disclaimers about the informational nature of these tags"),
+});
+
 // Visibility metadata
 const VisibilitySchema = z.object({
   client_safe: z.literal(true),
@@ -153,6 +167,7 @@ export const MyFlowerAIStrainSchemaV1_1 = z.object({
   session_template: SessionTemplateSchema.optional(),
   freshness_guidance: FreshnessGuidanceSchema.optional(),
   packaging: PackagingSchema.optional(),
+  meaning: MeaningSchema.optional(),
 });
 
 export type MyFlowerAIStrainV1_1 = z.infer<typeof MyFlowerAIStrainSchemaV1_1>;

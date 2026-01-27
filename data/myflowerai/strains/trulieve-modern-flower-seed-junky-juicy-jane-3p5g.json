@@ -17,7 +17,10 @@
     "name": "Juicy Jane",
     "type": "hybrid",
     "brand": "Modern Flower x Seed Junky",
-    "lineage": ["(Guava Gelato x Sherb bx1)", "Cap Junky"]
+    "lineage": [
+      "(Guava Gelato x Sherb bx1)",
+      "Cap Junky"
+    ]
   },
   "product": {
     "dispensary": "Trulieve",
@@ -126,7 +129,13 @@
     "units_sampled": 41,
     "total_amt_sampled_g": 143.5
   },
-  "tags": ["hybrid", "fruit-forward", "balanced", "social", "daytime"],
+  "tags": [
+    "hybrid",
+    "fruit-forward",
+    "balanced",
+    "social",
+    "daytime"
+  ],
   "your_notes": {
     "rating_1to10": null,
     "felt_like": [],
@@ -152,6 +161,52 @@
       "On a scale of 1-10, how intense was it?",
       "Did it work well for the situation?",
       "Would you choose Juicy Jane again for similar occasions?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "camphor-like",
+      "chamomile-like",
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lavender",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "stress-relief",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "limonene",
+      "caryophyllene",
+      "linalool"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
     ]
   }
 }

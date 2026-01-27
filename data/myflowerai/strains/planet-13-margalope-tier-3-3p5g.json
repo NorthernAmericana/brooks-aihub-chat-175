@@ -17,7 +17,10 @@
     "name": "Margalope Tier 3",
     "type": "sativa",
     "brand": "Planet 13",
-    "lineage": ["Chocolope", "Frozen Margy"]
+    "lineage": [
+      "Chocolope",
+      "Frozen Margy"
+    ]
   },
   "product": {
     "dispensary": "Planet 13",
@@ -123,7 +126,13 @@
     "units_sampled": null,
     "total_amt_sampled_g": null
   },
-  "tags": ["sativa", "gas", "fruit", "uplifting", "creative"],
+  "tags": [
+    "sativa",
+    "gas",
+    "fruit",
+    "uplifting",
+    "creative"
+  ],
   "your_notes": {
     "rating_1to10": null,
     "felt_like": [],
@@ -147,6 +156,48 @@
       "How would you rate the intensity on a scale of 1-10?",
       "Did this strain help you achieve your goals?",
       "Would you use Margalope again for similar situations?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "terpinolene",
+      "caryophyllene",
+      "ocimene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
     ]
   }
 }
