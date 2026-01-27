@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -213,6 +214,35 @@ export async function getApprovedMemoriesByUserIdAndRoute({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories by route"
+    );
+  }
+}
+
+export async function getApprovedMemoriesByUserIdAndProjectRoute({
+  userId,
+  projectRoute,
+}: {
+  userId: string;
+  projectRoute: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          // Match routes that start with the project route (e.g., /MyCarMindATO/)
+          sql`${memory.route} LIKE ${projectRoute + "%"}`
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories by project route"
     );
   }
 }

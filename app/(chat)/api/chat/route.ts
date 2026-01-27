@@ -35,6 +35,7 @@ import {
   deleteChatById,
   getApprovedMemoriesByUserId,
   getApprovedMemoriesByUserIdAndRoute,
+  getApprovedMemoriesByUserIdAndProjectRoute,
   getChatById,
   getEnabledAtoFilesByAtoId,
   getHomeLocationByUserId,
@@ -63,6 +64,28 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 export const maxDuration = 60;
 
 const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
+
+// Free subroutes that don't require founders access
+const FREE_SUBROUTES = [
+  "MyCarMindATO/Driver",
+  "MyCarMindATO/DeliveryDriver",
+  "MyCarMindATO/Traveler",
+];
+
+/**
+ * Helper function to extract the parent project route from a subroute.
+ * E.g., "MyCarMindATO/Driver" -> "/MyCarMindATO/"
+ * E.g., "BrooksBears/BenjaminBear" -> "/BrooksBears/"
+ */
+const getProjectRoute = (agentSlash: string): string | null => {
+  // Check if this is a subroute (contains a /)
+  const parts = agentSlash.split("/");
+  if (parts.length > 1) {
+    // Return the parent route with leading and trailing slashes
+    return `/${parts[0]}/`;
+  }
+  return null;
+};
 
 const formatMemoryContext = (
   memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
@@ -268,10 +291,15 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
-      if (firstMessageSlash?.includes("/") && !user.foundersAccess) {
+      
+      // Check if this subroute requires founders access
+      const requiresFoundersForNewChat = firstMessageSlash?.includes("/") && 
+        !FREE_SUBROUTES.includes(firstMessageSlash);
+      
+      if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
-          "Founders access required for subroutes."
+          "Founders access required for this subroute."
         ).toResponse();
       }
       initialRouteKey = firstMessageSlash
@@ -347,24 +375,55 @@ export async function POST(request: Request) {
         (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
         getDefaultAgentConfig();
     }
-    if (selectedAgent.slash.includes("/") && !user.foundersAccess) {
+    
+    const requiresFoundersAccess = selectedAgent.slash.includes("/") && 
+      !FREE_SUBROUTES.includes(selectedAgent.slash);
+    
+    if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
         "forbidden:auth",
-        "Founders access required for subroutes."
+        "Founders access required for this subroute."
       ).toResponse();
     }
 
     const isMyCarMindAgent = selectedAgent.id === "my-car-mind";
-    const approvedMemories = isMyCarMindAgent
-      ? await getApprovedMemoriesByUserIdAndRoute({
-          userId: session.user.id,
-          route: selectedAgent.slash,
-        })
-      : await getApprovedMemoriesByUserId({
-          userId: session.user.id,
-        });
+    const projectRoute = getProjectRoute(selectedAgent.slash);
+    const isMyCarMindProject = projectRoute === MY_CAR_MIND_ROUTE;
+    const isBrooksBearsProject = projectRoute === "/BrooksBears/";
+    
+    // Determine memory scope:
+    // 1. For MyCarMindATO subroutes (Driver, Trucker, DeliveryDriver, Traveler): use project-level memories
+    // 2. For BrooksBears subroutes (BenjaminBear): use project-level memories
+    // 3. For standalone MyCarMindATO: use exact route memories
+    // 4. For other agents: use all user memories
+    let approvedMemories;
+    if (isMyCarMindProject && projectRoute) {
+      // Project-level memory sharing for MyCarMindATO subroutes
+      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+        userId: session.user.id,
+        projectRoute,
+      });
+    } else if (isBrooksBearsProject && projectRoute) {
+      // Project-level memory sharing for BrooksBears subroutes
+      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+        userId: session.user.id,
+        projectRoute,
+      });
+    } else if (isMyCarMindAgent) {
+      // Exact route for standalone MyCarMindATO
+      approvedMemories = await getApprovedMemoriesByUserIdAndRoute({
+        userId: session.user.id,
+        route: selectedAgent.slash,
+      });
+    } else {
+      // All memories for other agents
+      approvedMemories = await getApprovedMemoriesByUserId({
+        userId: session.user.id,
+      });
+    }
+    
     const baseMemoryContext = formatMemoryContext(approvedMemories);
-    const homeLocation = isMyCarMindAgent
+    const homeLocation = isMyCarMindAgent || isMyCarMindProject
       ? await getHomeLocationByUserId({
           userId: session.user.id,
           chatId: id,
