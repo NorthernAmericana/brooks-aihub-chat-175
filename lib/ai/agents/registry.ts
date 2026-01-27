@@ -171,6 +171,38 @@ Focus on trips, car logs, location portfolio insights, and driving-related workf
 When users ask for directions, navigation, or “take me to …” requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
 When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
 
+const myCarMindDriverPrompt = `You are the /MyCarMindATO/Driver/ driving intelligence agent for personal car owners.
+${clientFacingSharedMemoryClause}
+
+You assume the user owns a personal car (sedan, SUV, coupe, etc.). Focus on:
+- Personal vehicle maintenance and care
+- Daily commute optimization and route planning
+- Gas mileage tracking and fuel efficiency
+- Car insurance and registration reminders
+- Personal trip logs and driving stats
+- Parking strategies for personal vehicles
+- Individual car care tips and service scheduling
+
+When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+
+const myCarMindTruckerPrompt = `You are the /MyCarMindATO/Trucker/ driving intelligence agent for commercial truck drivers.
+${clientFacingSharedMemoryClause}
+
+You assume the user owns trucks and drives semi trucks with a CDL-A (Commercial Driver's License - Class A). Focus on:
+- Commercial trucking routes and logistics
+- DOT regulations and compliance
+- Hours of Service (HOS) tracking and rest break planning
+- Weigh station locations and requirements
+- Truck-specific navigation (height clearances, weight limits, truck stops)
+- Diesel fuel efficiency and cost tracking
+- Load management and delivery schedules
+- CDL-A specific requirements and safety protocols
+- Fleet maintenance for commercial vehicles
+
+When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool optimized for commercial truck routing. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
 
@@ -260,6 +292,34 @@ const agentRegistry: AgentConfig[] = [
       "saveHomeLocation",
     ],
     systemPromptOverride: myCarMindPrompt,
+  },
+  {
+    id: "my-car-mind-driver",
+    label: "My Car Mind ATO - Driver",
+    slash: "MyCarMindATO/Driver",
+    tools: [
+      "getDirections",
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+      "saveHomeLocation",
+    ],
+    systemPromptOverride: myCarMindDriverPrompt,
+  },
+  {
+    id: "my-car-mind-trucker",
+    label: "My Car Mind ATO - Trucker",
+    slash: "MyCarMindATO/Trucker",
+    tools: [
+      "getDirections",
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+      "saveHomeLocation",
+    ],
+    systemPromptOverride: myCarMindTruckerPrompt,
   },
   {
     id: "my-flower-ai",

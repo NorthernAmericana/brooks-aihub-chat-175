@@ -25,6 +25,8 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "BrooksBears", foundersOnly: false },
       { slash: "BrooksBears/BenjaminBear", foundersOnly: true },
       { slash: "MyCarMindATO", foundersOnly: false },
+      { slash: "MyCarMindATO/Driver", foundersOnly: true },
+      { slash: "MyCarMindATO/Trucker", foundersOnly: true },
       { slash: "MyFlowerAI", foundersOnly: false },
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
       { slash: "NAT", foundersOnly: false },
