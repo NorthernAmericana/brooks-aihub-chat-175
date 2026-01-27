@@ -109,36 +109,56 @@ const YourNotesSchema = z.object({
 
 // Freshness guidance (v1.2+)
 const FreshnessGuidanceSchema = z.object({
-  best_storage: z.string()
+  best_storage: z
+    .string()
     .describe("General storage recommendations for optimal freshness"),
-  typical_shelf_life_days: z.number()
+  typical_shelf_life_days: z
+    .number()
     .describe("Expected shelf life in days under optimal storage conditions"),
-  notes: z.string().optional()
+  notes: z
+    .string()
+    .optional()
     .describe("Additional freshness notes and guidance"),
-  do_not_store_in_public: z.array(z.string())
-    .describe("Array of field names that should never be in public strain files"),
+  do_not_store_in_public: z
+    .array(z.string())
+    .describe(
+      "Array of field names that should never be in public strain files"
+    ),
 });
 
 // Packaging recommendations (v1.2+)
 const PackagingSchema = z.object({
-  container_type_suggestions: z.array(z.string())
+  container_type_suggestions: z
+    .array(z.string())
     .describe("Recommended container types for optimal storage"),
-  humidipack_recommended: z.boolean()
+  humidipack_recommended: z
+    .boolean()
     .describe("Whether a humidity control pack is recommended"),
 });
 
 // Meaning section (v1.3+)
 const MeaningSchema = z.object({
-  aroma_flavor_tags: z.array(z.string())
-    .describe("Aroma and flavor characteristics commonly associated with the terpene profile"),
-  effect_tags: z.array(z.string())
-    .describe("Effects commonly associated with the terpene and cannabinoid profile"),
-  dominant_terpenes: z.array(z.string())
+  aroma_flavor_tags: z
+    .array(z.string())
+    .describe(
+      "Aroma and flavor characteristics commonly associated with the terpene profile"
+    ),
+  effect_tags: z
+    .array(z.string())
+    .describe(
+      "Effects commonly associated with the terpene and cannabinoid profile"
+    ),
+  dominant_terpenes: z
+    .array(z.string())
     .describe("Primary terpenes present above threshold levels"),
-  minor_cannabinoids_present: z.array(z.string())
+  minor_cannabinoids_present: z
+    .array(z.string())
     .describe("Minor cannabinoids detected above threshold levels"),
-  disclaimers: z.array(z.string())
-    .describe("General disclaimers about the informational nature of these tags"),
+  disclaimers: z
+    .array(z.string())
+    .describe(
+      "General disclaimers about the informational nature of these tags"
+    ),
 });
 
 // Visibility metadata
