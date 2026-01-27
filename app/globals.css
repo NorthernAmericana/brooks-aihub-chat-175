@@ -623,3 +623,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ATO Store styles */
+@layer utilities {
+  .store-overlay {
+    animation: store-slide-in 0.3s ease-out;
+  }
+
+  .store-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(20, 13, 18, 0.95);
+  }
+
+  .store-app-card {
+    transition: all 0.2s ease;
+  }
+
+  .store-app-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(255, 255, 255, 0.05);
+  }
+
+  @keyframes store-slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}
