@@ -8,9 +8,10 @@ This directory contains data files used by the MyCarMindATO agent (`/MyCarMindAT
 
 A comprehensive JSON file containing information about cities that MyCarMindATO can provide information about. The agent uses this data to match user queries with city information and provide contextual travel assistance.
 
-**Season 1 Status**: Currently includes 6 real Florida cities with comprehensive data, plus additional test/placeholder cities. Season 1 is designed to have a focused set of well-researched cities (target: 7 cities max for Season 1).
+**Season 1 Status**: Maximum capacity of 200 cities. Currently includes 6 real Florida cities with comprehensive data, plus additional test/placeholder entries.
 
-**Current count**: 205 total entries in file (6 complete Florida cities + test data)
+**Current count**: 205 total entries in file (6 complete Florida cities + test/placeholder data)
+**Capacity**: 6/200 real cities (194 slots remaining)
 
 **Structure**: Each city entry contains:
 
@@ -28,13 +29,15 @@ A comprehensive JSON file containing information about cities that MyCarMindATO 
 - `notable_businesses` (array): Local businesses worth visiting (optional)
 - `place_taxonomy` (object): Categorized places (optional)
 
-**Season 1 Florida Cities** (complete, comprehensive data):
+**Season 1 Cities** (complete, comprehensive data):
 1. Pensacola, Florida (original)
 2. Jacksonville, Florida (added January 2026)
 3. Miami, Florida (added January 2026)
 4. Tampa, Florida (added January 2026)
 5. Orlando, Florida (added January 2026)
 6. St. Petersburg, Florida (added January 2026)
+
+**Note**: Pace/Milton/Avalon area to be added as the 7th entry.
 
 ## How City Data is Used
 

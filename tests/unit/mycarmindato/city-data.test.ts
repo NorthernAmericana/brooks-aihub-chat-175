@@ -115,21 +115,21 @@ async function runTests() {
   console.log("Test 1: Load city data from JSON");
   const cities = await loadCityData();
   console.assert(cities.length > 0, "Should load cities from JSON file");
-  console.assert(cities.length >= 205, `Should have at least 205 entries (includes test data), got ${cities.length}`);
-  console.log(`✓ Test 1 passed - Loaded ${cities.length} entries`);
+  console.assert(cities.length >= 205, `Should have at least 205 entries, got ${cities.length}`);
+  console.log(`✓ Test 1 passed - Loaded ${cities.length} entries (Season 1 max: 200 cities)`);
 
-  // Test 2: Verify Season 1 Florida cities are present
-  console.log("\nTest 2: Verify Season 1 Florida cities are present");
-  const floridaCities = ["Pensacola, Florida", "Jacksonville, Florida", "Miami, Florida", "Tampa, Florida", "Orlando, Florida", "St. Petersburg, Florida"];
+  // Test 2: Verify Season 1 cities are present
+  console.log("\nTest 2: Verify Season 1 cities are present");
+  const season1Cities = ["Pensacola, Florida", "Jacksonville, Florida", "Miami, Florida", "Tampa, Florida", "Orlando, Florida", "St. Petersburg, Florida"];
   const cityNames = cities.map(c => c.city);
   
-  for (const floridaCity of floridaCities) {
+  for (const cityName of season1Cities) {
     console.assert(
-      cityNames.includes(floridaCity),
-      `Should include ${floridaCity}`
+      cityNames.includes(cityName),
+      `Should include ${cityName}`
     );
   }
-  console.log("✓ Test 2 passed - All 6 Season 1 Florida cities present");
+  console.log("✓ Test 2 passed - All 6 Season 1 cities present (6/200 capacity)");
 
   // Test 3: Match city by full name
   console.log("\nTest 3: Match city by full name");
