@@ -746,7 +746,7 @@ function PureMultimodalInput({
               {slashPrefix ? (
                 <>
                   <span
-                    className="cloud-button inline-flex items-center px-2 py-0.5 text-foreground"
+                    className="cloud-button cloud-button--inline inline-flex items-center px-2 py-0.5 text-foreground"
                     ref={slashPrefixRef}
                   >
                     {slashPrefix}
