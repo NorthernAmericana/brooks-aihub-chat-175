@@ -17,7 +17,10 @@
     "name": "White Sunshine",
     "type": "hybrid",
     "brand": "Sunshine Cannabis",
-    "lineage": ["The White", "Sunshine Daydream"]
+    "lineage": [
+      "The White",
+      "Sunshine Daydream"
+    ]
   },
   "product": {
     "dispensary": "Trulieve",
@@ -127,7 +130,13 @@
     "units_sampled": 23,
     "total_amt_sampled_g": 80.5
   },
-  "tags": ["hybrid", "pine", "skunky", "uplifting", "daytime"],
+  "tags": [
+    "hybrid",
+    "pine",
+    "skunky",
+    "uplifting",
+    "daytime"
+  ],
   "your_notes": {
     "rating_1to10": null,
     "felt_like": [],
@@ -151,6 +160,52 @@
       "On a scale of 1-10, how intense was the experience?",
       "Did it help you achieve what you were looking for?",
       "Would you use this strain again?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "camphor-like",
+      "chamomile-like",
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lavender",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "stress-relief",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "limonene",
+      "caryophyllene",
+      "myrcene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
     ]
   }
 }

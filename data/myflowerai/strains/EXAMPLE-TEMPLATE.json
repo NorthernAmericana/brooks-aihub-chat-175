@@ -31,10 +31,10 @@
     "in_stock": true
   },
   "stats": {
-    "total_thc_percent": 25.0,
+    "total_thc_percent": 25,
     "total_cbd_percent": 0.5,
-    "total_cannabinoids_percent": 30.0,
-    "total_terpenes_percent": 2.0,
+    "total_cannabinoids_percent": 30,
+    "total_terpenes_percent": 2,
     "top_terpenes": [
       {
         "name": "Limonene",
@@ -51,7 +51,7 @@
     ],
     "potency_breakdown_percent": {
       "thca": 27.5,
-      "delta9_thc": 1.0,
+      "delta9_thc": 1,
       "cbga": 0.5,
       "cbg": 0.2,
       "cbda": 0.1,
@@ -64,9 +64,9 @@
     },
     "potency_breakdown_mg": {
       "thca_mg": 962.5,
-      "delta9_thc_mg": 35.0,
+      "delta9_thc_mg": 35,
       "cbga_mg": 17.5,
-      "cbg_mg": 7.0,
+      "cbg_mg": 7,
       "cbda_mg": 3.5
     }
   },
@@ -99,7 +99,7 @@
     "qa_sample_id": "QA123456",
     "batch_size_g": 10000,
     "units_sampled": 10,
-    "total_amt_sampled_g": 35.0
+    "total_amt_sampled_g": 35
   },
   "tags": [
     "hybrid",
@@ -151,5 +151,42 @@
       "Mason jar"
     ],
     "humidipack_recommended": true
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "citrus",
+      "clove-like",
+      "earthy",
+      "fresh",
+      "herbal",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "spicy",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "limonene",
+      "caryophyllene",
+      "myrcene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
+    ]
   }
 }

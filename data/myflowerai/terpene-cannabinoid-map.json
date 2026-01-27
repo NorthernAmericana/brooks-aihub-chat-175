@@ -1,0 +1,168 @@
+{
+  "terpenes": {
+    "limonene": {
+      "normalized_names": ["limonene", "d-limonene"],
+      "aroma_flavor_tags": ["citrus", "lemon", "orange", "fresh"],
+      "effect_tags": ["uplifting", "energizing", "mood-enhancing"],
+      "threshold_percent": 0.1
+    },
+    "caryophyllene": {
+      "normalized_names": ["caryophyllene", "beta-caryophyllene", "b-caryophyllene"],
+      "aroma_flavor_tags": ["spicy", "peppery", "woody", "herbal"],
+      "effect_tags": ["relaxing", "anti-inflammatory"],
+      "threshold_percent": 0.1
+    },
+    "myrcene": {
+      "normalized_names": ["myrcene", "beta-myrcene", "b-myrcene"],
+      "aroma_flavor_tags": ["earthy", "musky", "herbal", "clove-like"],
+      "effect_tags": ["sedating", "relaxing", "calming"],
+      "threshold_percent": 0.1
+    },
+    "linalool": {
+      "normalized_names": ["linalool"],
+      "aroma_flavor_tags": ["floral", "lavender", "sweet"],
+      "effect_tags": ["calming", "relaxing", "stress-relief"],
+      "threshold_percent": 0.1
+    },
+    "pinene": {
+      "normalized_names": ["pinene", "alpha-pinene", "a-pinene", "beta-pinene", "b-pinene"],
+      "aroma_flavor_tags": ["pine", "woody", "fresh"],
+      "effect_tags": ["alertness", "memory-retention", "focus"],
+      "threshold_percent": 0.1
+    },
+    "humulene": {
+      "normalized_names": ["humulene", "alpha-humulene", "a-humulene"],
+      "aroma_flavor_tags": ["earthy", "woody", "hoppy"],
+      "effect_tags": ["appetite-suppressant", "anti-inflammatory"],
+      "threshold_percent": 0.05
+    },
+    "terpinolene": {
+      "normalized_names": ["terpinolene"],
+      "aroma_flavor_tags": ["floral", "herbal", "piney", "citrus"],
+      "effect_tags": ["uplifting", "energizing"],
+      "threshold_percent": 0.1
+    },
+    "ocimene": {
+      "normalized_names": ["ocimene", "beta-ocimene", "ocimene, total"],
+      "aroma_flavor_tags": ["sweet", "herbal", "woody", "citrus"],
+      "effect_tags": ["uplifting", "energizing"],
+      "threshold_percent": 0.05
+    },
+    "terpineol": {
+      "normalized_names": ["terpineol", "alpha-terpineol", "a-terpineol"],
+      "aroma_flavor_tags": ["floral", "piney", "citrus"],
+      "effect_tags": ["relaxing", "calming"],
+      "threshold_percent": 0.05
+    },
+    "nerolidol": {
+      "normalized_names": ["nerolidol", "trans-nerolidol", "cis-nerolidol"],
+      "aroma_flavor_tags": ["woody", "floral", "citrus"],
+      "effect_tags": ["sedating", "relaxing"],
+      "threshold_percent": 0.05
+    },
+    "bisabolol": {
+      "normalized_names": ["bisabolol", "alpha-bisabolol", "a-bisabolol"],
+      "aroma_flavor_tags": ["floral", "sweet", "chamomile-like"],
+      "effect_tags": ["calming", "anti-inflammatory"],
+      "threshold_percent": 0.05
+    },
+    "camphene": {
+      "normalized_names": ["camphene"],
+      "aroma_flavor_tags": ["woody", "earthy", "camphor-like"],
+      "effect_tags": ["anti-inflammatory"],
+      "threshold_percent": 0.05
+    },
+    "valencene": {
+      "normalized_names": ["valencene"],
+      "aroma_flavor_tags": ["citrus", "sweet", "orange"],
+      "effect_tags": ["uplifting"],
+      "threshold_percent": 0.05
+    },
+    "guaiol": {
+      "normalized_names": ["guaiol"],
+      "aroma_flavor_tags": ["woody", "piney", "earthy"],
+      "effect_tags": ["relaxing"],
+      "threshold_percent": 0.05
+    },
+    "fenchyl_alcohol": {
+      "normalized_names": ["fenchyl alcohol", "fenchol"],
+      "aroma_flavor_tags": ["woody", "camphor-like", "earthy"],
+      "effect_tags": ["relaxing"],
+      "threshold_percent": 0.05
+    }
+  },
+  "cannabinoids": {
+    "thc": {
+      "names": ["thc", "delta9_thc", "thca"],
+      "description": "Primary psychoactive compound",
+      "threshold_percent": 15,
+      "categories": {
+        "low": { "max": 15, "label": "Mild potency" },
+        "medium": { "min": 15, "max": 25, "label": "Moderate potency" },
+        "high": { "min": 25, "label": "High potency" }
+      }
+    },
+    "cbd": {
+      "names": ["cbd", "cbda"],
+      "description": "Non-psychoactive compound commonly associated with relaxation",
+      "threshold_percent": 0.5,
+      "categories": {
+        "trace": { "max": 0.5, "label": "Trace CBD" },
+        "low": { "min": 0.5, "max": 5, "label": "Low CBD" },
+        "medium": { "min": 5, "max": 15, "label": "Moderate CBD" },
+        "high": { "min": 15, "label": "High CBD" }
+      }
+    },
+    "cbg": {
+      "names": ["cbg", "cbga"],
+      "description": "Minor cannabinoid commonly associated with focus",
+      "threshold_percent": 0.2,
+      "categories": {
+        "trace": { "max": 0.2, "label": "Trace CBG" },
+        "notable": { "min": 0.2, "label": "Notable CBG" }
+      }
+    },
+    "cbn": {
+      "names": ["cbn"],
+      "description": "Minor cannabinoid commonly associated with sedation",
+      "threshold_percent": 0.2,
+      "categories": {
+        "trace": { "max": 0.2, "label": "Trace CBN" },
+        "notable": { "min": 0.2, "label": "Notable CBN" }
+      }
+    },
+    "thcv": {
+      "names": ["thcv"],
+      "description": "Minor cannabinoid commonly associated with appetite suppression",
+      "threshold_percent": 0.2,
+      "categories": {
+        "trace": { "max": 0.2, "label": "Trace THCV" },
+        "notable": { "min": 0.2, "label": "Notable THCV" }
+      }
+    },
+    "cbc": {
+      "names": ["cbc"],
+      "description": "Minor cannabinoid commonly associated with mood enhancement",
+      "threshold_percent": 0.2,
+      "categories": {
+        "trace": { "max": 0.2, "label": "Trace CBC" },
+        "notable": { "min": 0.2, "label": "Notable CBC" }
+      }
+    },
+    "cbdv": {
+      "names": ["cbdv"],
+      "description": "Minor cannabinoid with similar properties to CBD",
+      "threshold_percent": 0.2,
+      "categories": {
+        "trace": { "max": 0.2, "label": "Trace CBDV" },
+        "notable": { "min": 0.2, "label": "Notable CBDV" }
+      }
+    }
+  },
+  "disclaimers": {
+    "general": "This information is provided for general informational purposes only and is not intended as medical advice.",
+    "effects": "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response.",
+    "terpenes": "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+    "medical": "These statements have not been evaluated by the FDA. This product is not intended to diagnose, treat, cure, or prevent any disease."
+  }
+}
