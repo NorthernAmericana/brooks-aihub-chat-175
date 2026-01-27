@@ -33261,5 +33261,677 @@
       }
     ],
     "testing_notes": "Confirm hours for markets and museums, and verify seasonal festival schedules before routing quests."
+  },
+  {
+    "city": "Jacksonville, Florida",
+    "sub_areas": [
+      {
+        "name": "Riverside & Avondale",
+        "description": "Historic neighborhoods with tree-lined streets, boutique shops, and Riverside Arts Market."
+      },
+      {
+        "name": "Jacksonville Beach",
+        "description": "Beachside community with surf culture, oceanfront dining, and 22 miles of Atlantic coastline."
+      },
+      {
+        "name": "San Marco",
+        "description": "Charming district with Mediterranean Revival architecture, theaters, and local restaurants."
+      }
+    ],
+    "identity_vibe_tags": [
+      "LargestCity",
+      "BeachAccess",
+      "MilitaryTown",
+      "SouthernCity",
+      "NaturalBeauty",
+      "FamilyFriendly",
+      "GrowingArts"
+    ],
+    "community_vibe": "Jacksonville has a laid-back Southern charm with beach town energy. It's less touristy than other Florida cities, giving it an authentic local feel. The sprawling city offers both urban amenities and natural beauty, with a strong military presence and growing arts scene. Locals are friendly and the pace is relaxed - it's big enough to have everything you need but maintains a welcoming, neighborhood-oriented atmosphere.",
+    "travel_logic": {
+      "best_seasons": "Spring (March-May) and Fall (Sept-Nov) offer pleasant weather. Summers are hot and humid (90°F+) with afternoon thunderstorms. Hurricane season is June-Nov. Winters are mild (60s°F) - perfect for outdoor activities.",
+      "safety": "Generally safe in tourist and beach areas. Use normal precautions downtown after dark. Beach parking lots require vigilance for valuables. The city is large and sprawling, so research specific neighborhoods.",
+      "transportation": "Car recommended - Jacksonville is very spread out with limited public transit (JTA buses available). Rideshare services operate throughout. Beach towns are walkable once you arrive. Traffic is moderate compared to other major Florida cities.",
+      "parking": "Beach parking is mostly free or low-cost ($5-10/day). Downtown has metered parking and garages. Most attractions and restaurants have dedicated parking."
+    },
+    "anchors": [
+      "Jacksonville is Florida's largest city by population and the largest city by area in the contiguous United States - it's huge!",
+      "Unlike Miami or Orlando, Jacksonville feels more like a sprawling Southern city that happens to have beaches rather than a tourist destination.",
+      "Home to a significant military presence with Naval Station Mayport and NAS Jacksonville, similar to Norfolk or San Diego.",
+      "Jacksonville offers 22 miles of beaches without the crowds of South Florida - think relaxed surfing and local beach culture.",
+      "The St. Johns River runs through the city, making it one of the few rivers in the U.S. that flows northward."
+    ],
+    "must_dos": [
+      {
+        "name": "Jacksonville Beaches",
+        "type": "Nature/Beach",
+        "cost": "Free",
+        "description": "Enjoy 22 miles of Atlantic coastline across Jacksonville Beach, Neptune Beach, and Atlantic Beach. Surf, swim, or watch sunrise over the ocean."
+      },
+      {
+        "name": "Cummer Museum of Art & Gardens",
+        "type": "Museum/Art",
+        "cost": "$10-15",
+        "description": "Beautiful riverside museum with impressive collections and stunning formal gardens overlooking the St. Johns River."
+      },
+      {
+        "name": "Riverside Arts Market",
+        "type": "Market/Culture",
+        "cost": "Free",
+        "description": "Saturday morning market under the Fuller Warren Bridge featuring local artists, food vendors, and live music."
+      }
+    ],
+    "notable_businesses": [
+      "Intuition Ale Works - Popular craft brewery in Riverside with great beers and food trucks",
+      "Bold City Brewery - Jacksonville's first craft brewery, local favorite",
+      "Black Sheep Restaurant - Farm-to-table dining in Riverside",
+      "Orsay - French bistro in the Avondale neighborhood",
+      "River City Brewing Company - Riverside brewery and restaurant"
+    ],
+    "place_taxonomy": {
+      "Outdoors/Nature": [
+        "Jacksonville Beach",
+        "Kathryn Abbey Hanna Park",
+        "Big Talbot Island State Park",
+        "Timucuan Ecological Preserve"
+      ],
+      "Historical": [
+        "Fort Clinch State Park",
+        "Kingsley Plantation",
+        "Riverside Historic District"
+      ],
+      "Arts/Culture": [
+        "Cummer Museum",
+        "Museum of Contemporary Art",
+        "Riverside Arts Market"
+      ],
+      "Family": [
+        "Jacksonville Zoo and Gardens",
+        "MOSH (Museum of Science & History)",
+        "Adventure Landing"
+      ]
+    }
+  },
+  {
+    "city": "Miami, Florida",
+    "sub_areas": [
+      {
+        "name": "South Beach & Miami Beach",
+        "description": "Iconic beach destination with Art Deco architecture, Ocean Drive nightlife, and beautiful beaches."
+      },
+      {
+        "name": "Wynwood",
+        "description": "Arts district famous for colorful street murals, galleries, and hip restaurants and bars."
+      },
+      {
+        "name": "Little Havana",
+        "description": "Heart of Miami's Cuban community with authentic restaurants, cigar shops, and Calle Ocho culture."
+      }
+    ],
+    "identity_vibe_tags": [
+      "International",
+      "BeachLife",
+      "LatinCulture",
+      "ArtScene",
+      "Nightlife",
+      "Cosmopolitan",
+      "Luxury"
+    ],
+    "community_vibe": "Miami is electric, multicultural, and unapologetically vibrant. It's where Latin American culture meets American beach life, creating a unique bilingual atmosphere. The city pulses with energy day and night - from Art Basel to street festivals to world-class nightclubs. Expect diversity, bold fashion, international flavors, and a fast-paced lifestyle. It's glamorous but also authentic, especially in neighborhoods like Little Havana and Little Haiti.",
+    "travel_logic": {
+      "best_seasons": "Winter (Dec-April) is peak season - perfect weather but crowded and expensive. Spring (April-May) is ideal. Summer is hot, humid, and rainy but less crowded. Hurricane season June-Nov requires attention.",
+      "safety": "Tourist areas like South Beach and Wynwood are generally safe with police presence. Avoid walking alone late at night in unfamiliar areas. Keep valuables secure on beaches. Some neighborhoods outside tourist zones require caution.",
+      "transportation": "Car helpful but not essential in Miami Beach/downtown. Metrorail, Metromover (free downtown), and Brightline (to other FL cities) available. Rideshare very common. Traffic can be intense. Miami Beach is walkable/bikeable.",
+      "parking": "Expensive and limited in South Beach ($20-40/day). Use parking garages or apps. Many hotels charge for parking. Street parking is scarce and metered. Consider rideshare in beach areas."
+    },
+    "anchors": [
+      "Miami is the gateway to Latin America - it's more Caribbean and Latin than traditional American South.",
+      "South Beach's Art Deco Historic District is the largest collection of Art Deco architecture in the world.",
+      "Miami is truly bilingual - Spanish is spoken everywhere, and cultural influences from Cuba, Venezuela, Colombia, and beyond are woven into daily life.",
+      "It's one of the few U.S. cities where you can have authentic Latin American food, art, and nightlife experiences.",
+      "Miami combines beach paradise with international sophistication - it's not just Florida, it's a global city."
+    ],
+    "must_dos": [
+      {
+        "name": "South Beach & Ocean Drive",
+        "type": "Beach/Iconic",
+        "cost": "Free",
+        "description": "Experience the iconic Art Deco architecture, beach scene, and people-watching on Ocean Drive. Swim in turquoise waters and soak up the atmosphere."
+      },
+      {
+        "name": "Wynwood Walls",
+        "type": "Art/Culture",
+        "cost": "Free",
+        "description": "Explore spectacular outdoor street art by world-renowned artists. The neighborhood is filled with galleries, breweries, and restaurants."
+      },
+      {
+        "name": "Little Havana",
+        "type": "Culture/Food",
+        "cost": "Free to explore",
+        "description": "Walk Calle Ocho, watch domino games at Maximo Gomez Park, try authentic Cuban coffee and food, and experience Miami's Cuban heart."
+      }
+    ],
+    "notable_businesses": [
+      "Versailles Restaurant - Iconic Cuban restaurant and bakery, a Little Havana institution",
+      "Joe's Stone Crab - Historic seafood restaurant (seasonal, closed in summer)",
+      "Ball & Chain - Historic music venue in Little Havana with live Latin music",
+      "Zak the Baker - Artisanal bakery in Wynwood",
+      "Mister O1 Pizza - Popular local pizza chain"
+    ],
+    "place_taxonomy": {
+      "Outdoors/Nature": [
+        "South Beach",
+        "South Pointe Park",
+        "Oleta River State Park",
+        "Bill Baggs Cape Florida State Park"
+      ],
+      "Arts/Culture": [
+        "Wynwood Walls",
+        "Pérez Art Museum Miami",
+        "Bass Museum of Art",
+        "Vizcaya Museum"
+      ],
+      "Neighborhoods": [
+        "South Beach",
+        "Little Havana",
+        "Wynwood",
+        "Coconut Grove",
+        "Coral Gables"
+      ],
+      "Nightlife": [
+        "Ocean Drive",
+        "LIV at Fontainebleau",
+        "Ball & Chain",
+        "Wynwood bars"
+      ]
+    }
+  },
+  {
+    "city": "Tampa, Florida",
+    "sub_areas": [
+      {
+        "name": "Ybor City",
+        "description": "Historic neighborhood with Latin heritage, cigar factories, nightlife, and brick-lined streets."
+      },
+      {
+        "name": "Downtown & Riverwalk",
+        "description": "Revitalized waterfront area with parks, museums, restaurants, and the Tampa Riverwalk connecting attractions."
+      },
+      {
+        "name": "Hyde Park",
+        "description": "Upscale neighborhood with shopping on Hyde Park Village, restaurants, and historic bungalows."
+      }
+    ],
+    "identity_vibe_tags": [
+      "WorkingClass",
+      "Historic",
+      "CubanHeritage",
+      "WaterfrontCity",
+      "FamilyAttractions",
+      "Sports",
+      "Authentic"
+    ],
+    "community_vibe": "Tampa has an authentic, working-class character with deep Cuban and Spanish roots. It's less flashy than Miami but rich in history and culture, especially in Ybor City. The revitalized Riverwalk brings urban energy, while neighborhoods like Hyde Park and Seminole Heights offer local charm. Locals are proud of their city's heritage, their sports teams (Lightning, Bucs), and their Cuban sandwiches. It's a real city with real industries, not just tourism.",
+    "travel_logic": {
+      "best_seasons": "Winter (Nov-April) is ideal with mild, dry weather. Spring and fall are great. Summer is very hot and humid with daily afternoon thunderstorms. Hurricane season June-Nov. World-class beaches (Clearwater, St. Pete) are 30 minutes away.",
+      "safety": "Downtown and Ybor are generally safe in main areas, especially along Riverwalk. Use caution in Ybor late at night. Some neighborhoods outside tourist areas require awareness. Beach towns nearby are very safe.",
+      "transportation": "Car recommended - Tampa is sprawling with limited public transit (TECO streetcar downtown, some buses). Rideshare available. Traffic can be heavy during rush hours, especially on I-275.",
+      "parking": "Downtown has metered street parking and garages ($10-15/day). Ybor has free parking in some areas, paid lots near nightlife. Most restaurants and attractions have parking."
+    },
+    "anchors": [
+      "Tampa's Ybor City is a National Historic Landmark District, once known as the 'Cigar Capital of the World.'",
+      "The Columbia Restaurant in Ybor (opened 1905) is Florida's oldest restaurant, serving Spanish and Cuban cuisine.",
+      "Tampa is a major port city and economic center - it's not just a tourist destination, it's a working city.",
+      "Tampa Bay's beaches (Clearwater, St. Pete Beach) are consistently rated among the world's best, though they're technically separate cities.",
+      "The Tampa Riverwalk connects numerous attractions along 2.6 miles of waterfront - a gem for locals and visitors."
+    ],
+    "must_dos": [
+      {
+        "name": "Tampa Riverwalk",
+        "type": "Outdoor/Sightseeing",
+        "cost": "Free",
+        "description": "Walk or bike the 2.6-mile waterfront path connecting parks, museums, restaurants, and attractions along the Hillsborough River."
+      },
+      {
+        "name": "Ybor City Historic District",
+        "type": "Historic/Culture",
+        "cost": "Free to explore",
+        "description": "Explore brick streets, visit cigar shops, learn about Tampa's immigrant history, and enjoy nightlife in this vibrant historic neighborhood."
+      },
+      {
+        "name": "Busch Gardens Tampa Bay",
+        "type": "Theme Park",
+        "cost": "$$$ (tickets $100+)",
+        "description": "African-themed park with thrilling roller coasters, animal encounters, and live shows. A Tampa institution."
+      }
+    ],
+    "notable_businesses": [
+      "Columbia Restaurant - Florida's oldest restaurant (1905), Spanish/Cuban cuisine in Ybor City",
+      "Cigar City Brewing - Tampa's famous craft brewery",
+      "Ulele - Waterfront restaurant celebrating Native American-inspired Florida cuisine",
+      "Oxford Exchange - Bookstore, restaurant, and coffee shop in a beautiful historic building",
+      "Tampa Bay Brewing Company - Local brewery and restaurant"
+    ],
+    "place_taxonomy": {
+      "Historical": [
+        "Ybor City",
+        "Tampa Theatre",
+        "Henry B. Plant Museum"
+      ],
+      "Arts/Culture": [
+        "Tampa Museum of Art",
+        "Florida Aquarium",
+        "Tampa Riverwalk"
+      ],
+      "Family": [
+        "Busch Gardens",
+        "Florida Aquarium",
+        "ZooTampa at Lowry Park"
+      ],
+      "Outdoors/Nature": [
+        "Curtis Hixon Waterfront Park",
+        "Lettuce Lake Park",
+        "Hillsborough River"
+      ]
+    }
+  },
+  {
+    "city": "Orlando, Florida",
+    "sub_areas": [
+      {
+        "name": "Theme Park Corridor",
+        "description": "Area encompassing Walt Disney World, Universal Orlando, and other major attractions along I-4."
+      },
+      {
+        "name": "Downtown Orlando",
+        "description": "Urban center with Lake Eola, restaurants, nightlife, and the Amway Center arena."
+      },
+      {
+        "name": "Winter Park",
+        "description": "Charming adjacent city with Park Avenue shopping, Rollins College, and scenic lakes."
+      }
+    ],
+    "identity_vibe_tags": [
+      "ThemeParks",
+      "FamilyVacation",
+      "TouristDestination",
+      "Entertainment",
+      "MagicKingdom",
+      "GrowingTech",
+      "International"
+    ],
+    "community_vibe": "Orlando is synonymous with theme parks and family magic, but it's also a real growing city with neighborhoods, local culture, and industries beyond tourism. Downtown has an urban energy with bars and restaurants around Lake Eola. Winter Park adds upscale charm. The city is diverse, international (thanks to tourists and service workers), and constantly evolving. Locals have a love-hate relationship with tourist traffic but embrace the entertainment industry that defines the region.",
+    "travel_logic": {
+      "best_seasons": "Late fall, winter, and early spring (Nov-April) offer pleasant weather and manageable crowds (except holidays). Summer is extremely hot and humid with daily thunderstorms - theme parks are packed. Hurricane season June-Nov.",
+      "safety": "Tourist areas are very safe and heavily patrolled. Theme park resorts are exceptionally secure. Use caution in unfamiliar neighborhoods outside tourist zones. Traffic is the biggest danger - I-4 is notoriously busy.",
+      "transportation": "Car essential outside theme parks. Once at Disney/Universal, their internal transportation works well. SunRail (commuter train) limited. Rideshare available but expensive during peak times. I-4 traffic can be brutal.",
+      "parking": "Theme parks charge $25-30/day for parking. Downtown Orlando has metered parking and garages. Most restaurants have free parking. Disney resort guests get free theme park parking."
+    },
+    "anchors": [
+      "Orlando is the theme park capital of the world - Walt Disney World alone is twice the size of Manhattan.",
+      "More than 75 million visitors come to the Orlando area annually, making it one of the most visited places on Earth.",
+      "Despite no ocean beaches, Orlando has more to do than most coastal cities - it's fantasy and entertainment concentrated in one place.",
+      "The city has over 100 lakes within its limits and is nicknamed 'The City Beautiful.'",
+      "Universal's Wizarding World of Harry Potter revolutionized theme parks and is a must-visit for fans."
+    ],
+    "must_dos": [
+      {
+        "name": "Walt Disney World Resort",
+        "type": "Theme Parks",
+        "cost": "$$$$ (tickets $100-200/day)",
+        "description": "Experience Magic Kingdom, EPCOT, Hollywood Studios, and Animal Kingdom. Four theme parks plus water parks and Disney Springs."
+      },
+      {
+        "name": "Universal Orlando Resort",
+        "type": "Theme Parks",
+        "cost": "$$$$ (tickets $100-200/day)",
+        "description": "Visit Universal Studios, Islands of Adventure (Wizarding World of Harry Potter), and Volcano Bay water park."
+      },
+      {
+        "name": "Lake Eola Park",
+        "type": "Park/Outdoor",
+        "cost": "Free",
+        "description": "Downtown Orlando's centerpiece park with swan boats, walking path, farmer's market on Sundays, and city skyline views."
+      }
+    ],
+    "notable_businesses": [
+      "The Ravenous Pig - Award-winning gastropub in Winter Park",
+      "Se7en Bites - Popular breakfast and bakery spot",
+      "4 Rivers Smokehouse - Local BBQ chain with cult following",
+      "Prato - Italian restaurant in Winter Park",
+      "Gatorland - Old Florida attraction, 'The Alligator Capital of the World'"
+    ],
+    "place_taxonomy": {
+      "Theme Parks": [
+        "Walt Disney World",
+        "Universal Orlando",
+        "SeaWorld Orlando",
+        "LEGOLAND Florida"
+      ],
+      "Outdoors/Nature": [
+        "Lake Eola Park",
+        "Wekiwa Springs State Park",
+        "Harry P. Leu Gardens"
+      ],
+      "Culture": [
+        "Orlando Science Center",
+        "Orlando Museum of Art",
+        "Dr. Phillips Center for Performing Arts"
+      ],
+      "Shopping": [
+        "Disney Springs",
+        "Universal CityWalk",
+        "Park Avenue (Winter Park)"
+      ]
+    }
+  },
+  {
+    "city": "St. Petersburg, Florida",
+    "sub_areas": [
+      {
+        "name": "Downtown St. Petersburg",
+        "description": "Vibrant waterfront downtown with museums, the Pier, restaurants, galleries, and craft breweries."
+      },
+      {
+        "name": "Grand Central District",
+        "description": "Artsy neighborhood with vintage shops, cafes, live music venues, and the Saturday morning market."
+      },
+      {
+        "name": "St. Pete Beach",
+        "description": "Separate barrier island city with pristine white sand beaches, resorts, and Don CeSar 'Pink Palace.'"
+      }
+    ],
+    "identity_vibe_tags": [
+      "ArtCity",
+      "BeachAccess",
+      "CraftBeer",
+      "Walkable",
+      "Sunshine",
+      "Museums",
+      "LaidBack"
+    ],
+    "community_vibe": "St. Pete is the cultural, artsy, and laid-back gem of the Tampa Bay area. It's consistently ranked as one of America's best places to live for good reason - walkable downtown, world-class museums (especially the Dalí), a thriving craft brewery scene, and beautiful beaches minutes away. The vibe is creative, welcoming, and progressive. First Friday and Second Saturday art walks bring the community together. It's less hectic than Miami, more cultured than pure beach towns.",
+    "travel_logic": {
+      "best_seasons": "Winter and spring (Nov-May) are ideal with gorgeous weather. Fall is great too. Summer is hot and humid with afternoon storms but less crowded. Average 361 days of sunshine annually. Hurricane season June-Nov.",
+      "safety": "Very safe in downtown, beach areas, and most neighborhoods. The city has invested heavily in public safety. Some areas south of downtown require normal urban caution.",
+      "transportation": "Downtown is very walkable and bikeable. The Looper trolley is free and connects downtown attractions. Pinellas Trail great for biking. Car useful for beach trips. Rideshare readily available.",
+      "parking": "Downtown has metered parking ($1.50-2/hour) and garages. Many spaces are free after 6pm and on Sundays. Beach parking at meters or paid lots ($2-3/hour). The Pier has parking garage."
+    },
+    "anchors": [
+      "St. Petersburg is home to the Salvador Dalí Museum, which houses the largest collection of Dalí's works outside Spain.",
+      "With an average of 361 days of sunshine per year, St. Pete holds the Guinness World Record (set in 1968) for consecutive sunny days - 768 days!",
+      "The city's downtown waterfront and Pier are constantly ranked among America's best public spaces.",
+      "St. Pete has become Florida's craft beer capital with dozens of breweries within walking distance of each other.",
+      "It's the artsy, walkable alternative to Tampa across the bay - beaches, culture, and sunshine in a livable city."
+    ],
+    "must_dos": [
+      {
+        "name": "Salvador Dalí Museum",
+        "type": "Museum/Art",
+        "cost": "$25-29",
+        "description": "World-class museum housing the most comprehensive collection of Dalí's works. Stunning architecture and fascinating surrealist art."
+      },
+      {
+        "name": "The Pier St. Petersburg",
+        "type": "Outdoor/Dining",
+        "cost": "Free to explore",
+        "description": "Beautiful waterfront destination with restaurants, shops, splash pad, observation tower, and stunning views of Tampa Bay."
+      },
+      {
+        "name": "St. Pete Beach",
+        "type": "Beach/Nature",
+        "cost": "Free",
+        "description": "Consistently rated one of America's best beaches. Soft white sand, calm Gulf waters, and spectacular sunsets. Visit Pass-a-Grille's quieter southern tip."
+      }
+    ],
+    "notable_businesses": [
+      "Green Bench Brewing Co. - Popular downtown brewery with great beer and atmosphere",
+      "Cycle Brewing - Renowned craft brewery specializing in barrel-aged and rare beers",
+      "Engine No. 9 - Firehouse-turned-restaurant and bar in Grand Central District",
+      "The Hangar Restaurant & Flight Lounge - Aviation-themed waterfront dining",
+      "Red Mesa Cantina - Local favorite for Mexican food with multiple locations"
+    ],
+    "place_taxonomy": {
+      "Arts/Culture": [
+        "Salvador Dalí Museum",
+        "Museum of Fine Arts",
+        "Chihuly Collection",
+        "Morean Arts Center"
+      ],
+      "Outdoors/Nature": [
+        "St. Pete Beach",
+        "Fort De Soto Park",
+        "The Pier",
+        "Weedon Island Preserve"
+      ],
+      "Breweries": [
+        "Green Bench Brewing",
+        "Cycle Brewing",
+        "3 Daughters Brewing",
+        "St. Pete Brewing"
+      ],
+      "Beaches": [
+        "St. Pete Beach",
+        "Pass-a-Grille Beach",
+        "Treasure Island",
+        "Fort De Soto Park"
+      ]
+    }
+  },
+  {
+    "city": "Pace/Milton/Avalon, Florida",
+    "sub_areas": [
+      {
+        "name": "Pace",
+        "description": "Suburban community west of Milton known for its good schools, newer neighborhoods, and shopping along Hwy 90."
+      },
+      {
+        "name": "Milton",
+        "description": "Historic small town on the Blackwater River with a quaint downtown and strong connection to nature (and the military, with NAS Whiting Field nearby)."
+      },
+      {
+        "name": "Avalon (Avalon Beach)",
+        "description": "Rural-residential area south of Milton along Avalon Blvd. Not much commercial presence, but it's a gateway to the Garcon Point Bridge (toll route to Gulf Breeze) and offers boat access to East Bay."
+      }
+    ],
+    "identity_vibe_tags": [
+      "SmallTown",
+      "OutdoorAdventure",
+      "MilitaryInfluence",
+      "FamilyOriented",
+      "HistoricCharm",
+      "Rural"
+    ],
+    "community_vibe": "These three areas together offer a slice of \"small-town USA\" with a Panhandle twist. Pace and Milton are family-oriented and church-centered communities – don't be surprised if Friday nights revolve around high school football. Milton, one of Florida's oldest cities, has a relaxed historic charm; locals are known to greet you with a friendly \"hey\" on the street. Pace has grown rapidly and feels more suburban (think big-box stores and new housing), but still retains a friendly, safe vibe. Avalon is quiet and sparsely populated; life there often means knowing your neighbors and enjoying some peace by the bay. Overall, people in this region are polite, often conservative, and deeply connected to outdoor life – weekends might mean fishing, tubing the river, or a community festival downtown. The pace of life (no pun intended) is slower, and folks take pride in their tight-knit community.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are fantastic – mild weather for river trips and outdoor festivals (mid-70s°F). Summer is peak for river tubing and kayaking (expect hot days ~90°F, perfect for a swim) but also afternoon thunderstorms; start outdoor activities early. Winter can get chilly (occasionally freezing nights in Jan/Feb), but generally 50s°F – fine for hiking and exploring downtown Milton's museums, though too cold for tubing.",
+      "safety": "Pace/Milton have low crime rates and that small-town safe feel. Still, lock your car when parked at trailheads or river landings, as opportunistic theft can happen anywhere. If you venture onto country roads at night, watch for deer crossing. The Blackwater River is generally gentle, but always wear a life jacket when canoeing or tubing and mind the outfitters' safety briefings (no glass or trash on the river!). In summer, apply bug spray – mosquitoes (and the occasional horsefly) are part of river life. During heavy rains, some backroads can flood; heed local advisories. In town, pedestrian crossings in Milton are respected, but keep an eye out on busy Hwy 90 in Pace where traffic moves fast.",
+      "transportation": "A car is necessary here. Pace and Milton are spread out, and there's essentially no public transit from Pensacola. Roads are easy to navigate; US Hwy 90 is the main artery connecting Pace and Milton – but it gets congested during rush hour and Saturday shopping in Pace. Avalon Blvd connects to I-10 and is a quick route to Pensacola or Gulf Breeze (with a $5 toll on Garcon Point Bridge). Ride-shares (Uber/Lyft) exist but expect longer wait times than in Pensacola, especially in Milton. Many locals drive trucks or SUVs – handy if you explore unpaved forest roads in Blackwater State Forest.",
+      "parking": "Plentiful and free everywhere – one perk of small-town travel. Downtown Milton has free street parking and public lots (you can usually park by the Riverwalk or at Russell Harbor Landing with no issue). At popular river outfitters and state park sites, parking is free but can fill on summer weekends (arrive early for tubing trips). If visiting a Friday football game at Pace High or Milton High, be prepared for creative parking in fields as half the town shows up.",
+      "local_laws": "Santa Rosa County is strict about public drinking – no open containers on streets or parks. Up until a few years ago, alcohol sales were banned on Sunday in much of the county, but now sales are legal 7 days a week (7am–2:30am). If you're tubing or camping on the Blackwater, note that alcohol is officially prohibited in state park areas and glass containers are banned on the river entirely. (Outfitters may quietly allow a limited number of cans per adult – just be discreet and pack out your empties.) Driving: speed limits drop quickly on rural roads — watch for signs, especially around Avalon and small residential areas. Law enforcement is strict about DUI on those long stretches, so have a designated driver if you sample local brews. Also, NAS Whiting Field (north of Milton) is an active Navy base; access is restricted to authorized personnel, so general visitors can't tour it like NAS Pensacola. Overall, respect that this area has a strong military and church influence, so behavior that might raise eyebrows in a big city (like loud profanity or very revealing attire) might get some side-eye here."
+    },
+    "anchors": [
+      "Milton is known as the \"Canoe Capital of Florida\", highlighting its status as a hub for paddling and river fun in the Panhandle.",
+      "These towns are part of the Pensacola metro area, but they feel a world apart from the beach scene – more like classic Southern Americana. If Pensacola is the lively hub, Pace/Milton are the peaceful backyard.",
+      "Pace and Milton compare to other Panhandle small towns like Crestview or DeFuniak Springs, but with the bonus of the Blackwater River and proximity to both beaches and forests.",
+      "Avalon's Garcon Point Bridge offers a backdoor route to the Gulf Coast – a reminder that even if you're based in this quiet area, white-sand beaches are just a short drive away (about 30–40 minutes).",
+      "NAS Whiting Field is to Milton what NAS Pensacola is to Pensacola – a pillar of the community. Training aircraft frequently buzz the skies here, so Milton shares in the military aviation heritage."
+    ],
+    "must_dos": [
+      {
+        "name": "Blackwater River (Canoeing/Tubing)",
+        "type": "Outdoor/Nature",
+        "cost": "$ (about $20/person with outfitter)",
+        "description": "Float down the clear, tannin-tinted waters of the Blackwater River, lined with little white-sand beaches. Rent a canoe, kayak, or inner tube from a local outfitter (like Blackwater Canoe Rental or Adventures Unlimited) and enjoy one of the area's most iconic activities. It's lazy, refreshing fun – you can stop on sandbars for a picnic or a swim."
+      },
+      {
+        "name": "Downtown Milton Historic Walk & Riverwalk",
+        "type": "Sightseeing/History",
+        "cost": "Free",
+        "description": "Stroll along Willing Street in historic downtown Milton. See the quaint shops, the Imogene Theatre (a 1920s theater and museum), and then walk the Riverwalk boardwalk along the Blackwater River. At Veteran's Memorial Plaza by the river, reflect at the war memorial. In summer, you might catch the free \"Bands on the Blackwater\" concert series on Friday nights – live music under the stars by the riverfront."
+      },
+      {
+        "name": "Arcadia Mill Archaeological Site",
+        "type": "History/Archaeology",
+        "cost": "Free (donations appreciated)",
+        "description": "Explore the remains of a 19th-century lumber mill and industrial village in Pace. A boardwalk trail leads through the woods to ruins of the old water mill. The visitor center has exhibits on the mill operation and the multicultural community that lived here. It's an educational and scenic spot, blending history with nature."
+      },
+      {
+        "name": "Blackwater Heritage State Trail (Biking/Hiking)",
+        "type": "Outdoor/Trail",
+        "cost": "Free",
+        "description": "Enjoy a bike ride or jog on this paved rail-trail that starts in Milton and stretches ~8.5 miles north through woodlands toward Whiting Field. The trailhead by the Milton old railroad depot has parking and restrooms. Along the way, you might see Navy training planes overhead. The flat trail is great for families – bring your own bike or rent one in town."
+      },
+      {
+        "name": "Southern Raceway (Milton)",
+        "type": "Entertainment/Sports",
+        "cost": "$ (approx $15 entry)",
+        "description": "For a unique local thrill, spend a Saturday night at Southern Raceway, Milton's dirt track for stock car racing. Hear the roar of engines and watch late-model and sprint cars kick up dust. It's loud, exciting, and very Southern – complete with concession stand funnel cakes and cheering locals. (Races run spring through fall.)"
+      },
+      {
+        "name": "Adventures Unlimited Zipline & Coldwater Creek",
+        "type": "Outdoor/Adventure",
+        "cost": "$$$",
+        "description": "If you crave more adrenaline, Adventures Unlimited (north of Milton) offers ziplining through the treetops and ropes courses, as well as canoe trips on Coldwater Creek. You can even stay overnight in a cabin or tent at their campground. It's a full-fledged outdoor adventure resort – perfect for families or groups looking for an outdoor retreat."
+      },
+      {
+        "name": "Pace Area Dining (Local Flavors)",
+        "type": "Food",
+        "cost": "$",
+        "description": "Pace has plenty of chains, but seek out a few local favorites: try the smoked BBQ at The Cutting Board, grab a famous hot glazed donut at Milton Quality Bakery (worth the short drive), or enjoy down-home Southern cooking at Ace's Restaurant in Milton (known for catfish and country breakfast). For a small-town treat, if it's fall, check out the Peanut Festival in nearby Allentown – boiled peanuts and local crafts galore."
+      },
+      {
+        "name": "Carpenter's Park & Splash Pad (Milton)",
+        "type": "Nature/Leisure",
+        "cost": "Free",
+        "description": "A lovely park on the Blackwater River in Milton. Carpenter's Park has a playground, picnic pavilions, boat ramps, and in summer a splash pad for kids. It's a great spot to launch a kayak or just relax under oak trees draped in Spanish moss while watching the river flow by."
+      },
+      {
+        "name": "NAS Whiting Field Observation",
+        "type": "Military/Planespotting",
+        "cost": "Free",
+        "description": "You can't enter Whiting Field without clearance, but you can drive near its perimeter. Park by the NAS Whiting Field North gate area and you may see the Navy's training aircraft (painted in orange/white) performing touch-and-go landings. There's an old jet on a stick at the entrance for a quick photo-op. It's a small way to appreciate Milton's role in training Navy pilots."
+      },
+      {
+        "name": "Bagdad Village & Museum",
+        "type": "History/Nature",
+        "cost": "Free (museum may accept donations)",
+        "description": "Just south of Milton lies the historic community of Bagdad (yes, that's its name). It was a booming mill town in the 1800s. Stroll the sleepy neighborhood to see restored Victorian homes and the waterfront where a huge sawmill once stood. If open, visit the Bagdad Village Museum for local history artifacts (hours are limited). It's a peaceful detour with Old Florida vibes."
+      }
+    ],
+    "notable_businesses": [
+      "Milton Quality Bakery – A multi-generational bakery (opened 1962) famed for its glazed donuts and \"fudge fancy\" cookies. Lines form early in the morning; by afternoon they might be sold out!",
+      "Blackwater Bistro – A popular Milton restaurant set in a historic downtown house. Known for Southern dishes (shrimp & grits, fried green tomatoes) and a cozy porch; often hosts live music on weekends.",
+      "Ye Olde Brothers Brewery – Technically in nearby Navarre, but it's the closest craft brewery. Family-owned, they brew beer and make brick-oven pizzas. A great stop if you're headed to or from Navarre Beach.",
+      "Pace Mill RV Park & Market – A local farmers market that pops up seasonally in Pace, offering regional produce (think tomatoes, watermelons, and boiled peanuts) and handmade crafts. It reflects Pace's farming community roots.",
+      "Hall's Hardware & Lumber – An old-fashioned hardware store in Milton (since the 1940s) that's like a living history shop. Beyond tools, locals say you can find antiques and chat with staff who've been around for decades.",
+      "Southern Raceway Vendors – At Milton's dirt track (Southern Raceway), local small businesses set up shop on race nights: from Momma Loca's Tacos to kettle corn stands. Supporting them is part of the local experience!"
+    ],
+    "local_lore": [
+      "Milton's got quirky old nicknames. It was called \"Scratch Ankle\" for the briars that would scratch up folks' ankles by the river, and even \"Hell-Town\" because of the rampant mosquitoes and tough swamp life back in the day!",
+      "Folklore says there's buried treasure along the Blackwater River from pirate times. While unproven, kids in Milton sometimes go out with metal detectors after hearing the tales from their grandparents.",
+      "The historic Imogene Theatre in Milton is rumored to be haunted by a friendly ghost. People have reported unexplained piano music or a shadowy figure on the balcony – especially during quiet rehearsals.",
+      "Milton folks love telling the story of how the town got its name: some say it's short for \"Mill Town\" due to the 1800s lumber mills. The Blackwater River was once filled with logs floating to sawmills – an image you can still imagine on misty mornings.",
+      "Every summer, locals flock to \"The Tube\" – a particular bend on the Blackwater River known for its gentle current and sandy shore. It's something of a community secret which sandbar is the best for picnicking (insider tip: many favor one near Chicken Wing Beach, nicknamed for a past floating food shack).",
+      "Avalon lore: Decades ago, there was a waterpark off Avalon Blvd (since closed) and people still talk about the overgrown remnants hidden in the woods. It's become a bit of a local urban legend for adventurous teens to try to find the old slides (not recommended without permission!).",
+      "Pace's rapid growth in the 2000s led locals to joke that its name stands for \"People Are Coming Everyday.\" It used to be a rural blip on the map; now it's a booming suburb – but long-time residents remember when you could hardly find a fast-food joint there."
+    ],
+    "place_taxonomy": {
+      "Water Activities": [
+        "Blackwater River (canoeing/tubing)",
+        "Coldwater Creek (kayaking)",
+        "East Bay (fishing/boating via Avalon boat ramp)"
+      ],
+      "Parks/Trails": [
+        "Blackwater Heritage State Trail",
+        "Carpenter's Park",
+        "Russell Harbor Landing Park",
+        "Floridatown Park (Pace waterfront)"
+      ],
+      "Historic Sites": [
+        "Downtown Milton Historic District",
+        "Imogene Theatre",
+        "Arcadia Mill Site",
+        "Bagdad Village Museum"
+      ],
+      "Family Activities": [
+        "Splash pad at Carpenter's Park (summer)",
+        "West Florida Railroad Museum (Milton)",
+        "Pace Area Skate Park"
+      ],
+      "Food & Drink": [
+        "Milton Quality Bakery",
+        "Blackwater Bistro",
+        "Ace's Restaurant (Milton)",
+        "Socio's Pizza & Pasta (Pace)"
+      ],
+      "Events/Festivals": [
+        "Bands on the Blackwater (summer concerts)",
+        "Scratch Ankle Festival (heritage event)",
+        "Santa Rosa County Fair (spring)",
+        "Pace Christmas Parade"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "River Rat Quest",
+        "quest": "Spend a day on the Blackwater River. Take a selfie on a sandy bank while tubing or paddling. Collect a unique river rock or shell as a souvenir. After the trip, stop by Milton Quality Bakery for a treat and snap a photo of your favorite donut as a reward!"
+      },
+      {
+        "title": "History Hunt in Milton",
+        "quest": "Find three historical markers or plaques in downtown Milton (e.g., outside the Courthouse, by the Veterans Memorial, at the Imogene Theatre). Write down one interesting fact from each. Bonus: find the old cannon by the river park and take a picture pretending to fire it!"
+      },
+      {
+        "title": "Small-Town Saturday",
+        "quest": "Start with breakfast at a local diner (maybe coffee at Copper Bull in Milton or bagels at Bagelheads in Pace). Visit the Pace Area Farmers Market (if in season) and buy a local product. In the afternoon, explore the Arcadia Mill nature trail and find the remnants of the old dam. End the day at Bands on the Blackwater or a high school football game to experience the community spirit."
+      },
+      {
+        "title": "Outdoor Adventurer Challenge",
+        "quest": "Bike 5 miles of the Blackwater Heritage Trail. Along the way, note three different types of trees or flowers you see (longleaf pine, magnolia, wildflowers?). Reward yourself with a cool-down dip or paddle at Carpenter's Park afterward. Share a photo of something interesting you spotted on the trail."
+      },
+      {
+        "title": "Canoe Capital Captain",
+        "quest": "Embrace Milton's title: paddle a canoe on the Blackwater for at least an hour. During your trip, pick up any litter you see (help keep the river pristine!). Back on land, visit the small Navy jet display by Whiting Field and snap a pic, saluting our \"canoe capital\" and its link to Navy pilot training."
+      },
+      {
+        "title": "Community Connection",
+        "quest": "Do a good deed or have a chat: help a local set up a tent at the farmers market, or talk to the person renting you a canoe about their favorite thing in Milton. Record what you learned or the recommendation they gave you – then go try it and document your experience (photo or journal entry)."
+      }
+    ],
+    "review_prompts": [
+      "What did you enjoy most about the Blackwater River experience? (Any fun tubing stories or wildlife sightings?)",
+      "How does the pace of life in Pace/Milton compare to what you're used to? Did the small-town charm meet your expectations?",
+      "Did you discover a favorite local eatery or treat (perhaps a donut shop or BBQ joint)? Give it a quick review!",
+      "For history buffs: what's one thing you learned about Milton's past (or Pace's origins) that you found fascinating?",
+      "If you attended a local event (game, festival, concert), describe the atmosphere. Did you feel welcomed by the community?",
+      "Would you recommend a day trip to this region for someone staying in Pensacola Beach? Why or why not?"
+    ],
+    "badges": [
+      {
+        "name": "River Rat",
+        "criteria": "Completed a tubing or paddling trip on the Blackwater River."
+      },
+      {
+        "name": "History Explorer",
+        "criteria": "Visited at least three historical sites or museums in the Pace/Milton area (e.g., Arcadia Mill, downtown Milton museums, Bagdad village)."
+      },
+      {
+        "name": "Nature Lover",
+        "criteria": "Hiked or biked a local trail (e.g., Blackwater Heritage Trail) and visited a local park (Carpenter's Park or Floridatown Park)."
+      },
+      {
+        "name": "Local Flavor",
+        "criteria": "Dined at three non-chain local eateries (bakery, BBQ, diner, etc.) in Pace/Milton."
+      },
+      {
+        "name": "Community Participant",
+        "criteria": "Attended a local event or festival (football game, fair, concert) and interacted with residents."
+      },
+      {
+        "name": "Canoe Capital Champion",
+        "criteria": "Embraced the Canoe Capital spirit: both paddled the river and explored a historic site or nature trail in the area."
+      }
+    ],
+    "testing_notes": "All locations and businesses mentioned are verified open as of 2026 (Milton Quality Bakery open daily; Arcadia Mill museum open Wed–Sat). Bands on the Blackwater runs summer through fall; Scratch Ankle Festival was held April 2024, assume continuation. Garcon Point Bridge toll is $5 (SunPass or toll-by-plate) – noted for travel logic. No search errors; local insights were cross-checked via news (e.g., Milton nickname, Canoe Capital claim, friendly vibe quote). Ensure cultural notes (like Sunday alcohol sales) reflect current law (updated in 2017 to allow 7-day sales). Overall, information is up-to-date and reflective of the community character."
   }
 ]
