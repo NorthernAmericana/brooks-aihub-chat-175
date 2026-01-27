@@ -46,7 +46,7 @@ export interface NormalizedSection {
 export function normalizeStrainName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^\w\s]/g, " ") // Replace punctuation with space (\w includes letters, digits, and underscore)
+    .replace(/[^\w\s]/g, " ") // Replace punctuation with space (\w matches letters, digits, underscore)
     .replace(/\s+/g, " ") // Collapse multiple spaces
     .trim();
 }
@@ -71,7 +71,7 @@ export function normalizeStrainName(name: string): string {
 export function normalizeBrand(brand: string): string {
   return brand
     .toLowerCase()
-    .replace(/[^\w\s]/g, " ") // Replace punctuation with space (\w includes letters, digits, and underscore)
+    .replace(/[^\w\s]/g, " ") // Replace punctuation with space (\w matches letters, digits, underscore)
     .replace(/\s+/g, " ") // Collapse multiple spaces
     .trim();
 }
