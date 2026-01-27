@@ -217,6 +217,38 @@ export async function getApprovedMemoriesByUserIdAndRoute({
   }
 }
 
+export async function getApprovedMemoriesByUserIdAndProjectRoute({
+  userId,
+  projectRoute,
+}: {
+  userId: string;
+  projectRoute: string;
+}) {
+  try {
+    // Import sql from drizzle-orm for LIKE queries
+    const { sql } = await import("drizzle-orm");
+    
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          // Match routes that start with the project route (e.g., /MyCarMindATO/)
+          sql`${memory.route} LIKE ${projectRoute + "%"}`
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories by project route"
+    );
+  }
+}
+
 export async function createUnofficialAto({
   ownerUserId,
   name,
