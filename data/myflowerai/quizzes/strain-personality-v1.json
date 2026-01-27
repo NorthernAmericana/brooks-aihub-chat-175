@@ -1,0 +1,422 @@
+{
+  "id": "strain-personality-v1",
+  "version": "1.0",
+  "title": "What Strain Are You?",
+  "description": "Discover your cannabis personality and get personalized strain recommendations based on your preferences and lifestyle.",
+  "questions": [
+    {
+      "id": "q1_time_of_day",
+      "text": "When do you most often enjoy cannabis?",
+      "type": "multiple-choice",
+      "required": true,
+      "options": [
+        {
+          "id": "morning",
+          "text": "Morning - I like to start my day with focus",
+          "trait_points": {
+            "uplifting": 3,
+            "active": 2,
+            "focused": 2,
+            "relaxing": -1
+          }
+        },
+        {
+          "id": "afternoon",
+          "text": "Afternoon - Perfect for getting things done",
+          "trait_points": {
+            "active": 2,
+            "focused": 2,
+            "creative": 1,
+            "uplifting": 1
+          }
+        },
+        {
+          "id": "evening",
+          "text": "Evening - Winding down after the day",
+          "trait_points": {
+            "relaxing": 3,
+            "cozy": 2,
+            "social": 1
+          }
+        },
+        {
+          "id": "night",
+          "text": "Night - Helping me sleep or deeply relax",
+          "trait_points": {
+            "relaxing": 4,
+            "cozy": 3,
+            "active": -2,
+            "uplifting": -1
+          }
+        }
+      ]
+    },
+    {
+      "id": "q2_activity",
+      "text": "What's your ideal cannabis activity?",
+      "type": "multiple-choice",
+      "required": true,
+      "options": [
+        {
+          "id": "creative_work",
+          "text": "Creative projects (art, music, writing)",
+          "trait_points": {
+            "creative": 4,
+            "focused": 2,
+            "uplifting": 1
+          }
+        },
+        {
+          "id": "social",
+          "text": "Hanging out with friends",
+          "trait_points": {
+            "social": 4,
+            "uplifting": 2,
+            "adventurous": 1
+          }
+        },
+        {
+          "id": "outdoor",
+          "text": "Outdoor adventures (hiking, biking)",
+          "trait_points": {
+            "active": 4,
+            "adventurous": 3,
+            "uplifting": 2
+          }
+        },
+        {
+          "id": "cozy_home",
+          "text": "Relaxing at home (movies, reading)",
+          "trait_points": {
+            "cozy": 4,
+            "relaxing": 3
+          }
+        },
+        {
+          "id": "productive",
+          "text": "Getting work or chores done",
+          "trait_points": {
+            "focused": 4,
+            "active": 2,
+            "uplifting": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "q3_mood_goal",
+      "text": "What mood are you typically going for?",
+      "type": "multiple-choice",
+      "required": true,
+      "options": [
+        {
+          "id": "energy",
+          "text": "Energized and motivated",
+          "trait_points": {
+            "uplifting": 3,
+            "active": 3,
+            "relaxing": -1
+          }
+        },
+        {
+          "id": "calm",
+          "text": "Calm and peaceful",
+          "trait_points": {
+            "relaxing": 4,
+            "cozy": 2
+          }
+        },
+        {
+          "id": "creative_flow",
+          "text": "Creative and inspired",
+          "trait_points": {
+            "creative": 4,
+            "focused": 2,
+            "uplifting": 1
+          }
+        },
+        {
+          "id": "social_vibe",
+          "text": "Chatty and sociable",
+          "trait_points": {
+            "social": 4,
+            "uplifting": 2
+          }
+        },
+        {
+          "id": "balanced",
+          "text": "Balanced and centered",
+          "trait_points": {
+            "relaxing": 2,
+            "uplifting": 2,
+            "focused": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "q4_experience_level",
+      "text": "How would you describe your experience level?",
+      "type": "multiple-choice",
+      "required": true,
+      "options": [
+        {
+          "id": "beginner",
+          "text": "New to cannabis or occasional user",
+          "trait_points": {
+            "cozy": 1,
+            "relaxing": 1
+          }
+        },
+        {
+          "id": "intermediate",
+          "text": "Regular user, know what I like",
+          "trait_points": {
+            "focused": 1,
+            "creative": 1
+          }
+        },
+        {
+          "id": "experienced",
+          "text": "Very experienced, seeking unique experiences",
+          "trait_points": {
+            "adventurous": 2,
+            "creative": 1,
+            "social": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "q5_setting",
+      "text": "Where do you usually enjoy cannabis?",
+      "type": "multiple-choice",
+      "required": true,
+      "options": [
+        {
+          "id": "home_alone",
+          "text": "At home by myself",
+          "trait_points": {
+            "cozy": 3,
+            "creative": 1,
+            "focused": 1
+          }
+        },
+        {
+          "id": "home_friends",
+          "text": "At home with friends",
+          "trait_points": {
+            "social": 3,
+            "cozy": 2
+          }
+        },
+        {
+          "id": "outdoors",
+          "text": "Outdoors in nature",
+          "trait_points": {
+            "adventurous": 3,
+            "active": 2,
+            "uplifting": 1
+          }
+        },
+        {
+          "id": "events",
+          "text": "At events or social gatherings",
+          "trait_points": {
+            "social": 4,
+            "adventurous": 1,
+            "uplifting": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "q6_energy_preference",
+      "text": "Rate your ideal energy level (1-10)",
+      "description": "1 = deeply relaxed, 10 = highly energized",
+      "type": "slider",
+      "required": true,
+      "slider_config": {
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "labels": {
+          "min": "Deeply Relaxed",
+          "max": "Highly Energized"
+        },
+        "trait_mapping": [
+          {
+            "trait": "uplifting",
+            "scale": "linear"
+          },
+          {
+            "trait": "relaxing",
+            "scale": "linear"
+          }
+        ]
+      }
+    }
+  ],
+  "scoring": {
+    "traits": [
+      "uplifting",
+      "relaxing",
+      "creative",
+      "social",
+      "cozy",
+      "active",
+      "focused",
+      "adventurous"
+    ],
+    "trait_ranges": {
+      "uplifting": { "min": -5, "max": 20 },
+      "relaxing": { "min": -5, "max": 25 },
+      "creative": { "min": 0, "max": 15 },
+      "social": { "min": 0, "max": 20 },
+      "cozy": { "min": 0, "max": 18 },
+      "active": { "min": -5, "max": 18 },
+      "focused": { "min": 0, "max": 15 },
+      "adventurous": { "min": 0, "max": 12 }
+    },
+    "profile_mapping": [
+      {
+        "conditions": {
+          "uplifting": { "min": 0.6 },
+          "active": { "min": 0.5 },
+          "adventurous": { "min": 0.4 }
+        },
+        "profile_id": "energetic_explorer"
+      },
+      {
+        "conditions": {
+          "creative": { "min": 0.6 },
+          "focused": { "min": 0.4 }
+        },
+        "profile_id": "creative_thinker"
+      },
+      {
+        "conditions": {
+          "social": { "min": 0.6 },
+          "uplifting": { "min": 0.4 }
+        },
+        "profile_id": "social_butterfly"
+      },
+      {
+        "conditions": {
+          "relaxing": { "min": 0.6 },
+          "cozy": { "min": 0.5 }
+        },
+        "profile_id": "cozy_relaxer"
+      },
+      {
+        "conditions": {
+          "focused": { "min": 0.5 },
+          "uplifting": { "min": 0.3 }
+        },
+        "profile_id": "focused_achiever"
+      }
+    ]
+  },
+  "result_profiles": [
+    {
+      "id": "energetic_explorer",
+      "name": "The Energetic Explorer",
+      "vibe_text": "You're all about adventure and staying active! You love strains that keep you energized and ready to take on the world, whether you're hiking a trail or exploring a new hobby. You seek uplifting experiences that enhance your natural curiosity.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "uplifting",
+        "energizing",
+        "daytime",
+        "active",
+        "outdoor",
+        "adventurous",
+        "mood-enhancing"
+      ],
+      "avoid_tags": ["sedating", "couch-lock", "sleepy"]
+    },
+    {
+      "id": "creative_thinker",
+      "name": "The Creative Thinker",
+      "vibe_text": "Your mind is your playground! You appreciate strains that spark creativity and help you focus on artistic or intellectual pursuits. Whether you're painting, writing, or problem-solving, you want something that enhances your creative flow.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "creative",
+        "focus",
+        "mental-clarity",
+        "artistic",
+        "uplifting",
+        "daytime"
+      ],
+      "avoid_tags": ["sedating", "couch-lock", "unfocused"]
+    },
+    {
+      "id": "social_butterfly",
+      "name": "The Social Butterfly",
+      "vibe_text": "You thrive in social settings! You love strains that make conversations flow easily and enhance your social experiences. Whether it's a party, a dinner with friends, or a casual hangout, you want something that brings out your sociable side.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "social",
+        "uplifting",
+        "conversational",
+        "mood-enhancing",
+        "party",
+        "daytime"
+      ],
+      "avoid_tags": ["sedating", "introspective", "sleepy"]
+    },
+    {
+      "id": "cozy_relaxer",
+      "name": "The Cozy Relaxer",
+      "vibe_text": "Comfort is your priority! You love strains that help you unwind and feel at ease, perfect for movie nights, reading, or just melting into the couch. You seek deep relaxation and a sense of peaceful contentment.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "relaxing",
+        "cozy",
+        "calming",
+        "comfortable",
+        "night",
+        "indoor",
+        "stress-relief"
+      ],
+      "avoid_tags": ["energizing", "racy", "anxiety-inducing"]
+    },
+    {
+      "id": "focused_achiever",
+      "name": "The Focused Achiever",
+      "vibe_text": "You're goal-oriented and productive! You appreciate strains that help you stay on task and maintain mental clarity. Whether you're working, studying, or tackling your to-do list, you want something that enhances your focus without overwhelming you.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "focus",
+        "mental-clarity",
+        "productive",
+        "daytime",
+        "uplifting",
+        "balanced"
+      ],
+      "avoid_tags": ["sedating", "unfocused", "couch-lock"]
+    },
+    {
+      "id": "balanced_explorer",
+      "name": "The Balanced Explorer",
+      "vibe_text": "You appreciate variety and balance! You enjoy strains that offer a well-rounded experience, not too energizing or too sedating. You're open to different activities and moods, seeking versatile strains that work in various situations.",
+      "trait_scores": {},
+      "recommended_tags": [
+        "balanced",
+        "versatile",
+        "uplifting",
+        "relaxing",
+        "daytime",
+        "social"
+      ],
+      "avoid_tags": ["extreme", "one-dimensional"]
+    }
+  ],
+  "disclaimers": [
+    "This quiz provides general informational recommendations only and is NOT medical advice.",
+    "Cannabis effects vary by individual. What works for one person may not work for another.",
+    "Always start with a low dose and go slow, especially with new strains.",
+    "Consult a healthcare professional for medical advice about cannabis use.",
+    "Tags and recommendations are based on general terpene profiles and user preferences, not clinical studies.",
+    "This tool does not diagnose, treat, cure, or prevent any disease or medical condition."
+  ]
+}
