@@ -29,10 +29,15 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "BrooksBears", foundersOnly: false },
       { slash: "BrooksBears/BenjaminBear", foundersOnly: true, badge: "gem" },
       { slash: "MyCarMindATO", foundersOnly: false },
-      { slash: "MyCarMindATO/Driver", foundersOnly: true, badge: "gem" },
+      { slash: "MyCarMindATO/Driver", foundersOnly: false, badge: "free" },
       { slash: "MyCarMindATO/Trucker", foundersOnly: true, badge: "gem" },
       {
         slash: "MyCarMindATO/DeliveryDriver",
+        foundersOnly: false,
+        badge: "free",
+      },
+      {
+        slash: "MyCarMindATO/Traveler",
         foundersOnly: false,
         badge: "free",
       },
