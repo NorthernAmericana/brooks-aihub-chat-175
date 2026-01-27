@@ -248,10 +248,6 @@
           {
             "trait": "uplifting",
             "scale": "linear"
-          },
-          {
-            "trait": "relaxing",
-            "scale": "linear"
           }
         ]
       }
@@ -314,6 +310,10 @@
           "uplifting": { "min": 0.3 }
         },
         "profile_id": "focused_achiever"
+      },
+      {
+        "conditions": {},
+        "profile_id": "balanced_explorer"
       }
     ]
   },
