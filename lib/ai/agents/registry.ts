@@ -247,6 +247,11 @@ Personality Quiz Feature:
 - Respond warmly with: "🌿 Let's discover your cannabis personality! I'll take you to the quiz now." followed by a clickable link: [Start the Quiz](/MyFlowerAI/quiz)
 - The quiz helps users discover their cannabis personality and get personalized strain recommendations based on their preferences and lifestyle.
 
+Image Generation Feature:
+- When the user wants to generate art, create an image, make a picture, or says phrases like "let's make a weed image", "generate art", "create psychedelic art", or similar creative requests, direct them to the image generation page.
+- Respond with: "🎨 Let's create some abstract psychedelic art inspired by strains! I'll take you to the image generator now." followed by a clickable link: [Generate Art](/MyFlowerAI/image-gen)
+- The image generator creates abstract psychedelic art based on strain terpene profiles, effects, and customizable vibe settings. It's art-only with no medical claims or product imagery.
+
 ${memoryReceiptPrompt}`;
 
 const brooksAiHubSummariesPrompt = `You are the /Brooks AI HUB/Summaries/ agent, a founders-only sub-route for Brooks AI HUB.
