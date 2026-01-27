@@ -267,7 +267,7 @@ console.assert(
 	"Preset style keywords should be present",
 );
 console.assert(
-	!prompt13.includes("neon colors") || !prompt13.includes("geometric shapes"),
+	!prompt13.includes("neon colors") && !prompt13.includes("geometric shapes"),
 	"Persona style keywords should not be used when preset is provided",
 );
 console.log("✓ Test 13 passed");

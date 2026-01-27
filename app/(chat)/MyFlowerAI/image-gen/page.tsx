@@ -126,10 +126,23 @@ export default function ImageGenPage() {
         }
 
         // Load presets
-        const presetsRes = await fetch("/data/myflowerai/image-presets.json");
-        if (presetsRes.ok) {
-          const presetsData = await presetsRes.json();
-          setPresets(presetsData.presets);
+        try {
+          const presetsRes = await fetch(
+            "/data/myflowerai/image-presets.json"
+          );
+          if (presetsRes.ok) {
+            const presetsData = await presetsRes.json();
+            if (presetsData?.presets && Array.isArray(presetsData.presets)) {
+              setPresets(presetsData.presets);
+            } else {
+              console.warn("Invalid presets data structure");
+            }
+          } else {
+            console.warn("Failed to load presets, continuing without them");
+          }
+        } catch (presetErr) {
+          console.warn("Error loading presets:", presetErr);
+          // Continue without presets - this is not critical
         }
 
         setLoadingData(false);
