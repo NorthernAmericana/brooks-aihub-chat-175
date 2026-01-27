@@ -291,10 +291,15 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
-      if (firstMessageSlash?.includes("/") && !user.foundersAccess) {
+      
+      // Check if this subroute requires founders access
+      const requiresFoundersForNewChat = firstMessageSlash?.includes("/") && 
+        !FREE_SUBROUTES.includes(firstMessageSlash);
+      
+      if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
-          "Founders access required for subroutes."
+          "Founders access required for this subroute."
         ).toResponse();
       }
       initialRouteKey = firstMessageSlash
