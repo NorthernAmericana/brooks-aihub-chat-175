@@ -313,3 +313,36 @@ export const redemption = pgTable("Redemption", {
 });
 
 export type Redemption = InferSelectModel<typeof redemption>;
+
+// User Inventory table for privacy-safe cannabis inventory tracking
+// See: /docs/myflowerai/inventory-management.md
+export const userInventory = pgTable("user_inventory", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  inventoryId: uuid("inventory_id").notNull().unique().defaultRandom(),
+  strainId: varchar("strain_id", { length: 255 }).notNull(),
+  
+  // Privacy metadata
+  storageLocation: varchar("storage_location", { length: 50 })
+    .notNull()
+    .default("supabase_user_private"),
+  userConsent: boolean("user_consent").notNull().default(false),
+  
+  // Inventory details (privacy-safe with bucketed values and month granularity)
+  acquiredMonth: varchar("acquired_month", { length: 7 }), // YYYY-MM format only
+  opened: boolean("opened").default(false),
+  remainingEstimate: varchar("remaining_estimate", { length: 20 }), // Bucketed: full, half, low, empty
+  storageType: varchar("storage_type", { length: 50 }),
+  hasHumidipack: boolean("has_humidipack"),
+  storageLocationType: varchar("storage_location_type", { length: 50 }),
+  qualityNotes: text("quality_notes"),
+  tags: text("tags").array(),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type UserInventory = InferSelectModel<typeof userInventory>;

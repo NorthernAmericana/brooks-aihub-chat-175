@@ -26,6 +26,28 @@ const sessionLog = SessionLogSchemaV1_0.parse(data);
 
 **Documentation**: See `/docs/myflowerai/session-logging.md` for complete documentation.
 
+### User Inventory Schema v1.0
+**File**: `user-inventory-v1.schema.json`
+
+**Purpose**: Defines the structure for PRIVATE user inventory tracking. This data tracks individual user's cannabis inventory with privacy-safe bucketed amounts and month-level acquisition dates.
+
+**Storage**: Inventory records MUST be stored in private per-user storage:
+- Supabase user-private tables (recommended)
+- Local encrypted storage
+- Private JSON namespace (not committed to repo)
+
+**Privacy**: Inventory records contain user consumption patterns and purchase history. They must NEVER be stored in public strain JSON files. Use month-granularity dates and bucketed amounts (not exact grams).
+
+**Usage**:
+```typescript
+import { UserInventorySchemaV1_0 } from '@/lib/validation/user-inventory-schema';
+
+// Validate an inventory record
+const inventory = UserInventorySchemaV1_0.parse(data);
+```
+
+**Documentation**: See `/docs/myflowerai/inventory-management.md` for complete documentation.
+
 ---
 
 ## Schema Validation

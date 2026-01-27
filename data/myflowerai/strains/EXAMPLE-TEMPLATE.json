@@ -131,5 +131,25 @@
       "On a scale of 1-10, how intense was the experience?",
       "Would you use this strain again in a similar situation?"
     ]
+  },
+  "freshness_guidance": {
+    "best_storage": "Store in an airtight container in a cool, dark place. Ideal temperature is 60-70°F (15-21°C) with 59-63% relative humidity.",
+    "typical_shelf_life_days": 180,
+    "notes": "Flower quality begins to degrade after opening. Terpenes are volatile and evaporate over time. Use within 3-6 months of purchase for optimal experience.",
+    "do_not_store_in_public": [
+      "opened_date",
+      "remaining_g",
+      "purchase_date",
+      "purchase_location",
+      "user_stash_amount"
+    ]
+  },
+  "packaging": {
+    "container_type_suggestions": [
+      "Glass jar with airtight seal",
+      "CVault container",
+      "Mason jar"
+    ],
+    "humidipack_recommended": true
   }
 }

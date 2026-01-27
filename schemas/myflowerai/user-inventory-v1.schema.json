@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.com/schemas/myflowerai/user-inventory-v1.schema.json",
+  "title": "MyFlowerAI User Inventory Schema v1.0",
+  "description": "Schema for PRIVATE user cannabis inventory tracking. This data MUST be stored in per-user private storage (Supabase with RLS, local encrypted, or private namespace). NEVER commit inventory data to public repository or strain JSON files.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "inventory_id",
+    "strain_id",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version identifier"
+    },
+    "inventory_id": {
+      "type": "string",
+      "description": "Unique identifier for this inventory record (UUID recommended)"
+    },
+    "strain_id": {
+      "type": "string",
+      "description": "Reference to public strain data ID"
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["storage_location", "user_consent"],
+      "properties": {
+        "storage_location": {
+          "type": "string",
+          "enum": ["supabase_user_private", "local_encrypted", "private_namespace"],
+          "description": "Where this inventory data is stored"
+        },
+        "user_consent": {
+          "type": "boolean",
+          "description": "Whether user has consented to inventory tracking"
+        }
+      }
+    },
+    "acquired_month": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+      "description": "Month when product was acquired in YYYY-MM format (month granularity only for privacy)",
+      "examples": ["2026-01", "2025-12"]
+    },
+    "opened": {
+      "type": "boolean",
+      "description": "Whether the product container has been opened",
+      "default": false
+    },
+    "remaining_estimate": {
+      "type": "string",
+      "enum": ["full", "half", "low", "empty"],
+      "description": "Bucketed estimate of remaining amount (not exact grams for privacy)"
+    },
+    "storage_type": {
+      "type": "string",
+      "enum": [
+        "glass_jar_airtight",
+        "original_container",
+        "cvault",
+        "mason_jar",
+        "plastic_container",
+        "other"
+      ],
+      "description": "Type of storage container being used"
+    },
+    "storage_conditions": {
+      "type": "object",
+      "properties": {
+        "has_humidipack": {
+          "type": "boolean",
+          "description": "Whether a humidity control pack is being used"
+        },
+        "location": {
+          "type": "string",
+          "enum": ["dark_cool_place", "drawer", "cabinet", "fridge", "other"],
+          "description": "General storage location type (not specific address)"
+        }
+      }
+    },
+    "quality_notes": {
+      "type": "string",
+      "description": "Freeform notes about current quality, freshness, or condition"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User-defined tags for organizing inventory"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this inventory record was created (ISO 8601)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this inventory record was last updated (ISO 8601)"
+    }
+  }
+}
