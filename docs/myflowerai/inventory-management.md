@@ -12,7 +12,7 @@ The inventory and freshness management system enables users to track their canna
 ### Privacy-First Architecture
 
 1. **Public strain JSON files MUST NOT contain user inventory data**
-2. **Inventory records are stored in private per-user storage** (Supabase with RLS, local encrypted, or private namespace)
+2. **Inventory records are stored in private per-user storage** (Database with application-level access control, local encrypted, or private namespace)
 3. **Public strain files include `freshness_guidance` and `packaging`** - general guidance for all users
 4. **User consent is required** before storing any inventory data
 5. **No exact amounts, dates, or locations** - use bucketed/aggregated values for privacy
@@ -115,9 +115,10 @@ Defines the structure for **PRIVATE** user inventory data. This tracks individua
 
 Inventory records MUST be stored in one of these private locations:
 
-1. **Supabase User-Private Table** (recommended for production)
-   - Table: `user_inventory` with Row Level Security (RLS)
-   - User can only access their own inventory records
+1. **Database User-Private Table** (recommended for production)
+   - Table: `user_inventory` with user_id foreign key
+   - Application-level access control ensures users can only access their own inventory records
+   - Access is enforced by filtering all queries with the authenticated user's ID
    - Encrypted at rest
 
 2. **Local Encrypted Storage**
@@ -138,7 +139,7 @@ Inventory records MUST be stored in one of these private locations:
   inventory_id: string,              // Unique ID (UUID)
   strain_id: string,                 // Reference to public strain
   privacy: {
-    storage_location: "supabase_user_private" | "local_encrypted" | "private_namespace",
+    storage_location: "database_user_private" | "local_encrypted" | "private_namespace",
     user_consent: boolean
   },
   acquired_month?: string,           // YYYY-MM (month granularity only)
@@ -182,7 +183,7 @@ Inventory records MUST be stored in one of these private locations:
   "inventory_id": "550e8400-e29b-41d4-a716-446655440001",
   "strain_id": "trulieve-sunshine-cannabis-white-sunshine-3p5g",
   "privacy": {
-    "storage_location": "supabase_user_private",
+    "storage_location": "database_user_private",
     "user_consent": true
   },
   "acquired_month": "2026-01",
@@ -279,29 +280,49 @@ async function createInventoryRecord(
   userId: string, 
   inventoryData: UserInventoryV1_0
 ) {
-  // Store in Supabase with RLS
-  const { data, error } = await supabase
-    .from('user_inventory')
-    .insert({
-      user_id: userId,
+  // Store in database with user_id for access control
+  const { data, error } = await db
+    .insert(userInventory)
+    .values({
+      userId: userId,
       ...inventoryData
-    });
+    })
+    .returning();
   
   return data;
+}
+
+async function getUserInventory(userId: string) {
+  // IMPORTANT: Always filter by userId to ensure users can only access their own data
+  return await db
+    .select()
+    .from(userInventory)
+    .where(eq(userInventory.userId, userId));
 }
 
 async function getInventoryFreshnessAdvice(
   userId: string,
   inventoryId: string
 ) {
-  // 1. Get private inventory record
-  const inventory = await getPrivateInventory(userId, inventoryId);
+  // 1. Get private inventory record (filtered by userId for security)
+  const inventory = await db
+    .select()
+    .from(userInventory)
+    .where(
+      and(
+        eq(userInventory.userId, userId),
+        eq(userInventory.inventoryId, inventoryId)
+      )
+    )
+    .limit(1);
+  
+  if (!inventory.length) return null;
   
   // 2. Get public strain data
-  const strain = await getPublicStrainData(inventory.strain_id);
+  const strain = await getPublicStrainData(inventory[0].strainId);
   
   // 3. Calculate freshness based on acquired_month and shelf_life
-  const monthsOld = calculateMonthsSince(inventory.acquired_month);
+  const monthsOld = calculateMonthsSince(inventory[0].acquiredMonth);
   const shelfLifeMonths = strain.freshness_guidance.typical_shelf_life_days / 30;
   
   // 4. Provide generalized advice without revealing exact dates
@@ -336,7 +357,7 @@ const strainData = {
 };
 ```
 
-## Database Schema (Supabase)
+## Database Schema
 
 ### User Inventory Table
 
@@ -349,7 +370,7 @@ CREATE TABLE user_inventory (
   strain_id VARCHAR(255) NOT NULL,
   
   -- Privacy metadata
-  storage_location VARCHAR(50) NOT NULL DEFAULT 'supabase_user_private',
+  storage_location VARCHAR(50) NOT NULL DEFAULT 'database_user_private',
   user_consent BOOLEAN NOT NULL DEFAULT false,
   
   -- Inventory details (privacy-safe)
@@ -368,28 +389,14 @@ CREATE TABLE user_inventory (
   CONSTRAINT acquired_month_format CHECK (acquired_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$')
 );
 
--- Row Level Security
-ALTER TABLE user_inventory ENABLE ROW LEVEL SECURITY;
+-- Foreign key constraint
+ALTER TABLE user_inventory 
+  ADD CONSTRAINT user_inventory_user_id_User_id_fk 
+  FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE;
 
--- Users can only see their own inventory
-CREATE POLICY "Users can view own inventory"
-  ON user_inventory FOR SELECT
-  USING (auth.uid() = user_id);
-
--- Users can only insert their own inventory
-CREATE POLICY "Users can insert own inventory"
-  ON user_inventory FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Users can only update their own inventory
-CREATE POLICY "Users can update own inventory"
-  ON user_inventory FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- Users can only delete their own inventory
-CREATE POLICY "Users can delete own inventory"
-  ON user_inventory FOR DELETE
-  USING (auth.uid() = user_id);
+-- Note: This application uses application-level access control.
+-- Queries should always filter by user_id matching the authenticated user's ID
+-- to ensure users can only access their own inventory records.
 
 -- Index for performance
 CREATE INDEX idx_user_inventory_user_id ON user_inventory(user_id);
@@ -431,9 +438,9 @@ pnpm validate:myflowerai
 
 ### Setting Up User Inventory
 
-1. Run Supabase migration to create `user_inventory` table
-2. Enable Row Level Security policies
-3. Update AI agent to use inventory when user opts in
+1. Run database migration to create `user_inventory` table
+2. Update AI agent to use inventory when user opts in
+3. Ensure all inventory queries filter by authenticated user's ID
 4. Test with sample data in development environment
 
 ## Security Best Practices
@@ -442,7 +449,7 @@ pnpm validate:myflowerai
 
 1. **Never log private inventory data to console** in production
 2. **Always require user consent** before storing inventory data
-3. **Use RLS (Row Level Security)** in Supabase to enforce access control
+3. **Enforce access control at application layer** - filter all queries by authenticated user's ID
 4. **Encrypt inventory data at rest** and in transit
 5. **Provide data export/deletion** features to comply with privacy regulations
 6. **Add inventory files to `.gitignore`** if using local file storage

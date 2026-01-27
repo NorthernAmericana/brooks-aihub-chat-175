@@ -20,7 +20,7 @@ export const UserInventorySchemaV1_0 = z.object({
   
   privacy: z.object({
     storage_location: z.enum([
-      "supabase_user_private",
+      "database_user_private",
       "local_encrypted", 
       "private_namespace"
     ]).describe("Where this inventory data is stored"),
@@ -88,7 +88,7 @@ export const EXAMPLE_USER_INVENTORY: UserInventoryV1_0 = {
   inventory_id: "550e8400-e29b-41d4-a716-446655440001",
   strain_id: "trulieve-sunshine-cannabis-white-sunshine-3p5g",
   privacy: {
-    storage_location: "supabase_user_private",
+    storage_location: "database_user_private",
     user_consent: true,
   },
   acquired_month: "2026-01",

@@ -328,7 +328,7 @@ export const userInventory = pgTable("user_inventory", {
   // Privacy metadata
   storageLocation: varchar("storage_location", { length: 50 })
     .notNull()
-    .default("supabase_user_private"),
+    .default("database_user_private"),
   userConsent: boolean("user_consent").notNull().default(false),
   
   // Inventory details (privacy-safe with bucketed values and month granularity)

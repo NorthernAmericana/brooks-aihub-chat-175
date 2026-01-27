@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "user_inventory" (
   "strain_id" varchar(255) NOT NULL,
   
   -- Privacy metadata
-  "storage_location" varchar(50) NOT NULL DEFAULT 'supabase_user_private',
+  "storage_location" varchar(50) NOT NULL DEFAULT 'database_user_private',
   "user_consent" boolean NOT NULL DEFAULT false,
   
   -- Inventory details (privacy-safe with bucketed values and month granularity)
@@ -37,35 +37,9 @@ EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
--- Row Level Security (RLS) - Users can only access their own inventory
-ALTER TABLE "user_inventory" ENABLE ROW LEVEL SECURITY;
-
--- Note: RLS policies require Supabase auth. If using a different auth system,
--- these policies should be adjusted accordingly.
-
--- Policy: Users can view their own inventory
-CREATE POLICY "Users can view own inventory"
-  ON "user_inventory"
-  FOR SELECT
-  USING ("user_id" = (SELECT "id" FROM "User" WHERE "id" = "user_id"));
-
--- Policy: Users can insert their own inventory
-CREATE POLICY "Users can insert own inventory"
-  ON "user_inventory"
-  FOR INSERT
-  WITH CHECK ("user_id" = (SELECT "id" FROM "User" WHERE "id" = "user_id"));
-
--- Policy: Users can update their own inventory
-CREATE POLICY "Users can update own inventory"
-  ON "user_inventory"
-  FOR UPDATE
-  USING ("user_id" = (SELECT "id" FROM "User" WHERE "id" = "user_id"));
-
--- Policy: Users can delete their own inventory
-CREATE POLICY "Users can delete own inventory"
-  ON "user_inventory"
-  FOR DELETE
-  USING ("user_id" = (SELECT "id" FROM "User" WHERE "id" = "user_id"));
+-- Note: This application uses application-level access control rather than database-level RLS.
+-- Access control should be enforced in the application layer to ensure users can only access
+-- their own inventory records by filtering queries with the authenticated user's ID.
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS "idx_user_inventory_user_id" ON "user_inventory"("user_id");

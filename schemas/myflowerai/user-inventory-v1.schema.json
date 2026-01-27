@@ -30,7 +30,7 @@
       "properties": {
         "storage_location": {
           "type": "string",
-          "enum": ["supabase_user_private", "local_encrypted", "private_namespace"],
+          "enum": ["database_user_private", "local_encrypted", "private_namespace"],
           "description": "Where this inventory data is stored"
         },
         "user_consent": {
