@@ -8,6 +8,9 @@ const allowedProducts = new Set<string>([
   PRODUCT_IDS.MDD_NOVEL_BASE,
 ]);
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

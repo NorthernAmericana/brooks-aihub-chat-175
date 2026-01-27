@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, updateChatTtsSettings } from "@/lib/db/queries";
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const session = await auth();
 
