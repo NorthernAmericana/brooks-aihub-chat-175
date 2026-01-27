@@ -150,13 +150,30 @@ const normalizeQueryValue = (value: string) =>
     .trim()
     .replace(/\s+/g, " ");
 
-const loadStrains = async () => {
+type StrainRecord = {
+  id?: string;
+  strain?: {
+    name?: string;
+    type?: string;
+  };
+  stats?: {
+    total_thc_percent?: number;
+    total_terpenes_percent?: number;
+    top_terpenes?: Array<{ name?: string; percent?: number }>;
+  };
+  description?: {
+    dispensary_bio?: string;
+    vibes_like?: string[];
+  };
+};
+
+const loadStrains = async (): Promise<StrainRecord[]> => {
   const fileContents = await readFile(STRAINS_FILE_PATH, "utf8");
   return fileContents
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as { id?: string; strain?: { name?: string } });
+    .map((line) => JSON.parse(line) as StrainRecord);
 };
 
 const FALLBACK_STRAIN_LIMIT = 8;
@@ -181,10 +198,7 @@ const isGenericStrainQuery = (query: string) =>
   GENERIC_STRAIN_QUERIES.has(query) ||
   GENERIC_STRAIN_QUERY_PATTERNS.some((pattern) => pattern.test(query));
 
-const selectMatchingStrains = (
-  strains: Array<{ id?: string; strain?: { name?: string } }>,
-  query: string
-) => {
+const selectMatchingStrains = (strains: StrainRecord[], query: string) => {
   // Normalization check: "Blue-Dream#1" => "blue dream 1", "  OG   Kush " => "og kush".
   const normalizedQuery = normalizeQueryValue(query);
   const isGenericQuery =
@@ -217,10 +231,15 @@ const selectMatchingStrains = (
   };
 };
 
-const buildStrainSummary = (
-  strains: Array<{ id?: string; strain?: { name?: string; type?: string } }>,
-  label: string
-) => {
+const formatPercent = (value?: number, fractionDigits = 1) =>
+  typeof value === "number" && Number.isFinite(value)
+    ? `${value.toFixed(fractionDigits)}%`
+    : "n/a";
+
+const truncateText = (text: string, maxLength = 140) =>
+  text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text;
+
+const buildStrainSummary = (strains: StrainRecord[], label: string) => {
   if (!strains.length) {
     return "Strain Data: No matching strains found in strains.ndjson.";
   }
@@ -228,7 +247,32 @@ const buildStrainSummary = (
   const lines = strains.map((strain) => {
     const name = strain.strain?.name ?? strain.id ?? "Unknown strain";
     const type = strain.strain?.type;
-    return `- ${name}${type ? ` (${type})` : ""}`;
+    const thc = formatPercent(strain.stats?.total_thc_percent, 1);
+    const terps = formatPercent(strain.stats?.total_terpenes_percent, 2);
+    const topTerpenes = (strain.stats?.top_terpenes ?? [])
+      .slice(0, 3)
+      .map((terp) => {
+        const terpPercent = formatPercent(terp.percent, 2);
+        return terp.name ? `${terp.name} (${terpPercent})` : null;
+      })
+      .filter((value): value is string => Boolean(value))
+      .join(", ");
+    const vibes =
+      strain.description?.vibes_like?.slice(0, 2).join("; ") ??
+      (strain.description?.dispensary_bio
+        ? truncateText(strain.description.dispensary_bio, 120)
+        : null);
+
+    const details = [
+      `THC ${thc}`,
+      `Total terps ${terps}`,
+      topTerpenes ? `Top terps: ${topTerpenes}` : null,
+      vibes ? `Vibes: ${vibes}` : null,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(" | ");
+
+    return `- ${name}${type ? ` (${type})` : ""}${details ? ` — ${details}` : ""}`;
   });
 
   return `Strain Data (${label}):\n${lines.join("\n")}`;
@@ -295,9 +339,7 @@ export const runMyFlowerAIWorkflow = async ({
             ? "sample list for generic request"
             : "sample list; no direct matches"
         )
-      : `Strain Data:\n${strainSelection.matching
-          .map((strain) => JSON.stringify(strain))
-          .join("\n")}`;
+      : buildStrainSummary(strainSelection.matching, "matching strains");
 
     const vectorSummary = buildVectorStoreSummary(
       vectorStoreResults.data.map((result) => ({
