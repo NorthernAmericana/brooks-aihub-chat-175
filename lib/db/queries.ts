@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -225,9 +226,6 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
   projectRoute: string;
 }) {
   try {
-    // Import sql from drizzle-orm for LIKE queries
-    const { sql } = await import("drizzle-orm");
-    
     return await db
       .select()
       .from(memory)

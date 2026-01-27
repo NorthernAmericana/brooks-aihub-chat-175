@@ -65,6 +65,13 @@ export const maxDuration = 60;
 
 const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
 
+// Free subroutes that don't require founders access
+const FREE_SUBROUTES = [
+  "MyCarMindATO/Driver",
+  "MyCarMindATO/DeliveryDriver",
+  "MyCarMindATO/Traveler",
+];
+
 /**
  * Helper function to extract the parent project route from a subroute.
  * E.g., "MyCarMindATO/Driver" -> "/MyCarMindATO/"
@@ -364,14 +371,8 @@ export async function POST(request: Request) {
         getDefaultAgentConfig();
     }
     
-    // Free subroutes that don't require founders access
-    const freeSubroutes = [
-      "MyCarMindATO/Driver",
-      "MyCarMindATO/DeliveryDriver", 
-      "MyCarMindATO/Traveler",
-    ];
     const requiresFoundersAccess = selectedAgent.slash.includes("/") && 
-      !freeSubroutes.includes(selectedAgent.slash);
+      !FREE_SUBROUTES.includes(selectedAgent.slash);
     
     if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
@@ -395,7 +396,7 @@ export async function POST(request: Request) {
       // Project-level memory sharing for subroutes
       approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
         userId: session.user.id,
-        projectRoute: projectRoute,
+        projectRoute,
       });
     } else if (isMyCarMindAgent) {
       // Exact route for standalone MyCarMindATO
