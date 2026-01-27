@@ -94,7 +94,7 @@
   "coa": {
     "status": "passed",
     "lab": "Trulieve Testing Lab",
-    "laboratory_id": null,
+    "laboratory_id": "TL-SPC-2026",
     "sample_matrix": "Whole Flower",
     "admin_route": "Inhalation",
     "product_name_on_coa": "Roll One - Southern Pound Cake",
