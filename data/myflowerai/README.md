@@ -116,5 +116,50 @@ Full schema documentation: `/docs/myflowerai/schema.md`
 - Precise timestamps (dates are OK, exact times are not)
 - Purchase prices or financial data
 - Data that could identify individual users
+- **User session logs** - Use private storage instead (see Session Logging below)
 
 For internal operations requiring this data, use a separate internal-only schema.
+
+## Session Logging
+
+MyFlowerAI supports session logging for tracking user cannabis consumption experiences.
+
+### Privacy-Safe Architecture
+
+- **Public strain files** contain `session_template` - guidance for AI agents
+- **Private user data** (actual session logs) stored separately in Supabase or private storage
+- **NEVER commit** `sessions`, `session_logs`, or `user_sessions` arrays to public strain files
+
+### Adding Session Templates to Strains
+
+Strain files can include an optional `session_template` to guide AI agents:
+
+```json
+{
+  "session_template": {
+    "suggested_methods": ["joint", "vaporizer_dry_herb"],
+    "suggested_dose_guidance_text": "Start with 0.25-0.5g for moderate experience",
+    "recommended_questions": [
+      "What method did you use?",
+      "How much did you use?",
+      "What effects did you notice?"
+    ]
+  }
+}
+```
+
+### Documentation
+
+- Full session logging guide: `/docs/myflowerai/session-logging.md`
+- Session log schema: `/schemas/myflowerai/session-log-v1.schema.json`
+- TypeScript schema: `/lib/validation/session-log-schema.ts`
+
+### Validation
+
+The validation script automatically rejects strain files containing user session data:
+
+```bash
+pnpm validate:myflowerai
+```
+
+This ensures privacy is maintained in public files.

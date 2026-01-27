@@ -139,6 +139,18 @@ The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to
   - `avoid_if`: Array of warnings
   - `session_notes`: Freeform notes
 
+##### `session_template` (optional, added in v1.1.1)
+- Type: `object`
+- Public guidance for AI agents on session logging
+- **NOTE**: This is PUBLIC data providing guidance, NOT private session logs
+- Fields:
+  - `suggested_methods`: Array of recommended consumption methods (e.g., `["joint", "vaporizer_dry_herb"]`)
+  - `suggested_dose_guidance_text`: Natural language dosing advice based on strain potency
+  - `recommended_questions`: Array of questions for AI agent to ask when logging sessions
+- Purpose: Helps AI agents ask consistent, strain-appropriate questions
+- Privacy: User session logs (answers to these questions) are stored in PRIVATE storage, never in public strain files
+- See `/docs/myflowerai/session-logging.md` for complete session logging documentation
+
 #### Removed Fields (from v1.0)
 
 The following fields are **removed** in v1.1 as they contain private/purchase metadata:
@@ -149,6 +161,20 @@ The following fields are **removed** in v1.1 as they contain private/purchase me
 4. **`sources`**: Array containing `retrieved_at` timestamps (operational metadata)
 5. **`created_at`**: Record creation timestamp (operational metadata)
 6. **`updated_at`**: Record update timestamp (operational metadata)
+
+#### Prohibited Fields (MUST NOT be added)
+
+The following fields are **explicitly prohibited** in public strain files to maintain privacy:
+
+1. **`sessions`**: User session logs array - PRIVACY VIOLATION
+2. **`session_logs`**: User session logs array - PRIVACY VIOLATION  
+3. **`user_sessions`**: User session logs array - PRIVACY VIOLATION
+4. Any field containing personally identifying information
+5. Any field containing user consumption history
+
+**Note**: User session data must be stored in private per-user storage (Supabase, local encrypted, or private namespace). See `/docs/myflowerai/session-logging.md` for proper session logging implementation.
+
+The validation script will automatically reject any strain file containing these prohibited fields.
 
 ### Migration from v1.0 to v1.1
 

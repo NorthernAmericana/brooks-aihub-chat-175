@@ -132,5 +132,26 @@
     "felt_like": [],
     "avoid_if": [],
     "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "bong",
+      "pipe"
+    ],
+    "suggested_dose_guidance_text": "Balanced hybrid with 24.2% THC. Good for social situations or daytime relaxation. Start with 0.25-0.5g for moderate effects.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "Approximately how much did you use?",
+      "What time of day was your session?",
+      "What was the setting or activity?",
+      "How did you feel before using it?",
+      "What positive effects did you notice?",
+      "Were there any negative effects?",
+      "On a scale of 1-10, how intense was it?",
+      "Did it work well for the situation?",
+      "Would you choose Juicy Jane again for similar occasions?"
+    ]
   }
 }

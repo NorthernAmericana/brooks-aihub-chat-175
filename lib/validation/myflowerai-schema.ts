@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SessionTemplateSchema } from "./session-log-schema";
 
 /**
  * MyFlowerAI Strain Data Schema v1.1
@@ -129,6 +130,7 @@ export const MyFlowerAIStrainSchemaV1_1 = z.object({
   coa: COASchema,
   tags: z.array(z.string()),
   your_notes: YourNotesSchema,
+  session_template: SessionTemplateSchema.optional(),
 });
 
 export type MyFlowerAIStrainV1_1 = z.infer<typeof MyFlowerAIStrainSchemaV1_1>;

@@ -32,6 +32,34 @@ async function validateFile(filename: string): Promise<ValidationResult> {
     const contents = await readFile(filepath, "utf8");
     const data = JSON.parse(contents);
 
+    // Check for privacy violations before proceeding with schema validation
+    const privacyErrors: string[] = [];
+    
+    // Explicitly check for session/session_log arrays (MUST NOT exist in public files)
+    if ("sessions" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+      );
+    }
+    if ("session_logs" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'session_logs' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+      );
+    }
+    if ("user_sessions" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'user_sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+      );
+    }
+
+    if (privacyErrors.length > 0) {
+      return {
+        filename,
+        valid: false,
+        errors: privacyErrors,
+      };
+    }
+
     // Validate against v1.1 schema
     MyFlowerAIStrainSchemaV1_1.parse(data);
 
