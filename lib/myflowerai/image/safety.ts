@@ -75,7 +75,7 @@ export function scrubVibeText(vibeText: string | undefined | null): string {
   // Check for blocked content
   if (containsBlockedContent(vibeText)) {
     console.warn(
-      "Blocked content detected in vibe text, using neutral fallback"
+      "Blocked content detected in vibe text (content not logged for privacy)"
     );
     return NEUTRAL_FALLBACK_TEXT;
   }

@@ -10,6 +10,18 @@ import {
 import { validateVibeText } from "@/lib/myflowerai/image/safety";
 
 /**
+ * Image generation configuration
+ */
+const IMAGE_CONFIG = {
+  model: process.env.DALLE_MODEL || "dall-e-3",
+  size:
+    (process.env.DALLE_SIZE as "1024x1024" | "1792x1024" | "1024x1792") ||
+    "1024x1024",
+  quality: (process.env.DALLE_QUALITY as "standard" | "hd") || "standard",
+  response_format: "url" as const,
+} as const;
+
+/**
  * API route for MyFlowerAI strain-based image generation
  *
  * POST /api/myflowerai/generate-image
@@ -99,25 +111,35 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "dall-e-3",
+          model: IMAGE_CONFIG.model,
           prompt,
           n: 1,
-          size: "1024x1024",
-          quality: "standard",
-          response_format: "url",
+          size: IMAGE_CONFIG.size,
+          quality: IMAGE_CONFIG.quality,
+          response_format: IMAGE_CONFIG.response_format,
         }),
       }
     );
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.json();
-      console.error("OpenAI API error:", errorData);
+      console.error(
+        `OpenAI API error: status=${openaiResponse.status}, message=${errorData.error?.message || "Unknown"}`
+      );
+
+      // Map OpenAI error codes to appropriate HTTP status codes
+      const statusCode =
+        openaiResponse.status === 400 ||
+        errorData.error?.code === "content_policy_violation"
+          ? 400
+          : 502;
+
       return NextResponse.json(
         {
           error: "Image generation failed",
           details: errorData.error?.message || "Unknown error",
         },
-        { status: openaiResponse.status }
+        { status: statusCode }
       );
     }
 

@@ -10,6 +10,11 @@ import type { StrainMeaning } from "../tagger";
 import { scrubVibeText } from "./safety";
 
 /**
+ * Maximum prompt length for OpenAI DALL-E API
+ */
+const MAX_PROMPT_LENGTH = 1000;
+
+/**
  * Persona profile for image generation
  */
 export interface PersonaProfile {
@@ -220,10 +225,9 @@ export function composeImagePrompt(
   // Join all parts
   const prompt = parts.join(". ");
 
-  // Ensure prompt doesn't exceed reasonable length (OpenAI has limits)
-  const maxLength = 1000;
-  if (prompt.length > maxLength) {
-    return `${prompt.substring(0, maxLength).trim()}...`;
+  // Ensure prompt doesn't exceed maximum length
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return `${prompt.substring(0, MAX_PROMPT_LENGTH).trim()}...`;
   }
 
   return prompt;

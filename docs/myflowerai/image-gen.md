@@ -23,7 +23,7 @@ All generated images are **abstract psychedelic art only**. The system enforces 
 
 ### Components
 
-#### 1. Prompt Composer (`/lib/myflowerai/image/promptComposer.ts`)
+#### 1. Prompt Composer (`/lib/myflowerai/image/prompt-composer.ts`)
 
 Composes safe, art-focused prompts for image generation.
 
