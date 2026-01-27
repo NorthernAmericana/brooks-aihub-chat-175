@@ -135,7 +135,7 @@ The `normalized` section is added to each strain file:
 Input: "White Sunshine" + "Sunshine Cannabis"
 Normalized: "white sunshine|sunshine cannabis"
 Hash: SHA-256 → first 16 chars
-Output: "a1b2c3d4e5f6g7h8"
+Output: "a5cf1b087d554dc2" (actual hash from real data)
 ```
 
 #### `ids.product_key`
@@ -149,7 +149,7 @@ Output: "a1b2c3d4e5f6g7h8"
 Input: "White Sunshine" + "Sunshine Cannabis" + "flower" + "3.5g Whole Flower"
 Normalized: "white sunshine|sunshine cannabis|flower|3.5g_whole_flower"
 Hash: SHA-256 → first 16 chars
-Output: "z9y8x7w6v5u4t3s2"
+Output: "7960325b6402e35e" (actual hash from real data)
 ```
 
 ## Usage
@@ -196,8 +196,8 @@ console.log(normalized);
 //   canonical_product_category: "flower",
 //   canonical_form_factor: "3.5g_whole_flower",
 //   ids: {
-//     strain_key: "a1b2c3d4e5f6g7h8",
-//     product_key: "z9y8x7w6v5u4t3s2"
+//     strain_key: "98bcf39df3220fe1",
+//     product_key: "5caa5d6a01419629"
 //   }
 // }
 ```

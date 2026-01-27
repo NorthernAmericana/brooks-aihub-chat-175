@@ -75,7 +75,15 @@ async function backfillFile(filename: string): Promise<BackfillResult> {
     const withNormalized = addNormalizedToStrain(data);
 
     // Write back to file (pretty-printed JSON)
-    await writeFile(filepath, JSON.stringify(withNormalized, null, 2) + "\n", "utf8");
+    try {
+      await writeFile(filepath, JSON.stringify(withNormalized, null, 2) + "\n", "utf8");
+    } catch (writeError) {
+      return {
+        filename,
+        success: false,
+        error: `Failed to write file: ${writeError instanceof Error ? writeError.message : String(writeError)}`,
+      };
+    }
 
     return {
       filename,
