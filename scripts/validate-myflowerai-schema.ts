@@ -51,6 +51,43 @@ async function validateFile(filename: string): Promise<ValidationResult> {
         "PRIVACY VIOLATION: 'user_sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
       );
     }
+    
+    // Check for inventory-related privacy violations
+    if ("inventory" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead."
+      );
+    }
+    if ("user_inventory" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'user_inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead."
+      );
+    }
+    if ("opened_date" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'opened_date' field found. Exact dates must NOT be stored in public strain files."
+      );
+    }
+    if ("remaining_g" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'remaining_g' field found. Exact amounts must NOT be stored in public strain files."
+      );
+    }
+    if ("purchase_date" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'purchase_date' field found. Purchase dates must NOT be stored in public strain files."
+      );
+    }
+    if ("purchase_location" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'purchase_location' field found. Purchase locations must NOT be stored in public strain files."
+      );
+    }
+    if ("user_stash_amount" in data) {
+      privacyErrors.push(
+        "PRIVACY VIOLATION: 'user_stash_amount' field found. User stash amounts must NOT be stored in public strain files."
+      );
+    }
 
     if (privacyErrors.length > 0) {
       return {

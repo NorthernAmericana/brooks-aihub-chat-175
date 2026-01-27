@@ -107,6 +107,26 @@ const YourNotesSchema = z.object({
   session_notes: z.string(),
 });
 
+// Freshness guidance (v1.2+)
+const FreshnessGuidanceSchema = z.object({
+  best_storage: z.string()
+    .describe("General storage recommendations for optimal freshness"),
+  typical_shelf_life_days: z.number()
+    .describe("Expected shelf life in days under optimal storage conditions"),
+  notes: z.string().optional()
+    .describe("Additional freshness notes and guidance"),
+  do_not_store_in_public: z.array(z.string())
+    .describe("Array of field names that should never be in public strain files"),
+});
+
+// Packaging recommendations (v1.2+)
+const PackagingSchema = z.object({
+  container_type_suggestions: z.array(z.string())
+    .describe("Recommended container types for optimal storage"),
+  humidipack_recommended: z.boolean()
+    .describe("Whether a humidity control pack is recommended"),
+});
+
 // Visibility metadata
 const VisibilitySchema = z.object({
   client_safe: z.literal(true),
@@ -131,6 +151,8 @@ export const MyFlowerAIStrainSchemaV1_1 = z.object({
   tags: z.array(z.string()),
   your_notes: YourNotesSchema,
   session_template: SessionTemplateSchema.optional(),
+  freshness_guidance: FreshnessGuidanceSchema.optional(),
+  packaging: PackagingSchema.optional(),
 });
 
 export type MyFlowerAIStrainV1_1 = z.infer<typeof MyFlowerAIStrainSchemaV1_1>;
