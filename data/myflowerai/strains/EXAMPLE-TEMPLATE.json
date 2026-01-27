@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "example-dispensary-brand-strain-name-size",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "Example Strain",
+    "type": "hybrid",
+    "brand": "Example Brand",
+    "lineage": [
+      "Parent Strain 1",
+      "Parent Strain 2"
+    ]
+  },
+  "product": {
+    "dispensary": "Example Dispensary",
+    "category": "flower",
+    "form": "3.5g Whole Flower",
+    "size_g": 3.5,
+    "sku": "SKU123",
+    "in_stock": true
+  },
+  "stats": {
+    "total_thc_percent": 25.0,
+    "total_cbd_percent": 0.5,
+    "total_cannabinoids_percent": 30.0,
+    "total_terpenes_percent": 2.0,
+    "top_terpenes": [
+      {
+        "name": "Limonene",
+        "percent": 0.6
+      },
+      {
+        "name": "Caryophyllene",
+        "percent": 0.5
+      },
+      {
+        "name": "Myrcene",
+        "percent": 0.4
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 27.5,
+      "delta9_thc": 1.0,
+      "cbga": 0.5,
+      "cbg": 0.2,
+      "cbda": 0.1,
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "cbn": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 962.5,
+      "delta9_thc_mg": 35.0,
+      "cbga_mg": 17.5,
+      "cbg_mg": 7.0,
+      "cbda_mg": 3.5
+    }
+  },
+  "description": {
+    "dispensary_bio": "A balanced hybrid with fruity and earthy notes, offering uplifting effects perfect for any time of day.",
+    "vibes_like": [
+      "Relaxing after work with good vibes",
+      "Creative projects with focused energy",
+      "Social gatherings with friends"
+    ],
+    "product_positioning": "Premium flower cultivated with care for consistent quality and potency.",
+    "brand_info": "Example Brand is known for award-winning genetics and sustainable cultivation practices."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Example Testing Lab",
+    "laboratory_id": "LAB12345",
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "Example Product Name",
+    "cultivar_on_coa": "Example Strain",
+    "completed_at": "2026-01-15",
+    "received_at": "2026-01-12",
+    "sample_date": "2026-01-12",
+    "batch_date": "2026-01-09",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Example Facility",
+    "processing_facility": "Example Processing",
+    "seed_to_sale_id": "1234567890",
+    "qa_sample_id": "QA123456",
+    "batch_size_g": 10000,
+    "units_sampled": 10,
+    "total_amt_sampled_g": 35.0
+  },
+  "tags": [
+    "hybrid",
+    "fruity",
+    "balanced",
+    "social",
+    "anytime"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  }
+}
