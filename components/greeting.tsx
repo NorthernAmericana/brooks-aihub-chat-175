@@ -61,13 +61,24 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           return null;
         }
 
-        return {
+        const folderItem: {
+          label: string;
+          slash: string;
+          folder: string;
+          foundersOnly: boolean;
+          badge?: "gem" | "free";
+        } = {
           label: labelOverrides[agent.slash] ?? agent.label,
           slash: agent.slash,
           folder: `/${agent.slash}/`,
           foundersOnly: entry.foundersOnly,
-          badge: entry.badge,
         };
+        
+        if (entry.badge) {
+          folderItem.badge = entry.badge;
+        }
+        
+        return folderItem;
       })
       .filter(
         (
