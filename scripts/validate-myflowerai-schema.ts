@@ -11,7 +11,7 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import type { ZodError } from "zod";
+import { ZodError } from "zod";
 import { MyFlowerAIStrainSchemaV1_1 } from "../lib/validation/myflowerai-schema";
 
 const STRAINS_DIR = path.join(process.cwd(), "data", "myflowerai", "strains");
@@ -40,14 +40,11 @@ async function validateFile(filename: string): Promise<ValidationResult> {
       valid: true,
     };
   } catch (error) {
-    if (error && typeof error === "object" && "errors" in error) {
-      const zodError = error as ZodError;
+    if (error instanceof ZodError) {
       return {
         filename,
         valid: false,
-        errors: zodError.errors.map(
-          (err) => `${err.path.join(".")}: ${err.message}`
-        ),
+        errors: error.issues.map((err) => `${err.path.join(".")}: ${err.message}`),
       };
     }
 
