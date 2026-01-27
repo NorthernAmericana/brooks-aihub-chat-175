@@ -218,5 +218,30 @@
       "strain_key": "a5cf1b087d554dc2",
       "product_key": "7960325b6402e35e"
     }
+  },
+  "comparative_context": {
+    "alternative_genetics_note": "White Sunshine has two known genetic lineages in circulation. The Florida version (Trulieve/Sunshine Cannabis) uses The White x Sunshine Daydream from Bodhi Seeds. Other markets may carry White Widow x Sour Diesel variants. Always verify lineage by checking breeder/dispensary info.",
+    "market_availability": [
+      "Florida (Trulieve/Sunshine Cannabis - primary)",
+      "Washington State (Khush Kush phenotype #8/#9)",
+      "Massachusetts/Vermont (some dispensaries as 'White Sunrise')",
+      "Oregon (Kush Cart PDX with Bodhi lineage)"
+    ],
+    "distinguishing_characteristics": [
+      "Frosty appearance consistent with 'White' family genetics",
+      "Dynamic terpene profile varies by phenotype - Florida cut emphasizes sweet pine, gas, and skunk",
+      "Robust potency (27-30% THC range in premium batches)",
+      "Versatile effects - can tilt uplifting or relaxing depending on terpene expression"
+    ],
+    "medical_therapeutic_notes": [
+      "Clear-headed euphoria suitable for daytime use",
+      "Mood elevation and stress relief",
+      "Balanced energy without heavy sedation",
+      "Some phenotypes (WA Khush Kush) provide more body relaxation for pain relief"
+    ],
+    "comparison_highlights": {
+      "vs_juicy_jane": "White Sunshine offers more balanced daytime energy, while Juicy Jane delivers fruit-forward flavor with stronger cerebral onset",
+      "vs_margalope": "White Sunshine provides hybrid balance, while Margalope leans more sativa with pronounced creative/energizing effects"
+    }
   }
 }
