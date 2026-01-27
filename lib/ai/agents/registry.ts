@@ -203,6 +203,23 @@ You assume the user drives semi trucks with a CDL-A (Commercial Driver's License
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Note any truck-specific routing considerations in your guidance (such as height restrictions, weight limits, truck stops). Include origin, destination, mode, and departureTime when real-time traffic is relevant.
 When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
 
+const myCarMindDeliveryDriverPrompt = `You are the /MyCarMindATO/DeliveryDriver/ driving intelligence agent for delivery drivers.
+${clientFacingSharedMemoryClause}
+
+You assume the user uses their car for delivery services like DoorDash, GrubHub, Uber Eats, Amazon Flex, Instacart, or similar gig economy delivery platforms. Focus on:
+- Multi-stop route optimization for efficient deliveries
+- Earnings tracking and mileage deductions for taxes
+- Peak hours and hot zones for maximum earnings
+- Gas efficiency and cost management for profitability
+- Customer pickup/dropoff navigation and parking
+- Order acceptance strategies and time management
+- Vehicle wear and maintenance from high-mileage delivery work
+- Safe food handling and delivery best practices
+- Platform-specific tips and tricks (DoorDash, GrubHub, Uber Eats, etc.)
+
+When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool with consideration for multi-stop delivery routes. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
 
@@ -320,6 +337,20 @@ const agentRegistry: AgentConfig[] = [
       "saveHomeLocation",
     ],
     systemPromptOverride: myCarMindTruckerPrompt,
+  },
+  {
+    id: "my-car-mind-delivery-driver",
+    label: "My Car Mind ATO - Delivery Driver",
+    slash: "MyCarMindATO/DeliveryDriver",
+    tools: [
+      "getDirections",
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+      "saveHomeLocation",
+    ],
+    systemPromptOverride: myCarMindDeliveryDriverPrompt,
   },
   {
     id: "my-flower-ai",
