@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "trulieve-roll-one-southern-pound-cake-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "Southern Pound Cake",
+    "type": "indica",
+    "brand": "Roll One",
+    "lineage": [
+      "Wedding Cake",
+      "Kush Mints"
+    ],
+    "breeder": "Trulieve (pheno #7)"
+  },
+  "product": {
+    "dispensary": "Trulieve",
+    "category": "flower",
+    "form": "3.5g Whole Flower",
+    "size_g": 3.5,
+    "sku": null,
+    "in_stock": true
+  },
+  "stats": {
+    "total_thc_percent": 26,
+    "total_cbd_percent": 0.5,
+    "total_cannabinoids_percent": 29,
+    "total_terpenes_percent": 1.35,
+    "top_terpenes": [
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.51
+      },
+      {
+        "name": "Linalool",
+        "percent": 0.38
+      },
+      {
+        "name": "d-Limonene",
+        "percent": 0.2
+      },
+      {
+        "name": "trans-Nerolidol",
+        "percent": 0.12
+      },
+      {
+        "name": "alpha-Humulene",
+        "percent": 0.09
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 28.5,
+      "delta9_thc": 1.1,
+      "cbga": 0.7,
+      "cbg": 0.25,
+      "cbda": "<LOQ",
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "cbn": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 997.5,
+      "delta9_thc_mg": 38.5,
+      "cbga_mg": 24.5,
+      "cbg_mg": 8.75,
+      "cbda_mg": null,
+      "cbn_mg": null
+    }
+  },
+  "description": {
+    "dispensary_bio": "Southern Pound Cake delivers a rich aroma of sweet vanilla cake layered with gassy richness. This indica-dominant phenotype (#7) of Wedding Cake × Kush Mints offers a calming headband-like weight and full-body ease, making it ideal for unwinding. With chunky, golden-colored buds dripping with resin and glistening trichomes, it resembles a sweet slice of freshly-frosted pound cake. The flavor profile features minty, cakey dough notes that coat your mouth with sweet vanilla frosting and baked goods on the inhale, followed by light peppery earth and cool mint on the finish.",
+    "vibes_like": [
+      "After-dinner dessert strain to melt away the day's stress",
+      "Couch-locked evening watching movies or listening to mellow music",
+      "Nightcap an hour or two before bed for deep, restful sleep",
+      "Easing chronic pain while enjoying sweet, dessert-like flavors"
+    ],
+    "product_positioning": "Roll One's Southern Pound Cake is a high-value, low-cost flower option delivering top-shelf potency at mid-shelf prices. This budget-friendly indica 'punches above its weight' with powerful sedative effects, exceptional terpene-rich vanilla cake aroma, and deeply relaxing body high. Best bang-for-buck indica flower available in the Florida market.",
+    "brand_info": "Roll One by Trulieve is a value-oriented product line that delivers premium genetics and potent effects at accessible prices. Southern Pound Cake exemplifies this approach—cultivated in Florida with careful phenotype selection (pheno #7) to emphasize dessert-like flavors and strong indica effects while keeping costs low for medical patients."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Trulieve Testing Lab",
+    "laboratory_id": null,
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "Roll One - Southern Pound Cake",
+    "cultivar_on_coa": "Southern Pound Cake (Wedding Cake × Kush Mints pheno #7)",
+    "completed_at": null,
+    "received_at": null,
+    "sample_date": null,
+    "batch_date": null,
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Florida (Trulieve)",
+    "processing_facility": "Florida (Trulieve)",
+    "seed_to_sale_id": null,
+    "qa_sample_id": null,
+    "batch_size_g": null,
+    "units_sampled": null,
+    "total_amt_sampled_g": null
+  },
+  "tags": [
+    "indica",
+    "dessert",
+    "sweet",
+    "vanilla",
+    "cake",
+    "gassy",
+    "minty",
+    "relaxing",
+    "sedating",
+    "euphoric",
+    "couch-lock",
+    "potent",
+    "evening",
+    "sleep",
+    "pain-relief",
+    "budget-friendly",
+    "value"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "pipe",
+      "bong"
+    ],
+    "suggested_dose_guidance_text": "This is a potent indica (22-30% THC depending on batch). Start with a small dose—one or two puffs for beginners. Effects set in with a creeping calm that gradually builds into powerful, sedative relaxation. Experienced users can enjoy a standard bowl but should be prepared for significant couch-lock and drowsiness. Best for evening or nighttime use when you have no responsibilities. Not for productivity—this is strictly 'off the clock' relaxation.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "About how much did you use?",
+      "What time of day was it?",
+      "Were you seeking relaxation, pain relief, or sleep assistance?",
+      "What positive effects did you experience (relaxation, euphoria, pain relief)?",
+      "Did you notice the 'headband' effect or calming weight?",
+      "Did you experience sedation or couch-lock?",
+      "How was the flavor? Did you taste the vanilla cake and minty notes?",
+      "Any negative effects or side effects (dry mouth, drowsiness, dizziness)?",
+      "How would you rate the intensity on a scale of 1-10?",
+      "Did you get the munchies?",
+      "Would you use Southern Pound Cake again for similar situations?",
+      "How would you rate the value for the price point?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "cake",
+      "vanilla",
+      "sweet",
+      "gassy",
+      "minty",
+      "creamy",
+      "doughy",
+      "dessert",
+      "floral",
+      "peppery",
+      "earthy",
+      "spicy",
+      "frosting"
+    ],
+    "effect_tags": [
+      "calming",
+      "relaxing",
+      "sedating",
+      "euphoric",
+      "happy",
+      "couch-lock",
+      "sleepy",
+      "pain-relieving",
+      "stress-relieving",
+      "anti-inflammatory",
+      "mood-enhancing",
+      "body-high"
+    ],
+    "dominant_terpenes": [
+      "caryophyllene",
+      "linalool",
+      "limonene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response.",
+      "This is a very potent strain (26-28% THC). Beginners should use extreme caution and start with minimal doses."
+    ]
+  },
+  "normalized": {
+    "canonical_strain_name": "southern pound cake",
+    "canonical_brand": "roll one",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "a8f3c5d9e7b2a014",
+      "product_key": "3c9d8e7f6a5b4d2e"
+    }
+  },
+  "comparative_context": {
+    "genetics_origin": "Southern Pound Cake is phenotype #7 of a Wedding Cake × Kush Mints cross, cultivated exclusively by Trulieve in Florida. Wedding Cake (Triangle Kush × Animal Mints) brings sweet vanilla cake taste and heavy body effects, while Kush Mints (Bubba Kush × Animal Mints) adds minty cookie flavor and potent relaxation. This specific pheno was selected to emphasize dessert-like flavors and strong indica effects. Note: This is essentially the same genetic pairing often known as 'LA Kush Cake' or 'Kush Cake' elsewhere.",
+    "market_availability": [
+      "Florida - Exclusively available at Trulieve dispensaries statewide (medical only) as part of Roll One brand",
+      "Batch availability can be intermittent due to high demand - often sells out during sales",
+      "Trulieve regularly announces restocks on social media",
+      "Seeds available from some breeders (Captain Seeds, etc.) for home cultivation in legal states",
+      "Same genetics may appear as 'LA Kush Cake' or 'Wedding Mints' at other dispensaries in other states"
+    ],
+    "distinguishing_characteristics": [
+      "Trulieve-exclusive phenotype #7 of Wedding Cake × Kush Mints",
+      "High THC range: 22-30% depending on batch (some batches test exceptionally high)",
+      "Caryophyllene-dominant terpene profile (~0.51%) with significant linalool (~0.38%) and limonene (~0.2%)",
+      "Total terpenes around 1.3-1.4% - lower than some ultra-premium strains but well-expressed",
+      "Distinctive 'vanilla cake layered with gassy richness' aroma",
+      "Chunky, golden-colored buds dripping with resin and glistening trichomes",
+      "Machine-trimmed with variable bud size (small to medium, sometimes 'popcorn' nugs)",
+      "Well-cured with good moisture retention - sticky when broken up, not overly dry",
+      "Exceptional value pricing: $20-35 per eighth (commonly $25 on sale)",
+      "Effects 'punch above weight' for the price - compared favorably to more expensive top-shelf indicas"
+    ],
+    "medical_therapeutic_notes": [
+      "Stress and Anxiety Relief - Linalool and limonene provide calming, uplifting effects; steady mood elevation",
+      "Pain Management - β-caryophyllene's anti-inflammatory properties plus strong body buzz help chronic pain, inflammation, muscle spasms, and headaches",
+      "Insomnia and Sleep Support - Sedative finish commonly induces drowsiness; excellent evening/nighttime strain",
+      "Appetite Stimulation - May trigger munchies, beneficial for appetite loss from illness or treatments",
+      "Mood Disorders - Uplifting yet calming nature helps depression and PTSD by providing mood lift with reduced intrusive thoughts",
+      "Characteristic 'headband-like weight' behind eyes and across forehead helps tension headaches",
+      "Effects described as 'creeping calm' that gradually crescendos into powerful, sedative relaxation",
+      "Warning: High THC and heavy indica effects can be intense - potential couch-lock and drowsiness",
+      "Not suitable when focus, motor coordination, or energy needed - avoid driving or operating machinery",
+      "Common side effects: dry mouth, dry eyes, dizziness (especially at higher doses)"
+    ],
+    "comparison_highlights": {
+      "vs_wedding_cake": "Southern Pound Cake inherits Wedding Cake's dessert flavor and euphoria but adds significantly stronger sedative effects from Kush Mints. More couch-locking.",
+      "vs_london_pound_cake": "Comparable potency and sedative effects. Some users report Southern Pound Cake rivaling London Pound Cake batches. Southern Pound Cake has more vanilla/cake notes vs London's more berry-forward profile.",
+      "vs_kush_mints": "Maintains Kush Mints' powerful relaxation while adding Wedding Cake's sweeter vanilla flavor profile and more pronounced mood elevation.",
+      "vs_la_kush_cake": "Same genetics (Wedding Cake × Kush Mints) but Southern Pound Cake is Trulieve's specific pheno #7. LA Kush Cake may vary by producer.",
+      "vs_sanctuary_wedding_mints": "Very similar genetics (Wedding Cake × Kush Mints #11 vs pheno #7). Sanctuary's version priced similarly ($30-40/eighth) but different phenotype selection."
+    },
+    "flavor_profile_detail": "Opens with sweet vanilla cake layered with gassy richness. The 'minty, cakey dough' scent fills the room and transfers well to taste. Inhale brings sweet vanilla frosting and baked goods with subtle floral notes (linalool). Exhale reveals light peppery earth (caryophyllene), cool mint (limonene), and doughy cake batter. The flavor coats your mouth and lingers pleasantly. Smooth, rich smoke. Overall a pronounced terpene profile that exceeds expectations for a budget-tier strain.",
+    "consumer_feedback_summary": {
+      "quality": "Bag appeal is average - machine-trimmed with variable bud sizes (small to medium, some 'popcorn' nugs). However, buds are still frosty with abundant trichomes and great cure (not overly dry, slightly sticky). Quality satisfactory for price point.",
+      "aroma_flavor": "Consistently praised. 'Minty, cakey dough' aroma that 'transfers to taste very well.' Users surprised a value-tier strain has such pronounced terpene profile. 'Pretty awesome' flavor with sweet cake and vanilla balanced by gassy, minty backend.",
+      "effects_potency": "Where it truly excels. 'Gets me very medicated' at $20-25/eighth. Heavy-hitting and relaxing. 'Couldn't believe I didn't have to reach for something stronger.' Compared favorably to more expensive strains. 'Very stoney,' 'heavy indica leaning,' potent sedative buzz that outperforms some higher-priced indicas.",
+      "value": "Exceptional. 'Getting top-shelf effects for bottom-shelf cost.' 'For $20 it's a great ass deal.' Has 'sleeper hit' status - not flashy but delivers where it counts. 'One of the best budget indica flowers in Florida market.' Minor downsides: inconsistent bud size, slightly less flavorful than ultra-premium boutique batches, but critiques are mild given price.",
+      "overall_sentiment": "Highly recommended by Florida patients. Strong reputation for value. 'Punches above its weight.' Perfect for evening relief. Go-to for medical users seeking pain, stress, and sleep support at affordable price. Be prepared for potent, couch-locking experience and have snacks ready."
+    },
+    "pricing_detail": {
+      "regular_price_usd": 35.0,
+      "common_sale_price_usd": 25.0,
+      "promotional_low_price_usd": 20.0,
+      "price_per_gram_regular": 10.0,
+      "price_per_gram_sale": 7.14,
+      "price_per_gram_promo": 5.71,
+      "pricing_notes": "Trulieve frequently runs promotions. Patients commonly purchase at $25/eighth during sales. Occasional special deals bring it to $20/eighth (e.g., $40 quarter-ounce deals). At $20-25, it's one of the best bang-for-buck indica flowers in Florida."
+    }
+  },
+  "freshness_guidance": {
+    "best_storage": "Store in an airtight container in a cool, dark place. Ideal temperature is 60-70°F (15-21°C) with 59-63% relative humidity. Due to its rich terpene content, proper storage is essential to maintain the dessert-like aroma and flavor.",
+    "typical_shelf_life_days": 180,
+    "notes": "Flower quality begins to degrade after opening. Terpenes are volatile and evaporate over time, especially the delicate dessert notes. Use within 3-6 months of purchase for optimal experience. The high resin content helps preserve potency but proper humidity control is crucial.",
+    "do_not_store_in_public": [
+      "opened_date",
+      "remaining_g",
+      "purchase_date",
+      "purchase_location",
+      "user_stash_amount"
+    ]
+  },
+  "packaging": {
+    "container_type_suggestions": [
+      "Glass jar with airtight seal",
+      "CVault container",
+      "Mason jar with humidity pack"
+    ],
+    "humidipack_recommended": true
+  },
+  "sources": [
+    {
+      "type": "strain_research",
+      "where": "Trulieve Roll One product information and lab reports",
+      "retrieved_at": "2026-01-27",
+      "url": null
+    },
+    {
+      "type": "strain_research",
+      "where": "Trulieve Blog - Florida's Finest Flower Strains",
+      "retrieved_at": "2026-01-27",
+      "url": null
+    },
+    {
+      "type": "consumer_reviews",
+      "where": "Reddit r/FLMedicalTrees - Patient reviews and feedback",
+      "retrieved_at": "2026-01-27",
+      "url": null
+    },
+    {
+      "type": "strain_research",
+      "where": "Captain Seeds - Southern Pound Cake genetics and effects",
+      "retrieved_at": "2026-01-27",
+      "url": null
+    }
+  ],
+  "created_at": "2026-01-27",
+  "updated_at": "2026-01-27"
+}
