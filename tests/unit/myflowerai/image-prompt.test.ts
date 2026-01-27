@@ -11,6 +11,7 @@ import {
 	type PersonaProfile,
 	type StrainData,
 	type VibeSettings,
+	type ImagePreset,
 } from "@/lib/myflowerai/image/prompt-composer";
 
 // Test strain data
@@ -68,6 +69,24 @@ const testVibeSettings: VibeSettings = {
 	nature: 3,
 	surreal: 9,
 	chaos: 6,
+};
+
+const testPreset: ImagePreset = {
+	id: "cosmic-citrus",
+	name: "Cosmic Citrus",
+	description: "Bright celestial bursts with zesty energy",
+	style_keywords: [
+		"bright yellow-orange cosmic bursts",
+		"radiating star patterns",
+		"vibrant citrus-inspired spheres",
+	],
+	vibe_settings: {
+		intensity: 9,
+		neon: 7,
+		nature: 3,
+		surreal: 8,
+		chaos: 7,
+	},
 };
 
 // Test 1: Basic prompt generation
@@ -197,5 +216,81 @@ console.assert(
 	"Unsafe prompt should have issues",
 );
 console.log("✓ Test 10 passed");
+
+// Test 11: Preset adds style keywords
+console.log("Test 11: Preset should add style keywords to prompt");
+const prompt11 = composeImagePrompt(
+	testStrain,
+	undefined,
+	undefined,
+	undefined,
+	testPreset,
+);
+console.assert(
+	prompt11.includes("bright yellow-orange cosmic bursts") ||
+		prompt11.includes("radiating star patterns"),
+	"Prompt should include preset style keywords",
+);
+console.log("✓ Test 11 passed");
+
+// Test 12: Preset vibe settings override manual settings
+console.log("Test 12: Preset vibe settings should be used");
+const prompt12 = composeImagePrompt(
+	testStrain,
+	undefined,
+	testVibeSettings,
+	undefined,
+	testPreset,
+);
+// Preset has intensity: 9 (bold/vivid), neon: 7 (neon)
+console.assert(
+	prompt12.includes("bold") || prompt12.includes("vivid"),
+	"Preset's high intensity should result in bold/vivid description",
+);
+console.assert(
+	prompt12.includes("neon"),
+	"Preset's neon setting should add neon description",
+);
+console.log("✓ Test 12 passed");
+
+// Test 13: Preset overrides persona style keywords
+console.log("Test 13: Preset should override persona style keywords");
+const prompt13 = composeImagePrompt(
+	testStrain,
+	testPersona,
+	undefined,
+	undefined,
+	testPreset,
+);
+console.assert(
+	prompt13.includes("cosmic bursts") || prompt13.includes("radiating star"),
+	"Preset style keywords should be present",
+);
+console.assert(
+	!prompt13.includes("neon colors") && !prompt13.includes("geometric shapes"),
+	"Persona style keywords should not be used when preset is provided",
+);
+console.log("✓ Test 13 passed");
+
+// Test 14: Preset combines with strain tags
+console.log("Test 14: Preset should work with strain tags");
+const prompt14 = composeImagePrompt(
+	testStrain,
+	undefined,
+	undefined,
+	undefined,
+	testPreset,
+);
+// Should have strain type
+console.assert(
+	prompt14.includes("balanced harmonious composition"),
+	"Strain type should still be included",
+);
+// Should have preset keywords
+console.assert(
+	prompt14.includes("cosmic") || prompt14.includes("citrus"),
+	"Preset keywords should be present",
+);
+console.log("✓ Test 14 passed");
 
 console.log("\n✅ All prompt composer tests passed!");

@@ -2,6 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getUnofficialAtoById, updateAtoFileEnabled } from "@/lib/db/queries";
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; fileId: string }> }

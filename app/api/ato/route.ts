@@ -12,6 +12,9 @@ import {
 
 const allowedIntelligenceModes = ["Hive", "ATO-Limited"] as const;
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await auth();
 

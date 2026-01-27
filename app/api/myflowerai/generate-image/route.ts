@@ -6,6 +6,7 @@ import {
   composeImagePrompt,
   generateImageTitle,
   type PersonaProfile,
+  type ImagePreset,
 } from "@/lib/myflowerai/image/prompt-composer";
 import { validateVibeText } from "@/lib/myflowerai/image/safety";
 
@@ -28,6 +29,7 @@ const IMAGE_CONFIG = {
  * Body: {
  *   strain_id: string,
  *   persona_id?: string,
+ *   preset_id?: string,
  *   vibe_settings?: VibeSettings,
  *   user_vibe_text?: string
  * }
@@ -35,7 +37,8 @@ const IMAGE_CONFIG = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strain_id, persona_id, vibe_settings, user_vibe_text } = body;
+    const { strain_id, persona_id, preset_id, vibe_settings, user_vibe_text } =
+      body;
 
     // Validate required fields
     if (!strain_id) {
@@ -67,6 +70,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Load preset data if provided
+    let preset: ImagePreset | undefined;
+    if (preset_id) {
+      const loadedPreset = await loadPresetData(preset_id);
+      if (!loadedPreset) {
+        console.warn(
+          `Preset not found: ${preset_id}, continuing without preset`
+        );
+      } else {
+        preset = loadedPreset;
+      }
+    }
+
     // Validate user vibe text if provided
     let sanitizedVibeText: string | undefined;
     if (user_vibe_text) {
@@ -89,7 +105,8 @@ export async function POST(request: NextRequest) {
       strainData,
       personaProfile,
       vibe_settings,
-      sanitizedVibeText
+      sanitizedVibeText,
+      preset
     );
 
     // Generate image title
@@ -221,6 +238,35 @@ async function loadPersonaData(
     return personaData;
   } catch (error) {
     console.error(`Error loading persona ${personaId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Load preset data from file system
+ */
+async function loadPresetData(
+  presetId: string
+): Promise<ImagePreset | null> {
+  try {
+    const presetsFilePath = path.join(
+      process.cwd(),
+      "data",
+      "myflowerai",
+      "image-presets.json"
+    );
+
+    const fileContent = await fs.readFile(presetsFilePath, "utf-8");
+    const presetsData = JSON.parse(fileContent);
+
+    // Find the preset by id
+    const preset = presetsData.presets.find(
+      (p: ImagePreset) => p.id === presetId
+    );
+
+    return preset || null;
+  } catch (error) {
+    console.error(`Error loading preset ${presetId}:`, error);
     return null;
   }
 }

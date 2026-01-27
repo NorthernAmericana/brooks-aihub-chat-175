@@ -13,6 +13,9 @@ const stripe = new Stripe(stripeSecretKey, {
 
 const FOUNDERS_ACCESS_PRICE_ID = "price_1SpBht050iAre6ZtPyv42z6s";
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

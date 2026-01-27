@@ -36,6 +36,17 @@ export interface VibeSettings {
 }
 
 /**
+ * Image generation preset
+ */
+export interface ImagePreset {
+  id: string;
+  name: string;
+  description: string;
+  style_keywords: string[];
+  vibe_settings: VibeSettings;
+}
+
+/**
  * Strain data for prompt composition
  */
 export interface StrainData {
@@ -113,18 +124,25 @@ function vibeSettingsToText(settings: VibeSettings): string {
  * @param personaProfile - Optional persona profile for style guidance
  * @param vibeSettings - Optional vibe slider settings
  * @param userVibeText - Optional user-provided vibe text (will be sanitized)
+ * @param preset - Optional image preset with style keywords
  * @returns Composed prompt string for image generation
  */
 export function composeImagePrompt(
   strainData: StrainData,
   personaProfile?: PersonaProfile,
   vibeSettings?: VibeSettings,
-  userVibeText?: string
+  userVibeText?: string,
+  preset?: ImagePreset
 ): string {
   const parts: string[] = [];
 
   // Start with art style constraint
   parts.push("Abstract psychedelic art:");
+
+  // Add preset style keywords if provided (takes precedence for style direction)
+  if (preset?.style_keywords && preset.style_keywords.length > 0) {
+    parts.push(preset.style_keywords.join(", "));
+  }
 
   // Add strain type influence
   const strainType = strainData.strain.type.toLowerCase();
@@ -191,8 +209,9 @@ export function composeImagePrompt(
     parts.push(effectDescriptions.join(", "));
   }
 
-  // Add persona style if provided
+  // Add persona style if provided (and not overridden by preset)
   if (
+    !preset &&
     personaProfile?.image_style_keywords &&
     personaProfile.image_style_keywords.length > 0
   ) {
@@ -200,9 +219,10 @@ export function composeImagePrompt(
     parts.push(keywords.join(", "));
   }
 
-  // Add vibe settings
-  if (vibeSettings) {
-    const vibeText = vibeSettingsToText(vibeSettings);
+  // Add vibe settings (use preset settings if provided, otherwise use manual settings)
+  const effectiveVibeSettings = preset?.vibe_settings || vibeSettings;
+  if (effectiveVibeSettings) {
+    const vibeText = vibeSettingsToText(effectiveVibeSettings);
     parts.push(vibeText);
   }
 

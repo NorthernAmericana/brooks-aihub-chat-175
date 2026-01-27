@@ -6,6 +6,9 @@ import {
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
