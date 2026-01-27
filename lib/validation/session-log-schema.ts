@@ -65,12 +65,17 @@ const FollowUpSchema = z
   .optional();
 
 /**
+ * Schema version constant
+ */
+export const SESSION_LOG_SCHEMA_VERSION = "1.0";
+
+/**
  * Session Log Schema v1.0
  *
  * Complete schema for a single session log entry.
  */
 export const SessionLogSchemaV1_0 = z.object({
-  schema_version: z.literal("1.0"),
+  schema_version: z.literal(SESSION_LOG_SCHEMA_VERSION),
   session_id: z.string(),
   strain_id: z.string(),
   timestamp: z.string().datetime(),

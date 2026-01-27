@@ -32,7 +32,7 @@ async function validateFile(filename: string): Promise<ValidationResult> {
     const contents = await readFile(filepath, "utf8");
     const data = JSON.parse(contents);
 
-    // Check for privacy violations BEFORE schema validation
+    // Check for privacy violations before proceeding with schema validation
     const privacyErrors: string[] = [];
     
     // Explicitly check for session/session_log arrays (MUST NOT exist in public files)
