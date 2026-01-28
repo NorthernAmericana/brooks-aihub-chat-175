@@ -103,6 +103,7 @@ export default function StorePage() {
                     width={64}
                     height={64}
                     className="h-full w-full object-cover"
+                    priority={app.id <= 3}
                   />
                 </div>
 
