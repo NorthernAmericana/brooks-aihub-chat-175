@@ -185,26 +185,27 @@ export default function ImageGenPage() {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file (JPG, PNG, WEBP)");
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
     // Validate file size (4MB limit)
     if (file.size > 4 * 1024 * 1024) {
       setError("Image file must be less than 4MB");
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
     setReferenceImageFile(file);
     setError(null);
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setReferenceImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload to Vercel Blob
+    // Upload to Vercel Blob first, then create preview
     setUploadingReference(true);
     try {
       const formData = new FormData();
@@ -223,12 +224,23 @@ export default function ImageGenPage() {
       const uploadData = await uploadRes.json();
       // Store only the pathname (storage_key), not the full signed URL
       setReferenceStorageKey(uploadData.pathname);
+
+      // Only create preview after successful upload
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReferenceImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       console.error("Error uploading reference image:", err);
       setError("Failed to upload reference image. Please try again.");
       setReferenceImageFile(null);
       setReferenceImagePreview(null);
       setReferenceStorageKey(null);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } finally {
       setUploadingReference(false);
     }
@@ -547,7 +559,7 @@ export default function ImageGenPage() {
 
           {/* Reference Image Section */}
           <div className="space-y-4 border-t pt-4">
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 checked={useReferenceImage}
                 className="h-4 w-4 accent-foreground"
@@ -568,9 +580,10 @@ export default function ImageGenPage() {
             {useReferenceImage && (
               <div className="space-y-3 pl-6">
                 <p className="text-xs text-muted-foreground">
-                  Upload a personal photo to inspire the color palette and mood
-                  of the generated art. The result will be an abstract
-                  interpretation, not a direct reproduction.
+                  Upload a personal photo to inspire the abstract art. The AI
+                  will use your image as conceptual inspiration through enhanced
+                  text prompts, creating an abstract interpretation rather than
+                  a direct reproduction.
                 </p>
 
                 <div className="space-y-2">
@@ -590,7 +603,9 @@ export default function ImageGenPage() {
 
                 {uploadingReference && (
                   <Alert>
-                    <AlertDescription>Uploading image...</AlertDescription>
+                    <AlertDescription>
+                      Uploading image... Please wait.
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -615,8 +630,9 @@ export default function ImageGenPage() {
                       Clear Image
                     </Button>
                     <p className="text-xs text-yellow-600 dark:text-yellow-500">
-                      ⚠️ If your image contains text, logos, or branding, they
-                      will be transformed into abstract patterns.
+                      ⚠️ Note: The uploaded image serves as conceptual
+                      inspiration. If it contains text or logos, the AI will
+                      create abstract patterns instead.
                     </p>
                   </div>
                 )}
@@ -633,10 +649,19 @@ export default function ImageGenPage() {
         <CardFooter>
           <Button
             className="w-full"
-            disabled={loading || !selectedStrain || (useReferenceImage && !referenceStorageKey)}
+            disabled={
+              loading ||
+              !selectedStrain ||
+              uploadingReference ||
+              (useReferenceImage && !referenceStorageKey)
+            }
             onClick={handleGenerate}
           >
-            {loading ? "Generating..." : "Generate Image"}
+            {loading
+              ? "Generating..."
+              : uploadingReference
+                ? "Uploading image..."
+                : "Generate Image"}
           </Button>
         </CardFooter>
       </Card>

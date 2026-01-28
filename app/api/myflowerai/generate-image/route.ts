@@ -125,16 +125,21 @@ export async function POST(request: NextRequest) {
     // Generate image title
     const title = generateImageTitle(strainData, personaProfile);
 
-    // If reference image is provided, enhance prompt with vision context
-    let enhancedPrompt = prompt;
-    if (hasReferenceImage && reference_image_url) {
-      // Note: DALL-E 3 doesn't support image-to-image directly
-      // We rely on the enhanced prompt that instructs about the reference image
-      // A future enhancement could use vision API to analyze the reference image
-      // and extract specific color/mood information to enhance the prompt further
+    // Note: DALL-E 3 doesn't support image-to-image generation directly
+    // The reference image is used conceptually through enhanced text prompts
+    // that guide the AI to create abstract interpretations
+    // Future enhancement: Integrate vision API to analyze uploaded image
+    // and extract specific color/mood information to enhance prompts
+    if (hasReferenceImage) {
       console.log(
-        "Reference image provided, using enhanced prompt with style transfer guidance"
+        "Reference image mode enabled - using enhanced prompt with style transfer guidance"
       );
+      if (storage_key) {
+        console.log(`Reference image storage key: ${storage_key}`);
+      }
+      if (reference_image_url) {
+        console.log(`Reference image URL provided: ${reference_image_url}`);
+      }
     }
 
     // Call OpenAI DALL-E for image generation
@@ -156,7 +161,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           model: IMAGE_CONFIG.model,
-          prompt: enhancedPrompt,
+          prompt,
           n: 1,
           size: IMAGE_CONFIG.size,
           quality: IMAGE_CONFIG.quality,
@@ -194,7 +199,7 @@ export async function POST(request: NextRequest) {
       success: true,
       image_url: data.data[0].url,
       title,
-      prompt_used: enhancedPrompt,
+      prompt_used: prompt,
       strain: {
         id: strain_id,
         name: strainData.strain.name,

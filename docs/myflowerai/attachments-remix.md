@@ -81,23 +81,26 @@ The generated artwork will be an **abstract interpretation** that captures the m
 1. User selects an image file via the UI file input
 2. Image is uploaded to Vercel Blob via `/api/files/upload`
 3. Upload returns `{ url, pathname, contentType }`
-4. UI stores the `pathname` (not the signed URL) in component state
+4. UI stores the `pathname` (storage_key) in component state for privacy
 5. When generating, UI passes `storage_key: pathname` to the API
-6. API reconstructs the Blob URL internally using Vercel Blob SDK
+6. The reference image information is included in the prompt as text guidance
+
+Note: DALL-E 3 does not support native image-to-image generation. The reference image serves as conceptual inspiration through enhanced text prompts that describe style transfer and abstraction. A future enhancement could integrate a vision API to analyze the uploaded image and extract specific color/mood information to further enhance the prompt.
 
 ### Prompt Composition with Remix
 
 When a reference image is provided:
 
-1. The API analyzes the reference image (color palette, mood, composition)
-2. Prompt composer adds guidance text emphasizing:
+1. The prompt includes enhanced guidance text emphasizing:
    - **Style transfer** over exact reproduction
    - **Abstract interpretation** of visual elements
    - **Avoidance of text, logos, branding** from the source image
-3. Combined prompt includes:
+2. Combined prompt includes:
    - Strain-based visual characteristics
-   - Reference image mood and color inspiration
+   - Reference image-inspired abstraction guidance
    - Standard safety constraints (no faces, no packaging, abstract only)
+
+Note: DALL-E 3 does not directly analyze or use the uploaded image. The reference image serves as conceptual inspiration through text prompt modifications. Future enhancements may integrate vision APIs to extract color palettes and mood information from the uploaded image.
 
 ### Style Transfer Guidance
 
