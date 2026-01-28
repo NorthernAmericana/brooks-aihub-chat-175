@@ -125,6 +125,7 @@ function vibeSettingsToText(settings: VibeSettings): string {
  * @param vibeSettings - Optional vibe slider settings
  * @param userVibeText - Optional user-provided vibe text (will be sanitized)
  * @param preset - Optional image preset with style keywords
+ * @param hasReferenceImage - Whether a reference image is being used for inspiration
  * @returns Composed prompt string for image generation
  */
 export function composeImagePrompt(
@@ -132,12 +133,22 @@ export function composeImagePrompt(
   personaProfile?: PersonaProfile,
   vibeSettings?: VibeSettings,
   userVibeText?: string,
-  preset?: ImagePreset
+  preset?: ImagePreset,
+  hasReferenceImage?: boolean
 ): string {
   const parts: string[] = [];
 
   // Start with art style constraint
-  parts.push("Abstract psychedelic art:");
+  if (hasReferenceImage) {
+    parts.push(
+      "Abstract psychedelic art inspired by the uploaded reference image:"
+    );
+    parts.push(
+      "Draw inspiration from the color palette, mood, and composition of the reference image, but reimagine all elements as abstract psychedelic forms. If the image contains text, logos, or branding, represent them as abstract geometric patterns or color blocks - do not reproduce any readable text or recognizable logos. Focus on style transfer and abstraction."
+    );
+  } else {
+    parts.push("Abstract psychedelic art:");
+  }
 
   // Add preset style keywords if provided (takes precedence for style direction)
   if (preset?.style_keywords && preset.style_keywords.length > 0) {

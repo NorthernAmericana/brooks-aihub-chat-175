@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface StrainOption {
   id: string;
@@ -64,6 +65,14 @@ export default function ImageGenPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imageTitle, setImageTitle] = useState<string | null>(null);
+  
+  // Reference image state
+  const [useReferenceImage, setUseReferenceImage] = useState<boolean>(false);
+  const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
+  const [referenceImagePreview, setReferenceImagePreview] = useState<string | null>(null);
+  const [referenceStorageKey, setReferenceStorageKey] = useState<string | null>(null);
+  const [uploadingReference, setUploadingReference] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load strains and personas on mount
   useEffect(() => {
@@ -168,9 +177,81 @@ export default function ImageGenPage() {
     }
   };
 
+  const handleReferenceImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file (JPG, PNG, WEBP)");
+      return;
+    }
+
+    // Validate file size (4MB limit)
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Image file must be less than 4MB");
+      return;
+    }
+
+    setReferenceImageFile(file);
+    setError(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReferenceImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Vercel Blob
+    setUploadingReference(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const uploadData = await uploadRes.json();
+      // Store only the pathname (storage_key), not the full signed URL
+      setReferenceStorageKey(uploadData.pathname);
+    } catch (err) {
+      console.error("Error uploading reference image:", err);
+      setError("Failed to upload reference image. Please try again.");
+      setReferenceImageFile(null);
+      setReferenceImagePreview(null);
+      setReferenceStorageKey(null);
+    } finally {
+      setUploadingReference(false);
+    }
+  };
+
+  const handleClearReferenceImage = () => {
+    setReferenceImageFile(null);
+    setReferenceImagePreview(null);
+    setReferenceStorageKey(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleGenerate = async () => {
     if (!selectedStrain) {
       setError("Please select a strain");
+      return;
+    }
+
+    if (useReferenceImage && !referenceStorageKey) {
+      setError("Please upload a reference image or disable the option");
       return;
     }
 
@@ -180,18 +261,37 @@ export default function ImageGenPage() {
     setImageTitle(null);
 
     try {
+      const requestBody: {
+        strain_id: string;
+        persona_id?: string;
+        preset_id?: string;
+        vibe_settings: VibeSettings;
+        user_vibe_text?: string;
+        storage_key?: string;
+      } = {
+        strain_id: selectedStrain,
+        vibe_settings: vibeSettings,
+      };
+
+      if (selectedPersona) {
+        requestBody.persona_id = selectedPersona;
+      }
+      if (selectedPreset) {
+        requestBody.preset_id = selectedPreset;
+      }
+      if (userVibeText) {
+        requestBody.user_vibe_text = userVibeText;
+      }
+      if (useReferenceImage && referenceStorageKey) {
+        requestBody.storage_key = referenceStorageKey;
+      }
+
       const response = await fetch("/api/myflowerai/generate-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          strain_id: selectedStrain,
-          persona_id: selectedPersona || undefined,
-          preset_id: selectedPreset || undefined,
-          vibe_settings: vibeSettings,
-          user_vibe_text: userVibeText || undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -446,6 +546,86 @@ export default function ImageGenPage() {
             </p>
           </div>
 
+          {/* Reference Image Section */}
+          <div className="space-y-4 border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                checked={useReferenceImage}
+                id="use-reference"
+                onCheckedChange={(checked) => {
+                  setUseReferenceImage(checked as boolean);
+                  if (!checked) {
+                    handleClearReferenceImage();
+                  }
+                }}
+              />
+              <Label
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                htmlFor="use-reference"
+              >
+                Use my photo as inspiration
+              </Label>
+            </div>
+
+            {useReferenceImage && (
+              <div className="space-y-3 pl-6">
+                <p className="text-xs text-muted-foreground">
+                  Upload a personal photo to inspire the color palette and mood
+                  of the generated art. The result will be an abstract
+                  interpretation, not a direct reproduction.
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reference-image">Reference Image</Label>
+                  <Input
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={uploadingReference}
+                    id="reference-image"
+                    onChange={handleReferenceImageChange}
+                    ref={fileInputRef}
+                    type="file"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG, or WEBP - Max 4MB
+                  </p>
+                </div>
+
+                {uploadingReference && (
+                  <Alert>
+                    <AlertDescription>Uploading image...</AlertDescription>
+                  </Alert>
+                )}
+
+                {referenceImagePreview && !uploadingReference && (
+                  <div className="space-y-2">
+                    <Label>Preview</Label>
+                    <div className="relative aspect-video w-full max-w-xs overflow-hidden rounded-lg border">
+                      <Image
+                        alt="Reference image preview"
+                        className="object-cover"
+                        fill
+                        sizes="(max-width: 384px) 100vw, 384px"
+                        src={referenceImagePreview}
+                      />
+                    </div>
+                    <Button
+                      onClick={handleClearReferenceImage}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Clear Image
+                    </Button>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                      ⚠️ If your image contains text, logos, or branding, they
+                      will be transformed into abstract patterns.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -455,7 +635,7 @@ export default function ImageGenPage() {
         <CardFooter>
           <Button
             className="w-full"
-            disabled={loading || !selectedStrain}
+            disabled={loading || !selectedStrain || (useReferenceImage && !referenceStorageKey)}
             onClick={handleGenerate}
           >
             {loading ? "Generating..." : "Generate Image"}

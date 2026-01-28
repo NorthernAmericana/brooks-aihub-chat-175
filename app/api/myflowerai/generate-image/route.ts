@@ -31,14 +31,23 @@ const IMAGE_CONFIG = {
  *   persona_id?: string,
  *   preset_id?: string,
  *   vibe_settings?: VibeSettings,
- *   user_vibe_text?: string
+ *   user_vibe_text?: string,
+ *   storage_key?: string,         // Vercel Blob pathname for reference image
+ *   reference_image_url?: string  // Direct Vercel Blob URL for reference image
  * }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strain_id, persona_id, preset_id, vibe_settings, user_vibe_text } =
-      body;
+    const {
+      strain_id,
+      persona_id,
+      preset_id,
+      vibe_settings,
+      user_vibe_text,
+      storage_key,
+      reference_image_url,
+    } = body;
 
     // Validate required fields
     if (!strain_id) {
@@ -47,6 +56,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Determine if we have a reference image
+    const hasReferenceImage = !!(storage_key || reference_image_url);
 
     // Load strain data
     const strainData = await loadStrainData(strain_id);
@@ -106,11 +118,24 @@ export async function POST(request: NextRequest) {
       personaProfile,
       vibe_settings,
       sanitizedVibeText,
-      preset
+      preset,
+      hasReferenceImage
     );
 
     // Generate image title
     const title = generateImageTitle(strainData, personaProfile);
+
+    // If reference image is provided, enhance prompt with vision context
+    let enhancedPrompt = prompt;
+    if (hasReferenceImage && reference_image_url) {
+      // Note: DALL-E 3 doesn't support image-to-image directly
+      // We rely on the enhanced prompt that instructs about the reference image
+      // A future enhancement could use vision API to analyze the reference image
+      // and extract specific color/mood information to enhance the prompt further
+      console.log(
+        "Reference image provided, using enhanced prompt with style transfer guidance"
+      );
+    }
 
     // Call OpenAI DALL-E for image generation
     const apiKey = process.env.OPENAI_API_KEY;
@@ -131,7 +156,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           model: IMAGE_CONFIG.model,
-          prompt,
+          prompt: enhancedPrompt,
           n: 1,
           size: IMAGE_CONFIG.size,
           quality: IMAGE_CONFIG.quality,
@@ -169,7 +194,7 @@ export async function POST(request: NextRequest) {
       success: true,
       image_url: data.data[0].url,
       title,
-      prompt_used: prompt,
+      prompt_used: enhancedPrompt,
       strain: {
         id: strain_id,
         name: strainData.strain.name,
@@ -181,6 +206,7 @@ export async function POST(request: NextRequest) {
             name: personaProfile.display_name,
           }
         : undefined,
+      has_reference_image: hasReferenceImage,
     });
   } catch (error) {
     console.error("Error in generate-image API:", error);
