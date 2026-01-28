@@ -30,7 +30,7 @@ User-provided "vibe text" goes through automatic safety scrubbing before being u
 **Minors & Age-Inappropriate Content**
 - Keywords: kid, kids, child, children, minor, minors, teen, teens, teenager, school, student, underage
 - Phrases: "high school", "middle school", "elementary"
-- **Reason**: Cannabis is adult-only (21+); no content involving or targeting minors
+- **Reason**: Cannabis is adult-only (18+); no content involving or targeting minors
 
 **Weapons & Violence**
 - Keywords: gun, guns, weapon, weapons, firearm, rifle, pistol, shoot, shooting, violence, violent, attack, assault
@@ -140,7 +140,7 @@ Simple age verification before accessing cannabis-themed features.
 
 **Flow**:
 1. User attempts to access `/MyFlowerAI/quiz` or image generation
-2. If not verified, show modal: "I confirm I am 21 years of age or older"
+2. If not verified, show modal: "I confirm I am 18 years of age or older"
 3. Store verification in:
    - Local storage (key: `myflowerai_age_verified`)
    - OR user profile (database field: `age_verified_myflowerai`)
@@ -248,7 +248,7 @@ If unsafe content bypasses filters:
 - Not a recommendation to use cannabis
 - Not legal advice on cannabis laws
 - Users responsible for compliance with local laws
-- Must be 21+ to use cannabis-themed features (U.S. legal age)
+- Must be 18+ to use cannabis-themed features (common legal age)
 
 **Cannabis laws vary by jurisdiction**:
 - Some states/countries prohibit cannabis entirely

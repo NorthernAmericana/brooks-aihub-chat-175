@@ -96,7 +96,7 @@ CREATE TABLE myflowerai_images (
 ### 5. UI Components ✅
 
 **Age Gate** (`/components/myflowerai/aura/age-gate.tsx`):
-- Simple 21+ verification modal
+- Simple 18+ verification modal
 - Stores verification in localStorage
 - Blocks access until confirmed
 - Disclaimer text included
@@ -166,7 +166,7 @@ CREATE TABLE myflowerai_images (
 - **Art-only constraints** - mandatory suffix in all prompts
 - **Content filtering** - blocks illegal sales, minors, weapons, hate, medical claims
 - **Vibe text scrubbing** - automatic safety validation with fallback
-- **Age gate** - 21+ verification (UI-level, not legal verification)
+- **Age gate** - 18+ verification (UI-level, not legal verification)
 - **No medical advice** - informational tags only ("commonly associated with")
 - **OpenAI content policy** - DALL-E 3 has built-in filtering
 
@@ -179,7 +179,7 @@ CREATE TABLE myflowerai_images (
 2. Users can generate persona-only aura images
 3. Generated images are stored privately per user
 4. Safety scrubber blocks prohibited content
-5. Age gate verifies 21+ before access
+5. Age gate verifies 18+ before access
 6. Vibe sliders allow customization
 
 ### Future Enhancements (Out of Scope)
@@ -222,7 +222,7 @@ POSTGRES_URL=...                # For database
 
 **Quiz Flow:**
 1. Visit MyFlowerAI quiz
-2. Confirm you're 21+ (age gate)
+2. Confirm you're 18+ (age gate)
 3. Answer personality questions
 4. Receive your cannabis persona
 

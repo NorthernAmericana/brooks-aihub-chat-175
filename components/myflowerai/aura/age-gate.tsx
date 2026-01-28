@@ -23,7 +23,7 @@ const AGE_GATE_KEY = "myflowerai_age_verified";
 /**
  * Age Gate Component
  * 
- * Simple 21+ age verification for cannabis-themed features.
+ * Simple 18+ age verification for cannabis-themed features.
  * This is NOT a legal age verification system - UI-level check only.
  */
 export function AgeGate({ onVerified }: AgeGateProps) {
@@ -77,7 +77,7 @@ export function AgeGate({ onVerified }: AgeGateProps) {
               htmlFor="age-confirm"
               className="text-sm font-normal leading-relaxed cursor-pointer"
             >
-              I confirm that I am <strong>21 years of age or older</strong> (or the
+              I confirm that I am <strong>18 years of age or older</strong> (or the
               legal age in my jurisdiction) and agree to use MyFlowerAI responsibly.
             </Label>
           </div>

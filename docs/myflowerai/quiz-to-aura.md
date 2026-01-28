@@ -199,7 +199,7 @@ See `/docs/myflowerai/safety.md` for complete safety specifications.
 ## Age Gate
 
 Cannabis-themed features require age verification:
-- Simple modal/checkbox: "I confirm I am 21 years of age or older"
+- Simple modal/checkbox: "I confirm I am 18 years of age or older"
 - Stored in:
   - Local storage (client-side, lightweight)
   - OR user profile setting (database, persistent)
