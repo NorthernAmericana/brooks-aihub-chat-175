@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface StrainOption {
   id: string;
@@ -548,24 +547,23 @@ export default function ImageGenPage() {
 
           {/* Reference Image Section */}
           <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
+            <label className="flex items-center space-x-2">
+              <input
                 checked={useReferenceImage}
+                className="h-4 w-4 accent-foreground"
                 id="use-reference"
-                onCheckedChange={(checked) => {
-                  setUseReferenceImage(checked as boolean);
-                  if (!checked) {
+                onChange={(e) => {
+                  setUseReferenceImage(e.target.checked);
+                  if (!e.target.checked) {
                     handleClearReferenceImage();
                   }
                 }}
+                type="checkbox"
               />
-              <Label
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                htmlFor="use-reference"
-              >
+              <span className="text-sm font-medium leading-none">
                 Use my photo as inspiration
-              </Label>
-            </div>
+              </span>
+            </label>
 
             {useReferenceImage && (
               <div className="space-y-3 pl-6">
