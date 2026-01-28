@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-ai-hub.com/schemas/myflowerai/session-log-v1.json",
+  "title": "MyFlowerAI Session Log Schema v1",
+  "description": "Private user session log schema for cannabis consumption tracking. This data must NEVER be stored in public strain JSON files. Store in private per-user storage (Supabase or private JSON namespace).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session_id",
+    "strain_id",
+    "timestamp",
+    "method",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version identifier"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Unique identifier for this session"
+    },
+    "strain_id": {
+      "type": "string",
+      "description": "Reference to the strain from public strain data"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the session occurred"
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["storage_location", "user_consent"],
+      "properties": {
+        "storage_location": {
+          "type": "string",
+          "enum": ["supabase_user_private", "local_encrypted", "private_namespace"],
+          "description": "Where this private data is stored"
+        },
+        "user_consent": {
+          "type": "boolean",
+          "description": "User has consented to storing this session data"
+        }
+      },
+      "description": "Privacy metadata ensuring this data stays private"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "joint",
+        "blunt",
+        "pipe",
+        "bong",
+        "vaporizer_dry_herb",
+        "vaporizer_concentrate",
+        "edible",
+        "tincture",
+        "topical",
+        "other"
+      ],
+      "description": "Method of consumption"
+    },
+    "dose_estimate": {
+      "type": "object",
+      "properties": {
+        "amount_g": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated amount consumed in grams"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["exact", "approximate", "guess"],
+          "description": "User's confidence in the dose estimate"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about dosing"
+        }
+      },
+      "description": "Estimated dose information"
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "time_of_day": {
+          "type": "string",
+          "enum": ["morning", "afternoon", "evening", "night"],
+          "description": "General time of day"
+        },
+        "duration_minutes": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How long the session lasted"
+        }
+      },
+      "description": "Timing details of the session"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "setting": {
+          "type": "string",
+          "enum": ["home", "outdoors", "social", "work", "travel", "other"],
+          "description": "Where the session took place"
+        },
+        "activity": {
+          "type": "string",
+          "description": "What the user was doing or planned to do"
+        },
+        "mood_before": {
+          "type": "string",
+          "description": "User's mood before consumption"
+        },
+        "intention": {
+          "type": "string",
+          "description": "What the user hoped to achieve"
+        }
+      },
+      "description": "Contextual information about the session"
+    },
+    "effects_positive": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of positive effects experienced"
+    },
+    "effects_negative": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of negative effects or side effects experienced"
+    },
+    "intensity_1to10": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Overall intensity rating from 1 (very mild) to 10 (very intense)"
+    },
+    "outcome_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags describing the overall outcome (e.g., 'productive', 'relaxing', 'social', 'creative')"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Freeform notes about the session"
+    },
+    "follow_up": {
+      "type": "object",
+      "properties": {
+        "would_use_again": {
+          "type": "boolean",
+          "description": "Whether the user would use this strain/method again"
+        },
+        "next_time_adjust": {
+          "type": "string",
+          "description": "What the user would do differently next time"
+        }
+      },
+      "description": "Follow-up reflections"
+    }
+  }
+}

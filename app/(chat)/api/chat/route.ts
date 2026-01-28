@@ -10,20 +10,23 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
+import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
+import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
   type AgentToolId,
   getAgentConfigById,
   getAgentConfigBySlash,
   getDefaultAgentConfig,
 } from "@/lib/ai/agents/registry";
-import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
-import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { getDirections } from "@/lib/ai/tools/get-directions";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
 import { saveMemory } from "@/lib/ai/tools/save-memory";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -31,13 +34,16 @@ import {
   createStreamId,
   deleteChatById,
   getApprovedMemoriesByUserId,
+  getApprovedMemoriesByUserIdAndRoute,
+  getApprovedMemoriesByUserIdAndProjectRoute,
   getChatById,
   getEnabledAtoFilesByAtoId,
+  getHomeLocationByUserId,
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
-  getUserEntitlements,
   getUserById,
+  getUserEntitlements,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -57,6 +63,30 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
 
+const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
+
+// Free subroutes that don't require founders access
+const FREE_SUBROUTES = [
+  "MyCarMindATO/Driver",
+  "MyCarMindATO/DeliveryDriver",
+  "MyCarMindATO/Traveler",
+];
+
+/**
+ * Helper function to extract the parent project route from a subroute.
+ * E.g., "MyCarMindATO/Driver" -> "/MyCarMindATO/"
+ * E.g., "BrooksBears/BenjaminBear" -> "/BrooksBears/"
+ */
+const getProjectRoute = (agentSlash: string): string | null => {
+  // Check if this is a subroute (contains a /)
+  const parts = agentSlash.split("/");
+  if (parts.length > 1) {
+    // Return the parent route with leading and trailing slashes
+    return `/${parts[0]}/`;
+  }
+  return null;
+};
+
 const formatMemoryContext = (
   memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
 ) => {
@@ -73,6 +103,16 @@ const formatMemoryContext = (
     .join("\n");
 
   return `MEMORY CONTEXT\nUse these approved user memories when relevant:\n${formatted}`;
+};
+
+const formatHomeLocationContext = (
+  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserId>>
+) => {
+  if (!homeLocation) {
+    return null;
+  }
+
+  return `HOME LOCATION\nUser-approved home location:\n- ${homeLocation.rawText}`;
 };
 
 function getStreamContext() {
@@ -141,6 +181,16 @@ function isDocumentSuggestionRequest(text: string | null): boolean {
     return false;
   }
   return /\b(suggest|suggestions|feedback|review)\b[\s\S]*\b(document|doc)\b/i.test(
+    text
+  );
+}
+
+function isHomeLocationRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /(\b(save|set|store|remember)\b[\s\S]*\b(home|house)\b[\s\S]*\b(location|address)\b)|(\bmy home is\b)|(\bhome location\b)/i.test(
     text
   );
 }
@@ -241,10 +291,15 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
-      if (firstMessageSlash?.includes("/") && !user.foundersAccess) {
+      
+      // Check if this subroute requires founders access
+      const requiresFoundersForNewChat = firstMessageSlash?.includes("/") && 
+        !FREE_SUBROUTES.includes(firstMessageSlash);
+      
+      if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
-          "Founders access required for subroutes."
+          "Founders access required for this subroute."
         ).toResponse();
       }
       initialRouteKey = firstMessageSlash
@@ -269,7 +324,10 @@ export async function POST(request: Request) {
       : undefined;
     const uiMessages = isToolApprovalFlow
       ? (messages as ChatMessage[]).map((current) => filterParts(current))
-      : [...convertToUIMessages(messagesFromDb), ...(sanitizedMessage ? [sanitizedMessage] : [])];
+      : [
+          ...convertToUIMessages(messagesFromDb),
+          ...(sanitizedMessage ? [sanitizedMessage] : []),
+        ];
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -317,17 +375,63 @@ export async function POST(request: Request) {
         (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
         getDefaultAgentConfig();
     }
-    if (selectedAgent.slash.includes("/") && !user.foundersAccess) {
+    
+    const requiresFoundersAccess = selectedAgent.slash.includes("/") && 
+      !FREE_SUBROUTES.includes(selectedAgent.slash);
+    
+    if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
         "forbidden:auth",
-        "Founders access required for subroutes."
+        "Founders access required for this subroute."
       ).toResponse();
     }
 
-    const approvedMemories = await getApprovedMemoriesByUserId({
-      userId: session.user.id,
-    });
+    const isMyCarMindAgent = selectedAgent.id === "my-car-mind";
+    const projectRoute = getProjectRoute(selectedAgent.slash);
+    const isMyCarMindProject = projectRoute === MY_CAR_MIND_ROUTE;
+    const isBrooksBearsProject = projectRoute === "/BrooksBears/";
+    
+    // Determine memory scope:
+    // 1. For MyCarMindATO subroutes (Driver, Trucker, DeliveryDriver, Traveler): use project-level memories
+    // 2. For BrooksBears subroutes (BenjaminBear): use project-level memories
+    // 3. For standalone MyCarMindATO: use exact route memories
+    // 4. For other agents: use all user memories
+    let approvedMemories;
+    if (isMyCarMindProject && projectRoute) {
+      // Project-level memory sharing for MyCarMindATO subroutes
+      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+        userId: session.user.id,
+        projectRoute,
+      });
+    } else if (isBrooksBearsProject && projectRoute) {
+      // Project-level memory sharing for BrooksBears subroutes
+      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+        userId: session.user.id,
+        projectRoute,
+      });
+    } else if (isMyCarMindAgent) {
+      // Exact route for standalone MyCarMindATO
+      approvedMemories = await getApprovedMemoriesByUserIdAndRoute({
+        userId: session.user.id,
+        route: selectedAgent.slash,
+      });
+    } else {
+      // All memories for other agents
+      approvedMemories = await getApprovedMemoriesByUserId({
+        userId: session.user.id,
+      });
+    }
+    
     const baseMemoryContext = formatMemoryContext(approvedMemories);
+    const homeLocation = isMyCarMindAgent || isMyCarMindProject
+      ? await getHomeLocationByUserId({
+          userId: session.user.id,
+          chatId: id,
+          // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
+          route: MY_CAR_MIND_ROUTE,
+        })
+      : null;
+    const homeLocationContext = formatHomeLocationContext(homeLocation);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
     });
@@ -335,8 +439,9 @@ export async function POST(request: Request) {
     const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
     const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
     const memoryContext =
-      [baseMemoryContext, spoilerAccessContext].filter(Boolean).join("\n\n") ||
-      null;
+      [baseMemoryContext, homeLocationContext, spoilerAccessContext]
+        .filter(Boolean)
+        .join("\n\n") || null;
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
@@ -348,20 +453,27 @@ export async function POST(request: Request) {
           isNamcAgent && isDocumentRequest(lastUserText);
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
+        const isHomeLocationSaveRequest =
+          selectedAgent.id === "my-car-mind" &&
+          isHomeLocationRequest(lastUserText);
         type ToolDefinition =
+          | typeof getDirections
           | typeof getWeather
           | ReturnType<typeof createDocument>
           | ReturnType<typeof updateDocument>
           | ReturnType<typeof requestSuggestions>
-          | ReturnType<typeof saveMemory>;
+          | ReturnType<typeof saveMemory>
+          | ReturnType<typeof saveHomeLocation>;
 
-        const toolImplementations: Record<AgentToolId, ToolDefinition> = {
+        const toolImplementations = {
+          getDirections,
           getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
-        };
+          saveHomeLocation: saveHomeLocation({ session, chatId: id }),
+        } satisfies Record<AgentToolId, ToolDefinition>;
 
         const namcDocumentTools: AgentToolId[] = [
           "createDocument",
@@ -403,6 +515,26 @@ export async function POST(request: Request) {
           const responseText = await runMyFlowerAIWorkflow({
             messages: uiMessages,
             memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else if (
+          selectedAgent.id === "my-car-mind" &&
+          !isToolApprovalFlow &&
+          !isHomeLocationSaveRequest
+        ) {
+          const responseText = await runMyCarMindAtoWorkflow({
+            messages: uiMessages,
+            memoryContext,
+            homeLocationText: homeLocation?.rawText ?? null,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });

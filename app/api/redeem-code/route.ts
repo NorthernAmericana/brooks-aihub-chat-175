@@ -8,6 +8,9 @@ import {
   redeemCode,
 } from "@/lib/db/queries";
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

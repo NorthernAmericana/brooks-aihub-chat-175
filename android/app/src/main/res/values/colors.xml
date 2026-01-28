@@ -1,0 +1,5 @@
+<resources>
+    <color name="status_bar_color">#FFFFFF</color>
+    <color name="splash_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

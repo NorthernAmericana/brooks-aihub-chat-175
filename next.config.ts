@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
   async redirects() {
     return [
       {
@@ -35,6 +34,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         //https://nextjs.org/docs/messages/next-image-unconfigured-host
         hostname: "*.public.blob.vercel-storage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "oaidalleapiprodscus.blob.core.windows.net",
       },
     ],
   },

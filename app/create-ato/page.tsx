@@ -56,8 +56,7 @@ export default function CreateAtoPage() {
     const webSearchEnabled = formData.get("ato-web-search") === "on";
     const fileSearchEnabled = formData.get("ato-file-search") === "on";
     const selectedVoice =
-      ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ??
-      ALL_VOICES[0];
+      ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ?? ALL_VOICES[0];
 
     const instructionsParts = (
       instructionsInput
@@ -256,9 +255,7 @@ export default function CreateAtoPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="ato-instructions">
-                Instructions (optional)
-              </Label>
+              <Label htmlFor="ato-instructions">Instructions (optional)</Label>
               <Textarea
                 id="ato-instructions"
                 name="ato-instructions"
@@ -281,7 +278,9 @@ export default function CreateAtoPage() {
               <ul className="mt-1 list-disc space-y-1 pl-4">
                 <li>Start with the mission or job-to-be-done.</li>
                 <li>Define tone, boundaries, and handoff rules.</li>
-                <li>List preferred tools, data sources, and memory behavior.</li>
+                <li>
+                  List preferred tools, data sources, and memory behavior.
+                </li>
                 <li>
                   Keep it local-only and project-like, like a personal thinking
                   file you revisit.

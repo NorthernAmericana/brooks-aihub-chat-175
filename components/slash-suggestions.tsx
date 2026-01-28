@@ -84,12 +84,14 @@ export function SlashSuggestions({
         {topThree.length > 0 ? (
           topThree.map((agent) => (
             <Button
-              className="w-full justify-start text-left hover:bg-accent"
+              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm text-foreground transition hover:bg-muted/50 hover:border-foreground/40"
               key={agent.id}
               onClick={() => onSelect(agent.slash)}
               variant="ghost"
             >
-              <span className="font-mono text-primary">/{agent.slash}/</span>
+              <span className="font-mono text-primary/90 tracking-[0.04em]">
+                /{agent.slash}/
+              </span>
               <span className="ml-2 text-muted-foreground">{agent.label}</span>
             </Button>
           ))

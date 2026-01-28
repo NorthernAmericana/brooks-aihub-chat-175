@@ -1,3 +1,5 @@
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   Agent,
   type AgentInputItem,
@@ -6,20 +8,25 @@ import {
   webSearchTool,
   withTrace,
 } from "@openai/agents";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { OpenAI } from "@/lib/openai/client";
 import { z } from "zod";
+import { OpenAI } from "@/lib/openai/client";
 import type { ChatMessage } from "@/lib/types";
+import type { MyFlowerAIStrain } from "@/lib/validation/myflowerai-schema";
 
 // Configuration constants
 const VECTOR_STORE_ID = "vs_6974ec32d5048191b7cba6c11cc3efb2";
 const WORKFLOW_ID = "wf_6974ec1e5d348190a3ebd25e3984fb8903dfa08e21a58075";
-const STRAINS_FILE_PATH = path.join(
+const STRAINS_FILE_PATH_V1_0 = path.join(
   process.cwd(),
   "data",
   "myflowerai",
   "strains.ndjson"
+);
+const STRAINS_DIR_V1_1 = path.join(
+  process.cwd(),
+  "data",
+  "myflowerai",
+  "strains"
 );
 
 // Tool definitions
@@ -101,10 +108,21 @@ Category: Conversate`,
   },
 });
 
+// Base agent instructions
+const BASE_INSTRUCTIONS =
+  "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. You are a client-facing assistant; never assume the user is the founder. Ground answers in this order: 1) Strain Data context, 2) Vector Store Context, 3) shared memory context. If sources conflict, say so and prioritize earlier sources. Review shared memory context provided by the system before responding; use it only when relevant. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. When discussing a strain, use this mini-structure: Known profile → likely effects → user's prior notes (if any). Keep the tone warm, woodsy, and supportive.";
+
+// Session logging instructions (privacy-focused)
+const SESSION_LOGGING_INSTRUCTIONS =
+  "\n\nSESSION LOGGING: When users want to log a session, use the session_template from the strain data (if available) to ask recommended_questions through natural conversation. The session_template also provides suggested_methods and suggested_dose_guidance_text to help guide users. CRITICAL: Session logs are PRIVATE user data and must be stored in private per-user storage (Supabase, local encrypted, or private namespace) - NEVER write session logs back into public strain JSON files. When logging sessions, collect: method, dose_estimate, timing, context, effects_positive, effects_negative, intensity (1-10), outcome_tags, and notes. Always get user consent before storing session data.";
+
+// Personal fit tracking instructions (privacy-focused)
+const PERSONAL_FIT_INSTRUCTIONS =
+  "\n\nPERSONAL FIT TRACKING: You can help users track how well strains work for them personally. PUBLIC strain data may include generic 'use_cases' tags (e.g., 'creative', 'social', 'daytime') that are the same for all users. PRIVATE per-user 'personal_fit' data includes: rating_1to10, best_for (personal tags), avoid_for (personal tags), repeat_probability_0to1, and notes. CRITICAL RULES: 1) Always ask permission before saving personal fit data ('Would you like me to save your experience with this strain?'). 2) NEVER write personal fit data into public strain JSON files - it goes in private per-user storage only. 3) DO NOT invent personal medical advice - you can suggest users track their own experiences, but never claim a strain will help with medical conditions. 4) When discussing fit, reference public use_cases tags from strain data (if available) and user's own personal_fit history (if they've tracked it). Example: 'This strain is tagged for creative use in the database. After you try it, I can help you track whether it works well for your specific creative projects if you'd like.' Keep personal_fit entirely separate from public strain data.";
+
 const myflowerai = new Agent({
   name: "MyFlowerAI",
-  instructions:
-    "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. You are a client-facing assistant; never assume the user is the founder. Ground answers in this order: 1) Strain Data context, 2) Vector Store Context, 3) shared memory context. If sources conflict, say so and prioritize earlier sources. Review shared memory context provided by the system before responding; use it only when relevant. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. When discussing a strain, use this mini-structure: Known profile → likely effects → user's prior notes (if any). Keep the tone warm, woodsy, and supportive.",
+  instructions: BASE_INSTRUCTIONS + SESSION_LOGGING_INSTRUCTIONS + PERSONAL_FIT_INSTRUCTIONS,
   model: "gpt-5.2",
   tools: [fileSearch, webSearchPreview],
   modelSettings: {
@@ -143,37 +161,169 @@ const buildConversationHistory = (messages: ChatMessage[]): AgentInputItem[] =>
     })
     .filter((item): item is AgentInputItem => item !== null);
 
-const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
+const normalizeQueryValue = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 
-const loadStrains = async () => {
-  const fileContents = await readFile(STRAINS_FILE_PATH, "utf8");
+type StrainRecord = {
+  id?: string;
+  strain?: {
+    name?: string;
+    type?: string;
+  };
+  stats?: {
+    total_thc_percent?: number;
+    total_terpenes_percent?: number;
+    top_terpenes?: Array<{ name?: string; percent?: number }>;
+  };
+  description?: {
+    dispensary_bio?: string;
+    vibes_like?: string[];
+  };
+};
+
+const loadStrains = async (): Promise<StrainRecord[]> => {
+  try {
+    // Try loading v1.1 format (individual JSON files)
+    const files = await readdir(STRAINS_DIR_V1_1);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    if (jsonFiles.length > 0) {
+      const strains: StrainRecord[] = [];
+
+      for (const file of jsonFiles) {
+        const filepath = path.join(STRAINS_DIR_V1_1, file);
+        const contents = await readFile(filepath, "utf8");
+        const strain = JSON.parse(contents) as MyFlowerAIStrain;
+
+        // Convert to StrainRecord format (compatible with both v1.0 and v1.1)
+        strains.push({
+          id: strain.id,
+          strain: strain.strain,
+          stats: strain.stats,
+          description: strain.description,
+        });
+      }
+
+      return strains;
+    }
+  } catch (_error) {
+    // Fall back to v1.0 if v1.1 directory doesn't exist or is empty
+    console.log("Loading v1.0 format (fallback)");
+  }
+
+  // Fallback: Load v1.0 format (NDJSON)
+  const fileContents = await readFile(STRAINS_FILE_PATH_V1_0, "utf8");
   return fileContents
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as { id?: string; strain?: { name?: string } });
+    .map((line) => JSON.parse(line) as StrainRecord);
 };
 
-const selectMatchingStrains = (
-  strains: Array<{ id?: string; strain?: { name?: string } }>,
-  query: string
-) => {
+const FALLBACK_STRAIN_LIMIT = 8;
+const GENERIC_STRAIN_QUERIES = new Set([
+  "strain",
+  "strains",
+  "strain list",
+  "list strains",
+  "available strains",
+  "what strains",
+  "what strain data do you have",
+]);
+const GENERIC_STRAIN_QUERY_PATTERNS = [
+  /what\s+strain\s+data\s+do\s+you\s+have/,
+  /\b(list|show)\b.*\bstrains?\b/,
+  /\bavailable\b.*\bstrains?\b/,
+  /\bstrain\s+data\b/,
+  /\bstrain\s+list\b/,
+];
+
+const isGenericStrainQuery = (query: string) =>
+  GENERIC_STRAIN_QUERIES.has(query) ||
+  GENERIC_STRAIN_QUERY_PATTERNS.some((pattern) => pattern.test(query));
+
+const selectMatchingStrains = (strains: StrainRecord[], query: string) => {
+  // Normalization check: "Blue-Dream#1" => "blue dream 1", "  OG   Kush " => "og kush".
   const normalizedQuery = normalizeQueryValue(query);
-  if (!normalizedQuery) {
-    return [];
+  const isGenericQuery =
+    !normalizedQuery || isGenericStrainQuery(normalizedQuery);
+
+  const matching = normalizedQuery
+    ? strains.filter((strain) => {
+        const idValue = normalizeQueryValue(strain.id ?? "");
+        const nameValue = normalizeQueryValue(strain.strain?.name ?? "");
+
+        return (
+          (nameValue && normalizedQuery.includes(nameValue)) ||
+          (idValue && normalizedQuery.includes(idValue)) ||
+          (normalizedQuery && nameValue.includes(normalizedQuery)) ||
+          (normalizedQuery && idValue.includes(normalizedQuery))
+        );
+      })
+    : [];
+
+  const shouldFallback = isGenericQuery || matching.length === 0;
+  const fallback = shouldFallback
+    ? strains.slice(0, FALLBACK_STRAIN_LIMIT)
+    : [];
+
+  return {
+    matching,
+    fallback,
+    usedFallback: shouldFallback,
+    isGenericQuery,
+  };
+};
+
+const formatPercent = (value?: number, fractionDigits = 1) =>
+  typeof value === "number" && Number.isFinite(value)
+    ? `${value.toFixed(fractionDigits)}%`
+    : "n/a";
+
+const truncateText = (text: string, maxLength = 140) =>
+  text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text;
+
+const buildStrainSummary = (strains: StrainRecord[], label: string) => {
+  if (!strains.length) {
+    return "Strain Data: No matching strains found in strains.ndjson.";
   }
 
-  return strains.filter((strain) => {
-    const idValue = normalizeQueryValue(strain.id ?? "");
-    const nameValue = normalizeQueryValue(strain.strain?.name ?? "");
+  const lines = strains.map((strain) => {
+    const name = strain.strain?.name ?? strain.id ?? "Unknown strain";
+    const type = strain.strain?.type;
+    const thc = formatPercent(strain.stats?.total_thc_percent, 1);
+    const terps = formatPercent(strain.stats?.total_terpenes_percent, 2);
+    const topTerpenes = (strain.stats?.top_terpenes ?? [])
+      .slice(0, 3)
+      .map((terp) => {
+        const terpPercent = formatPercent(terp.percent, 2);
+        return terp.name ? `${terp.name} (${terpPercent})` : null;
+      })
+      .filter((value): value is string => Boolean(value))
+      .join(", ");
+    const vibes =
+      strain.description?.vibes_like?.slice(0, 2).join("; ") ??
+      (strain.description?.dispensary_bio
+        ? truncateText(strain.description.dispensary_bio, 120)
+        : null);
 
-    return (
-      (nameValue && normalizedQuery.includes(nameValue)) ||
-      (idValue && normalizedQuery.includes(idValue)) ||
-      (normalizedQuery && nameValue.includes(normalizedQuery)) ||
-      (normalizedQuery && idValue.includes(normalizedQuery))
-    );
+    const details = [
+      `THC ${thc}`,
+      `Total terps ${terps}`,
+      topTerpenes ? `Top terps: ${topTerpenes}` : null,
+      vibes ? `Vibes: ${vibes}` : null,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(" | ");
+
+    return `- ${name}${type ? ` (${type})` : ""}${details ? ` — ${details}` : ""}`;
   });
+
+  return `Strain Data (${label}):\n${lines.join("\n")}`;
 };
 
 const buildVectorStoreSummary = (
@@ -226,15 +376,18 @@ export const runMyFlowerAIWorkflow = async ({
       }),
     ]);
 
-    const matchingStrains = selectMatchingStrains(
+    const strainSelection = selectMatchingStrains(
       strains,
       workflow.input_as_text
     );
-    const strainContext = matchingStrains.length
-      ? `Strain Data:\n${matchingStrains
-          .map((strain) => JSON.stringify(strain))
-          .join("\n")}`
-      : "Strain Data: No matching strains found in strains.ndjson.";
+    const strainContext = strainSelection.usedFallback
+      ? buildStrainSummary(
+          strainSelection.fallback,
+          strainSelection.isGenericQuery
+            ? "sample list for generic request"
+            : "sample list; no direct matches"
+        )
+      : buildStrainSummary(strainSelection.matching, "matching strains");
 
     const vectorSummary = buildVectorStoreSummary(
       vectorStoreResults.data.map((result) => ({

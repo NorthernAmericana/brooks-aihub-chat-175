@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -19,22 +20,24 @@ import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
 import {
+  atoFile,
   type Chat,
   chat,
   type DBMessage,
   document,
   entitlement,
-  atoFile,
   memory,
   message,
   redemption,
   redemptionCode,
-  unofficialAto,
   type Suggestion,
   stream,
   suggestion,
   type User,
+  type UserLocation,
+  unofficialAto,
   user,
+  userLocation,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -187,6 +190,63 @@ export async function getApprovedMemoriesByUserId({
   }
 }
 
+export async function getApprovedMemoriesByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          eq(memory.route, route)
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories by route"
+    );
+  }
+}
+
+export async function getApprovedMemoriesByUserIdAndProjectRoute({
+  userId,
+  projectRoute,
+}: {
+  userId: string;
+  projectRoute: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          // Match routes that start with the project route (e.g., /MyCarMindATO/)
+          sql`${memory.route} LIKE ${projectRoute + "%"}`
+        )
+      )
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories by project route"
+    );
+  }
+}
+
 export async function createUnofficialAto({
   ownerUserId,
   name,
@@ -303,7 +363,10 @@ export async function getUnofficialAtoById({
       .select()
       .from(unofficialAto)
       .where(
-        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
       );
 
     return record ?? null;
@@ -382,7 +445,10 @@ export async function updateUnofficialAtoSettings({
       .update(unofficialAto)
       .set(updateValues)
       .where(
-        and(eq(unofficialAto.id, id), eq(unofficialAto.ownerUserId, ownerUserId))
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
       )
       .returning();
 
@@ -444,7 +510,9 @@ export async function getAtoFilesByAtoId({
     return await db
       .select()
       .from(atoFile)
-      .where(and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId)))
+      .where(
+        and(eq(atoFile.atoId, atoId), eq(atoFile.ownerUserId, ownerUserId))
+      )
       .orderBy(desc(atoFile.createdAt));
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get ATO files");
@@ -504,10 +572,7 @@ export async function updateAtoFileEnabled({
 
     return record ?? null;
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to update ATO file"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to update ATO file");
   }
 }
 
@@ -550,6 +615,77 @@ export async function createMemoryRecord({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create memory record"
+    );
+  }
+}
+
+export async function createHomeLocationRecord({
+  ownerId,
+  chatId,
+  route,
+  rawText,
+  normalizedText,
+}: {
+  ownerId: string;
+  chatId: string;
+  route: string;
+  rawText: string;
+  normalizedText?: string | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(userLocation)
+      .values({
+        ownerId,
+        chatId,
+        route,
+        locationType: "home-location",
+        rawText,
+        normalizedText: normalizedText ?? null,
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create home location record"
+    );
+  }
+}
+
+export async function getHomeLocationByUserId({
+  userId,
+  chatId,
+  route,
+}: {
+  userId: string;
+  chatId: string;
+  route: string;
+}): Promise<UserLocation | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userLocation)
+      .where(
+        and(
+          eq(userLocation.ownerId, userId),
+          eq(userLocation.chatId, chatId),
+          eq(userLocation.route, route),
+          eq(userLocation.locationType, "home-location"),
+          eq(userLocation.isApproved, true)
+        )
+      )
+      .orderBy(desc(userLocation.updatedAt), desc(userLocation.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get home location"
     );
   }
 }
@@ -1157,7 +1293,12 @@ export async function updateEntitlementProgress({
     const [existing] = await db
       .select()
       .from(entitlement)
-      .where(and(eq(entitlement.userId, userId), eq(entitlement.productId, productId)))
+      .where(
+        and(
+          eq(entitlement.userId, userId),
+          eq(entitlement.productId, productId)
+        )
+      )
       .orderBy(desc(entitlement.grantedAt))
       .limit(1);
 

@@ -37,6 +37,10 @@ const VOICE_ROUTING_MAP: Record<string, RouteVoiceConfig> = {
     voices: [VOICES.BENJAMIN_BEAR],
     defaultVoiceId: VOICES.BENJAMIN_BEAR.id,
   },
+  "brooks-bears-benjamin": {
+    voices: [VOICES.BENJAMIN_BEAR],
+    defaultVoiceId: VOICES.BENJAMIN_BEAR.id,
+  },
   brooksbears: {
     voices: [VOICES.BENJAMIN_BEAR],
     defaultVoiceId: VOICES.BENJAMIN_BEAR.id,

@@ -20,12 +20,29 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   }, []);
 
   const suggestedFolders = useMemo(() => {
-    const desiredOrder = [
+    const desiredOrder: Array<{
+      slash: string;
+      foundersOnly: boolean;
+      badge?: "gem" | "free";
+    }> = [
       { slash: "Brooks AI HUB", foundersOnly: false },
       { slash: "BrooksBears", foundersOnly: false },
+      { slash: "BrooksBears/BenjaminBear", foundersOnly: true, badge: "gem" },
       { slash: "MyCarMindATO", foundersOnly: false },
+      { slash: "MyCarMindATO/Driver", foundersOnly: false, badge: "free" },
+      { slash: "MyCarMindATO/Trucker", foundersOnly: true, badge: "gem" },
+      {
+        slash: "MyCarMindATO/DeliveryDriver",
+        foundersOnly: false,
+        badge: "free",
+      },
+      {
+        slash: "MyCarMindATO/Traveler",
+        foundersOnly: false,
+        badge: "free",
+      },
       { slash: "MyFlowerAI", foundersOnly: false },
-      { slash: "Brooks AI HUB/Summaries", foundersOnly: true },
+      { slash: "Brooks AI HUB/Summaries", foundersOnly: true, badge: "gem" },
       { slash: "NAT", foundersOnly: false },
       { slash: "NAMC", foundersOnly: false },
     ];
@@ -44,12 +61,24 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           return null;
         }
 
-        return {
+        const folderItem: {
+          label: string;
+          slash: string;
+          folder: string;
+          foundersOnly: boolean;
+          badge?: "gem" | "free";
+        } = {
           label: labelOverrides[agent.slash] ?? agent.label,
           slash: agent.slash,
           folder: `/${agent.slash}/`,
           foundersOnly: entry.foundersOnly,
         };
+        
+        if (entry.badge) {
+          folderItem.badge = entry.badge;
+        }
+        
+        return folderItem;
       })
       .filter(
         (
@@ -59,6 +88,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           slash: string;
           folder: string;
           foundersOnly: boolean;
+          badge?: "gem" | "free";
         } => Boolean(folder)
       );
   }, []);
@@ -71,6 +101,21 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         minute: "2-digit",
       }),
     [now]
+  );
+
+  const cloudStyles = useMemo(
+    () => [
+      { transform: "translateY(0px)", minWidth: "10.75rem" },
+      { transform: "translateY(2px)", minWidth: "10rem" },
+      { transform: "translateY(-2px)", minWidth: "10.5rem" },
+      { transform: "translateY(3px)", minWidth: "9.75rem" },
+      { transform: "translateY(-3px)", minWidth: "10.25rem" },
+      { transform: "translateY(1px)", minWidth: "9.75rem" },
+      { transform: "translateY(-1px)", minWidth: "10.5rem" },
+      { transform: "translateY(2px)", minWidth: "10rem" },
+      { transform: "translateY(-2px)", minWidth: "10.25rem" },
+    ],
+    []
   );
 
   return (
@@ -104,30 +149,39 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         transition={{ delay: 0.7 }}
       >
         <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
-          Suggested folders
+          all ATO App Folder Clouds
         </div>
-        <div className="mt-3 flex flex-wrap justify-center gap-3">
-          {suggestedFolders.map((folder) => (
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
+          {suggestedFolders.map((folder, index) => (
             <button
-              className="rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-2 sm:text-sm md:text-base"
+              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-3 sm:text-sm"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
+              style={cloudStyles[index % cloudStyles.length]}
               type="button"
             >
-              <span className="flex flex-col gap-0.5 text-left leading-tight">
-                <span className="text-xs font-semibold sm:text-sm md:text-base">
+              <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
+                <span className="text-xs font-medium leading-snug sm:text-sm">
                   {folder.label}
-                  {folder.foundersOnly ? (
+                  {folder.badge === "gem" ? (
                     <span
                       aria-label="Founders access only"
-                      className="ml-1 inline-flex align-middle text-base"
+                      className="ml-1 inline-flex align-middle text-sm"
                       title="Founders access only"
                     >
                       💎
                     </span>
+                  ) : folder.badge === "free" ? (
+                    <span
+                      aria-label="Free access"
+                      className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-green-500 animate-pulse sm:text-[0.55rem]"
+                      title="Free access - no founders subscription required"
+                    >
+                      FREE
+                    </span>
                   ) : null}
                 </span>
-                <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground sm:text-[0.65rem] md:text-xs">
+                <span className="text-[0.6rem] uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[0.65rem]">
                   {folder.folder}
                 </span>
               </span>

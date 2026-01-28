@@ -205,6 +205,26 @@ export const memory = pgTable("Memory", {
 
 export type Memory = InferSelectModel<typeof memory>;
 
+export const userLocation = pgTable("UserLocation", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
+  route: varchar("route", { length: 128 }).notNull(),
+  locationType: varchar("locationType", {
+    enum: ["home-location"],
+  }).notNull(),
+  rawText: text("rawText").notNull(),
+  normalizedText: text("normalizedText"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserLocation = InferSelectModel<typeof userLocation>;
+
 export const unofficialAto = pgTable("UnofficialAto", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),
@@ -293,3 +313,98 @@ export const redemption = pgTable("Redemption", {
 });
 
 export type Redemption = InferSelectModel<typeof redemption>;
+
+// User Inventory table for privacy-safe cannabis inventory tracking
+// See: /docs/myflowerai/inventory-management.md
+export const userInventory = pgTable("user_inventory", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  inventoryId: uuid("inventory_id").notNull().unique().defaultRandom(),
+  strainId: varchar("strain_id", { length: 255 }).notNull(),
+  
+  // Privacy metadata
+  storageLocation: varchar("storage_location", { length: 50 })
+    .notNull()
+    .default("database_user_private"),
+  userConsent: boolean("user_consent").notNull().default(false),
+  
+  // Inventory details (privacy-safe with bucketed values and month granularity)
+  acquiredMonth: varchar("acquired_month", { length: 7 }), // YYYY-MM format only
+  opened: boolean("opened").default(false),
+  remainingEstimate: varchar("remaining_estimate", { length: 20 }), // Bucketed: full, half, low, empty
+  storageType: varchar("storage_type", { length: 50 }),
+  hasHumidipack: boolean("has_humidipack"),
+  storageLocationType: varchar("storage_location_type", { length: 50 }),
+  qualityNotes: text("quality_notes"),
+  tags: text("tags").array(),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type UserInventory = InferSelectModel<typeof userInventory>;
+
+// Personal Fit table for privacy-safe personal strain fit tracking
+// See: /docs/myflowerai/personal-fit.md
+export const personalFit = pgTable("personal_fit", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  personalFitId: uuid("personal_fit_id").notNull().unique().defaultRandom(),
+  strainId: varchar("strain_id", { length: 255 }).notNull(),
+  
+  // Privacy metadata
+  storageLocation: varchar("storage_location", { length: 50 })
+    .notNull()
+    .default("database_user_private"),
+  userConsent: boolean("user_consent").notNull().default(false),
+  
+  // Personal fit details
+  rating1to10: varchar("rating_1to10", { length: 10 }), // Stored as string to allow null/optional
+  bestFor: text("best_for").array(), // User's personal tags for what this works best for
+  avoidFor: text("avoid_for").array(), // User's personal tags for when to avoid
+  repeatProbability0to1: varchar("repeat_probability_0to1", { length: 10 }), // Stored as string to allow null/optional
+  notes: text("notes"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type PersonalFit = InferSelectModel<typeof personalFit>;
+
+// MyFlowerAI Quiz Results table for privacy-safe quiz completion tracking
+// See: /docs/myflowerai/quiz-to-aura.md
+export const myfloweraiQuizResults = pgTable("myflowerai_quiz_results", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  quizId: varchar("quiz_id", { length: 100 }).notNull(),
+  personaId: varchar("persona_id", { length: 100 }).notNull(),
+  createdMonth: varchar("created_month", { length: 7 }).notNull(), // YYYY-MM format only (privacy-safe)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type MyfloweraiQuizResult = InferSelectModel<typeof myfloweraiQuizResults>;
+
+// MyFlowerAI Generated Images table for privacy-safe image tracking
+// See: /docs/myflowerai/quiz-to-aura.md
+export const myfloweraiImages = pgTable("myflowerai_images", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  personaId: varchar("persona_id", { length: 100 }),
+  strainId: varchar("strain_id", { length: 255 }),
+  presetId: varchar("preset_id", { length: 100 }),
+  storageKey: text("storage_key").notNull(), // Vercel Blob storage key (not signed URL)
+  createdMonth: varchar("created_month", { length: 7 }).notNull(), // YYYY-MM format only (privacy-safe)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type MyfloweraiImage = InferSelectModel<typeof myfloweraiImages>;

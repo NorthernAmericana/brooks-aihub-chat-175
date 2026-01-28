@@ -1,0 +1,18 @@
+{
+  "persona_id": "adventure-seeker",
+  "display_name": "Adventure Seeker",
+  "vibe_summary": "Life is meant to be experienced fully. You're always planning the next adventure—road trips, festivals, spontaneous explorations, or trying new experiences. You seek strains that amplify your sense of wonder, boost your energy for exploration, and make every moment feel like a grand adventure.",
+  "tag_profile": {
+    "primary_tags": ["adventurous", "energizing", "euphoric", "uplifting"],
+    "secondary_tags": ["active", "social", "mood-enhancing"],
+    "avoid_tags": ["sedating", "couch-lock", "paranoid", "anxious"]
+  },
+  "image_style_keywords": [
+    "open road adventure",
+    "vibrant exploration",
+    "dynamic movement",
+    "exciting landscapes",
+    "bold colors",
+    "spirited journey"
+  ]
+}

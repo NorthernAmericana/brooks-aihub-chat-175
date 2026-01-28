@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.ai/schemas/myflowerai/image-request.schema.json",
+  "title": "MyFlowerAI Image Generation Request Schema",
+  "description": "Schema for image generation API request payloads",
+  "type": "object",
+  "properties": {
+    "persona_id": {
+      "type": "string",
+      "description": "Persona identifier for style guidance (optional)",
+      "pattern": "^[a-z-]+$"
+    },
+    "strain_id": {
+      "type": "string",
+      "description": "Strain identifier (optional if persona_id provided)",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "preset_id": {
+      "type": "string",
+      "description": "Image preset identifier (optional)",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "vibe_settings": {
+      "type": "object",
+      "description": "Manual vibe slider settings (optional)",
+      "properties": {
+        "intensity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Intensity level (0-10)"
+        },
+        "neon": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Neon glow level (0-10)"
+        },
+        "nature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Nature/organic level (0-10)"
+        },
+        "surreal": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Surreal/dreamlike level (0-10)"
+        },
+        "chaos": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Chaos/energy level (0=calm, 10=chaotic)"
+        }
+      }
+    },
+    "user_vibe_text": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Optional user-provided vibe text (will be sanitized)"
+    },
+    "reference_image_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional reference image URL for style inspiration"
+    }
+  },
+  "anyOf": [
+    { "required": ["persona_id"] },
+    { "required": ["strain_id"] }
+  ]
+}

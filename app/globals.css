@@ -48,6 +48,16 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
+  --cloud-bg-start: hsl(336 95% 85%);
+  --cloud-bg-end: hsl(332 88% 72%);
+  --cloud-border: hsl(332 60% 76%);
+  --cloud-shadow:
+    0 14px 32px rgba(246, 162, 190, 0.45), 0 6px 14px rgba(255, 198, 218, 0.35);
+  --cloud-shadow-inner:
+    inset 0 3px 10px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 12px rgba(246, 162, 190, 0.3);
+  --cloud-text: hsl(0 0% 100%);
+  --cloud-text-muted: rgba(255, 255, 255, 0.75);
 }
 
 /* define design tokens (dark mode) */
@@ -85,6 +95,16 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
+  --cloud-bg-start: hsl(336 95% 78%);
+  --cloud-bg-end: hsl(332 90% 64%);
+  --cloud-border: hsl(332 65% 70%);
+  --cloud-shadow:
+    0 16px 32px rgba(246, 144, 179, 0.55), 0 6px 16px rgba(255, 192, 214, 0.4);
+  --cloud-shadow-inner:
+    inset 0 3px 10px rgba(255, 255, 255, 0.7),
+    inset 0 -5px 14px rgba(246, 144, 179, 0.35);
+  --cloud-text: hsl(0 0% 100%);
+  --cloud-text-muted: rgba(255, 255, 255, 0.75);
 }
 
 /* define theme */
@@ -416,6 +436,69 @@
   }
 }
 
+@layer utilities {
+  .cloud-button {
+    position: relative;
+    border-radius: 9999px;
+    border: 1px solid var(--cloud-border);
+    background: linear-gradient(
+      180deg,
+      var(--cloud-bg-start) 0%,
+      var(--cloud-bg-end) 100%
+    );
+    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
+    isolation: isolate;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .cloud-button::before,
+  .cloud-button::after {
+    content: "";
+    position: absolute;
+    top: -25%;
+    width: 55%;
+    height: 75%;
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      var(--cloud-bg-start) 0%,
+      var(--cloud-bg-end) 100%
+    );
+    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .cloud-button::before {
+    left: 4%;
+  }
+
+  .cloud-button::after {
+    right: 6%;
+  }
+
+  .cloud-button > * {
+    position: relative;
+    z-index: 1;
+    color: var(--cloud-text);
+  }
+
+  .cloud-button .text-muted-foreground {
+    color: var(--cloud-text-muted);
+  }
+
+  .cloud-button--inline {
+    padding-block: 0.35rem;
+  }
+
+  .cloud-button--inline::before,
+  .cloud-button--inline::after {
+    top: -15%;
+    width: 48%;
+    height: 60%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -538,5 +621,39 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ATO Store styles */
+@layer utilities {
+  .store-overlay {
+    animation: store-slide-in 0.3s ease-out;
+  }
+
+  .store-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(20, 13, 18, 0.95);
+  }
+
+  .store-app-card {
+    transition: all 0.2s ease;
+  }
+
+  .store-app-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(255, 255, 255, 0.05);
+  }
+
+  @keyframes store-slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 }

@@ -1,0 +1,247 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "trulieve-sunshine-cannabis-white-sunshine-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "White Sunshine",
+    "type": "hybrid",
+    "brand": "Sunshine Cannabis",
+    "lineage": [
+      "The White",
+      "Sunshine Daydream"
+    ],
+    "breeder": "Bodhi Seeds"
+  },
+  "product": {
+    "dispensary": "Trulieve",
+    "category": "flower",
+    "form": "3.5g Whole Flower",
+    "size_g": 3.5,
+    "sku": "24134_0007653191",
+    "in_stock": true
+  },
+  "stats": {
+    "total_thc_percent": 27.5,
+    "total_cbd_percent": 0.0573,
+    "total_cannabinoids_percent": 32,
+    "total_terpenes_percent": 1.89,
+    "top_terpenes": [
+      {
+        "name": "d-Limonene",
+        "percent": 0.466
+      },
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.325
+      },
+      {
+        "name": "beta-Myrcene",
+        "percent": 0.262
+      },
+      {
+        "name": "Linalool",
+        "percent": 0.233
+      },
+      {
+        "name": "alpha-Humulene",
+        "percent": 0.111
+      },
+      {
+        "name": "trans-Nerolidol",
+        "percent": 0.1
+      },
+      {
+        "name": "alpha-Bisabolol",
+        "percent": 0.0881
+      },
+      {
+        "name": "Fenchyl Alcohol",
+        "percent": 0.0719
+      },
+      {
+        "name": "(+)-Borneol",
+        "percent": 0.0562
+      },
+      {
+        "name": "alpha-Terpineol",
+        "percent": 0.0559
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 30.1,
+      "delta9_thc": 1.09,
+      "cbga": 0.624,
+      "cbg": 0.14,
+      "cbda": 0.0653,
+      "cbn": 0.00945,
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 1050,
+      "delta9_thc_mg": 38.2,
+      "cbga_mg": 21.8,
+      "cbg_mg": 4.9,
+      "cbda_mg": 2.29,
+      "cbn_mg": 0.331
+    }
+  },
+  "description": {
+    "dispensary_bio": "Beaming with sweet pine, gas, and skunky flavors, this loud hybrid lightens and brightens the mood with a blissful energy that shines from the first hit to the last.",
+    "vibes_like": [
+      "Finding your balance between sunrise and sunset",
+      "Blending easy calm with bright, balanced clarity",
+      "Transforming any time of day into the golden hour"
+    ],
+    "product_positioning": "Sunshine Cannabis Flower in the 3.5g size is beautifully cured whole buds in the perfect quantity for everyday enjoyment. Each vibrant strain is grown indoors with care, ensuring bright flavors and consistent quality you can count on. Enjoy freely and savor the sunshine in every session, knowing your flower was cultivated with dedication to freshness, flavor, and feel-good vibes.",
+    "brand_info": "Sunshine Cannabis, founded in 2013, is a multiple award-winning cannabis company and the first brand partner of Trulieve. Together, they provide Florida patients with legendary heirloom strains known for their rich flavors and carefully selected terpene profiles. Committed to delivering consistent, reliable, and potent effects, every product is tested by trusted third-party labs to ensure purity and quality."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Modern Canna (MCS)",
+    "laboratory_id": "KA02002-02",
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "SUNSHINE CANNABIS - Hybrid - Whole Flower",
+    "cultivar_on_coa": "White Sunshine",
+    "completed_at": "2026-01-07 10:40",
+    "received_at": "2026-01-02 16:20",
+    "sample_date": "2026-01-02",
+    "batch_date": "2025-12-29",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Quincy",
+    "processing_facility": "Midway",
+    "seed_to_sale_id": "6887460261079379",
+    "qa_sample_id": "4981079471478334",
+    "batch_size_g": 18795,
+    "units_sampled": 23,
+    "total_amt_sampled_g": 80.5
+  },
+  "tags": [
+    "hybrid",
+    "pine",
+    "skunky",
+    "uplifting",
+    "daytime"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "bong"
+    ],
+    "suggested_dose_guidance_text": "This is a potent hybrid (27.5% THC). Start with 0.25g if inexperienced. Good for daytime energy with balanced calm.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "Approximately how much did you use?",
+      "What time of day was it, and what were you doing?",
+      "How did you feel before using it?",
+      "What positive effects did you notice?",
+      "Were there any negative effects or discomfort?",
+      "On a scale of 1-10, how intense was the experience?",
+      "Did it help you achieve what you were looking for?",
+      "Would you use this strain again?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "camphor-like",
+      "chamomile-like",
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lavender",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "stress-relief",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "limonene",
+      "caryophyllene",
+      "myrcene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
+    ]
+  },
+  "normalized": {
+    "canonical_strain_name": "white sunshine",
+    "canonical_brand": "sunshine cannabis",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "a5cf1b087d554dc2",
+      "product_key": "7960325b6402e35e"
+    }
+  },
+  "comparative_context": {
+    "alternative_genetics_note": "White Sunshine has two known genetic lineages in circulation. The Florida version (Trulieve/Sunshine Cannabis) uses The White x Sunshine Daydream from Bodhi Seeds. Other markets may carry White Widow x Sour Diesel variants. Always verify lineage by checking breeder/dispensary info.",
+    "market_availability": [
+      "Florida (Trulieve/Sunshine Cannabis - primary)",
+      "Washington State (Khush Kush phenotype #8/#9)",
+      "Massachusetts/Vermont (some dispensaries as 'White Sunrise')",
+      "Oregon (Kush Cart PDX with Bodhi lineage)"
+    ],
+    "distinguishing_characteristics": [
+      "Frosty appearance consistent with 'White' family genetics",
+      "Dynamic terpene profile varies by phenotype - Florida cut emphasizes sweet pine, gas, and skunk",
+      "Robust potency (27-30% THC range in premium batches)",
+      "Versatile effects - can tilt uplifting or relaxing depending on terpene expression"
+    ],
+    "medical_therapeutic_notes": [
+      "Clear-headed euphoria suitable for daytime use",
+      "Mood elevation and stress relief",
+      "Balanced energy without heavy sedation",
+      "Some phenotypes (WA Khush Kush) provide more body relaxation for pain relief"
+    ],
+    "comparison_highlights": {
+      "vs_juicy_jane": "White Sunshine offers more balanced daytime energy, while Juicy Jane delivers fruit-forward flavor with stronger cerebral onset",
+      "vs_margalope": "White Sunshine provides hybrid balance, while Margalope leans more sativa with pronounced creative/energizing effects"
+    }
+  }
+}

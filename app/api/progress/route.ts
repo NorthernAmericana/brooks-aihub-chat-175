@@ -8,6 +8,9 @@ const allowedProducts = new Set<string>([
   PRODUCT_IDS.MDD_NOVEL_BASE,
 ]);
 
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -21,10 +24,7 @@ export async function POST(request: NextRequest) {
     const progress = body?.progress;
 
     if (typeof productId !== "string" || !allowedProducts.has(productId)) {
-      return NextResponse.json(
-        { error: "Invalid productId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid productId" }, { status: 400 });
     }
 
     if (!progress || typeof progress !== "object") {

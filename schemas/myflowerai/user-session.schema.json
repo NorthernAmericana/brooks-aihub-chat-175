@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.ai/schemas/myflowerai/user-session.schema.json",
+  "title": "MyFlowerAI User Session Schema",
+  "description": "Schema for private user session logging (quiz completions, image generations)",
+  "type": "object",
+  "required": ["session_type", "timestamp_month"],
+  "properties": {
+    "session_type": {
+      "type": "string",
+      "enum": ["quiz_completion", "image_generation"],
+      "description": "Type of user session"
+    },
+    "timestamp_month": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}$",
+      "description": "Privacy-safe timestamp (month granularity only: YYYY-MM)"
+    },
+    "quiz_completion": {
+      "type": "object",
+      "description": "Quiz completion details (when session_type is 'quiz_completion')",
+      "required": ["quiz_id", "persona_id"],
+      "properties": {
+        "quiz_id": {
+          "type": "string",
+          "description": "Completed quiz identifier"
+        },
+        "persona_id": {
+          "type": "string",
+          "description": "Resulting persona identifier"
+        }
+      }
+    },
+    "image_generation": {
+      "type": "object",
+      "description": "Image generation details (when session_type is 'image_generation')",
+      "required": ["storage_key"],
+      "properties": {
+        "persona_id": {
+          "type": "string",
+          "description": "Persona used (optional)"
+        },
+        "strain_id": {
+          "type": "string",
+          "description": "Strain used (optional)"
+        },
+        "preset_id": {
+          "type": "string",
+          "description": "Preset used (optional)"
+        },
+        "storage_key": {
+          "type": "string",
+          "description": "Vercel Blob storage key (not signed URL)"
+        }
+      }
+    }
+  }
+}

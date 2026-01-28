@@ -1,0 +1,45 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.brooks.aihub.chat"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.brooks.aihub.chat"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv("TWA_KEYSTORE") ?: "keystore/brooks-aihub.keystore"
+            storeFile file(keystorePath)
+            storePassword System.getenv("TWA_KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("TWA_KEY_ALIAS") ?: "brooks-aihub"
+            keyPassword System.getenv("TWA_KEY_PASSWORD") ?: ""
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+        }
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.5.0"
+}

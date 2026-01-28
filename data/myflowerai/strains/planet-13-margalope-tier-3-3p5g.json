@@ -1,0 +1,244 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "planet-13-margalope-tier-3-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "Margalope Tier 3",
+    "type": "sativa",
+    "brand": "Planet 13",
+    "lineage": [
+      "Chocolope",
+      "Frozen Margy"
+    ],
+    "breeder": "Cannarado Genetics"
+  },
+  "product": {
+    "dispensary": "Planet 13",
+    "category": "flower",
+    "form": "3.5g Flower Pouch",
+    "size_g": 3.5,
+    "sku": null,
+    "in_stock": null
+  },
+  "stats": {
+    "total_thc_percent": 16.9,
+    "total_cbd_percent": 0,
+    "total_cannabinoids_percent": 20.3,
+    "total_terpenes_percent": 1.44,
+    "top_terpenes": [
+      {
+        "name": "Terpinolene",
+        "percent": 0.46
+      },
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.28
+      },
+      {
+        "name": "Ocimene",
+        "percent": 0.15
+      },
+      {
+        "name": "beta-Myrcene",
+        "percent": 0.13
+      },
+      {
+        "name": "Limonene",
+        "percent": 0.1
+      },
+      {
+        "name": "Humulene",
+        "percent": 0.07
+      },
+      {
+        "name": "beta-Pinene",
+        "percent": 0.05
+      },
+      {
+        "name": "alpha-Pinene",
+        "percent": 0.04
+      },
+      {
+        "name": "Linalool",
+        "percent": 0.04
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 18.1,
+      "delta9_thc": 0.52,
+      "cbga": 0.9,
+      "cbg": 0.19,
+      "cbda": "<LOQ",
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "cbn": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": null,
+      "delta9_thc_mg": null,
+      "cbga_mg": null,
+      "cbg_mg": null,
+      "cbda_mg": null,
+      "cbn_mg": null
+    }
+  },
+  "description": {
+    "dispensary_bio": "Margalope, a skunky sativa cross of Chocolope and Frozen Margy, delivers a unique aroma of gas, fruit, and floral notes with a sweet, rich flavor. The energizing effects lean uplifting and may help ease discomfort while keeping the mood bright.",
+    "vibes_like": [
+      "Starting the day with a fruity, gassy spark",
+      "Leaning into creative focus without feeling weighed down",
+      "Keeping energy upbeat while easing tension"
+    ],
+    "product_positioning": "Planet 13 Tier 3 flower showcases sun-grown, terpene-rich buds cultivated with hands-on care and modern indoor technology. Each 3.5g pouch highlights the cultivar’s signature aroma and balanced potency for an easygoing sativa session.",
+    "brand_info": "Planet 13 crafts cannabis with a blend of hands-on cultivation and innovative technology to preserve bold terpene profiles. Their indoor conservatories harness natural sunlight to deliver consistent, strain-specific effects."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Method Testing Laboratories",
+    "laboratory_id": "2512CBR0021-004",
+    "sample_matrix": "Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "Flower Pouch - 3.5g - Margalope (S3)",
+    "cultivar_on_coa": "Margalope",
+    "completed_at": "2025-12-05 12:53",
+    "received_at": "2025-12-02 16:12",
+    "sample_date": "2025-12-02",
+    "batch_date": "2025-12-02",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Jacksonville",
+    "processing_facility": "Jacksonville",
+    "seed_to_sale_id": null,
+    "qa_sample_id": null,
+    "batch_size_g": null,
+    "units_sampled": null,
+    "total_amt_sampled_g": null
+  },
+  "tags": [
+    "sativa",
+    "gas",
+    "fruit",
+    "uplifting",
+    "creative"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "pipe"
+    ],
+    "suggested_dose_guidance_text": "This is a moderate sativa (20.3% THC). Good for daytime creativity and energy. Start with 0.25-0.5g for uplifting effects.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "About how much did you use?",
+      "What time of day was it?",
+      "What were you hoping to accomplish or feel?",
+      "What positive effects did you experience?",
+      "Any negative effects or side effects?",
+      "How would you rate the intensity on a scale of 1-10?",
+      "Did this strain help you achieve your goals?",
+      "Would you use Margalope again for similar situations?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "terpinolene",
+      "caryophyllene",
+      "ocimene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
+    ]
+  },
+  "normalized": {
+    "canonical_strain_name": "margalope tier 3",
+    "canonical_brand": "planet 13",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "9e539865bee74246",
+      "product_key": "003dc688edd9ab6f"
+    }
+  },
+  "comparative_context": {
+    "genetics_origin": "Created by Cannarado Genetics crossing DNA Genetics' Chocolope (Chocolate Thai x Cannalope Haze) with Cannarado's Frozen Margy. Released as seed, allowing multiple cultivators to grow it.",
+    "market_availability": [
+      "Florida (Planet 13 - Tier 3 flower, pre-rolls, vape cartridges)",
+      "Illinois (The Botanist/GTI, Revolution Cannabis, Curaleaf - flower and live resin)",
+      "Nevada/California (likely via Planet 13's Las Vegas operations)",
+      "Ohio and Maryland (reported via GTI/Curaleaf operations)"
+    ],
+    "distinguishing_characteristics": [
+      "Terpene-rich profile - some producers report 3-4% total terpenes (Illinois batches)",
+      "Unique 'skunky tropical fruit' aroma with chocolate undertones",
+      "Terpinolene-dominant (0.46%) giving fruity, citrusy character",
+      "Moderate THC (16-25% range, FL Tier 3 at ~16.9%) but robust terpene expression",
+      "Planet 13's Tier 3 designation indicates sun-grown indoor cultivation with natural sunlight assist",
+      "Extra-large, sugar-coated buds characteristic of the strain"
+    ],
+    "medical_therapeutic_notes": [
+      "Energizing, clear-headed lift suitable for daytime use",
+      "Creative focus and mood elevation without anxiety",
+      "Light body relaxation that eases muscle tension without sedation",
+      "Effective for chronic stress, depression, pain, and PTSD",
+      "Balanced sativa-indica effects - 'creative euphoria without the crash'",
+      "Note: Terpinolene can cause mild stimulation/racing in sensitive users at higher doses"
+    ],
+    "comparison_highlights": {
+      "vs_white_sunshine": "Margalope is more sativa-leaning with pronounced creative/energizing effects, while White Sunshine offers hybrid balance",
+      "vs_juicy_jane": "Margalope emphasizes uplifting sativa effects with lower THC but higher terpene character, while Juicy Jane is more potent balanced hybrid"
+    },
+    "flavor_profile_detail": "Sweet and creamy inhale with faint chocolate/cocoa notes, diesel fuel and peppery spice on exhale, with tangy fruit and floral touches throughout"
+  }
+}

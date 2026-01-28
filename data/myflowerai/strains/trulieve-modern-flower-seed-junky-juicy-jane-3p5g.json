@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "trulieve-modern-flower-seed-junky-juicy-jane-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "Juicy Jane",
+    "type": "hybrid",
+    "brand": "Modern Flower x Seed Junky",
+    "lineage": [
+      "(Guava Gelato x Sherb bx1)",
+      "Cap Junky"
+    ],
+    "breeder": "Seed Junky Genetics"
+  },
+  "product": {
+    "dispensary": "Trulieve",
+    "category": "flower",
+    "form": "3.5g Whole Flower",
+    "size_g": 3.5,
+    "sku": "72984_0007965239",
+    "in_stock": true
+  },
+  "stats": {
+    "total_thc_percent": 28.8,
+    "total_cbd_percent": 0.0843,
+    "total_cannabinoids_percent": 33.4,
+    "total_terpenes_percent": 2.52,
+    "top_terpenes": [
+      {
+        "name": "d-Limonene",
+        "percent": 0.642
+      },
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.558
+      },
+      {
+        "name": "Linalool",
+        "percent": 0.277
+      },
+      {
+        "name": "alpha-Humulene",
+        "percent": 0.163
+      },
+      {
+        "name": "beta-Myrcene",
+        "percent": 0.157
+      },
+      {
+        "name": "trans-Nerolidol",
+        "percent": 0.115
+      },
+      {
+        "name": "Fenchyl Alcohol",
+        "percent": 0.1
+      },
+      {
+        "name": "alpha-Terpineol",
+        "percent": 0.0828
+      },
+      {
+        "name": "Ocimene, Total",
+        "percent": 0.0762
+      },
+      {
+        "name": "alpha-Bisabolol",
+        "percent": 0.0756
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 31.7,
+      "delta9_thc": 1.02,
+      "cbga": 0.477,
+      "cbg": 0.15,
+      "cbda": 0.0961,
+      "cbc": "<LOQ",
+      "cbd": "<LOQ",
+      "cbdv": "<LOQ",
+      "cbn": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 1110,
+      "delta9_thc_mg": 35.7,
+      "cbga_mg": 16.7,
+      "cbg_mg": 5.25,
+      "cbda_mg": 3.36
+    }
+  },
+  "description": {
+    "dispensary_bio": "A standout collaboration from MF x Seed Junky, Juicy Jane drips with tropical fruit sweetness layered over cool mint and earthy spice. Its candy-bright flavor up front softens into herbal depth, creating a profile that’s playful yet refined. It strikes a balance between lifted clarity and soothing calm, making it a versatile strain that shines in both social settings and solo sessions.",
+    "vibes_like": [
+      "Brightening the afternoon with fruit-forward flavor and flow",
+      "Easing into conversation with a smooth, balanced high",
+      "Finding the sweet spot between energy and relaxation"
+    ],
+    "product_positioning": "Modern Flower x Seed Junky 3.5g Flower represents a premium collab built around standout flavor and genetics. Each eighth is filled with potent, terpene-rich flower that reflects Seed Junky’s legendary profiles while staying true to Modern Flower’s approachable style. It’s an expression designed for patients who want both everyday reliability and next-level character.",
+    "brand_info": "When Modern Flower links up with Seed Junky, you know it’s fire. Modern Flower keeps it fresh, stylish, and accessible, while Seed Junky brings the legendary genetics and next-level flavors the culture craves. Together, they’re crafting strains that hit hard, taste incredible, and deliver the kind of quality you can always count on. This collab is all about keeping it real—blending Modern Flower’s everyday vibe with Seed Junky’s elite reputation—so every session feels authentic, elevated, and straight-up unforgettable."
+  },
+  "coa": {
+    "status": "passed",
+    "lab": "Modern Canna (MCS)",
+    "laboratory_id": "KA12001-01",
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "MODERN FLOWER - HYBRID FLOWER",
+    "cultivar_on_coa": "Juicy Jane by Seed Junky",
+    "completed_at": "2026-01-15 11:27",
+    "received_at": "2026-01-12 14:36",
+    "sample_date": "2026-01-12",
+    "batch_date": "2026-01-09",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Quincy",
+    "processing_facility": "Midway",
+    "seed_to_sale_id": "9510114596941605",
+    "qa_sample_id": "3339487800303734",
+    "batch_size_g": 36491,
+    "units_sampled": 41,
+    "total_amt_sampled_g": 143.5
+  },
+  "tags": [
+    "hybrid",
+    "fruit-forward",
+    "balanced",
+    "social",
+    "daytime"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "bong",
+      "pipe"
+    ],
+    "suggested_dose_guidance_text": "Balanced hybrid with 24.2% THC. Good for social situations or daytime relaxation. Start with 0.25-0.5g for moderate effects.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "Approximately how much did you use?",
+      "What time of day was your session?",
+      "What was the setting or activity?",
+      "How did you feel before using it?",
+      "What positive effects did you notice?",
+      "Were there any negative effects?",
+      "On a scale of 1-10, how intense was it?",
+      "Did it work well for the situation?",
+      "Would you choose Juicy Jane again for similar occasions?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "camphor-like",
+      "chamomile-like",
+      "citrus",
+      "clove-like",
+      "earthy",
+      "floral",
+      "fresh",
+      "herbal",
+      "hoppy",
+      "lavender",
+      "lemon",
+      "musky",
+      "orange",
+      "peppery",
+      "piney",
+      "spicy",
+      "sweet",
+      "woody"
+    ],
+    "effect_tags": [
+      "anti-inflammatory",
+      "appetite-suppressant",
+      "calming",
+      "energizing",
+      "mood-enhancing",
+      "relaxing",
+      "sedating",
+      "stress-relief",
+      "uplifting"
+    ],
+    "dominant_terpenes": [
+      "limonene",
+      "caryophyllene",
+      "linalool"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
+    ]
+  },
+  "normalized": {
+    "canonical_strain_name": "juicy jane",
+    "canonical_brand": "modern flower x seed junky",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "18da19bf922702c0",
+      "product_key": "1b5a222317112c3a"
+    }
+  },
+  "comparative_context": {
+    "release_info": "Limited-edition hybrid introduced in Florida late 2025 as part of the '12 Days of Cannabis' holiday collab drop between Modern Flower and Seed Junky Genetics",
+    "market_availability": [
+      "Florida (Trulieve - exclusive/primary market)",
+      "Available as whole flower (3.5g jars), Minis (small buds), pre-rolls, and live resin vape carts",
+      "Often sells out quickly due to limited batches and premium positioning"
+    ],
+    "distinguishing_characteristics": [
+      "Elite pedigree combining Guava Gelato/Sherb genetics with Seed Junky's Cap Junky line",
+      "Exceptionally high terpene content (~2.5% total) with strong tropical-citrus-mint profile",
+      "Potent but balanced - 28-29% THC with well-rounded hybrid effects",
+      "Candy-bright flavor that's both playful and refined",
+      "Strong aroma noted by users as 'orange citrus cleaner with pine backnote'"
+    ],
+    "medical_therapeutic_notes": [
+      "Fast cerebral onset with euphoric headrush",
+      "Stress relief and anxiety reduction while maintaining mental sharpness",
+      "Mild pain relief with gentle body relaxation",
+      "Mood enhancement and focus improvement",
+      "Versatile for social settings or solo sessions"
+    ],
+    "comparison_highlights": {
+      "vs_white_sunshine": "Juicy Jane emphasizes fruit-forward flavor and faster cerebral effects, while White Sunshine offers more daytime balance",
+      "vs_margalope": "Juicy Jane is more balanced hybrid with stronger body relaxation, while Margalope leans sativa with creative energizing lift"
+    }
+  }
+}

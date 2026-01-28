@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Offline",
 };
@@ -7,8 +9,15 @@ export default function OfflinePage() {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-4 p-6 text-center">
       <h1 className="text-2xl font-semibold">You&apos;re offline</h1>
       <p className="text-muted-foreground">
-        It looks like your connection dropped. Please check your network and try again.
+        It looks like your connection dropped. Please check your network and try
+        again.
       </p>
+      <Link
+        className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+        href="/"
+      >
+        Return to Home
+      </Link>
     </main>
   );
 }

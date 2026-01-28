@@ -1,0 +1,18 @@
+{
+  "persona_id": "zen-garden-keeper",
+  "display_name": "Zen Garden Keeper",
+  "vibe_summary": "Balance and mindfulness are your goals. You practice meditation, yoga, or simply seek moments of present awareness. You appreciate strains that help quiet mental chatter, enhance body awareness, and create a sense of peaceful centeredness without overwhelming sedation. Perfect for your mindfulness practice.",
+  "tag_profile": {
+    "primary_tags": ["balanced", "calming", "centered", "grounding"],
+    "secondary_tags": ["relaxing", "focused", "body-awareness"],
+    "avoid_tags": ["racy", "anxious", "overwhelming", "intense"]
+  },
+  "image_style_keywords": [
+    "peaceful zen garden",
+    "balanced stones",
+    "soft natural light",
+    "minimalist serenity",
+    "meditative atmosphere",
+    "tranquil harmony"
+  ]
+}

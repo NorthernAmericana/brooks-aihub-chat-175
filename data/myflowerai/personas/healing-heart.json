@@ -1,0 +1,18 @@
+{
+  "persona_id": "healing-heart",
+  "display_name": "Healing Heart",
+  "vibe_summary": "You're seeking relief and restoration—whether from physical discomfort, emotional stress, or the need for deep relaxation. You prioritize strains with therapeutic properties that help you feel better without compromising mental clarity completely. Your focus is on wellness, comfort, and gentle healing.",
+  "tag_profile": {
+    "primary_tags": ["pain-relief", "calming", "relaxing", "therapeutic"],
+    "secondary_tags": ["mood-enhancing", "body-relaxation", "stress-relief"],
+    "avoid_tags": ["racy", "anxious", "paranoid", "overstimulating"]
+  },
+  "image_style_keywords": [
+    "soft healing light",
+    "gentle lavender and blue",
+    "soothing atmosphere",
+    "peaceful restoration",
+    "caring warmth",
+    "comforting embrace"
+  ]
+}

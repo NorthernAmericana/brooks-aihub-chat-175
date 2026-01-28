@@ -3,6 +3,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ToolUIPart } from "ai";
 import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
+import { parseSlashAction } from "@/lib/suggested-actions";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
@@ -23,6 +24,8 @@ import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+
+const SLASH_PREFIX_REGEX = /^\/(.+)\/\s*/;
 
 const PurePreviewMessage = ({
   addToolApprovalResponse,
@@ -127,6 +130,24 @@ const PurePreviewMessage = ({
 
             if (type === "text") {
               if (mode === "view") {
+                const text = part.text ?? "";
+                const trimmedText = text.trimStart();
+                const slashMatch =
+                  message.role === "user" && parseSlashAction(trimmedText)
+                    ? trimmedText.match(SLASH_PREFIX_REGEX)
+                    : null;
+                const matchText = slashMatch?.[0] ?? "";
+                const slashPrefixText = slashMatch
+                  ? matchText.replace(/\s+$/, "")
+                  : "";
+                const slashPrefix = slashPrefixText || null;
+                const slashSpacing = slashMatch
+                  ? matchText.slice(slashPrefixText.length)
+                  : "";
+                const slashRemainder = slashMatch
+                  ? `${slashSpacing}${trimmedText.slice(matchText.length)}`
+                  : text;
+
                 return (
                   <div key={key}>
                     <MessageContent
@@ -143,7 +164,18 @@ const PurePreviewMessage = ({
                           : undefined
                       }
                     >
-                      <Response>{sanitizeText(part.text)}</Response>
+                      {slashPrefix ? (
+                        <>
+                          <span className="cloud-button cloud-button--inline inline-flex items-center px-2 py-0.5 text-foreground">
+                            {sanitizeText(slashPrefix)}
+                          </span>
+                          <Response className="inline [&_p]:inline">
+                            {sanitizeText(slashRemainder)}
+                          </Response>
+                        </>
+                      ) : (
+                        <Response>{sanitizeText(text)}</Response>
+                      )}
                     </MessageContent>
                   </div>
                 );

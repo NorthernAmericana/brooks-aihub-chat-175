@@ -29,6 +29,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import { useEntitlements } from "@/hooks/use-entitlements";
 import {
   getAgentConfigById,
   getAgentConfigBySlash,
@@ -38,7 +39,6 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import { useEntitlements } from "@/hooks/use-entitlements";
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher } from "@/lib/utils";
@@ -153,6 +153,65 @@ function PureMultimodalInput({
     setLocalStorageInput(input);
   }, [input, setLocalStorageInput]);
 
+  const slashPrefixMatch = input.match(/^\/[^/]+\//);
+  const slashPrefix = slashPrefixMatch?.[0] ?? "";
+  const slashRemainder = slashPrefix ? input.slice(slashPrefix.length) : input;
+
+  useEffect(() => {
+    if (!slashPrefix) {
+      setSlashPrefixIndent(0);
+      return;
+    }
+
+    const bubble = slashPrefixRef.current;
+    const textarea = textareaRef.current;
+    if (!bubble || !textarea) {
+      return;
+    }
+
+    const measurePrefixTextWidth = () => {
+      const computed = window.getComputedStyle(textarea);
+      const font = [
+        computed.fontStyle,
+        computed.fontVariant,
+        computed.fontWeight,
+        computed.fontSize,
+        computed.lineHeight,
+        computed.fontFamily,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return 0;
+      }
+      context.font = font;
+      const baseWidth = context.measureText(slashPrefix).width;
+      const letterSpacing = Number.parseFloat(computed.letterSpacing || "0");
+      if (Number.isNaN(letterSpacing) || slashPrefix.length <= 1) {
+        return baseWidth;
+      }
+      return baseWidth + letterSpacing * (slashPrefix.length - 1);
+    };
+
+    const updateIndent = () => {
+      const bubbleWidth = bubble.getBoundingClientRect().width;
+      const prefixTextWidth = measurePrefixTextWidth();
+      const indent = Math.max(0, bubbleWidth - prefixTextWidth);
+      setSlashPrefixIndent(indent);
+    };
+
+    updateIndent();
+
+    const resizeObserver = new ResizeObserver(updateIndent);
+    resizeObserver.observe(bubble);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [slashPrefix]);
+
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
   };
@@ -163,6 +222,9 @@ function PureMultimodalInput({
   const [_recordedText, setRecordedText] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const slashPrefixRef = useRef<HTMLSpanElement>(null);
+  const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
     currentRoute: string;
@@ -178,7 +240,9 @@ function PureMultimodalInput({
     atoId ? `/api/ato/${atoId}` : null,
     fetcher
   );
-  const canUploadFiles = atoId ? Boolean(atoData?.ato?.fileSearchEnabled) : true;
+  const canUploadFiles = atoId
+    ? Boolean(atoData?.ato?.fileSearchEnabled)
+    : true;
   const isAtoUpload = Boolean(atoId);
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
@@ -237,7 +301,8 @@ function PureMultimodalInput({
       };
 
       mediaRecorder.onstop = async () => {
-        const rawType = supportedMimeType || audioChunks[0]?.type || "audio/webm";
+        const rawType =
+          supportedMimeType || audioChunks[0]?.type || "audio/webm";
         const normalizedType = rawType.split(";")[0] || "audio/webm";
         const audioBlob = new Blob(audioChunks, { type: normalizedType });
 
@@ -372,8 +437,7 @@ function PureMultimodalInput({
   ]);
 
   const isPdfFile = (file: File) =>
-    file.type === "application/pdf" ||
-    file.name.toLowerCase().endsWith(".pdf");
+    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   const isImageFile = (file: File) => file.type.startsWith("image/");
   const isVideoFile = (file: File) => file.type.startsWith("video/");
   const isChatMediaFile = (file: File) =>
@@ -404,7 +468,9 @@ function PureMultimodalInput({
           return;
         }
       } else if (!isChatMediaFile(file)) {
-        toast.error("Only images, videos, or PDFs are accepted in chat uploads.");
+        toast.error(
+          "Only images, videos, or PDFs are accepted in chat uploads."
+        );
         return;
       }
 
@@ -564,7 +630,9 @@ function PureMultimodalInput({
         return;
       }
 
-      const fileItems = Array.from(items).filter((item) => item.kind === "file");
+      const fileItems = Array.from(items).filter(
+        (item) => item.kind === "file"
+      );
 
       if (fileItems.length === 0) {
         return;
@@ -614,9 +682,7 @@ function PureMultimodalInput({
 
       <input
         accept={
-          isAtoUpload
-            ? "application/pdf"
-            : "image/*,video/*,application/pdf"
+          isAtoUpload ? "application/pdf" : "image/*,video/*,application/pdf"
         }
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         disabled={!canUploadFiles}
@@ -675,18 +741,51 @@ function PureMultimodalInput({
           </div>
         )}
         <div className="flex flex-row items-start gap-1 sm:gap-2">
-          <PromptInputTextarea
-            className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
-            data-testid="multimodal-input"
-            disableAutoResize={true}
-            maxHeight={200}
-            minHeight={44}
-            onChange={handleInput}
-            placeholder="Send a message..."
-            ref={textareaRef}
-            rows={1}
-            value={input}
-          />
+          <div className="relative grow">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 overflow-auto p-2 text-base leading-6 tracking-normal text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [white-space:pre-wrap] [word-break:break-word] [&::-webkit-scrollbar]:hidden"
+              ref={overlayRef}
+            >
+              {slashPrefix ? (
+                <>
+                  <span
+                    className="cloud-button cloud-button--inline inline-flex items-center px-2 py-0.5 text-foreground"
+                    ref={slashPrefixRef}
+                  >
+                    {slashPrefix}
+                  </span>
+                  <span>{slashRemainder}</span>
+                </>
+              ) : (
+                <span>{input}</span>
+              )}
+            </div>
+            <PromptInputTextarea
+              className="grow resize-none border-0! border-none! bg-transparent p-2 text-base leading-6 tracking-normal text-transparent caret-foreground outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+              data-testid="multimodal-input"
+              disableAutoResize={true}
+              maxHeight={200}
+              minHeight={44}
+              onChange={handleInput}
+              onScroll={(event) => {
+                if (overlayRef.current) {
+                  overlayRef.current.scrollTop = event.currentTarget.scrollTop;
+                  overlayRef.current.scrollLeft =
+                    event.currentTarget.scrollLeft;
+                }
+              }}
+              placeholder="Send a message..."
+              ref={textareaRef}
+              rows={1}
+              style={
+                slashPrefixIndent
+                  ? { textIndent: `${slashPrefixIndent}px` }
+                  : undefined
+              }
+              value={input}
+            />
+          </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">

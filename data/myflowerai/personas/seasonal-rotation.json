@@ -1,0 +1,131 @@
+{
+  "config_version": "1.0",
+  "description": "Seasonal quiz rotation configuration for MyFlowerAI. This file controls which quizzes are featured during different time periods, allowing for dynamic content updates without code changes.",
+  "rotation_type": "weekly",
+  "default_quiz": "strain-personality-v1",
+  "featured_schedule": [
+    {
+      "id": "winter-cozy-2026",
+      "start_date": "2026-12-21",
+      "end_date": "2027-03-19",
+      "featured_personas": [
+        "cozy-nest-builder",
+        "night-owl-dreamer",
+        "midnight-philosopher",
+        "healing-heart"
+      ],
+      "theme": "Winter Comfort",
+      "description": "Embrace the cozy, introspective vibes of winter with personas that celebrate warmth, relaxation, and peaceful moments."
+    },
+    {
+      "id": "spring-renewal-2027",
+      "start_date": "2027-03-20",
+      "end_date": "2027-06-20",
+      "featured_personas": [
+        "golden-hour-optimist",
+        "forest-wanderer",
+        "zen-garden-keeper",
+        "balanced-harmonizer"
+      ],
+      "theme": "Spring Renewal",
+      "description": "Welcome spring with personas that focus on growth, balance, nature connection, and fresh starts."
+    },
+    {
+      "id": "summer-adventure-2027",
+      "start_date": "2027-06-21",
+      "end_date": "2027-09-22",
+      "featured_personas": [
+        "adventure-seeker",
+        "social-butterfly",
+        "sensory-explorer",
+        "weekend-warrior"
+      ],
+      "theme": "Summer Adventures",
+      "description": "Celebrate summer with energetic, social, and adventurous personas perfect for outdoor fun and memorable experiences."
+    },
+    {
+      "id": "fall-creativity-2027",
+      "start_date": "2027-09-23",
+      "end_date": "2027-12-20",
+      "featured_personas": [
+        "creative-fire",
+        "neon-arcade-brain",
+        "focused-achiever",
+        "mystical-wanderer"
+      ],
+      "theme": "Autumn Creativity",
+      "description": "Embrace fall with personas that celebrate creativity, focus, and introspective exploration."
+    }
+  ],
+  "weekly_rotation": [
+    {
+      "week": 1,
+      "featured_persona": "golden-hour-optimist",
+      "tagline": "Start your month with optimism"
+    },
+    {
+      "week": 2,
+      "featured_persona": "creative-fire",
+      "tagline": "Ignite your creative spark"
+    },
+    {
+      "week": 3,
+      "featured_persona": "social-butterfly",
+      "tagline": "Connect and celebrate"
+    },
+    {
+      "week": 4,
+      "featured_persona": "zen-garden-keeper",
+      "tagline": "Find your balance"
+    }
+  ],
+  "special_events": [
+    {
+      "event_id": "new-year-2027",
+      "start_date": "2026-12-31",
+      "end_date": "2027-01-02",
+      "featured_personas": ["golden-hour-optimist", "focused-achiever", "balanced-harmonizer"],
+      "theme": "New Year, New You",
+      "description": "Ring in the new year with personas focused on positive energy, goal-setting, and balance."
+    },
+    {
+      "event_id": "earth-day-2027",
+      "start_date": "2027-04-22",
+      "end_date": "2027-04-22",
+      "featured_personas": ["forest-wanderer", "zen-garden-keeper"],
+      "theme": "Earth Day Celebration",
+      "description": "Honor nature and sustainability with earth-connected personas."
+    },
+    {
+      "event_id": "summer-solstice-2027",
+      "start_date": "2027-06-21",
+      "end_date": "2027-06-21",
+      "featured_personas": ["adventure-seeker", "golden-hour-optimist"],
+      "theme": "Longest Day of the Year",
+      "description": "Celebrate the peak of summer energy and light."
+    },
+    {
+      "event_id": "halloween-2027",
+      "start_date": "2027-10-31",
+      "end_date": "2027-10-31",
+      "featured_personas": ["mystical-wanderer", "midnight-philosopher", "sensory-explorer"],
+      "theme": "Mystical Halloween",
+      "description": "Explore the mysterious and sensory-rich side of cannabis."
+    }
+  ],
+  "fallback_rotation": {
+    "enabled": true,
+    "personas": [
+      "balanced-harmonizer",
+      "social-butterfly",
+      "golden-hour-optimist",
+      "cozy-nest-builder"
+    ],
+    "description": "Default rotation when no seasonal or special event is active"
+  },
+  "metadata": {
+    "last_updated": "2027-01-27",
+    "updated_by": "system",
+    "notes": "Initial seasonal rotation setup. Dates follow Northern Hemisphere seasons. Update annually for new years."
+  }
+}

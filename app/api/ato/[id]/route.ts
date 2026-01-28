@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
-  getUserById,
   getUnofficialAtoById,
+  getUserById,
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
+
+// Force dynamic rendering to prevent prerendering issues with auth()
+export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,

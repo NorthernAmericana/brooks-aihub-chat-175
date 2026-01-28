@@ -1,0 +1,18 @@
+{
+  "persona_id": "cozy-nest-builder",
+  "display_name": "Cozy Nest Builder",
+  "vibe_summary": "Home is where your heart is. You create comfortable, warm spaces and find joy in simple pleasures—soft blankets, good books, comfort food, and intimate gatherings. You seek strains that enhance relaxation and contentment without putting you completely to sleep, perfect for those cherished moments of domestic bliss.",
+  "tag_profile": {
+    "primary_tags": ["relaxing", "cozy", "calming", "comforting"],
+    "secondary_tags": ["mood-enhancing", "social", "mellow"],
+    "avoid_tags": ["racy", "anxious", "paranoid", "intense"]
+  },
+  "image_style_keywords": [
+    "warm amber lighting",
+    "soft textures and blankets",
+    "comfortable home setting",
+    "tea and candles",
+    "hygge aesthetic",
+    "gentle warmth"
+  ]
+}

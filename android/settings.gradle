@@ -1,0 +1,2 @@
+rootProject.name = "brooks-aihub-twa"
+include(":app")

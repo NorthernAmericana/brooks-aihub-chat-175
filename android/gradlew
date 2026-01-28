@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+APP_HOME=$(cd "$(dirname "$0")" && pwd)
+WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+PROPS_FILE="$APP_HOME/gradle/wrapper/gradle-wrapper.properties"
+
+if [ ! -f "$WRAPPER_JAR" ]; then
+  DISTRIBUTION_URL=$(grep -E "^distributionUrl=" "$PROPS_FILE" | cut -d= -f2-)
+  DISTRIBUTION_URL=${DISTRIBUTION_URL//\\:/:}
+  DISTRIBUTION_URL=${DISTRIBUTION_URL//\\//\/}
+  WRAPPER_DIR="$APP_HOME/gradle/wrapper"
+  mkdir -p "$WRAPPER_DIR"
+  ARCHIVE_NAME="${DISTRIBUTION_URL##*/}"
+  TEMP_DIR=$(mktemp -d)
+  curl -fsSL "$DISTRIBUTION_URL" -o "$TEMP_DIR/$ARCHIVE_NAME"
+  unzip -q "$TEMP_DIR/$ARCHIVE_NAME" -d "$TEMP_DIR"
+  JAR_PATH=$(find "$TEMP_DIR" -path "*/lib/plugins/gradle-wrapper-main-*.jar" | head -n 1)
+  SHARED_JAR_PATH=$(find "$TEMP_DIR" -path "*/lib/gradle-wrapper-shared-*.jar" | head -n 1)
+  if [ -n "$JAR_PATH" ] && [ -n "$SHARED_JAR_PATH" ]; then
+    (cd "$TEMP_DIR" && jar xf "$JAR_PATH" && jar xf "$SHARED_JAR_PATH" && jar cf "$WRAPPER_JAR" .)
+  fi
+  rm -rf "$TEMP_DIR"
+fi
+
+CLASSPATH="$WRAPPER_JAR"
+
+if [ -n "$JAVA_HOME" ]; then
+  JAVA_CMD="$JAVA_HOME/bin/java"
+else
+  JAVA_CMD="java"
+fi
+
+exec "$JAVA_CMD" ${JAVA_OPTS} ${GRADLE_OPTS} -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"

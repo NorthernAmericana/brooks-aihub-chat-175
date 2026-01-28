@@ -1,9 +1,11 @@
 export type SlashRouteTool =
   | "getWeather"
+  | "getDirections"
   | "createDocument"
   | "updateDocument"
   | "requestSuggestions"
-  | "saveMemory";
+  | "saveMemory"
+  | "saveHomeLocation";
 
 export type SlashRoute = {
   id: string;

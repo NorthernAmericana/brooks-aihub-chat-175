@@ -1,8 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      router.replace("/brooks-ai-hub/");
+    }
+  }, [router, session?.user, status]);
+
   return (
     <div className="flex h-dvh w-screen items-start justify-center bg-background pt-12 md:items-center md:pt-0">
       <div className="flex w-full max-w-md flex-col gap-10 overflow-hidden rounded-2xl">
