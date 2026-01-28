@@ -376,3 +376,35 @@ export const personalFit = pgTable("personal_fit", {
 });
 
 export type PersonalFit = InferSelectModel<typeof personalFit>;
+
+// MyFlowerAI Quiz Results table for privacy-safe quiz completion tracking
+// See: /docs/myflowerai/quiz-to-aura.md
+export const myfloweraiQuizResults = pgTable("myflowerai_quiz_results", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  quizId: varchar("quiz_id", { length: 100 }).notNull(),
+  personaId: varchar("persona_id", { length: 100 }).notNull(),
+  createdMonth: varchar("created_month", { length: 7 }).notNull(), // YYYY-MM format only (privacy-safe)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type MyfloweraiQuizResult = InferSelectModel<typeof myfloweraiQuizResults>;
+
+// MyFlowerAI Generated Images table for privacy-safe image tracking
+// See: /docs/myflowerai/quiz-to-aura.md
+export const myfloweraiImages = pgTable("myflowerai_images", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  personaId: varchar("persona_id", { length: 100 }),
+  strainId: varchar("strain_id", { length: 255 }),
+  presetId: varchar("preset_id", { length: 100 }),
+  storageKey: text("storage_key").notNull(), // Vercel Blob storage key (not signed URL)
+  createdMonth: varchar("created_month", { length: 7 }).notNull(), // YYYY-MM format only (privacy-safe)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type MyfloweraiImage = InferSelectModel<typeof myfloweraiImages>;

@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.ai/schemas/myflowerai/quiz.schema.json",
+  "title": "MyFlowerAI Quiz Schema",
+  "description": "Schema for MyFlowerAI quiz definitions including questions, scoring, and result profiles",
+  "type": "object",
+  "required": ["id", "version", "title", "description", "questions", "scoring", "result_profiles"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the quiz",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Quiz version (semver format)",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable quiz title",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Quiz description and purpose",
+      "minLength": 1
+    },
+    "questions": {
+      "type": "array",
+      "description": "List of quiz questions",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "type", "required", "options"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique question identifier",
+            "pattern": "^q\\d+_[a-z_]+$"
+          },
+          "text": {
+            "type": "string",
+            "description": "Question text",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["multiple-choice", "slider"],
+            "description": "Question type"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether question must be answered"
+          },
+          "options": {
+            "type": "array",
+            "description": "Answer options",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "text", "trait_points"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z_]+$"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trait_points": {
+                  "type": "object",
+                  "description": "Trait scores assigned for this option",
+                  "patternProperties": {
+                    "^[a-z_]+$": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "description": "Scoring configuration",
+      "required": ["traits"],
+      "properties": {
+        "traits": {
+          "type": "array",
+          "description": "List of traits to score",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "min_value", "max_value"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "min_value": {
+                "type": "number"
+              },
+              "max_value": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "result_profiles": {
+      "type": "array",
+      "description": "Possible result profiles",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "trait_thresholds", "recommended_tags"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "trait_thresholds": {
+            "type": "object",
+            "description": "Minimum trait scores required for this profile",
+            "patternProperties": {
+              "^[a-z_]+$": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "recommended_tags": {
+            "type": "array",
+            "description": "Strain tags recommended for this profile",
+            "items": {
+              "type": "string"
+            }
+          },
+          "avoid_tags": {
+            "type": "array",
+            "description": "Strain tags to avoid for this profile",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "disclaimers": {
+      "type": "array",
+      "description": "Legal and informational disclaimers",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

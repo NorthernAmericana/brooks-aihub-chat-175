@@ -229,8 +229,83 @@ The following fields are **explicitly prohibited** in public strain files to mai
 - User session data must be stored in private per-user storage (Supabase, local encrypted, or private namespace). See `/docs/myflowerai/session-logging.md` for proper session logging implementation.
 - User inventory data must be stored in private per-user storage. See `/docs/myflowerai/inventory-management.md` for proper inventory tracking implementation.
 - User personal fit data must be stored in private per-user storage. See `/docs/myflowerai/personal-fit.md` for proper personal fit tracking implementation.
+- Quiz results and generated images must be stored in private database tables. See `/docs/myflowerai/quiz-to-aura.md` for proper quiz-to-aura implementation.
 
 The validation script will automatically reject any strain file containing these prohibited fields.
+
+### Private User Data Storage
+
+The following user data is stored in **private database tables** with user-scoped access controls:
+
+#### Quiz Results Table (`myflowerai_quiz_results`)
+
+Stores quiz completions privately without raw answers:
+
+```sql
+CREATE TABLE myflowerai_quiz_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  quiz_id VARCHAR(100) NOT NULL,
+  persona_id VARCHAR(100) NOT NULL,
+  created_month VARCHAR(7) NOT NULL,  -- YYYY-MM only (privacy-safe)
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
+**Privacy Features**:
+- Only stores resulting persona_id, NOT raw quiz answers
+- Timestamps use month-level granularity only
+- User-scoped (rows accessible only by owning user)
+
+#### Generated Images Table (`myflowerai_images`)
+
+Stores generated aura images privately:
+
+```sql
+CREATE TABLE myflowerai_images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  persona_id VARCHAR(100),
+  strain_id VARCHAR(255),
+  preset_id VARCHAR(100),
+  storage_key TEXT NOT NULL,  -- Vercel Blob pathname (not signed URL)
+  created_month VARCHAR(7) NOT NULL,  -- YYYY-MM only
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
+**Privacy Features**:
+- Storage keys are pathnames, not signed URLs (avoids committing temporary URLs)
+- Images stored in Vercel Blob with user-scoped paths: `myflowerai/aura/{user_id}/{timestamp}.png`
+- Timestamps use month-level granularity for created_month field
+- User-scoped (rows accessible only by owning user)
+
+**Row-Level Security (RLS)**:
+If using Postgres with RLS enabled, ensure policies allow users to access only their own rows:
+
+```sql
+-- Enable RLS
+ALTER TABLE myflowerai_quiz_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE myflowerai_images ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read their own quiz results
+CREATE POLICY quiz_results_user_read ON myflowerai_quiz_results
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Policy: Users can insert their own quiz results
+CREATE POLICY quiz_results_user_insert ON myflowerai_quiz_results
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Policy: Users can read their own generated images
+CREATE POLICY images_user_read ON myflowerai_images
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Policy: Users can insert their own generated images
+CREATE POLICY images_user_insert ON myflowerai_images
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+```
+
+See `/docs/myflowerai/quiz-to-aura.md` for complete quiz-to-aura implementation details.
 
 ### Migration from v1.0 to v1.1
 

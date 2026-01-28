@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brooks-aihub.ai/schemas/myflowerai/persona.schema.json",
+  "title": "MyFlowerAI Persona Schema",
+  "description": "Schema for MyFlowerAI persona pack definitions including traits, tags, and image style keywords",
+  "type": "object",
+  "required": ["persona_id", "display_name", "vibe_summary", "tag_profile", "image_style_keywords"],
+  "properties": {
+    "persona_id": {
+      "type": "string",
+      "description": "Unique identifier for the persona",
+      "pattern": "^[a-z-]+$"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable persona name",
+      "minLength": 1
+    },
+    "vibe_summary": {
+      "type": "string",
+      "description": "Detailed description of the persona's vibe and preferences",
+      "minLength": 1
+    },
+    "tag_profile": {
+      "type": "object",
+      "description": "Tag profile for strain matching",
+      "required": ["primary_tags", "secondary_tags"],
+      "properties": {
+        "primary_tags": {
+          "type": "array",
+          "description": "Primary strain effect/use-case tags",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "secondary_tags": {
+          "type": "array",
+          "description": "Secondary strain effect/use-case tags",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avoid_tags": {
+          "type": "array",
+          "description": "Tags to avoid for this persona",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "image_style_keywords": {
+      "type": "array",
+      "description": "Visual style keywords for image generation",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
