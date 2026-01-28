@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, Download, Search } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -14,7 +15,7 @@ export default function StorePage() {
       name: "BrooksBears",
       path: "/BrooksBears/",
       description: "AI teddy bear companion for ages 13 and up",
-      icon: "🐻",
+      icon: "/icons/brooksbears-appicon.png",
       category: "Entertainment",
       rating: 4.5,
       downloads: "10K+",
@@ -25,7 +26,7 @@ export default function StorePage() {
       name: "MyCarMindATO",
       path: "/MyCarMindATO/",
       description: "Intelligent automotive AI assistant for your vehicle",
-      icon: "🚗",
+      icon: "/icons/mycarmindato-appicon.png",
       category: "Utilities",
       rating: 4.7,
       downloads: "5K+",
@@ -35,7 +36,7 @@ export default function StorePage() {
       name: "MyFlowerAI",
       path: "/MyFlowerAI/",
       description: "Cannabis tracking and data analysis for harm reduction",
-      icon: "🌿",
+      icon: "/icons/myflowerai-appicon.png",
       category: "Health & Wellness",
       rating: 4.8,
       downloads: "15K+",
@@ -45,7 +46,7 @@ export default function StorePage() {
       name: "NAMC",
       path: "/NAMC/",
       description: "Northern Americana Media Collection - Your curated media library and lore explorer",
-      icon: "🎬",
+      icon: "/icons/namc-appicon.png",
       category: "Media & Entertainment",
       rating: 4.9,
       downloads: "8K+",
@@ -95,8 +96,14 @@ export default function StorePage() {
             >
               <div className="flex gap-4">
                 {/* App Icon */}
-                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-white/20 to-white/10 text-4xl shadow-lg">
-                  {app.icon}
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-white/20 to-white/10 shadow-lg overflow-hidden">
+                  <Image
+                    src={app.icon}
+                    alt={`${app.name} icon`}
+                    width={64}
+                    height={64}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 {/* App Info */}
