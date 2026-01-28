@@ -141,9 +141,11 @@ export default function StorePage() {
                       ⭐ {app.rating}
                     </span>
                     <span>{app.downloads}</span>
-                    <span className="flex items-center gap-1">
-                      📍 {app.routes.length} {app.routes.length === 1 ? 'route' : 'routes'}
-                    </span>
+                    {app.routes && app.routes.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        📍 {app.routes.length} {app.routes.length === 1 ? 'route' : 'routes'}
+                      </span>
+                    )}
                   </div>
                 </div>
 

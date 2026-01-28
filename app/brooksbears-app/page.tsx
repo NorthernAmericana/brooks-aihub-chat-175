@@ -3,7 +3,7 @@
 import { ArrowLeft, Download, Check, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export default function BrooksBearsAppPage() {
   const router = useRouter();
@@ -62,12 +62,12 @@ export default function BrooksBearsAppPage() {
     const minSwipeDistance = 50;
 
     if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance > 0) {
-        // Swipe left - go to previous session (for now, go back)
-        router.back();
-      } else {
-        // Swipe right - go to homepage
+      if (swipeDistance < 0) {
+        // Swipe right (finger moves right) - go to homepage
         router.push("/");
+      } else {
+        // Swipe left (finger moves left) - go back
+        router.back();
       }
     }
 
@@ -77,6 +77,13 @@ export default function BrooksBearsAppPage() {
 
   // Mouse drag handlers for desktop
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Don't start drag if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, textarea, select')) {
+      return;
+    }
+    
+    e.preventDefault();
     isDragging.current = true;
     startX.current = e.clientX;
   }, []);
@@ -93,12 +100,12 @@ export default function BrooksBearsAppPage() {
     const minSwipeDistance = 100;
 
     if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance > 0) {
-        // Swipe left - go to previous session (for now, go back)
-        router.back();
-      } else {
-        // Swipe right - go to homepage
+      if (swipeDistance < 0) {
+        // Drag right - go to homepage
         router.push("/");
+      } else {
+        // Drag left - go back
+        router.back();
       }
     }
 
@@ -116,6 +123,20 @@ export default function BrooksBearsAppPage() {
       prev === 0 ? galleryImages.length - 1 : prev - 1
     );
   };
+
+  // Handle Escape key for delete dialog
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showDeletePrompt) {
+        setShowDeletePrompt(false);
+      }
+    };
+
+    if (showDeletePrompt) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [showDeletePrompt]);
 
   return (
     <div
@@ -266,7 +287,7 @@ export default function BrooksBearsAppPage() {
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`h-2 w-2 rounded-full transition ${
+                  className={`h-2 w-2 rounded-full transition focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none ${
                     index === currentImageIndex
                       ? "bg-white w-6"
                       : "bg-white/30"
@@ -323,17 +344,23 @@ export default function BrooksBearsAppPage() {
 
       {/* Delete Confirmation Dialog */}
       {showDeletePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
           <div className="delete-prompt rounded-2xl border border-white/20 bg-[#1a0f16] p-6 max-w-sm w-full space-y-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 mx-auto">
               <Trash2 className="h-6 w-6 text-red-400" />
             </div>
             
-            <h3 className="text-lg font-semibold text-white text-center">
+            <h3 id="delete-dialog-title" className="text-lg font-semibold text-white text-center">
               Delete BrooksBears?
             </h3>
             
-            <p className="text-white/70 text-sm text-center">
+            <p id="delete-dialog-description" className="text-white/70 text-sm text-center">
               This will remove the ATO app while keeping your memories and conversations safe.
             </p>
             
