@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       result: {
         persona_id: quizResult.profile.id,
         persona_name: quizResult.profile.name,
-        vibe_summary: quizResult.profile.description,
+        vibe_summary: quizResult.profile.vibe_text,
         recommended_tags: quizResult.profile.recommended_tags,
         trait_scores: quizResult.normalized_trait_scores,
       },
