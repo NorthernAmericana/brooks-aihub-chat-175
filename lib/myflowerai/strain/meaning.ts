@@ -84,6 +84,7 @@ export function deriveStrainMeaning(strainData: StrainData): StrainMeaning {
 
   const effectTags = new Set<string>();
   const aromaFlavorTags = new Set<string>();
+  const dominantTerpenes: string[] = [];
 
   // Derive from strain type
   const strainType = strainData.strain.type.toLowerCase();
@@ -104,6 +105,9 @@ export function deriveStrainMeaning(strainData: StrainData): StrainMeaning {
     for (const terpene of strainData.stats.top_terpenes.slice(0, 3)) {
       const terpeneName = terpene.name.toLowerCase();
       const mapping = TERPENE_MAPPINGS[terpeneName];
+
+      // Add to dominant terpenes list
+      dominantTerpenes.push(terpene.name);
 
       if (mapping) {
         // Add effects
@@ -137,6 +141,12 @@ export function deriveStrainMeaning(strainData: StrainData): StrainMeaning {
   return {
     effect_tags: Array.from(effectTags).sort(),
     aroma_flavor_tags: Array.from(aromaFlavorTags).sort(),
+    dominant_terpenes: dominantTerpenes,
+    minor_cannabinoids_present: [],
+    disclaimers: [
+      "Effects are general informational tags derived from terpene profiles and cannabinoid ratios.",
+      "Individual experiences may vary.",
+    ],
   };
 }
 
