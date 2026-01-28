@@ -293,4 +293,50 @@ console.assert(
 );
 console.log("✓ Test 14 passed");
 
+// Test 15: Reference image adds style transfer guidance
+console.log("Test 15: Reference image should add style transfer guidance");
+const prompt15 = composeImagePrompt(
+	testStrain,
+	undefined,
+	undefined,
+	undefined,
+	undefined,
+	true, // hasReferenceImage
+);
+console.assert(
+	prompt15.includes("inspired by the uploaded reference image"),
+	"Prompt should mention reference image",
+);
+console.assert(
+	prompt15.includes("style transfer") || prompt15.includes("abstraction"),
+	"Prompt should include style transfer/abstraction guidance",
+);
+console.assert(
+	prompt15.includes("do not reproduce any readable text or recognizable logos"),
+	"Prompt should warn against reproducing text/logos",
+);
+console.log("✓ Test 15 passed");
+
+// Test 16: Reference image prompt without persona still includes strain features
+console.log("Test 16: Reference image prompt should include strain features");
+const prompt16 = composeImagePrompt(
+	testStrain,
+	undefined,
+	undefined,
+	undefined,
+	undefined,
+	true, // hasReferenceImage
+);
+console.assert(
+	prompt16.includes("balanced harmonious composition"),
+	"Reference image prompt should still include strain type",
+);
+console.assert(
+	prompt16.includes("citrus") ||
+		prompt16.includes("pine") ||
+		prompt16.includes("earthy"),
+	"Reference image prompt should include strain aroma tags",
+);
+console.log("✓ Test 16 passed");
+
 console.log("\n✅ All prompt composer tests passed!");
