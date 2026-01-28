@@ -106,6 +106,9 @@ export async function POST(request: NextRequest) {
         meaning: {
           effect_tags: personaTags.slice(0, 5),
           aroma_flavor_tags: [],
+          dominant_terpenes: [],
+          minor_cannabinoids_present: [],
+          disclaimers: [],
         },
       };
     }
