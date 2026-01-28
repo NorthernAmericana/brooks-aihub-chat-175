@@ -132,7 +132,7 @@ async function validate() {
   let files: string[];
   try {
     const allFiles = await readdir(STRAINS_DIR);
-    files = allFiles.filter((f) => f.endsWith(".json"));
+    files = allFiles.filter((f) => f.endsWith(".json") && !f.includes("EXAMPLE"));
   } catch (error) {
     console.error(`❌ Failed to read directory: ${error}`);
     process.exit(1);
