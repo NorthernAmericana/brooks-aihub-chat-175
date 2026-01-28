@@ -45,6 +45,7 @@ const StrainSchema = z.object({
   type: z.enum(["indica", "sativa", "hybrid"]),
   brand: z.string(),
   lineage: z.array(z.string()),
+  breeder: z.string().nullable().optional(),
 });
 
 // Product information (v1.1: removed location, prices)
