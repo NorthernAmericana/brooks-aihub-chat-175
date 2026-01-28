@@ -91,8 +91,14 @@ export default function StorePage() {
         <div className="space-y-4">
           {filteredApps.map((app) => (
             <div
-              className="store-app-card group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
+              className="store-app-card group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 cursor-pointer"
               key={app.id}
+              onClick={() => {
+                // Only BrooksBears has a dedicated app page
+                if (app.id === 1) {
+                  router.push("/brooksbears-app");
+                }
+              }}
             >
               <div className="flex gap-4">
                 {/* App Icon */}
@@ -124,6 +130,10 @@ export default function StorePage() {
                   <button
                     className="flex h-9 items-center gap-2 rounded-full bg-white/10 px-4 text-xs font-medium text-white transition hover:bg-white/20"
                     type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Keep existing install behavior
+                    }}
                   >
                     <Download className="h-3.5 w-3.5" />
                     Install
