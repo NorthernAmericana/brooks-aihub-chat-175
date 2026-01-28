@@ -40,6 +40,16 @@ export default function StorePage() {
       rating: 4.8,
       downloads: "15K+",
     },
+    {
+      id: 4,
+      name: "NAMC",
+      path: "/NAMC/",
+      description: "Northern Americana Media Collection - Your curated media library and lore explorer",
+      icon: "🎬",
+      category: "Media & Entertainment",
+      rating: 4.9,
+      downloads: "8K+",
+    },
   ];
 
   const filteredApps = apps.filter((app) =>
@@ -76,7 +86,7 @@ export default function StorePage() {
       </div>
 
       {/* App List */}
-      <div className="store-content flex-1 overflow-y-auto px-4 pb-6">
+      <div className="store-content flex-1 overflow-y-auto -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain px-4 pb-6">
         <div className="space-y-4">
           {filteredApps.map((app) => (
             <div
