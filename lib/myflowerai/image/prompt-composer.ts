@@ -22,6 +22,11 @@ export interface PersonaProfile {
   display_name: string;
   vibe_summary?: string;
   image_style_keywords?: string[];
+  tag_profile?: {
+    primary_tags: string[];
+    secondary_tags: string[];
+    avoid_tags?: string[];
+  };
 }
 
 /**
