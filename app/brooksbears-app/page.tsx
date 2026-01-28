@@ -201,14 +201,28 @@ export default function BrooksBearsAppPage() {
         {/* Routes Information */}
         <div className="routes-section space-y-3 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
           <h3 className="text-lg font-semibold text-white">Routes in Brooks AI HUB</h3>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-white/70">
-              <div className="w-2 h-2 rounded-full bg-blue-400" />
-              <span className="text-sm font-mono">/BrooksBears/</span>
+          <div className="space-y-4">
+            {/* Main route */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-white/70">
+                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                <span className="text-sm font-mono">/BrooksBears/</span>
+              </div>
+              <p className="text-xs text-white/50 ml-4">
+                Main chat interface with Benjamin Bear agent
+              </p>
             </div>
-            <p className="text-xs text-white/50 ml-4">
-              Main chat interface with Benjamin Bear agent
-            </p>
+            
+            {/* Subroute */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-white/70">
+                <div className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="text-sm font-mono">/BrooksBears/BenjaminBear/</span>
+              </div>
+              <p className="text-xs text-white/50 ml-4">
+                Direct conversation route with Benjamin Bear persona
+              </p>
+            </div>
           </div>
         </div>
 

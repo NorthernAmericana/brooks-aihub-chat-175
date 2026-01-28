@@ -20,6 +20,10 @@ export default function StorePage() {
       rating: 4.5,
       downloads: "10K+",
       ageRating: "13+",
+      routes: [
+        { path: "/BrooksBears/", description: "Main chat interface" },
+        { path: "/BrooksBears/BenjaminBear/", description: "Benjamin Bear persona" },
+      ],
     },
     {
       id: 2,
@@ -30,6 +34,13 @@ export default function StorePage() {
       category: "Utilities",
       rating: 4.7,
       downloads: "5K+",
+      routes: [
+        { path: "/MyCarMindATO/", description: "Main interface" },
+        { path: "/MyCarMindATO/Driver/", description: "Personal car owners" },
+        { path: "/MyCarMindATO/Trucker/", description: "Commercial truck drivers" },
+        { path: "/MyCarMindATO/DeliveryDriver/", description: "Delivery/gig drivers" },
+        { path: "/MyCarMindATO/Traveler/", description: "Road trip enthusiasts" },
+      ],
     },
     {
       id: 3,
@@ -40,6 +51,11 @@ export default function StorePage() {
       category: "Health & Wellness",
       rating: 4.8,
       downloads: "15K+",
+      routes: [
+        { path: "/MyFlowerAI/", description: "Main interface" },
+        { path: "/MyFlowerAI/quiz", description: "Cannabis personality quiz" },
+        { path: "/MyFlowerAI/image-gen", description: "Psychedelic art generator" },
+      ],
     },
     {
       id: 4,
@@ -50,6 +66,9 @@ export default function StorePage() {
       category: "Media & Entertainment",
       rating: 4.9,
       downloads: "8K+",
+      routes: [
+        { path: "/NAMC/", description: "Media curator interface" },
+      ],
     },
   ];
 
@@ -122,6 +141,9 @@ export default function StorePage() {
                       ⭐ {app.rating}
                     </span>
                     <span>{app.downloads}</span>
+                    <span className="flex items-center gap-1">
+                      📍 {app.routes.length} {app.routes.length === 1 ? 'route' : 'routes'}
+                    </span>
                   </div>
                 </div>
 
