@@ -9,8 +9,11 @@ import { SliderQuestion } from "@/components/myflowerai/quiz/slider-question";
 import { PersonaCard } from "@/components/myflowerai/quiz/persona-card";
 import { StrainRecommendations } from "@/components/myflowerai/quiz/strain-recommendations";
 import { QuizProgress } from "@/components/myflowerai/quiz/quiz-progress";
+import { AgeGate } from "@/components/myflowerai/aura/age-gate";
+import { AuraGeneratorPanel } from "@/components/myflowerai/aura/aura-generator-panel";
 import { loadQuiz, processQuizResponses, generateStrainRecommendations } from "@/lib/myflowerai/quiz/engine";
 import type { Quiz, QuizResult } from "@/lib/myflowerai/quiz/types";
+import { Sparkles } from "lucide-react";
 
 export default function QuizPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -20,6 +23,8 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [strainDatabase, setStrainDatabase] = useState<any[]>([]);
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [showAuraGenerator, setShowAuraGenerator] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -139,38 +144,65 @@ export default function QuizPage() {
   // Show results
   if (result) {
     return (
-      <div className="min-h-screen p-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Your Results</h1>
-            <p className="text-muted-foreground">
-              Based on your answers, here's your cannabis personality profile
-            </p>
+      <>
+        <AgeGate onVerified={() => setAgeVerified(true)} />
+        {ageVerified && (
+          <div className="min-h-screen p-4 py-8">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold">Your Results</h1>
+                <p className="text-muted-foreground">
+                  Based on your answers, here's your cannabis personality profile
+                </p>
+              </div>
+
+              <PersonaCard profile={result.profile} />
+
+              {!showAuraGenerator && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <Button
+                      onClick={() => setShowAuraGenerator(true)}
+                      size="lg"
+                      className="w-full"
+                    >
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Generate My Strain Aura
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {showAuraGenerator && (
+                <AuraGeneratorPanel
+                  personaId={result.profile.id}
+                  personaProfile={result.profile}
+                />
+              )}
+
+              <StrainRecommendations result={result} />
+
+              {/* Disclaimers */}
+              <Alert>
+                <AlertDescription className="space-y-2">
+                  <p className="font-semibold">Important Disclaimers:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    {quiz.disclaimers.map((disclaimer, index) => (
+                      <li key={index}>{disclaimer}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex justify-center">
+                <Button onClick={handleRestart} size="lg">
+                  Take Quiz Again
+                </Button>
+              </div>
+            </div>
           </div>
-
-          <PersonaCard profile={result.profile} />
-
-          <StrainRecommendations result={result} />
-
-          {/* Disclaimers */}
-          <Alert>
-            <AlertDescription className="space-y-2">
-              <p className="font-semibold">Important Disclaimers:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                {quiz.disclaimers.map((disclaimer, index) => (
-                  <li key={index}>{disclaimer}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          <div className="flex justify-center">
-            <Button onClick={handleRestart} size="lg">
-              Take Quiz Again
-            </Button>
-          </div>
-        </div>
-      </div>
+        )}
+      </>
     );
   }
 
@@ -178,69 +210,74 @@ export default function QuizPage() {
   const currentQuestion = quiz.questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen p-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{quiz.title}</h1>
-          <p className="text-muted-foreground">{quiz.description}</p>
-        </div>
+    <>
+      <AgeGate onVerified={() => setAgeVerified(true)} />
+      {ageVerified && (
+        <div className="min-h-screen p-4 py-8">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">{quiz.title}</h1>
+              <p className="text-muted-foreground">{quiz.description}</p>
+            </div>
 
-        <QuizProgress
-          currentQuestion={currentQuestionIndex + 1}
-          totalQuestions={quiz.questions.length}
-        />
+            <QuizProgress
+              currentQuestion={currentQuestionIndex + 1}
+              totalQuestions={quiz.questions.length}
+            />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Question {currentQuestionIndex + 1}</CardTitle>
-          </CardHeader>
+            <Card>
+              <CardHeader>
+                <CardTitle>Question {currentQuestionIndex + 1}</CardTitle>
+              </CardHeader>
 
-          <CardContent>
-            {currentQuestion.type === "multiple-choice" ? (
-              <MultipleChoiceQuestion
-                question={currentQuestion}
-                value={responses[currentQuestion.id] as string}
-                onChange={(value) => handleResponse(currentQuestion.id, value)}
-              />
-            ) : (
-              <SliderQuestion
-                question={currentQuestion}
-                value={responses[currentQuestion.id] as number}
-                onChange={(value) => handleResponse(currentQuestion.id, value)}
-              />
+              <CardContent>
+                {currentQuestion.type === "multiple-choice" ? (
+                  <MultipleChoiceQuestion
+                    question={currentQuestion}
+                    value={responses[currentQuestion.id] as string}
+                    onChange={(value) => handleResponse(currentQuestion.id, value)}
+                  />
+                ) : (
+                  <SliderQuestion
+                    question={currentQuestion}
+                    value={responses[currentQuestion.id] as number}
+                    onChange={(value) => handleResponse(currentQuestion.id, value)}
+                  />
+                )}
+              </CardContent>
+
+              <CardFooter className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  Previous
+                </Button>
+                <Button onClick={handleNext}>
+                  {currentQuestionIndex === quiz.questions.length - 1
+                    ? "See Results"
+                    : "Next"}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-          </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
-            >
-              Previous
-            </Button>
-            <Button onClick={handleNext}>
-              {currentQuestionIndex === quiz.questions.length - 1
-                ? "See Results"
-                : "Next"}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Quiz Disclaimers at Bottom */}
-        <Alert>
-          <AlertDescription className="text-xs text-muted-foreground">
-            This quiz provides general informational recommendations only and is NOT
-            medical advice. Cannabis effects vary by individual.
-          </AlertDescription>
-        </Alert>
-      </div>
-    </div>
+            {/* Quiz Disclaimers at Bottom */}
+            <Alert>
+              <AlertDescription className="text-xs text-muted-foreground">
+                This quiz provides general informational recommendations only and is NOT
+                medical advice. Cannabis effects vary by individual.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
