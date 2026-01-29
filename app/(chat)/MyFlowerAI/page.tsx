@@ -36,7 +36,10 @@ export default function MyFlowerAiHomePage() {
     if (usedToday.targetGrams <= 0) {
       return 0;
     }
-    return Math.max(0, Math.min(1, usedToday.usedGrams / usedToday.targetGrams));
+    return Math.max(
+      0,
+      Math.min(1, usedToday.usedGrams / usedToday.targetGrams)
+    );
   }, [usedToday]);
 
   const handleToggleMoodEffect = (id: string) => {
@@ -121,7 +124,9 @@ export default function MyFlowerAiHomePage() {
                 <div className="relative h-20 w-20 rounded-full bg-white ring-1 ring-black/10">
                   <div
                     className="absolute inset-1 rounded-full bg-[conic-gradient(from_180deg,rgba(236,72,153,0.85)_0,rgba(236,72,153,0.85)_var(--p),rgba(0,0,0,0.06)_var(--p),rgba(0,0,0,0.06)_100%)]"
-                    style={{ ["--p" as never]: `${(progress * 100).toFixed(0)}%` }}
+                    style={{
+                      ["--p" as never]: `${(progress * 100).toFixed(0)}%`,
+                    }}
                   />
                   <div className="absolute inset-3 rounded-full bg-white ring-1 ring-black/10" />
                 </div>
@@ -162,20 +167,24 @@ export default function MyFlowerAiHomePage() {
 
           <section className="rounded-3xl border border-black/5 bg-white/70 p-5 backdrop-blur-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold text-black">Mood & effects</h2>
-              <div className="text-xs text-black/60">{selectedCount} selected</div>
+              <h2 className="text-base font-semibold text-black">
+                Mood & effects
+              </h2>
+              <div className="text-xs text-black/60">
+                {selectedCount} selected
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {moodEffects.map((item) => {
                 const isSelected = selectedMoodEffects.has(item.id);
                 return (
                   <button
-                    key={item.id}
                     className={`rounded-full px-3 py-2 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black/40 ${
                       isSelected
                         ? "bg-pink-600 text-white"
                         : "bg-black/5 text-black/80 hover:bg-black/10"
                     }`}
+                    key={item.id}
                     onClick={() => handleToggleMoodEffect(item.id)}
                     type="button"
                   >
@@ -191,7 +200,9 @@ export default function MyFlowerAiHomePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <section className="rounded-3xl border border-black/5 bg-white/70 p-5 backdrop-blur-sm">
-              <h2 className="text-base font-semibold text-black">Recently logged</h2>
+              <h2 className="text-base font-semibold text-black">
+                Recently logged
+              </h2>
               <div className="mt-3 space-y-3">
                 <div className="flex items-center gap-3 rounded-2xl bg-black/5 p-3">
                   <div className="h-14 w-20 rounded-xl bg-black/10" />
@@ -270,17 +281,20 @@ export default function MyFlowerAiHomePage() {
                 )}
               </div>
               <p className="mt-3 text-xs text-black/50">
-                Placeholder — image analysis + harm-reduction prompts coming soon.
+                Placeholder — image analysis + harm-reduction prompts coming
+                soon.
               </p>
             </section>
           </div>
 
           <section className="rounded-3xl border border-black/5 bg-white/70 p-5 backdrop-blur-sm">
-            <h2 className="text-base font-semibold text-black">AI insights & feedback</h2>
+            <h2 className="text-base font-semibold text-black">
+              AI insights & feedback
+            </h2>
             <p className="mt-2 text-sm text-black/70">
-              Agentic feedback placeholder: Your daytime sativa sessions correlate
-              with higher “creative” tags. Consider a lighter dose later in the
-              day if sleep quality dips.
+              Agentic feedback placeholder: Your daytime sativa sessions
+              correlate with higher “creative” tags. Consider a lighter dose
+              later in the day if sleep quality dips.
             </p>
             <p className="mt-3 text-xs text-black/50">
               Informational only. Not medical advice.
@@ -291,4 +305,3 @@ export default function MyFlowerAiHomePage() {
     </>
   );
 }
-

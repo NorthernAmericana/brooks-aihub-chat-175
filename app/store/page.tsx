@@ -27,7 +27,10 @@ const apps = [
     ageRating: "13+",
     routes: [
       { path: "/BrooksBears/", description: "Main chat interface" },
-      { path: "/BrooksBears/BenjaminBear/", description: "Benjamin Bear persona" },
+      {
+        path: "/BrooksBears/BenjaminBear/",
+        description: "Benjamin Bear persona",
+      },
     ],
   },
   {
@@ -44,8 +47,14 @@ const apps = [
     routes: [
       { path: "/MyCarMindATO/", description: "Main interface" },
       { path: "/MyCarMindATO/Driver/", description: "Personal car owners" },
-      { path: "/MyCarMindATO/Trucker/", description: "Commercial truck drivers" },
-      { path: "/MyCarMindATO/DeliveryDriver/", description: "Delivery/gig drivers" },
+      {
+        path: "/MyCarMindATO/Trucker/",
+        description: "Commercial truck drivers",
+      },
+      {
+        path: "/MyCarMindATO/DeliveryDriver/",
+        description: "Delivery/gig drivers",
+      },
       { path: "/MyCarMindATO/Traveler/", description: "Road trip enthusiasts" },
     ],
   },
@@ -158,50 +167,36 @@ export default function StorePage() {
               ? installedApps[app.installKey]
               : false;
             let actionLabel = "Install";
-            let actionPath = app.path;
             if (app.storePath) {
               if (isInstalled) {
                 actionLabel = "Open";
-                actionPath = app.path;
               } else {
                 actionLabel = "View";
-                actionPath = app.storePath;
               }
             }
 
             return (
-              <div
-                className="store-app-card group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 cursor-pointer"
+              <button
+                className="store-app-card group cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-4 text-left backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
                 key={app.id}
-                role="button"
-                tabIndex={0}
                 onClick={() => {
                   const targetPath = app.storePath ?? app.path;
                   if (targetPath) {
                     router.push(targetPath);
                   }
                 }}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter" && event.key !== " ") {
-                    return;
-                  }
-                  event.preventDefault();
-                  const targetPath = app.storePath ?? app.path;
-                  if (targetPath) {
-                    router.push(targetPath);
-                  }
-                }}
+                type="button"
               >
                 <div className="flex gap-4">
                   {/* App Icon */}
                   <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-white/20 to-white/10 shadow-lg overflow-hidden">
                     <Image
-                      src={app.icon}
                       alt={`${app.name} icon`}
-                      width={64}
-                      height={64}
                       className="h-full w-full object-cover"
+                      height={64}
                       priority={app.id <= 3}
+                      src={app.icon}
+                      width={64}
                     />
                   </div>
 
@@ -227,25 +222,16 @@ export default function StorePage() {
 
                   {/* Install Button */}
                   <div className="flex flex-shrink-0 items-center">
-                    <button
-                      className="flex h-9 items-center gap-2 rounded-full bg-white/10 px-4 text-xs font-medium text-white transition hover:bg-white/20"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (actionPath) {
-                          router.push(actionPath);
-                        }
-                      }}
-                    >
+                    <span className="flex h-9 items-center gap-2 rounded-full bg-white/10 px-4 text-xs font-medium text-white transition group-hover:bg-white/20">
                       <Download className="h-3.5 w-3.5" />
                       {actionLabel}
-                    </button>
+                    </span>
                   </div>
                 </div>
 
                 {/* App Description */}
                 <p className="mt-3 text-sm text-white/70">{app.description}</p>
-              </div>
+              </button>
             );
           })}
 

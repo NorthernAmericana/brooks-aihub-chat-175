@@ -8,6 +8,11 @@ import { authConfig } from "./auth.config";
 
 export type UserType = "guest" | "regular";
 
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV === "production" ? undefined : "dev-auth-secret");
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
@@ -37,6 +42,7 @@ export const {
   signOut,
 } = NextAuth({
   ...authConfig,
+  secret: authSecret,
   providers: [
     Credentials({
       credentials: {},

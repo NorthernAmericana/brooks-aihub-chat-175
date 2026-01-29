@@ -131,9 +131,9 @@ export default function MyFlowerAiAppPage() {
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
           <h3 className="text-lg font-semibold text-white">About</h3>
           <p className="mt-2 text-sm text-white/70">
-            MyFlowerAI is a cannabis tracking companion built for harm reduction.
-            Log your sessions (dose, method, strain, mood/effects), attach photos,
-            and get gentle pattern insights over time.
+            MyFlowerAI is a cannabis tracking companion built for harm
+            reduction. Log your sessions (dose, method, strain, mood/effects),
+            attach photos, and get gentle pattern insights over time.
           </p>
           <p className="mt-3 text-xs text-white/55">
             Informational only. Not medical advice. If you are under 21, do not
@@ -155,8 +155,8 @@ export default function MyFlowerAiAppPage() {
           <h3 className="text-lg font-semibold text-white">Preview</h3>
           <p className="mt-2 text-sm text-white/70">
             Placeholder dashboard mock for session tracking, quick logging, and
-            AI insights—connecting soon to the <span className="font-mono">/MyFlowerAI/</span>{" "}
-            agent.
+            AI insights—connecting soon to the{" "}
+            <span className="font-mono">/MyFlowerAI/</span> agent.
           </p>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -180,7 +180,9 @@ export default function MyFlowerAiAppPage() {
             </div>
 
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm font-semibold text-white">AI insights</div>
+              <div className="text-sm font-semibold text-white">
+                AI insights
+              </div>
               <p className="mt-2 text-sm text-white/70">
                 “Your daytime sativa use correlates with more creative output.
                 Consider balancing with calmer sessions to support sleep.”
@@ -219,4 +221,3 @@ export default function MyFlowerAiAppPage() {
     </div>
   );
 }
-
