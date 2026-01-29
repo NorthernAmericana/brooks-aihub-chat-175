@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
 
@@ -104,6 +105,23 @@ export default function MyFlowerAiHomePage() {
               1 strain (mock)
             </div>
           </header>
+
+          <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-black/5 bg-white/70 p-5 backdrop-blur-sm">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-black">
+                Strain library
+              </h2>
+              <p className="text-xs text-black/60">
+                Search the MyFlowerAI catalog of indexed strains.
+              </p>
+            </div>
+            <Link
+              className="rounded-full bg-pink-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-pink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black/40"
+              href="/MyFlowerAI/strain-library"
+            >
+              Open library
+            </Link>
+          </section>
 
           <div className="grid gap-4 md:grid-cols-2">
             <section className="rounded-3xl border border-black/5 bg-white/70 p-5 backdrop-blur-sm">
