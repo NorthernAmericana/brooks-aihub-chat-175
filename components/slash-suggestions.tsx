@@ -43,25 +43,23 @@ export function SlashSuggestions({
   const { data: atoData } = useSWR<AtoListResponse>("/api/ato", fetcher);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
-  const customAtos = useMemo<SlashSuggestion[]>(() => {
+  const customAtos = useMemo(() => {
     const atos = atoData?.atos ?? [];
-    return atos
-      .map((ato) => {
-        const routeSource = ato.route || ato.name;
-        const formattedRoute = formatAtoRoute(routeSource);
-        if (!formattedRoute) {
-          return null;
-        }
-        return {
-          id: `custom-${ato.id}`,
-          label: ato.name,
-          slash: formattedRoute,
-          atoId: ato.id,
-        };
-      })
-      .filter(
-        (item): item is SlashSuggestion => Boolean(item && item.slash.length > 0)
-      );
+    const results: SlashSuggestion[] = [];
+    for (const ato of atos) {
+      const routeSource = ato.route || ato.name;
+      const formattedRoute = formatAtoRoute(routeSource);
+      if (!formattedRoute) {
+        continue;
+      }
+      results.push({
+        id: `custom-${ato.id}`,
+        label: ato.name,
+        slash: formattedRoute,
+        atoId: ato.id,
+      });
+    }
+    return results;
   }, [atoData]);
 
   const suggestions = useMemo(() => {
