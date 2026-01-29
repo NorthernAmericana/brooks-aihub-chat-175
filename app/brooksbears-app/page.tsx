@@ -69,7 +69,7 @@ export default function BrooksBearsAppPage() {
   };
 
   const handleGoToApp = () => {
-    router.push("/BrooksBears/");
+    router.push("/BrooksBears");
   };
 
   // Touch swipe handlers
