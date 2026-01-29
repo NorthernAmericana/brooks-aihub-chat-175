@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PhoneIcon, PlusIcon } from "./icons";
+import { PhoneIcon, PlusIcon, SpeakerIcon, SpeakerMutedIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { toast } from "./toast";
 import { useSidebar } from "./ui/sidebar";
@@ -33,6 +33,7 @@ type ThemeOption = {
   id: string;
   label: string;
   audioFile: string;
+  badge?: "free";
 };
 
 function PureChatHeader({
@@ -41,7 +42,9 @@ function PureChatHeader({
   routeKey,
   selectedVisibilityType,
   isReadonly,
+  isThemeAudioEnabled,
   onThemeChange,
+  onThemeAudioToggle,
   selectedThemeId,
   themeOptions,
 }: {
@@ -50,7 +53,9 @@ function PureChatHeader({
   routeKey: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  isThemeAudioEnabled?: boolean;
   onThemeChange?: (themeId: string) => void;
+  onThemeAudioToggle?: () => void;
   selectedThemeId?: string;
   themeOptions?: ThemeOption[];
 }) {
@@ -69,6 +74,8 @@ function PureChatHeader({
     normalizedRouteKey.startsWith("brooks-bears");
   const shouldShowThemes =
     Boolean(themeOptions?.length) && Boolean(selectedThemeId);
+  const shouldShowThemeAudioToggle =
+    typeof isThemeAudioEnabled === "boolean" && Boolean(onThemeAudioToggle);
 
   const resetCallDialog = useCallback(() => {
     setCallStep("confirm");
@@ -139,8 +146,13 @@ function PureChatHeader({
                       key={theme.id}
                       value={theme.id}
                     >
-                      <span className="font-medium leading-tight">
+                      <span className="flex items-center gap-1 font-medium leading-tight">
                         {theme.label}
+                        {theme.badge === "free" ? (
+                          <span className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-green-500 animate-pulse">
+                            Free
+                          </span>
+                        ) : null}
                       </span>
                       <span className="text-muted-foreground text-xs">
                         {theme.audioFile}
@@ -150,6 +162,23 @@ function PureChatHeader({
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+          {shouldShowThemeAudioToggle && (
+            <Button
+              aria-pressed={isThemeAudioEnabled}
+              className="h-8 px-2 md:h-fit md:px-2"
+              onClick={onThemeAudioToggle}
+              title={
+                isThemeAudioEnabled ? "Mute theme audio" : "Play theme audio"
+              }
+              type="button"
+              variant="outline"
+            >
+              {isThemeAudioEnabled ? <SpeakerIcon /> : <SpeakerMutedIcon />}
+              <span className="sr-only">
+                {isThemeAudioEnabled ? "Theme audio on" : "Theme audio off"}
+              </span>
+            </Button>
           )}
         </div>
       )}
@@ -273,7 +302,9 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
     prevProps.routeKey === nextProps.routeKey &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
     prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.isThemeAudioEnabled === nextProps.isThemeAudioEnabled &&
     prevProps.onThemeChange === nextProps.onThemeChange &&
+    prevProps.onThemeAudioToggle === nextProps.onThemeAudioToggle &&
     prevProps.selectedThemeId === nextProps.selectedThemeId &&
     prevProps.themeOptions === nextProps.themeOptions
   );

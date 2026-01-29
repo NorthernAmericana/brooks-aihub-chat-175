@@ -34,6 +34,9 @@ import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 
 const CHAT_THEME_STORAGE_KEY = "brooks-ai-hub-chat-theme";
+const CHAT_THEME_AUDIO_STORAGE_KEY = "brooks-ai-hub-chat-theme-audio";
+const THEME_AUDIO_RESUME_EVENT = "brooks-ai-hub:resume-theme-audio";
+const THEME_AUDIO_VOLUME = 0.35;
 const CHAT_THEMES = [
   {
     id: "forest",
@@ -42,6 +45,7 @@ const CHAT_THEMES = [
     audioFile: "forest-beats-1.mp3",
     audioSrc: "/audio/forest-beats-1.mp3",
     background: "/backgrounds/brooksaihub-landingpage-background.png",
+    badge: "free",
   },
   {
     id: "space",
@@ -50,20 +54,22 @@ const CHAT_THEMES = [
     audioFile: "8bitspace-01-audio.mp3",
     audioSrc: "/audio/8bitspace-01-audio.mp3",
     background: "/backgrounds/8bitspace-background.png",
+    badge: "free",
   },
 ] as const;
 
 type ChatThemeId = (typeof CHAT_THEMES)[number]["id"];
 type ChatThemeOption = Pick<
   (typeof CHAT_THEMES)[number],
-  "id" | "label" | "audioFile"
+  "id" | "label" | "audioFile" | "badge"
 >;
 
 const CHAT_THEME_OPTIONS: ChatThemeOption[] = CHAT_THEMES.map(
-  ({ id, label, audioFile }) => ({
+  ({ id, label, audioFile, badge }) => ({
     id,
     label,
     audioFile,
+    badge,
   })
 );
 const DEFAULT_CHAT_THEME: ChatThemeId = "forest";
@@ -120,11 +126,24 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const [chatTheme, setChatTheme] = useState<ChatThemeId>(DEFAULT_CHAT_THEME);
+  const [isThemeAudioEnabled, setIsThemeAudioEnabled] = useState(true);
   const currentModelIdRef = useRef(currentModelId);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioGainRef = useRef<GainNode | null>(null);
+  const audioBufferRef = useRef<{ src: string; buffer: AudioBuffer } | null>(
+    null
+  );
 
-  const isBrooksAiHubRoute =
-    chatRouteKey === "brooks-ai-hub" || pathname?.startsWith("/brooks-ai-hub");
+  const isBrooksAiHubThemeRoute =
+    chatRouteKey === "brooks-ai-hub" ||
+    chatRouteKey === "default" ||
+    chatRouteKey.startsWith("brooks-ai-hub");
+  const isBrooksAiHubPath = Boolean(pathname?.startsWith("/brooks-ai-hub"));
+  const isChatRoute = Boolean(pathname?.startsWith("/chat/"));
+  const isChatThemeEnabled =
+    isChatRoute || isBrooksAiHubPath || isBrooksAiHubThemeRoute;
   const activeTheme =
     CHAT_THEMES.find((theme) => theme.id === chatTheme) ?? CHAT_THEMES[0];
 
@@ -133,7 +152,7 @@ export function Chat({
   }, [currentModelId]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
@@ -141,58 +160,232 @@ export function Chat({
     if (storedTheme && isChatTheme(storedTheme)) {
       setChatTheme(storedTheme);
     }
-  }, [isBrooksAiHubRoute]);
+  }, [isChatThemeEnabled]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
     window.localStorage.setItem(CHAT_THEME_STORAGE_KEY, chatTheme);
-  }, [chatTheme, isBrooksAiHubRoute]);
+  }, [chatTheme, isChatThemeEnabled]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
-    const audio = audioRef.current;
-    if (!audio) {
+    const storedPreference = window.localStorage.getItem(
+      CHAT_THEME_AUDIO_STORAGE_KEY
+    );
+    if (storedPreference === "off") {
+      setIsThemeAudioEnabled(false);
+    }
+    if (storedPreference === "on") {
+      setIsThemeAudioEnabled(true);
+    }
+  }, [isChatThemeEnabled]);
+
+  useEffect(() => {
+    if (!isChatThemeEnabled) {
       return;
     }
 
-    audio.muted = true;
-    audio.volume = 0.35;
+    window.localStorage.setItem(
+      CHAT_THEME_AUDIO_STORAGE_KEY,
+      isThemeAudioEnabled ? "on" : "off"
+    );
+  }, [isThemeAudioEnabled, isChatThemeEnabled]);
 
-    const startMuted = async () => {
+  useEffect(() => {
+    if (!isChatThemeEnabled) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const stopWebAudio = () => {
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.stop();
+        } catch {
+          // Ignore: source may already be stopped.
+        }
+        audioSourceRef.current.disconnect();
+        audioSourceRef.current = null;
+      }
+
+      if (audioGainRef.current) {
+        audioGainRef.current.disconnect();
+        audioGainRef.current = null;
+      }
+    };
+
+    const stopHtmlAudio = () => {
+      const audioElement = audioElementRef.current;
+      if (!audioElement) {
+        return;
+      }
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    };
+
+    const stopThemeAudio = () => {
+      stopWebAudio();
+      stopHtmlAudio();
+    };
+
+    const getAudioContextConstructor = () => {
+      if (typeof window === "undefined") {
+        return null;
+      }
+      if (window.AudioContext) {
+        return window.AudioContext;
+      }
+      const webkitContext = (
+        window as unknown as {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
+      return webkitContext ?? null;
+    };
+
+    const getAudioBuffer = async (
+      context: AudioContext
+    ): Promise<AudioBuffer | null> => {
+      if (audioBufferRef.current?.src === activeTheme.audioSrc) {
+        return audioBufferRef.current.buffer;
+      }
+
       try {
-        await audio.play();
+        const response = await fetch(activeTheme.audioSrc);
+        if (!response.ok) {
+          return null;
+        }
+        const data = await response.arrayBuffer();
+        const buffer = await context.decodeAudioData(data.slice(0));
+        audioBufferRef.current = { src: activeTheme.audioSrc, buffer };
+        return buffer;
+      } catch {
+        return null;
+      }
+    };
+
+    const startWebAudio = async (): Promise<boolean> => {
+      const AudioContextConstructor = getAudioContextConstructor();
+      if (!AudioContextConstructor) {
+        return false;
+      }
+
+      const context =
+        audioContextRef.current ?? new AudioContextConstructor();
+      audioContextRef.current = context;
+
+      const buffer = await getAudioBuffer(context);
+      if (!buffer) {
+        return false;
+      }
+
+      if (isCancelled) {
+        return true;
+      }
+
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      gain.gain.value = 0;
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(gain).connect(context.destination);
+      source.start(0);
+      audioSourceRef.current = source;
+      audioGainRef.current = gain;
+
+      try {
+        await context.resume();
+      } catch {
+        // Ignore: autoplay policies may block background audio.
+      }
+
+      return true;
+    };
+
+    const startHtmlAudio = async () => {
+      const audioElement = audioElementRef.current;
+      if (!audioElement) {
+        return;
+      }
+      audioElement.muted = true;
+      audioElement.volume = THEME_AUDIO_VOLUME;
+      audioElement.src = activeTheme.audioSrc;
+      try {
+        await audioElement.play();
       } catch {
         // Ignore: autoplay policies may block background audio.
       }
     };
 
-    const handleInteraction = async () => {
-      audio.muted = false;
+    const resumeThemeAudio = async () => {
+      if (!isThemeAudioEnabled) {
+        return;
+      }
+
+      const context = audioContextRef.current;
+      const gain = audioGainRef.current;
+      if (context && gain) {
+        gain.gain.value = THEME_AUDIO_VOLUME;
+        try {
+          await context.resume();
+        } catch {
+          // Ignore: user settings or browser policies may block playback.
+        }
+        return;
+      }
+
+      const audioElement = audioElementRef.current;
+      if (!audioElement) {
+        return;
+      }
+      audioElement.muted = false;
+      audioElement.volume = THEME_AUDIO_VOLUME;
       try {
-        await audio.play();
+        await audioElement.play();
       } catch {
         // Ignore: user settings or browser policies may block playback.
       }
     };
 
-    void startMuted();
+    const startThemeAudio = async () => {
+      stopThemeAudio();
+      if (!isThemeAudioEnabled) {
+        return;
+      }
 
-    window.addEventListener("pointerdown", handleInteraction, { once: true });
-    window.addEventListener("keydown", handleInteraction, { once: true });
+      const started = await startWebAudio();
+      if (!started) {
+        await startHtmlAudio();
+      }
+    };
+
+    void startThemeAudio();
+
+    if (isThemeAudioEnabled) {
+      window.addEventListener("pointerdown", resumeThemeAudio, { once: true });
+      window.addEventListener("keydown", resumeThemeAudio, { once: true });
+      window.addEventListener(THEME_AUDIO_RESUME_EVENT, resumeThemeAudio);
+    }
 
     return () => {
-      window.removeEventListener("pointerdown", handleInteraction);
-      window.removeEventListener("keydown", handleInteraction);
-      audio.pause();
-      audio.currentTime = 0;
+      window.removeEventListener("pointerdown", resumeThemeAudio);
+      window.removeEventListener("keydown", resumeThemeAudio);
+      window.removeEventListener(THEME_AUDIO_RESUME_EVENT, resumeThemeAudio);
+      stopThemeAudio();
+      if (audioContextRef.current?.state === "running") {
+        audioContextRef.current.suspend().catch(() => {
+          // Ignore: audio context might already be closed.
+        });
+      }
     };
-  }, [activeTheme.audioSrc, isBrooksAiHubRoute]);
+  }, [activeTheme.audioSrc, isChatThemeEnabled, isThemeAudioEnabled]);
 
   const {
     messages,
@@ -310,6 +503,10 @@ export function Chat({
     }
   }, []);
 
+  const handleThemeAudioToggle = useCallback(() => {
+    setIsThemeAudioEnabled((previous) => !previous);
+  }, []);
+
   useAutoResume({
     autoResume,
     initialMessages,
@@ -340,17 +537,17 @@ export function Chat({
       <div
         className={cn(
           "overscroll-behavior-contain relative flex h-dvh min-w-0 touch-pan-y flex-col bg-background",
-          isBrooksAiHubRoute ? "chat-theme" : null
+          isChatThemeEnabled ? "chat-theme" : null
         )}
-        data-chat-theme={isBrooksAiHubRoute ? chatTheme : undefined}
+        data-chat-theme={isChatThemeEnabled ? chatTheme : undefined}
       >
-        {isBrooksAiHubRoute && (
+        {isChatThemeEnabled && (
           <>
             <div aria-hidden className="chat-theme-bg" />
             <div aria-hidden className="chat-theme-overlay" />
             <audio
               key={activeTheme.id}
-              ref={audioRef}
+              ref={audioElementRef}
               src={activeTheme.audioSrc}
               title={activeTheme.audioTitle}
               loop
@@ -363,11 +560,15 @@ export function Chat({
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
-            onThemeChange={isBrooksAiHubRoute ? handleThemeChange : undefined}
+            isThemeAudioEnabled={isChatThemeEnabled ? isThemeAudioEnabled : undefined}
+            onThemeChange={isChatThemeEnabled ? handleThemeChange : undefined}
+            onThemeAudioToggle={
+              isChatThemeEnabled ? handleThemeAudioToggle : undefined
+            }
             routeKey={chatRouteKey}
-            selectedThemeId={isBrooksAiHubRoute ? chatTheme : undefined}
+            selectedThemeId={isChatThemeEnabled ? chatTheme : undefined}
             selectedVisibilityType={initialVisibilityType}
-            themeOptions={isBrooksAiHubRoute ? CHAT_THEME_OPTIONS : undefined}
+            themeOptions={isChatThemeEnabled ? CHAT_THEME_OPTIONS : undefined}
           />
 
           <Messages

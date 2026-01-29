@@ -46,6 +46,13 @@ export function PureMessageActions({
     .join("\n")
     .trim();
 
+  const requestThemeAudioResume = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.dispatchEvent(new Event("brooks-ai-hub:resume-theme-audio"));
+  };
+
   const handleCopy = async () => {
     if (!textFromParts) {
       toast.error("There's no text to copy!");
@@ -123,6 +130,7 @@ export function PureMessageActions({
       audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
+      audio.preload = "auto";
       audioRef.current = audio;
 
       audio.addEventListener("ended", () => {
@@ -145,7 +153,9 @@ export function PureMessageActions({
       });
 
       setIsPlaying(true);
-      await audio.play();
+      const playPromise = audio.play();
+      requestThemeAudioResume();
+      await playPromise;
       toast.success("Playing response.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {

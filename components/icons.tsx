@@ -260,6 +260,30 @@ export const SpeakerIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
+export const SpeakerMutedIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        d="M2.5 6.25H5.25L8.25 3.75V12.25L5.25 9.75H2.5V6.25Z"
+        fill="currentColor"
+      />
+      <path
+        d="M3 13L13 3"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.4"
+      />
+    </svg>
+  );
+};
+
 export const LogoOpenAI = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
