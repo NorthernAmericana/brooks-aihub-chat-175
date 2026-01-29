@@ -446,6 +446,97 @@
   .intro-sparkle {
     animation: intro-sparkle 4s ease-in-out infinite;
   }
+
+  .chat-theme {
+    --chat-theme-text-outline: rgba(6, 8, 12, 0.85);
+    --chat-theme-text-glow: rgba(255, 255, 255, 0.6);
+    --chat-theme-bubble-outline: rgba(255, 255, 255, 0.55);
+    --chat-theme-cloud-outline: rgba(255, 255, 255, 0.7);
+  }
+
+  .dark .chat-theme {
+    --chat-theme-text-outline: rgba(0, 0, 0, 0.9);
+    --chat-theme-text-glow: rgba(120, 200, 255, 0.35);
+    --chat-theme-bubble-outline: rgba(255, 255, 255, 0.4);
+    --chat-theme-cloud-outline: rgba(255, 255, 255, 0.5);
+  }
+
+  .chat-theme-bg,
+  .chat-theme-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+  }
+
+  .chat-theme-bg {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: saturate(1.05);
+    opacity: 0.65;
+  }
+
+  .dark .chat-theme-bg {
+    opacity: 0.72;
+  }
+
+  [data-chat-theme="forest"] .chat-theme-bg {
+    background-image: url("/backgrounds/brooksaihub-landingpage-background.png");
+  }
+
+  [data-chat-theme="space"] .chat-theme-bg {
+    background-image: url("/backgrounds/8bitspace-background.png");
+  }
+
+  .chat-theme-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 10, 12, 0.35) 0%,
+      rgba(6, 8, 10, 0.75) 100%
+    );
+  }
+
+  .dark .chat-theme-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(4, 6, 10, 0.6) 0%,
+      rgba(2, 4, 8, 0.88) 100%
+    );
+  }
+
+  .chat-theme .greeting-title,
+  .chat-theme .greeting-time,
+  .chat-theme .greeting-clouds-label {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 2px 10px var(--chat-theme-text-outline),
+      0 0 16px var(--chat-theme-text-glow);
+  }
+
+  .chat-theme [data-testid="message-content"] {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 0 12px var(--chat-theme-text-glow);
+  }
+
+  .chat-theme [data-role="user"] [data-testid="message-content"] {
+    border: 1px solid var(--chat-theme-bubble-outline);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+  }
+
+  .chat-theme .cloud-button {
+    box-shadow:
+      0 0 0 1px var(--chat-theme-cloud-outline),
+      var(--cloud-shadow),
+      var(--cloud-shadow-inner);
+  }
+
+  .chat-theme .cloud-button,
+  .chat-theme .cloud-button * {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 0 10px var(--chat-theme-text-glow);
+  }
 }
 
 @layer utilities {

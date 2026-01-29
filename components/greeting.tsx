@@ -130,11 +130,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        <span className="font-pixel">/Brooks AI HUB/</span>
+        <span className="greeting-title font-pixel">/Brooks AI HUB/</span>
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs md:text-sm"
+        className="greeting-time mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs md:text-sm"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
@@ -148,7 +148,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
+        <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           all ATO App Folder Clouds
         </div>
         <div className="mt-4 flex w-full flex-wrap justify-center gap-4">

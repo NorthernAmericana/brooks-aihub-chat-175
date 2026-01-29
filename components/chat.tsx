@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
@@ -23,7 +23,7 @@ import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
-import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { getChatRouteKey } from "@/lib/voice";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
@@ -32,6 +32,43 @@ import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
+
+const CHAT_THEME_STORAGE_KEY = "brooks-ai-hub-chat-theme";
+const CHAT_THEMES = [
+  {
+    id: "forest",
+    label: "Forest Beats",
+    audioTitle: "Forest Beats",
+    audioFile: "forest-beats-1.mp3",
+    audioSrc: "/audio/forest-beats-1.mp3",
+    background: "/backgrounds/brooksaihub-landingpage-background.png",
+  },
+  {
+    id: "space",
+    label: "8-bit Space Tunes",
+    audioTitle: "8-bit Space Tunes",
+    audioFile: "8bitspace-01-audio.mp3",
+    audioSrc: "/audio/8bitspace-01-audio.mp3",
+    background: "/backgrounds/8bitspace-background.png",
+  },
+] as const;
+
+type ChatThemeId = (typeof CHAT_THEMES)[number]["id"];
+type ChatThemeOption = Pick<
+  (typeof CHAT_THEMES)[number],
+  "id" | "label" | "audioFile"
+>;
+
+const CHAT_THEME_OPTIONS: ChatThemeOption[] = CHAT_THEMES.map(
+  ({ id, label, audioFile }) => ({
+    id,
+    label,
+    audioFile,
+  })
+);
+const DEFAULT_CHAT_THEME: ChatThemeId = "forest";
+const isChatTheme = (value: string): value is ChatThemeId =>
+  CHAT_THEMES.some((theme) => theme.id === value);
 
 export function Chat({
   id,
@@ -53,6 +90,7 @@ export function Chat({
   autoResume: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -81,11 +119,80 @@ export function Chat({
   const [input, setInput] = useState<string>("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
+  const [chatTheme, setChatTheme] = useState<ChatThemeId>(DEFAULT_CHAT_THEME);
   const currentModelIdRef = useRef(currentModelId);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const isBrooksAiHubRoute =
+    chatRouteKey === "brooks-ai-hub" || pathname?.startsWith("/brooks-ai-hub");
+  const activeTheme =
+    CHAT_THEMES.find((theme) => theme.id === chatTheme) ?? CHAT_THEMES[0];
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  useEffect(() => {
+    if (!isBrooksAiHubRoute) {
+      return;
+    }
+
+    const storedTheme = window.localStorage.getItem(CHAT_THEME_STORAGE_KEY);
+    if (storedTheme && isChatTheme(storedTheme)) {
+      setChatTheme(storedTheme);
+    }
+  }, [isBrooksAiHubRoute]);
+
+  useEffect(() => {
+    if (!isBrooksAiHubRoute) {
+      return;
+    }
+
+    window.localStorage.setItem(CHAT_THEME_STORAGE_KEY, chatTheme);
+  }, [chatTheme, isBrooksAiHubRoute]);
+
+  useEffect(() => {
+    if (!isBrooksAiHubRoute) {
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    audio.muted = true;
+    audio.volume = 0.35;
+
+    const startMuted = async () => {
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: autoplay policies may block background audio.
+      }
+    };
+
+    const handleInteraction = async () => {
+      audio.muted = false;
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: user settings or browser policies may block playback.
+      }
+    };
+
+    void startMuted();
+
+    window.addEventListener("pointerdown", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [activeTheme.audioSrc, isBrooksAiHubRoute]);
 
   const {
     messages,
@@ -197,6 +304,12 @@ export function Chat({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
+  const handleThemeChange = useCallback((value: string) => {
+    if (isChatTheme(value)) {
+      setChatTheme(value);
+    }
+  }, []);
+
   useAutoResume({
     autoResume,
     initialMessages,
@@ -224,49 +337,75 @@ export function Chat({
 
   return (
     <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader
-          chatId={id}
-          isReadonly={isReadonly}
-          routeKey={chatRouteKey}
-          selectedVisibilityType={initialVisibilityType}
-        />
-
-        <Messages
-          addToolApprovalResponse={addToolApprovalResponse}
-          chatId={id}
-          chatTitle={initialChatTitle}
-          isArtifactVisible={isArtifactVisible}
-          isReadonly={isReadonly}
-          messages={messages}
-          onSelectSuggestedFolder={handleSuggestedFolderSelect}
-          regenerate={regenerate}
-          selectedModelId={initialChatModel}
-          setMessages={setMessages}
-          status={status}
-          votes={votes}
-        />
-
-        <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-4">
-          {!isReadonly && (
-            <MultimodalInput
-              atoId={atoId}
-              attachments={attachments}
-              chatId={id}
-              chatRouteKey={initialRouteKey}
-              input={input}
-              messages={messages}
-              onModelChange={setCurrentModelId}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
+      <div
+        className={cn(
+          "overscroll-behavior-contain relative flex h-dvh min-w-0 touch-pan-y flex-col bg-background",
+          isBrooksAiHubRoute ? "chat-theme" : null
+        )}
+        data-chat-theme={isBrooksAiHubRoute ? chatTheme : undefined}
+      >
+        {isBrooksAiHubRoute && (
+          <>
+            <div aria-hidden className="chat-theme-bg" />
+            <div aria-hidden className="chat-theme-overlay" />
+            <audio
+              key={activeTheme.id}
+              ref={audioRef}
+              src={activeTheme.audioSrc}
+              title={activeTheme.audioTitle}
+              loop
+              preload="auto"
+              playsInline
             />
-          )}
+          </>
+        )}
+        <div className="relative z-10 flex h-dvh min-w-0 flex-col">
+          <ChatHeader
+            chatId={id}
+            isReadonly={isReadonly}
+            onThemeChange={isBrooksAiHubRoute ? handleThemeChange : undefined}
+            routeKey={chatRouteKey}
+            selectedThemeId={isBrooksAiHubRoute ? chatTheme : undefined}
+            selectedVisibilityType={initialVisibilityType}
+            themeOptions={isBrooksAiHubRoute ? CHAT_THEME_OPTIONS : undefined}
+          />
+
+          <Messages
+            addToolApprovalResponse={addToolApprovalResponse}
+            chatId={id}
+            chatTitle={initialChatTitle}
+            isArtifactVisible={isArtifactVisible}
+            isReadonly={isReadonly}
+            messages={messages}
+            onSelectSuggestedFolder={handleSuggestedFolderSelect}
+            regenerate={regenerate}
+            selectedModelId={initialChatModel}
+            setMessages={setMessages}
+            status={status}
+            votes={votes}
+          />
+
+          <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-4">
+            {!isReadonly && (
+              <MultimodalInput
+                atoId={atoId}
+                attachments={attachments}
+                chatId={id}
+                chatRouteKey={initialRouteKey}
+                input={input}
+                messages={messages}
+                onModelChange={setCurrentModelId}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+              />
+            )}
+          </div>
         </div>
       </div>
 
