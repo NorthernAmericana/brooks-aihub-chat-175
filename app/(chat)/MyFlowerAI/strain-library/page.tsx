@@ -57,9 +57,9 @@ const toListItem = (record: StrainRecord): StrainListItem | null => {
   const trimmedPositioning = productPositioning?.trim();
 
   if (trimmedBio) {
-    description = dispensaryBio;
+    description = trimmedBio;
   } else if (trimmedPositioning) {
-    description = productPositioning;
+    description = trimmedPositioning;
   }
 
   return {
