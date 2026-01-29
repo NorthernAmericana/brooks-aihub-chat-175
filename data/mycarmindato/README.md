@@ -38,6 +38,26 @@ A comprehensive JSON file containing information about cities that MyCarMindATO 
 6. St. Petersburg, Florida (added January 2026)
 7. Pace/Milton/Avalon, Florida (added January 2026)
 
+### season-1-plaza-rest-stops.json
+
+A JSON file containing high-signal rest stops, service plazas, and welcome centers for MyCarMindATO Season 1. This dataset is intended to help the agent recommend reliable pit-stops (restrooms, fuel, food, EV charging, pet breaks) and to support route planning across Florida highways.
+
+**Season 1 Status**: Curated list (currently includes 10 iconic Florida service plazas + welcome centers).
+
+**Structure**: Each entry contains:
+
+- `name` (string): Rest stop / plaza name
+- `kind` (string): `service_plaza` or `welcome_center`
+- `highway` (string): Highway/road system (e.g., "Florida's Turnpike", "I-95")
+- `mile_marker` (string, optional): Turnpike mile marker when applicable
+- `location` (object): City/county/state and notes
+- `access` (object): Directional access, center-median info for turnpike plazas
+- `hours` (string): Operating hours summary
+- `amenities` (object): Fuel, dining, EV charging, Wi‑Fi, pet/picnic areas, and other notes
+- `highlights` (array): Quick reasons the stop is notable
+- `road_tripper_tip` (string): Why/when to use this stop
+- `sources` (array): High-level source domains referenced in research
+
 ## How City Data is Used
 
 The MyCarMindATO workflow (`lib/ai/agents/mycarmindato-workflow.ts`) automatically:
@@ -48,6 +68,15 @@ The MyCarMindATO workflow (`lib/ai/agents/mycarmindato-workflow.ts`) automatical
 4. Limits results to top 3 matching cities to keep context manageable
 
 No additional configuration is needed - just add cities to the JSON file following the existing schema.
+
+## How Rest Stop Data is Used
+
+The MyCarMindATO workflow (`lib/ai/agents/mycarmindato-workflow.ts`) also:
+
+1. Loads rest stop data from `season-1-plaza-rest-stops.json`
+2. Matches stops based on user messages and home location
+3. Injects relevant rest stop context into agent conversations
+4. Limits results to top 3 matching stops to keep context manageable
 
 ## Adding New Cities
 
@@ -67,6 +96,11 @@ Unit tests for city data loading and matching are located at:
 Run tests with:
 ```bash
 npx tsx tests/unit/mycarmindato/city-data.test.ts
+```
+
+For rest stop data tests, run:
+```bash
+npx tsx tests/unit/mycarmindato/rest-stop-data.test.ts
 ```
 
 ## Source Documentation

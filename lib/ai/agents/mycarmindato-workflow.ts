@@ -19,6 +19,12 @@ const CITIES_FILE_PATH = path.join(
   "mycarmindato",
   "season-1-cities.json"
 );
+const REST_STOPS_FILE_PATH = path.join(
+  process.cwd(),
+  "data",
+  "mycarmindato",
+  "season-1-plaza-rest-stops.json"
+);
 
 // Tool definitions - using file search
 // Note: Vector store ID should be configured for MyCarMindATO specific data
@@ -143,7 +149,50 @@ type CityRecord = {
   anchors?: string[];
 };
 
+type RestStopRecord = {
+  name?: string;
+  kind?: "service_plaza" | "welcome_center";
+  highway?: string;
+  mile_marker?: string;
+  location?: {
+    city?: string;
+    county?: string;
+    state?: string;
+    notes?: string;
+  };
+  access?: {
+    center_median?: boolean;
+    directions?: string;
+  };
+  hours?: string;
+  amenities?: {
+    fuel?: {
+      available?: boolean;
+      brand?: string;
+      gasoline?: boolean;
+      diesel?: boolean;
+      e85?: boolean;
+      notes?: string;
+    };
+    dining?: string[];
+    ev_charging?: {
+      available?: boolean;
+      types?: string[];
+      notes?: string;
+    };
+    wifi?: boolean;
+    atm?: boolean;
+    pet_area?: boolean;
+    picnic_area?: boolean;
+    other?: string[];
+  };
+  highlights?: string[];
+  road_tripper_tip?: string;
+  sources?: string[];
+};
+
 let cityDataCache: CityRecord[] | null = null;
+let restStopDataCache: RestStopRecord[] | null = null;
 
 const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
 
@@ -171,6 +220,42 @@ const buildCityIndex = (cities: CityRecord[]) => {
   }
 
   return `City Index (${cityNames.length}):\n${cityNames
+    .map((name) => `- ${name}`)
+    .join("\n")}`;
+};
+
+const buildRestStopIndex = (stops: RestStopRecord[]) => {
+  const stopNames: string[] = [];
+  const seen = new Set<string>();
+
+  for (const stop of stops) {
+    const name = stop.name?.trim();
+    if (!name) {
+      continue;
+    }
+
+    const highway = stop.highway?.trim() ?? "";
+    const mile = stop.mile_marker?.trim() ?? "";
+    const labelParts = [
+      name,
+      highway ? `(${highway}${mile ? `, Mile ${mile}` : ""})` : null,
+    ].filter((value): value is string => Boolean(value));
+    const label = labelParts.join(" ");
+    const normalized = normalizeQueryValue(label);
+    if (seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    stopNames.push(label);
+  }
+
+  stopNames.sort((a, b) => a.localeCompare(b));
+
+  if (!stopNames.length) {
+    return "Rest Stop Index: No rest stop names available.";
+  }
+
+  return `Rest Stop Index (${stopNames.length}):\n${stopNames
     .map((name) => `- ${name}`)
     .join("\n")}`;
 };
@@ -213,6 +298,17 @@ const loadCityData = async () => {
   const fileContents = await readFile(CITIES_FILE_PATH, "utf8");
   const parsed = JSON.parse(fileContents) as CityRecord[];
   cityDataCache = parsed;
+  return parsed;
+};
+
+const loadRestStopData = async () => {
+  if (restStopDataCache) {
+    return restStopDataCache;
+  }
+
+  const fileContents = await readFile(REST_STOPS_FILE_PATH, "utf8");
+  const parsed = JSON.parse(fileContents) as RestStopRecord[];
+  restStopDataCache = parsed;
   return parsed;
 };
 
@@ -276,6 +372,86 @@ const selectMatchingCities = (
   return matches;
 };
 
+const selectMatchingRestStops = (
+  stops: RestStopRecord[],
+  queries: string[]
+): RestStopRecord[] => {
+  const normalizedQueries = queries
+    .map((query) => normalizeQueryValue(query))
+    .filter((value): value is string => Boolean(value));
+
+  if (!normalizedQueries.length) {
+    return [];
+  }
+
+  const matches: RestStopRecord[] = [];
+
+  for (const stop of stops) {
+    const locationTerms: string[] = [];
+    const name = stop.name?.trim();
+    if (name) {
+      locationTerms.push(name);
+    }
+    const highway = stop.highway?.trim();
+    if (highway) {
+      locationTerms.push(highway);
+    }
+    const mile = stop.mile_marker?.trim();
+    if (mile) {
+      locationTerms.push(mile);
+    }
+    if (stop.location?.city) {
+      locationTerms.push(stop.location.city);
+    }
+    if (stop.location?.county) {
+      locationTerms.push(stop.location.county);
+    }
+    if (stop.access?.directions) {
+      locationTerms.push(stop.access.directions);
+    }
+    if (stop.amenities?.fuel?.brand) {
+      locationTerms.push(stop.amenities.fuel.brand);
+    }
+    if (stop.amenities?.dining) {
+      for (const option of stop.amenities.dining) {
+        if (option) {
+          locationTerms.push(option);
+        }
+      }
+    }
+
+    const normalizedTerms = locationTerms
+      .map((term) => normalizeQueryValue(term))
+      .filter((value): value is string => Boolean(value));
+    if (!normalizedTerms.length) {
+      continue;
+    }
+
+    let isMatch = false;
+    for (const query of normalizedQueries) {
+      for (const term of normalizedTerms) {
+        if (term.includes(query) || query.includes(term)) {
+          isMatch = true;
+          break;
+        }
+      }
+      if (isMatch) {
+        break;
+      }
+    }
+
+    if (isMatch) {
+      matches.push(stop);
+    }
+
+    if (matches.length >= 3) {
+      break;
+    }
+  }
+
+  return matches;
+};
+
 const formatCitySummary = (city: CityRecord) => {
   const subAreaNames =
     city.sub_areas
@@ -305,6 +481,51 @@ const formatCitySummary = (city: CityRecord) => {
     .join("\n");
 };
 
+const formatRestStopSummary = (stop: RestStopRecord) => {
+  const highway = stop.highway?.trim() ?? "";
+  const mile = stop.mile_marker?.trim() ?? "";
+  const locationCity = stop.location?.city?.trim() ?? "";
+  const locationCounty = stop.location?.county?.trim() ?? "";
+  const access = stop.access?.directions?.trim() ?? "";
+  const hours = stop.hours?.trim() ?? "";
+
+  const fuel = stop.amenities?.fuel ?? {};
+  const fuelBrand = fuel.brand?.trim() ?? "";
+  const fuelBits = [
+    fuelBrand ? `Brand: ${fuelBrand}` : null,
+    fuel.gasoline ? "gas" : null,
+    fuel.diesel ? "diesel" : null,
+    fuel.e85 ? "E85" : null,
+    fuel.available === false ? "no fuel" : null,
+  ].filter((value): value is string => Boolean(value));
+
+  const dining = stop.amenities?.dining?.slice(0, 6) ?? [];
+  const ev = stop.amenities?.ev_charging ?? {};
+  const evTypes = ev.types?.slice(0, 4) ?? [];
+
+  const whereBits = [
+    highway ? `Highway: ${highway}${mile ? ` (Mile ${mile})` : ""}` : null,
+    locationCity ? `Near: ${locationCity}` : null,
+    locationCounty ? `County: ${locationCounty}` : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return [
+    `Rest Stop: ${stop.name ?? "Unknown"}`,
+    stop.kind ? `Kind: ${stop.kind}` : null,
+    whereBits.length ? whereBits.join("\n") : null,
+    access ? `Access: ${access}` : null,
+    hours ? `Hours: ${hours}` : null,
+    fuelBits.length ? `Fuel: ${fuelBits.join(", ")}` : null,
+    dining.length ? `Dining: ${dining.join(", ")}` : null,
+    ev.available
+      ? `EV: ${evTypes.length ? evTypes.join(", ") : "available"}`
+      : null,
+    stop.road_tripper_tip ? `Tip: ${stop.road_tripper_tip}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join("\n");
+};
+
 const buildRepoCityContext = (cities: CityRecord[]) => {
   if (!cities.length) {
     return "Repo City Data: No matching city entries found.";
@@ -312,6 +533,15 @@ const buildRepoCityContext = (cities: CityRecord[]) => {
 
   const summaries = cities.map((city) => formatCitySummary(city));
   return `Repo City Data:\n${summaries.join("\n\n")}`;
+};
+
+const buildRepoRestStopContext = (stops: RestStopRecord[]) => {
+  if (!stops.length) {
+    return "Repo Rest Stop Data: No matching rest stop entries found.";
+  }
+
+  const summaries = stops.map((stop) => formatRestStopSummary(stop));
+  return `Repo Rest Stop Data:\n${summaries.join("\n\n")}`;
 };
 
 // Build conversation history from ChatMessage format
@@ -388,16 +618,23 @@ export const runMyCarMindAtoWorkflow = async ({
     const vectorSearchQuery = [workflow.input_as_text, homeLocationText]
       .filter((value): value is string => Boolean(value))
       .join(" ");
-    const [cityData, vectorStoreResults] = await Promise.all([
+    const [cityData, restStopData, vectorStoreResults] = await Promise.all([
       loadCityData(),
+      loadRestStopData(),
       loadVectorStoreResults(vectorSearchQuery),
     ]);
     const matchingCities = selectMatchingCities(cityData, [
       workflow.input_as_text,
       homeLocationText ?? "",
     ]);
+    const matchingRestStops = selectMatchingRestStops(restStopData, [
+      workflow.input_as_text,
+      homeLocationText ?? "",
+    ]);
     const repoCityContext = buildRepoCityContext(matchingCities);
     const cityIndexContext = buildCityIndex(cityData);
+    const repoRestStopContext = buildRepoRestStopContext(matchingRestStops);
+    const restStopIndexContext = buildRestStopIndex(restStopData);
     const vectorSummary = buildVectorStoreSummary(vectorStoreResults);
     const homeContext = homeLocationText
       ? `Home Location:\n${homeLocationText}`
@@ -419,6 +656,14 @@ export const runMyCarMindAtoWorkflow = async ({
       {
         role: "system",
         content: [{ type: "input_text", text: cityIndexContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: repoRestStopContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: restStopIndexContext }],
       },
       {
         role: "system",
