@@ -488,6 +488,18 @@
     background-image: url("/backgrounds/8bitspace-background.png");
   }
 
+  [data-chat-theme="bens-garden"] .chat-theme-bg {
+    background-image: url("/backgrounds/bens-garden-backgrounds.png");
+  }
+
+  [data-chat-theme="my-daughter-death-1"] .chat-theme-bg {
+    background-image: url("/backgrounds/mdd-backgrounds-02.png");
+  }
+
+  [data-chat-theme="ghost-girl-1"] .chat-theme-bg {
+    background-image: url("/backgrounds/the-ghost-girl-app-theme.png");
+  }
+
   .chat-theme-overlay {
     background: linear-gradient(
       180deg,
