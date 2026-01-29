@@ -7,25 +7,6 @@ import { useEffect, useState } from "react";
 
 const INSTALL_STORAGE_KEY = "ato-app-installed:namc";
 
-const routes = [
-  {
-    path: "/NAMC/",
-    description: "Streaming-style homepage for featured media and games",
-  },
-  {
-    path: "/NAMC/library",
-    description: "Your shelves: playlists, projects, and saved picks",
-  },
-  {
-    path: "/NAMC/search",
-    description: "Search across your collection and lore",
-  },
-  {
-    path: "/NAMC/campfire",
-    description: "Cozy campfire browsing mode (coming soon)",
-  },
-] as const;
-
 export default function NamcAppPage() {
   const router = useRouter();
   const [isInstalled, setIsInstalled] = useState(false);
@@ -161,17 +142,12 @@ export default function NamcAppPage() {
 
         <section className="rounded-3xl border border-white/10 bg-black/30 p-5 backdrop-blur-md">
           <h3 className="text-lg font-semibold text-white">
-            Routes in Brooks AI HUB
+            Agent routes in Brooks AI HUB
           </h3>
-          <div className="mt-3 space-y-3 text-sm text-white/75">
-            {routes.map((route) => (
-              <div className="flex items-center gap-2" key={route.path}>
-                <span className="h-2 w-2 rounded-full bg-amber-300/90" />
-                <span className="font-mono">{route.path}</span>
-                <span className="text-xs text-white/55">{route.description}</span>
-              </div>
-            ))}
-          </div>
+          <p className="mt-2 text-sm text-white/75">
+            None yet. NAMC doesn’t have agentic chat subroutes in Brooks AI HUB
+            right now.
+          </p>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-black/30 p-5 backdrop-blur-md">

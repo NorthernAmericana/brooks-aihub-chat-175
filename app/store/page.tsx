@@ -75,12 +75,7 @@ const apps = [
     category: "Media & Entertainment",
     rating: 4.9,
     downloads: "8K+",
-    routes: [
-      { path: "/NAMC/", description: "Streaming-style homepage and featured picks" },
-      { path: "/NAMC/library", description: "Collection shelves and playlists" },
-      { path: "/NAMC/search", description: "Search across media and lore" },
-      { path: "/NAMC/campfire", description: "Cozy campfire mode (coming soon)" },
-    ],
+    routes: [],
   },
 ];
 
