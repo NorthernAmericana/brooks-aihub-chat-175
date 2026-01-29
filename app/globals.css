@@ -48,16 +48,16 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
-  --cloud-bg-start: hsl(336 95% 85%);
-  --cloud-bg-end: hsl(332 88% 72%);
-  --cloud-border: hsl(332 60% 76%);
+  --cloud-bg-start: rgba(255, 255, 255, 0.74);
+  --cloud-bg-end: rgba(255, 228, 241, 0.58);
+  --cloud-border: rgba(255, 255, 255, 0.52);
   --cloud-shadow:
-    0 14px 32px rgba(246, 162, 190, 0.45), 0 6px 14px rgba(255, 198, 218, 0.35);
+    0 16px 30px rgba(10, 6, 8, 0.12), 0 6px 14px rgba(255, 162, 199, 0.18);
   --cloud-shadow-inner:
-    inset 0 3px 10px rgba(255, 255, 255, 0.9),
-    inset 0 -4px 12px rgba(246, 162, 190, 0.3);
-  --cloud-text: hsl(0 0% 100%);
-  --cloud-text-muted: rgba(255, 255, 255, 0.75);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -10px 22px rgba(255, 142, 186, 0.16);
+  --cloud-text: hsl(336 28% 12%);
+  --cloud-text-muted: rgba(44, 18, 28, 0.62);
 }
 
 /* define design tokens (dark mode) */
@@ -95,16 +95,16 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
-  --cloud-bg-start: hsl(336 95% 78%);
-  --cloud-bg-end: hsl(332 90% 64%);
-  --cloud-border: hsl(332 65% 70%);
+  --cloud-bg-start: rgba(255, 255, 255, 0.64);
+  --cloud-bg-end: rgba(255, 206, 231, 0.42);
+  --cloud-border: rgba(255, 255, 255, 0.38);
   --cloud-shadow:
-    0 16px 32px rgba(246, 144, 179, 0.55), 0 6px 16px rgba(255, 192, 214, 0.4);
+    0 18px 36px rgba(0, 0, 0, 0.38), 0 8px 16px rgba(255, 120, 175, 0.18);
   --cloud-shadow-inner:
-    inset 0 3px 10px rgba(255, 255, 255, 0.7),
-    inset 0 -5px 14px rgba(246, 144, 179, 0.35);
-  --cloud-text: hsl(0 0% 100%);
-  --cloud-text-muted: rgba(255, 255, 255, 0.75);
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -12px 26px rgba(255, 128, 188, 0.14);
+  --cloud-text: hsl(336 28% 10%);
+  --cloud-text-muted: rgba(20, 10, 14, 0.62);
 }
 
 /* define theme */
@@ -441,30 +441,76 @@
     position: relative;
     border-radius: 9999px;
     border: 1px solid var(--cloud-border);
-    background: linear-gradient(
-      180deg,
-      var(--cloud-bg-start) 0%,
-      var(--cloud-bg-end) 100%
-    );
+    background-color: var(--cloud-bg-end);
+    background-image:
+      radial-gradient(
+        circle at 18% 35%,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.55) 42%,
+        rgba(255, 255, 255, 0) 68%
+      ),
+      radial-gradient(
+        circle at 42% 18%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.5) 44%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      radial-gradient(
+        circle at 68% 32%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.46) 44%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      linear-gradient(
+        180deg,
+        var(--cloud-bg-start) 0%,
+        var(--cloud-bg-end) 100%
+      );
+    background-repeat: no-repeat;
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
     box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
     isolation: isolate;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    color: var(--cloud-text);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      filter 150ms ease;
   }
 
   .cloud-button::before,
   .cloud-button::after {
     content: "";
     position: absolute;
-    top: -25%;
-    width: 55%;
-    height: 75%;
+    top: -42%;
+    width: 60%;
+    height: 92%;
     border-radius: 9999px;
-    background: linear-gradient(
-      180deg,
-      var(--cloud-bg-start) 0%,
-      var(--cloud-bg-end) 100%
-    );
-    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
+    opacity: 0.96;
+    background-color: var(--cloud-bg-end);
+    background-image:
+      radial-gradient(
+        circle at 35% 55%,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.52) 46%,
+        rgba(255, 255, 255, 0) 74%
+      ),
+      radial-gradient(
+        circle at 70% 45%,
+        rgba(255, 236, 246, 0.72) 0%,
+        rgba(255, 236, 246, 0.42) 44%,
+        rgba(255, 236, 246, 0) 74%
+      ),
+      linear-gradient(
+        180deg,
+        var(--cloud-bg-start) 0%,
+        var(--cloud-bg-end) 100%
+      );
+    background-repeat: no-repeat;
+    box-shadow:
+      0 10px 18px rgba(10, 6, 8, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
     z-index: 0;
     pointer-events: none;
   }
@@ -493,9 +539,17 @@
 
   .cloud-button--inline::before,
   .cloud-button--inline::after {
-    top: -15%;
-    width: 48%;
-    height: 60%;
+    top: -30%;
+    width: 54%;
+    height: 74%;
+  }
+
+  .cloud-button:hover {
+    filter: brightness(1.03) saturate(1.08);
+    box-shadow:
+      0 18px 34px rgba(10, 6, 8, 0.14),
+      0 8px 16px rgba(255, 162, 199, 0.22),
+      var(--cloud-shadow-inner);
   }
 }
 
