@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ALL_VOICES } from "@/lib/voice";
 
 export default function CreateAtoPage() {
+  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,6 +83,7 @@ export default function CreateAtoPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          route: route || null,
           description: description || null,
           personalityName: personalityName || null,
           instructions,
@@ -107,6 +110,9 @@ export default function CreateAtoPage() {
       event.currentTarget.reset();
       setInstructionsText("");
       setSelectedVoiceId(ALL_VOICES[0]?.id ?? "");
+      if (data?.ato?.id) {
+        router.push(`/create-ato/${data.ato.id}`);
+      }
     } catch (_error) {
       setErrorMessage("Unable to submit your ATO request. Please try again.");
     } finally {
@@ -160,6 +166,7 @@ export default function CreateAtoPage() {
                 id="ato-name"
                 name="ato-name"
                 placeholder="Example: My Wellness ATO"
+                required
                 type="text"
               />
             </div>
@@ -169,6 +176,7 @@ export default function CreateAtoPage() {
                 id="ato-route"
                 name="ato-route"
                 placeholder="/MyWellnessATO/"
+                required
                 type="text"
               />
               <p className="text-xs text-muted-foreground">

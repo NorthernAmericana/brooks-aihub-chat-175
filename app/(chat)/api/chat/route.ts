@@ -14,6 +14,7 @@ import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
 import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
+  type AgentConfig,
   type AgentToolId,
   getAgentConfigById,
   getAgentConfigBySlash,
@@ -42,6 +43,7 @@ import {
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
+  getUnofficialAtoByRoute,
   getUserById,
   getUserEntitlements,
   saveChat,
@@ -49,7 +51,7 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import type { DBMessage, UnofficialAto } from "@/lib/db/schema";
 import {
   deriveEntitlementRules,
   formatSpoilerAccessContext,
@@ -71,6 +73,32 @@ const FREE_SUBROUTES = [
   "MyCarMindATO/DeliveryDriver",
   "MyCarMindATO/Traveler",
 ];
+
+const UNOFFICIAL_ATO_ROUTE_KEY = "unofficial-ato";
+
+const formatUnofficialAtoPrompt = (ato: UnofficialAto) => {
+  const sections = [
+    `You are ${ato.name}, an unofficial ATO inside Brooks AI HUB.`,
+    ato.description ? `Description: ${ato.description}` : null,
+    ato.personalityName ? `Personality name: ${ato.personalityName}` : null,
+    ato.route ? `Slash route: /${ato.route}/` : null,
+    ato.instructions ? `Custom instructions:\n${ato.instructions}` : null,
+    "Follow the user's custom instructions and keep the experience private and personal.",
+  ];
+
+  return sections.filter(Boolean).join("\n\n");
+};
+
+const buildUnofficialAtoAgent = (ato: UnofficialAto): AgentConfig => {
+  const defaultAgent = getDefaultAgentConfig();
+  return {
+    id: `unofficial-ato-${ato.id}`,
+    label: ato.name,
+    slash: ato.route ?? ato.name,
+    tools: defaultAgent.tools,
+    systemPromptOverride: formatUnofficialAtoPrompt(ato),
+  };
+};
 
 /**
  * Helper function to extract the parent project route from a subroute.
@@ -139,6 +167,35 @@ function getSlashTriggerFromMessages(
   const textPart = lastUserMessage.parts.find((part) => part.type === "text") as
     | { type: "text"; text: string }
     | undefined;
+
+  if (!textPart) {
+    return undefined;
+  }
+
+  const trimmed = textPart.text.trim();
+  const wrappedMatch = trimmed.match(/^\/(.+)\/(?:\s|$)/);
+  if (wrappedMatch?.[1]) {
+    return wrappedMatch[1];
+  }
+
+  const match = trimmed.match(/^\/([^\s]+)/);
+  return match?.[1];
+}
+
+function getFirstSlashTriggerFromMessages(
+  messages: ChatMessage[]
+): string | undefined {
+  const firstUserMessage = messages.find(
+    (currentMessage) => currentMessage.role === "user"
+  );
+
+  if (!firstUserMessage) {
+    return undefined;
+  }
+
+  const textPart = firstUserMessage.parts.find(
+    (part) => part.type === "text"
+  ) as { type: "text"; text: string } | undefined;
 
   if (!textPart) {
     return undefined;
@@ -223,14 +280,15 @@ export async function POST(request: Request) {
     }
 
     const enabledFileUrls = new Set<string>();
+    let activeAto: UnofficialAto | null = null;
 
     if (requestBody.atoId) {
-      const ato = await getUnofficialAtoById({
+      activeAto = await getUnofficialAtoById({
         id: requestBody.atoId,
         ownerUserId: session.user.id,
       });
 
-      if (!ato) {
+      if (!activeAto) {
         return new ChatSDKError("forbidden:chat").toResponse();
       }
 
@@ -291,9 +349,21 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
+      if (
+        !activeAto &&
+        firstMessageSlash &&
+        !getAgentConfigBySlash(firstMessageSlash)
+      ) {
+        activeAto = await getUnofficialAtoByRoute({
+          ownerUserId: session.user.id,
+          route: firstMessageSlash,
+        });
+      }
       
       // Check if this subroute requires founders access
-      const requiresFoundersForNewChat = firstMessageSlash?.includes("/") && 
+      const requiresFoundersForNewChat =
+        !activeAto &&
+        firstMessageSlash?.includes("/") &&
         !FREE_SUBROUTES.includes(firstMessageSlash);
       
       if (requiresFoundersForNewChat && !user.foundersAccess) {
@@ -302,9 +372,11 @@ export async function POST(request: Request) {
           "Founders access required for this subroute."
         ).toResponse();
       }
-      initialRouteKey = firstMessageSlash
-        ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
-        : null;
+      initialRouteKey = activeAto
+        ? UNOFFICIAL_ATO_ROUTE_KEY
+        : firstMessageSlash
+          ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
+          : null;
 
       await saveChat({
         id,
@@ -312,6 +384,8 @@ export async function POST(request: Request) {
         title: "New chat",
         visibility: selectedVisibilityType,
         routeKey: initialRouteKey,
+        ttsVoiceId: activeAto?.defaultVoiceId ?? null,
+        ttsVoiceLabel: activeAto?.defaultVoiceLabel ?? null,
       });
       titlePromise = generateTitleFromUserMessage({
         message,
@@ -328,6 +402,16 @@ export async function POST(request: Request) {
           ...convertToUIMessages(messagesFromDb),
           ...(sanitizedMessage ? [sanitizedMessage] : []),
         ];
+
+    if (!activeAto && chat?.routeKey === UNOFFICIAL_ATO_ROUTE_KEY) {
+      const firstSlash = getFirstSlashTriggerFromMessages(uiMessages);
+      if (firstSlash) {
+        activeAto = await getUnofficialAtoByRoute({
+          ownerUserId: session.user.id,
+          route: firstSlash,
+        });
+      }
+    }
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -360,11 +444,11 @@ export async function POST(request: Request) {
     const modelMessages = await convertToModelMessages(uiMessages);
 
     // Determine agent selection
-    let selectedAgent: ReturnType<
-      typeof getAgentConfigBySlash | typeof getDefaultAgentConfig
-    >;
+    let selectedAgent: AgentConfig;
 
-    if (chat?.routeKey) {
+    if (activeAto) {
+      selectedAgent = buildUnofficialAtoAgent(activeAto);
+    } else if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
       selectedAgent =
         getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
@@ -376,7 +460,9 @@ export async function POST(request: Request) {
         getDefaultAgentConfig();
     }
     
-    const requiresFoundersAccess = selectedAgent.slash.includes("/") && 
+    const requiresFoundersAccess =
+      !activeAto &&
+      selectedAgent.slash.includes("/") &&
       !FREE_SUBROUTES.includes(selectedAgent.slash);
     
     if (requiresFoundersAccess && !user.foundersAccess) {

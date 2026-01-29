@@ -2,14 +2,34 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { fetcher } from "@/lib/utils";
 
 type GreetingProps = {
-  onSelectFolder?: (folder: string) => void;
+  onSelectFolder?: (folder: string, options?: { atoId?: string }) => void;
 };
+
+type AtoListResponse = {
+  atos: Array<{
+    id: string;
+    name: string;
+    route: string | null;
+    description: string | null;
+  }>;
+};
+
+const formatAtoRoute = (value: string) =>
+  value
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\s+/g, "")
+    .replace(/\/{2,}/g, "/")
+    .replace(/[^a-zA-Z0-9/_-]/g, "");
 
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const [now, setNow] = useState(() => new Date());
+  const { data: atoData } = useSWR<AtoListResponse>("/api/ato", fetcher);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -18,6 +38,38 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  const customAtoFolders = useMemo(() => {
+    const atos = atoData?.atos ?? [];
+    return atos
+      .map((ato) => {
+        const routeSource = ato.route || ato.name;
+        const formattedRoute = formatAtoRoute(routeSource);
+        if (!formattedRoute) {
+          return null;
+        }
+        return {
+          label: ato.name,
+          slash: formattedRoute,
+          folder: `/${formattedRoute}/`,
+          foundersOnly: false,
+          badge: "custom" as const,
+          atoId: ato.id,
+        };
+      })
+      .filter(
+        (
+          folder
+        ): folder is {
+          label: string;
+          slash: string;
+          folder: string;
+          foundersOnly: boolean;
+          badge: "custom";
+          atoId: string;
+        } => Boolean(folder)
+      );
+  }, [atoData]);
 
   const suggestedFolders = useMemo(() => {
     const desiredOrder: Array<{
@@ -148,6 +200,42 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
+        {customAtoFolders.length > 0 && (
+          <div className="mb-6">
+            <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
+              your custom ATO clouds
+            </div>
+            <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
+              {customAtoFolders.map((folder, index) => (
+                <button
+                  className="cloud-button flex h-full px-4 py-2 text-xs transition hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-3 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
+                  key={folder.folder}
+                  onClick={() =>
+                    onSelectFolder?.(folder.folder, { atoId: folder.atoId })
+                  }
+                  style={cloudStyles[index % cloudStyles.length]}
+                  type="button"
+                >
+                  <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
+                    <span className="text-xs font-medium leading-snug sm:text-sm">
+                      {folder.label}
+                      <span
+                        className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-amber-500 sm:text-[0.55rem]"
+                        title="Custom ATO"
+                      >
+                        CUSTOM
+                      </span>
+                    </span>
+                    <span className="text-[0.6rem] uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[0.65rem]">
+                      {folder.folder}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
           all ATO App Folder Clouds
         </div>

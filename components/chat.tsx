@@ -436,7 +436,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
-            ...(atoId ? { atoId } : null),
+            ...(activeAtoId ? { atoId: activeAtoId } : null),
             ...request.body,
           },
         };
@@ -466,9 +466,14 @@ export function Chat({
 
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
-  const atoId = searchParams.get("atoId");
+  const searchAtoId = searchParams.get("atoId");
+  const [activeAtoId, setActiveAtoId] = useState<string | null>(searchAtoId);
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
+
+  useEffect(() => {
+    setActiveAtoId(searchAtoId);
+  }, [searchAtoId]);
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
@@ -479,15 +484,15 @@ export function Chat({
 
       setHasAppendedQuery(true);
       const params = new URLSearchParams();
-      if (atoId) {
-        params.set("atoId", atoId);
+      if (activeAtoId) {
+        params.set("atoId", activeAtoId);
       }
       const nextUrl = params.toString()
         ? `/chat/${id}?${params.toString()}`
         : `/chat/${id}`;
       window.history.replaceState({}, "", nextUrl);
     }
-  }, [query, sendMessage, hasAppendedQuery, id, atoId]);
+  }, [query, sendMessage, hasAppendedQuery, id, activeAtoId]);
 
   const { data: votes } = useSWR<Vote[]>(
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
@@ -514,23 +519,55 @@ export function Chat({
     setMessages,
   });
 
-  const handleSuggestedFolderSelect = useCallback((folder: string) => {
-    const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
-    setInput(`${normalizedFolder} `);
-
-    requestAnimationFrame(() => {
-      const textarea = document.querySelector<HTMLTextAreaElement>(
-        '[data-testid="multimodal-input"]'
-      );
-      if (!textarea) {
+  const updateAtoIdInUrl = useCallback(
+    (nextAtoId: string | null) => {
+      if (typeof window === "undefined") {
         return;
       }
+      const params = new URLSearchParams(window.location.search);
+      if (nextAtoId) {
+        params.set("atoId", nextAtoId);
+      } else {
+        params.delete("atoId");
+      }
+      const queryString = params.toString();
+      const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      window.history.replaceState({}, "", nextUrl);
+    },
+    [pathname]
+  );
 
-      textarea.focus();
-      const endPosition = textarea.value.length;
-      textarea.setSelectionRange(endPosition, endPosition);
-    });
-  }, []);
+  const handleSuggestedFolderSelect = useCallback(
+    (folder: string, options?: { atoId?: string }) => {
+      const normalizedFolder = folder.endsWith("/") ? folder : `${folder}/`;
+      setInput(`${normalizedFolder} `);
+      const nextAtoId = options?.atoId ?? null;
+      setActiveAtoId(nextAtoId);
+      updateAtoIdInUrl(nextAtoId);
+
+      requestAnimationFrame(() => {
+        const textarea = document.querySelector<HTMLTextAreaElement>(
+          '[data-testid="multimodal-input"]'
+        );
+        if (!textarea) {
+          return;
+        }
+
+        textarea.focus();
+        const endPosition = textarea.value.length;
+        textarea.setSelectionRange(endPosition, endPosition);
+      });
+    },
+    [setActiveAtoId, setInput, updateAtoIdInUrl]
+  );
+
+  const handleAtoSelection = useCallback(
+    (nextAtoId: string | null) => {
+      setActiveAtoId(nextAtoId);
+      updateAtoIdInUrl(nextAtoId);
+    },
+    [setActiveAtoId, updateAtoIdInUrl]
+  );
 
   return (
     <>
@@ -589,13 +626,14 @@ export function Chat({
           <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-4">
             {!isReadonly && (
               <MultimodalInput
-                atoId={atoId}
+                atoId={activeAtoId}
                 attachments={attachments}
                 chatId={id}
                 chatRouteKey={initialRouteKey}
                 input={input}
                 messages={messages}
                 onModelChange={setCurrentModelId}
+                onSelectAto={handleAtoSelection}
                 selectedModelId={currentModelId}
                 selectedVisibilityType={visibilityType}
                 sendMessage={sendMessage}
