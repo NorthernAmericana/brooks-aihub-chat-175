@@ -19,7 +19,7 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
-  onSelectSuggestedFolder?: (folder: string) => void;
+  onSelectSuggestedFolder?: (folder: string, options?: { atoId?: string }) => void;
 };
 
 function PureMessages({

@@ -13,15 +13,28 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ALL_VOICES } from "@/lib/voice";
 
 type AtoResponse = {
   ato?: {
     id: string;
     name: string;
+    route: string | null;
     description: string | null;
     personalityName: string | null;
     instructions: string | null;
+    defaultVoiceId: string | null;
+    defaultVoiceLabel: string | null;
+    webSearchEnabled: boolean;
+    fileSearchEnabled: boolean;
   };
   error?: string;
 };
@@ -55,9 +68,15 @@ export default function EditAtoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [atoName, setAtoName] = useState("");
+  const [atoRoute, setAtoRoute] = useState("");
   const [atoDescription, setAtoDescription] = useState("");
   const [personalityName, setPersonalityName] = useState("");
   const [instructionsText, setInstructionsText] = useState("");
+  const [defaultVoiceId, setDefaultVoiceId] = useState(
+    ALL_VOICES[0]?.id ?? ""
+  );
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [fileSearchEnabled, setFileSearchEnabled] = useState(false);
   const [atoFiles, setAtoFiles] = useState<AtoFile[]>([]);
   const [filesError, setFilesError] = useState<string | null>(null);
   const [filesFeedback, setFilesFeedback] = useState<{
@@ -92,9 +111,13 @@ export default function EditAtoPage() {
         }
 
         setAtoName(data.ato.name);
+        setAtoRoute(data.ato.route ?? "");
         setAtoDescription(data.ato.description ?? "");
         setPersonalityName(data.ato.personalityName ?? "");
         setInstructionsText(data.ato.instructions ?? "");
+        setDefaultVoiceId(data.ato.defaultVoiceId ?? ALL_VOICES[0]?.id ?? "");
+        setWebSearchEnabled(Boolean(data.ato.webSearchEnabled));
+        setFileSearchEnabled(Boolean(data.ato.fileSearchEnabled));
       } catch (error) {
         console.error(error);
         if (isActive) {
@@ -214,12 +237,21 @@ export default function EditAtoPage() {
     setIsSubmitting(true);
 
     try {
+      const selectedVoice =
+        ALL_VOICES.find((voice) => voice.id === defaultVoiceId) ?? ALL_VOICES[0];
       const response = await fetch(`/api/ato/${atoId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: atoName.trim(),
+          route: atoRoute.trim(),
+          description: atoDescription || null,
           personalityName: personalityName || null,
           instructions: instructionsText || null,
+          defaultVoiceId: selectedVoice?.id ?? null,
+          defaultVoiceLabel: selectedVoice?.label ?? null,
+          webSearchEnabled,
+          fileSearchEnabled,
         }),
       });
 
@@ -261,19 +293,38 @@ export default function EditAtoPage() {
           <CardHeader>
             <CardTitle>ATO details</CardTitle>
             <CardDescription>
-              Review the ATO name and description.
+              Review the ATO name, route, and description.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="ato-name">ATO name</Label>
-              <Input id="ato-name" readOnly type="text" value={atoName} />
+              <Input
+                id="ato-name"
+                onChange={(event) => setAtoName(event.target.value)}
+                required
+                type="text"
+                value={atoName}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ato-route">Slash route</Label>
+              <Input
+                id="ato-route"
+                onChange={(event) => setAtoRoute(event.target.value)}
+                required
+                type="text"
+                value={atoRoute}
+              />
+              <p className="text-xs text-muted-foreground">
+                Keep this route unique to your personal ATOs.
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-description">Description</Label>
               <Input
                 id="ato-description"
-                readOnly
+                onChange={(event) => setAtoDescription(event.target.value)}
                 type="text"
                 value={atoDescription}
               />
@@ -301,6 +352,27 @@ export default function EditAtoPage() {
                 value={personalityName}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ato-default-voice">Default voice</Label>
+              <Select
+                onValueChange={(value) => setDefaultVoiceId(value)}
+                value={defaultVoiceId}
+              >
+                <SelectTrigger id="ato-default-voice">
+                  <SelectValue placeholder="Select a default voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_VOICES.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>
+                      {voice.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                This voice is the default starting point for this ATO.
+              </p>
+            </div>
             <div className="rounded-md border border-muted bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
               This ATO is local-only (like a personal project or chat). Keep the
               settings simple, but feel free to customize the personality and
@@ -322,6 +394,45 @@ export default function EditAtoPage() {
                 Founders: ≤ 999.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Capabilities</CardTitle>
+            <CardDescription>
+              Control which tools this ATO can access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm text-muted-foreground">
+            <label className="flex items-start gap-2">
+              <input
+                checked={webSearchEnabled}
+                className="mt-1 h-4 w-4 accent-foreground"
+                onChange={(event) => setWebSearchEnabled(event.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                Enable web search for this ATO.
+                <span className="block text-xs text-muted-foreground">
+                  Only available when supported by the model.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                checked={fileSearchEnabled}
+                className="mt-1 h-4 w-4 accent-foreground"
+                onChange={(event) => setFileSearchEnabled(event.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                Enable file search uploads for this ATO.
+                <span className="block text-xs text-muted-foreground">
+                  Upload PDFs in the chat once enabled.
+                </span>
+              </span>
+            </label>
           </CardContent>
         </Card>
 
