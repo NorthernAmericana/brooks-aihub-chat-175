@@ -80,6 +80,7 @@ function PureMultimodalInput({
   selectedModelId,
   onModelChange,
   atoId,
+  onSelectAto,
 }: {
   chatId: string;
   chatRouteKey?: string | null;
@@ -97,6 +98,7 @@ function PureMultimodalInput({
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   atoId?: string | null;
+  onSelectAto?: (atoId: string | null) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -264,15 +266,16 @@ function PureMultimodalInput({
   }, [input]);
 
   const handleSlashSelect = useCallback(
-    (slash: string) => {
+    (slash: string, options?: { atoId?: string }) => {
       setInput(`/${slash}/ `);
       setShowSlashSuggestions(false);
+      onSelectAto?.(options?.atoId ?? null);
       // Focus the textarea
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 0);
     },
-    [setInput]
+    [onSelectAto, setInput]
   );
 
   const handleStartRecording = useCallback(async () => {
@@ -368,7 +371,14 @@ function PureMultimodalInput({
   }, [isRecording]);
 
   const submitForm = useCallback(() => {
-    window.history.pushState({}, "", `/chat/${chatId}`);
+    const params = new URLSearchParams();
+    if (atoId) {
+      params.set("atoId", atoId);
+    }
+    const nextUrl = params.toString()
+      ? `/chat/${chatId}?${params.toString()}`
+      : `/chat/${chatId}`;
+    window.history.pushState({}, "", nextUrl);
 
     const parsedAction = parseSlashAction(input);
 
@@ -431,6 +441,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    atoId,
     resetHeight,
     messages.length,
     chatRouteKey,

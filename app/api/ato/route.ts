@@ -5,12 +5,29 @@ import { auth } from "@/app/(auth)/auth";
 import {
   createUnofficialAto,
   getUnofficialAtoCountByOwner,
+  getUnofficialAtoByRoute,
   getUnofficialAtosByOwner,
   getUserById,
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
+import { listAgentConfigs } from "@/lib/ai/agents/registry";
 
 const allowedIntelligenceModes = ["Hive", "ATO-Limited"] as const;
+
+const formatAtoRoute = (value: string) =>
+  value
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\s+/g, "")
+    .replace(/\/{2,}/g, "/")
+    .replace(/[^a-zA-Z0-9/_-]/g, "");
+
+const normalizeAtoRoute = (value: string) => formatAtoRoute(value).toLowerCase();
+
+const isReservedAtoRoute = (normalizedRoute: string) =>
+  listAgentConfigs().some(
+    (agent) => normalizeAtoRoute(agent.slash) === normalizedRoute
+  );
 
 // Force dynamic rendering to prevent prerendering issues with auth()
 export const dynamic = "force-dynamic";
@@ -38,6 +55,7 @@ export async function POST(request: Request) {
 
   let payload: {
     name?: string;
+    route?: string | null;
     description?: string | null;
     personalityName?: string | null;
     instructions?: string | null;
@@ -63,6 +81,36 @@ export async function POST(request: Request) {
 
   if (!name) {
     return NextResponse.json({ error: "name is required." }, { status: 400 });
+  }
+
+  const rawRoute = typeof payload.route === "string" ? payload.route : "";
+  const formattedRoute = formatAtoRoute(rawRoute || name);
+  const normalizedRoute = normalizeAtoRoute(formattedRoute);
+
+  if (!formattedRoute || !normalizedRoute) {
+    return NextResponse.json(
+      { error: "slash route is required." },
+      { status: 400 }
+    );
+  }
+
+  if (isReservedAtoRoute(normalizedRoute)) {
+    return NextResponse.json(
+      { error: "Slash route conflicts with an existing ATO." },
+      { status: 400 }
+    );
+  }
+
+  const existingRoute = await getUnofficialAtoByRoute({
+    ownerUserId: session.user.id,
+    route: formattedRoute,
+  });
+
+  if (existingRoute) {
+    return NextResponse.json(
+      { error: "Slash route is already in use." },
+      { status: 400 }
+    );
   }
 
   const user = await getUserById({ id: session.user.id });
@@ -140,6 +188,7 @@ export async function POST(request: Request) {
   const ato = await createUnofficialAto({
     ownerUserId: session.user.id,
     name,
+    route: formattedRoute,
     description:
       typeof payload.description === "string" ? payload.description : null,
     personalityName:

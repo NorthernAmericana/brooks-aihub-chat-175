@@ -228,6 +228,7 @@ export type UserLocation = InferSelectModel<typeof userLocation>;
 export const unofficialAto = pgTable("UnofficialAto", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),
+  route: text("route"),
   description: text("description"),
   personalityName: text("personalityName"),
   instructions: text("instructions"),

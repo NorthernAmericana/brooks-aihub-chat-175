@@ -94,12 +94,16 @@ export async function saveChat({
   title,
   visibility,
   routeKey,
+  ttsVoiceId,
+  ttsVoiceLabel,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
   routeKey?: string | null;
+  ttsVoiceId?: string | null;
+  ttsVoiceLabel?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -109,6 +113,8 @@ export async function saveChat({
       title,
       visibility,
       routeKey: routeKey ?? null,
+      ttsVoiceId: ttsVoiceId ?? null,
+      ttsVoiceLabel: ttsVoiceLabel ?? null,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -250,6 +256,7 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
 export async function createUnofficialAto({
   ownerUserId,
   name,
+  route,
   description,
   personalityName,
   instructions,
@@ -264,6 +271,7 @@ export async function createUnofficialAto({
 }: {
   ownerUserId: string;
   name: string;
+  route?: string | null;
   description?: string | null;
   personalityName?: string | null;
   instructions?: string | null;
@@ -282,6 +290,7 @@ export async function createUnofficialAto({
       .values({
         ownerUserId,
         name,
+        route: route ?? null,
         description: description ?? null,
         personalityName: personalityName ?? null,
         instructions: instructions ?? null,
@@ -378,6 +387,40 @@ export async function getUnofficialAtoById({
   }
 }
 
+export async function getUnofficialAtoByRoute({
+  ownerUserId,
+  route,
+}: {
+  ownerUserId: string;
+  route: string;
+}) {
+  try {
+    const normalizedRoute = route
+      .trim()
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/\s+/g, "")
+      .replace(/\/{2,}/g, "/")
+      .replace(/[^a-zA-Z0-9/_-]/g, "")
+      .toLowerCase();
+    const [record] = await db
+      .select()
+      .from(unofficialAto)
+      .where(
+        and(
+          eq(unofficialAto.ownerUserId, ownerUserId),
+          sql`lower(${unofficialAto.route}) = ${normalizedRoute}`
+        )
+      );
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO by route"
+    );
+  }
+}
+
 export async function updateUnofficialAtoSettings({
   id,
   ownerUserId,
@@ -385,6 +428,11 @@ export async function updateUnofficialAtoSettings({
   fileSearchEnabled,
   fileUsageEnabled,
   fileStoragePath,
+  route,
+  name,
+  description,
+  defaultVoiceId,
+  defaultVoiceLabel,
   personalityName,
   instructions,
   planMetadata,
@@ -395,6 +443,11 @@ export async function updateUnofficialAtoSettings({
   fileSearchEnabled?: boolean;
   fileUsageEnabled?: boolean;
   fileStoragePath?: string | null;
+  route?: string | null;
+  name?: string;
+  description?: string | null;
+  defaultVoiceId?: string | null;
+  defaultVoiceLabel?: string | null;
   personalityName?: string | null;
   instructions?: string | null;
   planMetadata?: Record<string, unknown> | null;
@@ -405,6 +458,11 @@ export async function updateUnofficialAtoSettings({
       fileSearchEnabled?: boolean;
       fileUsageEnabled?: boolean;
       fileStoragePath?: string | null;
+      route?: string | null;
+      name?: string;
+      description?: string | null;
+      defaultVoiceId?: string | null;
+      defaultVoiceLabel?: string | null;
       personalityName?: string | null;
       instructions?: string | null;
       planMetadata?: Record<string, unknown> | null;
@@ -427,6 +485,26 @@ export async function updateUnofficialAtoSettings({
 
     if (typeof fileStoragePath !== "undefined") {
       updateValues.fileStoragePath = fileStoragePath;
+    }
+
+    if (typeof route !== "undefined") {
+      updateValues.route = route;
+    }
+
+    if (typeof name === "string") {
+      updateValues.name = name;
+    }
+
+    if (typeof description !== "undefined") {
+      updateValues.description = description;
+    }
+
+    if (typeof defaultVoiceId !== "undefined") {
+      updateValues.defaultVoiceId = defaultVoiceId;
+    }
+
+    if (typeof defaultVoiceLabel !== "undefined") {
+      updateValues.defaultVoiceLabel = defaultVoiceLabel;
     }
 
     if (typeof personalityName !== "undefined") {
@@ -457,6 +535,37 @@ export async function updateUnofficialAtoSettings({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update unofficial ATO"
+    );
+  }
+}
+
+export async function deleteUnofficialAto({
+  id,
+  ownerUserId,
+}: {
+  id: string;
+  ownerUserId: string;
+}) {
+  try {
+    await db
+      .delete(atoFile)
+      .where(and(eq(atoFile.atoId, id), eq(atoFile.ownerUserId, ownerUserId)));
+
+    const [record] = await db
+      .delete(unofficialAto)
+      .where(
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete unofficial ATO"
     );
   }
 }
