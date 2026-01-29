@@ -239,11 +239,11 @@ export function Chat({
       if (typeof window === "undefined") {
         return null;
       }
-      if ("AudioContext" in window) {
+      if (window.AudioContext) {
         return window.AudioContext;
       }
       const webkitContext = (
-        window as typeof window & {
+        window as unknown as {
           webkitAudioContext?: typeof AudioContext;
         }
       ).webkitAudioContext;
