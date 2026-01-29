@@ -42,7 +42,6 @@ const CHAT_THEMES = [
     id: "forest",
     label: "Forest Beats",
     audioTitle: "Forest Beats",
-    audioFile: "forest-beats-1.mp3",
     audioSrc: "/audio/forest-beats-1.mp3",
     background: "/backgrounds/brooksaihub-landingpage-background.png",
     badge: "free",
@@ -51,9 +50,32 @@ const CHAT_THEMES = [
     id: "space",
     label: "8-bit Space Tunes",
     audioTitle: "8-bit Space Tunes",
-    audioFile: "8bitspace-01-audio.mp3",
     audioSrc: "/audio/8bitspace-01-audio.mp3",
     background: "/backgrounds/8bitspace-background.png",
+    badge: "free",
+  },
+  {
+    id: "bens-garden",
+    label: "Benjamin Bear's Garden",
+    audioTitle: "Benjamin Bear's Garden",
+    audioSrc: "/audio/bens-garden-song.mp3",
+    background: "/backgrounds/bens-garden-backgrounds.png",
+    badge: "free",
+  },
+  {
+    id: "my-daughter-death-1",
+    label: "My Daughter, Death 1",
+    audioTitle: "My Daughter, Death 1",
+    audioSrc: "/audio/mdd-cuts-song.mp3",
+    background: "/backgrounds/mdd-backgrounds-02.png",
+    badge: "free",
+  },
+  {
+    id: "ghost-girl-1",
+    label: "The Ghost Girl 1",
+    audioTitle: "The Ghost Girl 1",
+    audioSrc: "/audio/the-ghost-girl-song.mp3",
+    background: "/backgrounds/the-ghost-girl-app-theme.png",
     badge: "free",
   },
 ] as const;
@@ -61,14 +83,13 @@ const CHAT_THEMES = [
 type ChatThemeId = (typeof CHAT_THEMES)[number]["id"];
 type ChatThemeOption = Pick<
   (typeof CHAT_THEMES)[number],
-  "id" | "label" | "audioFile" | "badge"
+  "id" | "label" | "badge"
 >;
 
 const CHAT_THEME_OPTIONS: ChatThemeOption[] = CHAT_THEMES.map(
-  ({ id, label, audioFile, badge }) => ({
+  ({ id, label, badge }) => ({
     id,
     label,
-    audioFile,
     badge,
   })
 );
