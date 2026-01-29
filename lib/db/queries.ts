@@ -539,6 +539,37 @@ export async function updateUnofficialAtoSettings({
   }
 }
 
+export async function deleteUnofficialAto({
+  id,
+  ownerUserId,
+}: {
+  id: string;
+  ownerUserId: string;
+}) {
+  try {
+    await db
+      .delete(atoFile)
+      .where(and(eq(atoFile.atoId, id), eq(atoFile.ownerUserId, ownerUserId)));
+
+    const [record] = await db
+      .delete(unofficialAto)
+      .where(
+        and(
+          eq(unofficialAto.id, id),
+          eq(unofficialAto.ownerUserId, ownerUserId)
+        )
+      )
+      .returning();
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete unofficial ATO"
+    );
+  }
+}
+
 export async function createAtoFile({
   atoId,
   ownerUserId,

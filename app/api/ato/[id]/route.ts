@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
+  deleteUnofficialAto,
   getUnofficialAtoByRoute,
   getUnofficialAtoById,
   getUserById,
@@ -232,4 +233,32 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ato: updated });
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const { id: atoId } = await params;
+
+  if (!atoId) {
+    return NextResponse.json({ error: "id is required." }, { status: 400 });
+  }
+
+  const deleted = await deleteUnofficialAto({
+    id: atoId,
+    ownerUserId: session.user.id,
+  });
+
+  if (!deleted) {
+    return NextResponse.json({ error: "ATO not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ ato: deleted });
 }
