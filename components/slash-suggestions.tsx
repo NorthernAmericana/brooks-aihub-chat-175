@@ -84,7 +84,7 @@ export function SlashSuggestions({
         {topThree.length > 0 ? (
           topThree.map((agent) => (
             <Button
-              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm text-foreground transition hover:bg-muted/50 hover:border-foreground/40"
+              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm transition hover:scale-[1.01] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
               key={agent.id}
               onClick={() => onSelect(agent.slash)}
               variant="ghost"

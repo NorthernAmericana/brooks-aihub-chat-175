@@ -73,11 +73,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           folder: `/${agent.slash}/`,
           foundersOnly: entry.foundersOnly,
         };
-        
+
         if (entry.badge) {
           folderItem.badge = entry.badge;
         }
-        
+
         return folderItem;
       })
       .filter(
@@ -154,7 +154,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
           {suggestedFolders.map((folder, index) => (
             <button
-              className="cloud-button flex h-full px-4 py-2 text-xs text-foreground transition hover:bg-muted/50 hover:border-foreground/40 sm:px-4 sm:py-3 sm:text-sm"
+              className="cloud-button flex h-full px-4 py-2 text-xs transition hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-3 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
               key={folder.folder}
               onClick={() => onSelectFolder?.(folder.folder)}
               style={cloudStyles[index % cloudStyles.length]}
@@ -165,7 +165,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   {folder.label}
                   {folder.badge === "gem" ? (
                     <span
-                      aria-label="Founders access only"
+                      aria-hidden="true"
                       className="ml-1 inline-flex align-middle text-sm"
                       title="Founders access only"
                     >
@@ -173,12 +173,14 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                     </span>
                   ) : folder.badge === "free" ? (
                     <span
-                      aria-label="Free access"
                       className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-green-500 animate-pulse sm:text-[0.55rem]"
                       title="Free access - no founders subscription required"
                     >
                       FREE
                     </span>
+                  ) : null}
+                  {folder.badge === "gem" ? (
+                    <span className="sr-only">Founders access only</span>
                   ) : null}
                 </span>
                 <span className="text-[0.6rem] uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[0.65rem]">

@@ -247,7 +247,7 @@ export function Chat({
           votes={votes}
         />
 
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+        <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-4">
           {!isReadonly && (
             <MultimodalInput
               atoId={atoId}
