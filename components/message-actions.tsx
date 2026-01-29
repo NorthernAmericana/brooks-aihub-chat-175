@@ -46,21 +46,11 @@ export function PureMessageActions({
     .join("\n")
     .trim();
 
-  const keepThemeAudioPlaying = () => {
-    const themeAudio = document.querySelector<HTMLAudioElement>(
-      "[data-chat-theme-audio]"
-    );
-    if (!themeAudio) {
+  const requestThemeAudioResume = () => {
+    if (typeof window === "undefined") {
       return;
     }
-    if (themeAudio.muted) {
-      themeAudio.muted = false;
-    }
-    if (themeAudio.paused) {
-      themeAudio.play().catch(() => {
-        // Ignore: user settings or autoplay policies may block playback.
-      });
-    }
+    window.dispatchEvent(new Event("brooks-ai-hub:resume-theme-audio"));
   };
 
   const handleCopy = async () => {
@@ -164,7 +154,7 @@ export function PureMessageActions({
 
       setIsPlaying(true);
       const playPromise = audio.play();
-      keepThemeAudioPlaying();
+      requestThemeAudioResume();
       await playPromise;
       toast.success("Playing response.");
     } catch (error) {
