@@ -113,9 +113,12 @@ export default function StorePage() {
               className="store-app-card group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 cursor-pointer"
               key={app.id}
               onClick={() => {
-                // Only BrooksBears has a dedicated app page
                 if (app.id === 1) {
                   router.push("/brooksbears-app");
+                  return;
+                }
+                if (app.id === 2) {
+                  router.push("/mycarmindato-app");
                 }
               }}
             >

@@ -7,6 +7,7 @@ import {
   Runner,
   withTrace,
 } from "@openai/agents";
+import { OpenAI, type VectorStoreSearchResult } from "@/lib/openai/client";
 import type { ChatMessage } from "@/lib/types";
 
 // Configuration constants
@@ -22,6 +23,7 @@ const CITIES_FILE_PATH = path.join(
 // Tool definitions - using file search
 // Note: Vector store ID should be configured for MyCarMindATO specific data
 const fileSearch = fileSearchTool([VECTOR_STORE_ID]);
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const classify = new Agent({
   name: "Classify",
@@ -145,6 +147,64 @@ let cityDataCache: CityRecord[] | null = null;
 
 const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
 
+const buildCityIndex = (cities: CityRecord[]) => {
+  const cityNames: string[] = [];
+  const seen = new Set<string>();
+
+  for (const city of cities) {
+    const name = city.city?.trim();
+    if (!name) {
+      continue;
+    }
+    const normalized = normalizeQueryValue(name);
+    if (seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    cityNames.push(name);
+  }
+
+  cityNames.sort((a, b) => a.localeCompare(b));
+
+  if (!cityNames.length) {
+    return "City Index: No city names available.";
+  }
+
+  return `City Index (${cityNames.length}):\n${cityNames
+    .map((name) => `- ${name}`)
+    .join("\n")}`;
+};
+
+const buildVectorStoreSummary = (results: VectorStoreSearchResult[]) => {
+  if (results.length === 0) {
+    return "Vector Store Context: No matching vector store results.";
+  }
+
+  const lines = results.slice(0, 5).map((result) => {
+    const scoreValue = result.score ?? null;
+    const scoreLabel =
+      typeof scoreValue === "number" && Number.isFinite(scoreValue)
+        ? scoreValue.toFixed(2)
+        : "n/a";
+    return `- ${result.filename} (score: ${scoreLabel}, id: ${result.file_id})`;
+  });
+
+  return `Vector Store Context:\n${lines.join("\n")}`;
+};
+
+const loadVectorStoreResults = async (query: string) => {
+  if (!query.trim()) {
+    const emptyResults: VectorStoreSearchResult[] = [];
+    return emptyResults;
+  }
+
+  const results = await client.vectorStores.search(VECTOR_STORE_ID, {
+    query,
+    max_num_results: 10,
+  });
+  return results.data;
+};
+
 const loadCityData = async () => {
   if (cityDataCache) {
     return cityDataCache;
@@ -162,7 +222,7 @@ const selectMatchingCities = (
 ): CityRecord[] => {
   const normalizedQueries = queries
     .map((query) => normalizeQueryValue(query))
-    .filter(Boolean);
+    .filter((value): value is string => Boolean(value));
 
   if (!normalizedQueries.length) {
     return [];
@@ -171,16 +231,38 @@ const selectMatchingCities = (
   const matches: CityRecord[] = [];
 
   for (const city of cities) {
-    const cityName = normalizeQueryValue(city.city ?? "");
-    if (!cityName) {
+    const locationTerms: string[] = [];
+    const cityName = city.city?.trim();
+    if (cityName) {
+      locationTerms.push(cityName);
+    }
+    if (city.sub_areas) {
+      for (const area of city.sub_areas) {
+        if (area.name) {
+          locationTerms.push(area.name);
+        }
+      }
+    }
+
+    const normalizedTerms = locationTerms
+      .map((term) => normalizeQueryValue(term))
+      .filter((value): value is string => Boolean(value));
+    if (!normalizedTerms.length) {
       continue;
     }
 
-    const isMatch = normalizedQueries.some(
-      (query) =>
-        (query && cityName.includes(query)) ||
-        (query && query.includes(cityName))
-    );
+    let isMatch = false;
+    for (const query of normalizedQueries) {
+      for (const term of normalizedTerms) {
+        if (term.includes(query) || query.includes(term)) {
+          isMatch = true;
+          break;
+        }
+      }
+      if (isMatch) {
+        break;
+      }
+    }
 
     if (isMatch) {
       matches.push(city);
@@ -198,7 +280,7 @@ const formatCitySummary = (city: CityRecord) => {
   const subAreaNames =
     city.sub_areas
       ?.map((area) => area.name)
-      .filter(Boolean)
+      .filter((value): value is string => Boolean(value))
       .slice(0, 4) ?? [];
   const vibeTags = city.identity_vibe_tags?.slice(0, 6) ?? [];
   const anchors = city.anchors?.slice(0, 2) ?? [];
@@ -219,7 +301,7 @@ const formatCitySummary = (city: CityRecord) => {
     travelLogic.parking ? `Parking: ${travelLogic.parking}` : null,
     anchors.length ? `Anchors: ${anchors.join(" | ")}` : null,
   ]
-    .filter(Boolean)
+    .filter((value): value is string => Boolean(value))
     .join("\n");
 };
 
@@ -303,12 +385,20 @@ export const runMyCarMindAtoWorkflow = async ({
       input_as_text: inputText,
     };
 
-    const cityData = await loadCityData();
+    const vectorSearchQuery = [workflow.input_as_text, homeLocationText]
+      .filter((value): value is string => Boolean(value))
+      .join(" ");
+    const [cityData, vectorStoreResults] = await Promise.all([
+      loadCityData(),
+      loadVectorStoreResults(vectorSearchQuery),
+    ]);
     const matchingCities = selectMatchingCities(cityData, [
       workflow.input_as_text,
       homeLocationText ?? "",
     ]);
     const repoCityContext = buildRepoCityContext(matchingCities);
+    const cityIndexContext = buildCityIndex(cityData);
+    const vectorSummary = buildVectorStoreSummary(vectorStoreResults);
     const homeContext = homeLocationText
       ? `Home Location:\n${homeLocationText}`
       : "Home Location: Not provided.";
@@ -325,6 +415,14 @@ export const runMyCarMindAtoWorkflow = async ({
       {
         role: "system",
         content: [{ type: "input_text", text: repoCityContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: cityIndexContext }],
+      },
+      {
+        role: "system",
+        content: [{ type: "input_text", text: vectorSummary }],
       },
     ];
 
