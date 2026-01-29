@@ -42,6 +42,7 @@ const CHAT_THEMES = [
     audioFile: "forest-beats-1.mp3",
     audioSrc: "/audio/forest-beats-1.mp3",
     background: "/backgrounds/brooksaihub-landingpage-background.png",
+    badge: "free",
   },
   {
     id: "space",
@@ -50,20 +51,22 @@ const CHAT_THEMES = [
     audioFile: "8bitspace-01-audio.mp3",
     audioSrc: "/audio/8bitspace-01-audio.mp3",
     background: "/backgrounds/8bitspace-background.png",
+    badge: "free",
   },
 ] as const;
 
 type ChatThemeId = (typeof CHAT_THEMES)[number]["id"];
 type ChatThemeOption = Pick<
   (typeof CHAT_THEMES)[number],
-  "id" | "label" | "audioFile"
+  "id" | "label" | "audioFile" | "badge"
 >;
 
 const CHAT_THEME_OPTIONS: ChatThemeOption[] = CHAT_THEMES.map(
-  ({ id, label, audioFile }) => ({
+  ({ id, label, audioFile, badge }) => ({
     id,
     label,
     audioFile,
+    badge,
   })
 );
 const DEFAULT_CHAT_THEME: ChatThemeId = "forest";

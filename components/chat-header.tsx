@@ -33,6 +33,7 @@ type ThemeOption = {
   id: string;
   label: string;
   audioFile: string;
+  badge?: "free";
 };
 
 function PureChatHeader({
@@ -139,8 +140,13 @@ function PureChatHeader({
                       key={theme.id}
                       value={theme.id}
                     >
-                      <span className="font-medium leading-tight">
+                      <span className="flex items-center gap-1 font-medium leading-tight">
                         {theme.label}
+                        {theme.badge === "free" ? (
+                          <span className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-green-500 animate-pulse">
+                            Free
+                          </span>
+                        ) : null}
                       </span>
                       <span className="text-muted-foreground text-xs">
                         {theme.audioFile}
