@@ -324,28 +324,20 @@
 
   .intro-sky {
     background:
-      radial-gradient(
-        circle at 16% 14%,
-        rgba(120, 190, 160, 0.25),
-        transparent 46%
-      ),
-      radial-gradient(
-        circle at 82% 18%,
-        rgba(90, 150, 190, 0.22),
-        transparent 42%
-      ),
       linear-gradient(
         180deg,
-        #0b1a16 0%,
-        #0f2a21 35%,
-        #133829 62%,
-        #08110f 100%
+        rgba(6, 16, 12, 0.7) 0%,
+        rgba(5, 11, 9, 0.9) 100%
       ),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='260' viewBox='0%200%20800%20260'%3E%3Crect width='800' height='260' fill='none'/%3E%3Cg fill='%230b1712' opacity='0.85'%3E%3Cpolygon points='30,260%2090,120%20150,260'/%3E%3Cpolygon points='120,260%20190,110%20260,260'/%3E%3Cpolygon points='220,260%20300,130%20380,260'/%3E%3Cpolygon points='340,260%20420,100%20500,260'/%3E%3Cpolygon points='460,260%20520,140%20600,260'/%3E%3Cpolygon points='560,260%20640,115%20720,260'/%3E%3Cpolygon points='680,260%20750,150%20820,260'/%3E%3C/g%3E%3Cg fill='%2308120f' opacity='0.95' transform='translate(-40,20)'%3E%3Cpolygon points='0,260%2060,140%20120,260'/%3E%3Cpolygon points='100,260%20180,120%20260,260'/%3E%3Cpolygon points='220,260%20300,150%20380,260'/%3E%3Cpolygon points='340,260%20420,110%20500,260'/%3E%3Cpolygon points='460,260%20540,135%20620,260'/%3E%3Cpolygon points='580,260%20660,150%20740,260'/%3E%3Cpolygon points='700,260%20780,120%20860,260'/%3E%3C/g%3E%3C/svg%3E");
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat-x;
-    background-position: center, center, center, bottom center;
-    background-size: cover, cover, cover, 800px 260px;
-    background-blend-mode: screen, screen, normal, normal;
+      radial-gradient(
+        circle at 50% 18%,
+        rgba(90, 160, 130, 0.28),
+        transparent 62%
+      ),
+      url("/backgrounds/brooksaihub-landingpage-background.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
 
   .intro-stars {

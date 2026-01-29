@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/toast";
 
 export default function IntroPage() {
@@ -11,6 +11,7 @@ export default function IntroPage() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleFoundersAccess = async () => {
     if (!session?.user) {
@@ -62,8 +63,54 @@ export default function IntroPage() {
     }
   }, [router, status]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    audio.muted = true;
+    audio.volume = 0.35;
+
+    const startMuted = async () => {
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: autoplay policies may block background audio.
+      }
+    };
+
+    const handleInteraction = async () => {
+      audio.muted = false;
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: user settings or browser policies may block playback.
+      }
+    };
+
+    void startMuted();
+
+    window.addEventListener("pointerdown", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
+
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#0a1511] text-white">
+      <audio
+        ref={audioRef}
+        src="/audio/forest-background-sounds.mp3"
+        loop
+        preload="auto"
+        playsInline
+      />
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
       <div className="intro-mist absolute inset-0" />
