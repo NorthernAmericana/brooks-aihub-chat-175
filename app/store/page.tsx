@@ -12,8 +12,6 @@ const INSTALL_KEYS = {
   namc: "ato-app-installed:namc",
 } as const;
 
-const MYFLOWERAI_CHAT_PATH = "/brooks-ai-hub?query=%2FMyFlowerAI%2F";
-
 const apps = [
   {
     id: 1,
@@ -54,7 +52,7 @@ const apps = [
   {
     id: 3,
     name: "MyFlowerAI",
-    path: MYFLOWERAI_CHAT_PATH,
+    path: "/MyFlowerAI",
     storePath: "/myflowerai-app",
     installKey: INSTALL_KEYS.myFlowerAi,
     description: "Cannabis tracking, photo logs, and harm-reduction insights",
