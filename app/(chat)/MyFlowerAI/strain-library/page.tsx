@@ -42,11 +42,22 @@ const parseStrainRecord = (raw: string): StrainRecord | null => {
   }
 };
 
+const isPlaceholderStrain = (record: StrainRecord): boolean => {
+  const id = record.id?.toLowerCase() ?? "";
+  const name = record.strain?.name?.toLowerCase() ?? "";
+
+  return id.startsWith("example-") || name.startsWith("example ");
+};
+
 const toListItem = (record: StrainRecord): StrainListItem | null => {
   const id = record.id?.trim();
   const name = record.strain?.name?.trim();
 
   if (!id || !name) {
+    return null;
+  }
+
+  if (isPlaceholderStrain(record)) {
     return null;
   }
 
@@ -101,7 +112,9 @@ const loadStrains = async (): Promise<StrainListItem[]> => {
 
   const strainsDir = path.join(dataRoot, "strains");
   const strainFiles = await safeReadDir(strainsDir);
-  const jsonFiles = strainFiles.filter((file) => file.endsWith(".json"));
+  const jsonFiles = strainFiles.filter(
+    (file) => file.endsWith(".json") && file !== "EXAMPLE-TEMPLATE.json"
+  );
   const fileContents = await Promise.all(
     jsonFiles.map((file) => safeReadFile(path.join(strainsDir, file)))
   );
