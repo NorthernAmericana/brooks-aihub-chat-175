@@ -8,6 +8,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 export default function BrooksBearsAppPage() {
   const router = useRouter();
   const [isInstalled, setIsInstalled] = useState(false);
+  const [hasHydratedInstallState, setHasHydratedInstallState] = useState(false);
   const [showDeletePrompt, setShowDeletePrompt] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
@@ -24,6 +25,29 @@ export default function BrooksBearsAppPage() {
     "/icons/brooksbears-appicon.png",
     "/icons/brooksbears-appicon.png",
   ];
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedValue = window.localStorage.getItem(
+      "ato-app-installed:brooksbears"
+    );
+    setIsInstalled(storedValue === "true");
+    setHasHydratedInstallState(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedInstallState || typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      "ato-app-installed:brooksbears",
+      String(isInstalled)
+    );
+  }, [hasHydratedInstallState, isInstalled]);
 
   const handleInstallClick = () => {
     if (!isInstalled) {
