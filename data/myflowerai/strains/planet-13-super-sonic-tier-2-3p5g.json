@@ -1,0 +1,202 @@
+{
+  "schema_version": "1.1",
+  "visibility": {
+    "client_safe": true,
+    "excluded_fields": [
+      "product.location",
+      "product.price_current_usd",
+      "product.price_original_usd",
+      "sources",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "id": "planet-13-super-sonic-tier-2-3p5g",
+  "app_namespace": "myflowerai",
+  "strain": {
+    "name": "Super Sonic Tier 2",
+    "type": "hybrid",
+    "brand": "Planet 13",
+    "lineage": [
+      "Gary Payton",
+      "Project 4516"
+    ],
+    "breeder": "Purple City Genetics (reported)"
+  },
+  "product": {
+    "dispensary": "Planet 13",
+    "category": "flower",
+    "form": "3.5g Flower Jar",
+    "size_g": 3.5,
+    "sku": null,
+    "in_stock": null
+  },
+  "stats": {
+    "total_thc_percent": 19.4,
+    "total_cbd_percent": 0.1,
+    "total_cannabinoids_percent": 22.6,
+    "total_terpenes_percent": 1.01,
+    "top_terpenes": [
+      {
+        "name": "beta-Caryophyllene",
+        "percent": 0.45
+      },
+      {
+        "name": "alpha-Humulene",
+        "percent": 0.32
+      },
+      {
+        "name": "Limonene",
+        "percent": 0.24
+      }
+    ],
+    "potency_breakdown_percent": {
+      "thca": 21.6,
+      "delta9_thc": 0.5,
+      "cbga": 0.35,
+      "cbg": 0.08,
+      "cbda": 0.05,
+      "cbc": "<LOQ",
+      "cbd": 0.05,
+      "cbdv": "<LOQ",
+      "cbn": "<LOQ",
+      "delta8_thc": "<LOQ",
+      "thcv": "<LOQ"
+    },
+    "potency_breakdown_mg": {
+      "thca_mg": 756,
+      "delta9_thc_mg": 17.5,
+      "cbga_mg": 12.25,
+      "cbg_mg": 2.8,
+      "cbda_mg": 1.75,
+      "cbn_mg": null
+    }
+  },
+  "description": {
+    "dispensary_bio": "Super Sonic Tier 2 is a sativa-leaning hybrid known for an earthy, spicy aroma layered with citrus and tropical fruit notes. The effects arrive fast with clear-headed energy, sociable creativity, and a light body calm that keeps the session functional.",
+    "vibes_like": [
+      "Jump-starting the day with clean, bright energy",
+      "Staying social and creative without heavy sedation",
+      "Easing stress while keeping momentum"
+    ],
+    "product_positioning": "Planet 13 Tier 2 flower jars deliver terpene-forward indoor buds at a mid-tier price point. The 3.5g jar highlights balanced potency and a bright profile built for daytime-friendly sessions.",
+    "brand_info": "Planet 13 cultivates indoor flower with a focus on consistent terpene expression and approachable pricing tiers. The Tier 2 lineup balances quality and value for everyday use in Florida stores."
+  },
+  "coa": {
+    "status": "reported",
+    "lab": "Planet 13 partner labs",
+    "laboratory_id": "not listed",
+    "sample_matrix": "Whole Flower",
+    "admin_route": "Inhalation",
+    "product_name_on_coa": "Super Sonic Tier 2 Flower 3.5g",
+    "cultivar_on_coa": "Super Sonic",
+    "batch_unit_size_g": 3.5,
+    "cultivation_facility": "Planet 13 Florida",
+    "processing_facility": "Planet 13 Florida",
+    "seed_to_sale_id": null,
+    "qa_sample_id": null,
+    "batch_size_g": null,
+    "units_sampled": null,
+    "total_amt_sampled_g": null
+  },
+  "tags": [
+    "hybrid",
+    "sativa-leaning",
+    "citrus",
+    "tropical",
+    "spicy",
+    "earthy",
+    "uplifting",
+    "creative",
+    "daytime"
+  ],
+  "your_notes": {
+    "rating_1to10": null,
+    "felt_like": [],
+    "avoid_if": [],
+    "session_notes": ""
+  },
+  "session_template": {
+    "suggested_methods": [
+      "joint",
+      "vaporizer_dry_herb",
+      "pipe"
+    ],
+    "suggested_dose_guidance_text": "This is a sativa-leaning hybrid around 19% THC. Start with 0.25g for a clear, energizing lift and increase slowly to avoid overstimulation.",
+    "recommended_questions": [
+      "What method did you use to consume this strain?",
+      "Approximately how much did you use?",
+      "What time of day was your session?",
+      "Did you feel energized, focused, or social?",
+      "How did the body effects feel?",
+      "Did you notice any negative effects?",
+      "On a scale of 1-10, how intense was it?",
+      "Did it match the mood you wanted?",
+      "Would you choose Super Sonic Tier 2 again?"
+    ]
+  },
+  "meaning": {
+    "aroma_flavor_tags": [
+      "earthy",
+      "spicy",
+      "peppery",
+      "citrus",
+      "tropical",
+      "herbal",
+      "woody"
+    ],
+    "effect_tags": [
+      "energizing",
+      "uplifting",
+      "creative",
+      "mood-enhancing",
+      "stress-relief",
+      "calming",
+      "focused"
+    ],
+    "dominant_terpenes": [
+      "caryophyllene",
+      "humulene",
+      "limonene"
+    ],
+    "minor_cannabinoids_present": [
+      "CBG"
+    ],
+    "disclaimers": [
+      "This information is provided for general informational purposes only and is not intended as medical advice.",
+      "Terpene and cannabinoid profiles are commonly associated with certain characteristics but individual experiences may differ.",
+      "Effects and experiences may vary by individual. Start with a low dose and wait to understand your personal response."
+    ]
+  },
+  "normalized": {
+    "canonical_strain_name": "super sonic tier 2",
+    "canonical_brand": "planet 13",
+    "canonical_product_category": "flower",
+    "canonical_form_factor": "3.5g_whole_flower",
+    "ids": {
+      "strain_key": "7e2424f30cc9fd60",
+      "product_key": "dfb298c52adf3b89"
+    }
+  },
+  "comparative_context": {
+    "alternative_genetics_note": "Multiple cultivators use the Super Sonic name for slightly different hybrids. Many versions involve Gary Payton genetics, while some markets list alternate crosses or phenotypes.",
+    "market_availability": [
+      "Florida (Planet 13 Tier 2 flower jars and pre-rolls)",
+      "California (Pacific Reserve 3.5g flower bags)",
+      "Ontario (Symbl pre-roll packs, Hidden Hills THCA flower)",
+      "Minnesota (Vireo Super Sonic Blizzard pre-rolls)"
+    ],
+    "distinguishing_characteristics": [
+      "Sativa-leaning hybrid with fast, clear-headed onset",
+      "Earthy, spicy aroma with citrus and tropical fruit notes",
+      "Planet 13 batches show about 1.0% total terpenes dominated by caryophyllene, humulene, and limonene",
+      "Potency varies widely across markets, from the high teens to mid-20s THC"
+    ],
+    "medical_therapeutic_notes": [
+      "Often chosen for stress relief and mood lift without heavy sedation",
+      "Reported to ease fatigue while keeping users functional and social",
+      "Light body relaxation may help tension without couch-lock"
+    ],
+    "flavor_profile_detail": "Earthy spice and pepper up front, followed by lemony citrus and a faint tropical fruit sweetness on the finish."
+  }
+}
