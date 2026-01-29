@@ -140,7 +140,6 @@ export function PureMessageActions({
       audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
-      audio.playsInline = true;
       audio.preload = "auto";
       audioRef.current = audio;
 
