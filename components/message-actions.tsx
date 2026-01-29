@@ -46,6 +46,23 @@ export function PureMessageActions({
     .join("\n")
     .trim();
 
+  const keepThemeAudioPlaying = () => {
+    const themeAudio = document.querySelector<HTMLAudioElement>(
+      "[data-chat-theme-audio]"
+    );
+    if (!themeAudio) {
+      return;
+    }
+    if (themeAudio.muted) {
+      themeAudio.muted = false;
+    }
+    if (themeAudio.paused) {
+      themeAudio.play().catch(() => {
+        // Ignore: user settings or autoplay policies may block playback.
+      });
+    }
+  };
+
   const handleCopy = async () => {
     if (!textFromParts) {
       toast.error("There's no text to copy!");
@@ -123,6 +140,8 @@ export function PureMessageActions({
       audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
+      audio.playsInline = true;
+      audio.preload = "auto";
       audioRef.current = audio;
 
       audio.addEventListener("ended", () => {
@@ -145,7 +164,9 @@ export function PureMessageActions({
       });
 
       setIsPlaying(true);
-      await audio.play();
+      const playPromise = audio.play();
+      keepThemeAudioPlaying();
+      await playPromise;
       toast.success("Playing response.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {

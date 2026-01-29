@@ -123,8 +123,14 @@ export function Chat({
   const currentModelIdRef = useRef(currentModelId);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const isBrooksAiHubRoute =
-    chatRouteKey === "brooks-ai-hub" || pathname?.startsWith("/brooks-ai-hub");
+  const isBrooksAiHubThemeRoute =
+    chatRouteKey === "brooks-ai-hub" ||
+    chatRouteKey === "default" ||
+    chatRouteKey.startsWith("brooks-ai-hub");
+  const isBrooksAiHubPath = Boolean(pathname?.startsWith("/brooks-ai-hub"));
+  const isChatRoute = Boolean(pathname?.startsWith("/chat/"));
+  const isChatThemeEnabled =
+    isChatRoute || isBrooksAiHubPath || isBrooksAiHubThemeRoute;
   const activeTheme =
     CHAT_THEMES.find((theme) => theme.id === chatTheme) ?? CHAT_THEMES[0];
 
@@ -133,7 +139,7 @@ export function Chat({
   }, [currentModelId]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
@@ -141,18 +147,18 @@ export function Chat({
     if (storedTheme && isChatTheme(storedTheme)) {
       setChatTheme(storedTheme);
     }
-  }, [isBrooksAiHubRoute]);
+  }, [isChatThemeEnabled]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
     window.localStorage.setItem(CHAT_THEME_STORAGE_KEY, chatTheme);
-  }, [chatTheme, isBrooksAiHubRoute]);
+  }, [chatTheme, isChatThemeEnabled]);
 
   useEffect(() => {
-    if (!isBrooksAiHubRoute) {
+    if (!isChatThemeEnabled) {
       return;
     }
 
@@ -192,7 +198,7 @@ export function Chat({
       audio.pause();
       audio.currentTime = 0;
     };
-  }, [activeTheme.audioSrc, isBrooksAiHubRoute]);
+  }, [activeTheme.audioSrc, isChatThemeEnabled]);
 
   const {
     messages,
@@ -340,16 +346,17 @@ export function Chat({
       <div
         className={cn(
           "overscroll-behavior-contain relative flex h-dvh min-w-0 touch-pan-y flex-col bg-background",
-          isBrooksAiHubRoute ? "chat-theme" : null
+          isChatThemeEnabled ? "chat-theme" : null
         )}
-        data-chat-theme={isBrooksAiHubRoute ? chatTheme : undefined}
+        data-chat-theme={isChatThemeEnabled ? chatTheme : undefined}
       >
-        {isBrooksAiHubRoute && (
+        {isChatThemeEnabled && (
           <>
             <div aria-hidden className="chat-theme-bg" />
             <div aria-hidden className="chat-theme-overlay" />
             <audio
               key={activeTheme.id}
+              data-chat-theme-audio
               ref={audioRef}
               src={activeTheme.audioSrc}
               title={activeTheme.audioTitle}
@@ -363,11 +370,11 @@ export function Chat({
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
-            onThemeChange={isBrooksAiHubRoute ? handleThemeChange : undefined}
+            onThemeChange={isChatThemeEnabled ? handleThemeChange : undefined}
             routeKey={chatRouteKey}
-            selectedThemeId={isBrooksAiHubRoute ? chatTheme : undefined}
+            selectedThemeId={isChatThemeEnabled ? chatTheme : undefined}
             selectedVisibilityType={initialVisibilityType}
-            themeOptions={isBrooksAiHubRoute ? CHAT_THEME_OPTIONS : undefined}
+            themeOptions={isChatThemeEnabled ? CHAT_THEME_OPTIONS : undefined}
           />
 
           <Messages
