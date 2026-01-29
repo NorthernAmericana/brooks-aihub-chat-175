@@ -229,6 +229,1691 @@
     "testing_notes": "Ensure all attractions listed are open as of 2026 (Naval Aviation Museum reopened Nov 2025 with public access29). Check seasonality: Fort Barrancas is open seasonally30; confirm availability. Verify quest tasks (like finding the de Luna statue or climbing the lighthouse) are feasible year-round (lighthouse may have seasonal hours). All citations are for reference; content should be verified for accuracy and relevance. No major search errors encountered; local laws and culture notes derived from official sources and local testimonies."
   },
   {
+    "city": "Huntsville, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & Big Spring Park",
+        "description": "Walkable core with parks, museums, and Von Braun Center events."
+      },
+      {
+        "name": "MidCity District",
+        "description": "Entertainment hub with frequent Cars and Coffee meetups and dining."
+      },
+      {
+        "name": "Monte Sano Mountain",
+        "description": "Scenic overlooks, trailheads, and winding drives above the city."
+      }
+    ],
+    "identity_vibe_tags": [
+      "RocketCity",
+      "TechHub",
+      "AerospaceHeritage",
+      "OutdoorAdventure",
+      "FamilyFriendly",
+      "CarCulture",
+      "CraftBeer"
+    ],
+    "community_vibe": "Huntsville blends space-age innovation with an outdoorsy, family-friendly feel. Engineers, military families, and longtime locals share a relaxed, curious vibe with a steady calendar of community events.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall bring comfortable temps and colorful views from Monte Sano. Summer is hot but packed with events, while winter stays mild with clear mountain views.",
+      "safety": "Downtown and main attractions are generally safe. Use standard precautions at trailheads and in parking decks, and keep valuables out of view.",
+      "transportation": "A car is best for getting between districts and parks. Downtown is walkable once parked, and rideshare is available around MidCity and the Von Braun Center.",
+      "parking": "Downtown has metered street parking and garages; event nights can fill quickly near the Von Braun Center. Parks and trailheads usually have free lots.",
+      "local_laws": "Follow city open-container rules, observe park hours, and watch for posted speed changes on mountain roads."
+    },
+    "anchors": [
+      "The U.S. Space and Rocket Center anchors Huntsville's identity as the Rocket City.",
+      "Monte Sano State Park and Bankhead Parkway provide signature overlook drives.",
+      "Huntsville's aerospace and defense legacy has shaped its tech-forward growth.",
+      "Rocket City Octane and Cars and Coffee meetups spotlight a strong car culture.",
+      "Huntsville Speedway keeps stock car racing alive in North Alabama."
+    ],
+    "must_dos": [
+      {
+        "name": "U.S. Space and Rocket Center",
+        "type": "Museum/Science",
+        "cost": "$$",
+        "description": "Explore rockets, space history exhibits, and outdoor displays from the space program."
+      },
+      {
+        "name": "Huntsville Botanical Garden",
+        "type": "Garden/Nature",
+        "cost": "$$",
+        "description": "Seasonal blooms, themed gardens, and family-friendly exhibits."
+      },
+      {
+        "name": "Monte Sano State Park + Bankhead Parkway Drive",
+        "type": "Outdoor/Scenic",
+        "cost": "$ (park entry)",
+        "description": "Wind up the mountain for overlooks, hiking trails, and fall colors."
+      },
+      {
+        "name": "Big Spring Park Stroll",
+        "type": "Sightseeing",
+        "cost": "Free",
+        "description": "Relax by the lagoons, walk downtown, and catch festivals near the Von Braun Center."
+      },
+      {
+        "name": "Rocket City Octane or Huntsville Speedway",
+        "type": "Car Culture",
+        "cost": "$",
+        "description": "Catch a car show or a weekend stock car race when events are in season."
+      }
+    ],
+    "notable_businesses": [
+      "Big Spring Cafe - Historic diner known for its classic sliders.",
+      "Straight to Ale Brewing - Local brewery with a strong following.",
+      "Von Braun Center - Event hub for shows and auto exhibits.",
+      "Huntsville Speedway - Local oval track for stock car racing.",
+      "MidCity District - Popular gathering place for Cars and Coffee meets.",
+      "U.S. Space and Rocket Center - Signature attraction for space lovers."
+    ],
+    "local_lore": [
+      "Huntsville earned the Rocket City nickname from decades of NASA and Army rocket work.",
+      "Alabama's 1819 constitutional convention was held here, making Huntsville the state's first capital.",
+      "Locals take pride in seeing Saturn V rockets and aerospace artifacts around town.",
+      "The Huntsville Speedway opened in 1959 and still draws racing fans on summer weekends.",
+      "North Alabama's famous white BBQ sauce traces back to nearby Decatur and remains a regional staple."
+    ],
+    "place_taxonomy": {
+      "Museums/Attractions": [
+        "U.S. Space and Rocket Center",
+        "Huntsville Botanical Garden",
+        "Von Braun Center"
+      ],
+      "Outdoors/Nature": [
+        "Monte Sano State Park",
+        "Bankhead Parkway Overlooks",
+        "Big Spring Park"
+      ],
+      "Car Culture": [
+        "Rocket City Octane Auto Show",
+        "Huntsville Speedway",
+        "MidCity Cars and Coffee"
+      ],
+      "Food/Drink": [
+        "Big Spring Cafe",
+        "Straight to Ale Brewing",
+        "Downtown eateries"
+      ],
+      "Scenic Drives": [
+        "Bankhead Parkway",
+        "Tennessee River Drive near Ditto Landing",
+        "Natchez Trace Parkway access"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Rocket City Loop",
+        "quest": "Visit the U.S. Space and Rocket Center, snap a photo with a rocket display, then grab a local bite downtown."
+      },
+      {
+        "title": "Monte Sano Overlook",
+        "quest": "Drive Bankhead Parkway, stop at an overlook, and log a favorite view of the city."
+      },
+      {
+        "title": "Cars and Coffee Check-In",
+        "quest": "Attend a Cars and Coffee meetup at MidCity and note the most unique build you saw."
+      },
+      {
+        "title": "Garden Calm",
+        "quest": "Walk the Botanical Garden and pick one plant or exhibit to remember."
+      },
+      {
+        "title": "Riverfront Cruise",
+        "quest": "Take a short drive along the Tennessee River and capture a sunset photo."
+      }
+    ],
+    "review_prompts": [
+      "What stood out most at the Space and Rocket Center?",
+      "How were the views from Monte Sano or Bankhead Parkway?",
+      "Did you catch a car event or race? What was your favorite ride?",
+      "Which local food stop or brewery was your favorite?",
+      "Would you return for a longer outdoor trip in Huntsville?"
+    ],
+    "badges": [
+      {
+        "name": "Rocket City Explorer",
+        "criteria": "Visited the Space and Rocket Center or a major aerospace exhibit."
+      },
+      {
+        "name": "Mountain Overlook",
+        "criteria": "Stopped at a Monte Sano overlook and logged a photo."
+      },
+      {
+        "name": "Auto Enthusiast",
+        "criteria": "Attended a Cars and Coffee meetup or a Speedway event."
+      },
+      {
+        "name": "Garden Stroller",
+        "criteria": "Spent time at the Botanical Garden."
+      },
+      {
+        "name": "Downtown Rambler",
+        "criteria": "Walked Big Spring Park and nearby downtown blocks."
+      }
+    ],
+    "testing_notes": "Verify Rocket City Octane dates, Cars and Coffee schedule, and Huntsville Speedway race nights before suggesting event-specific quests."
+  },
+  {
+    "city": "Birmingham, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & Civil Rights District",
+        "description": "Historic core with major civil rights sites and museums."
+      },
+      {
+        "name": "Red Mountain & Vulcan Park",
+        "description": "Hilltop overlooks and the iconic Vulcan statue above the city."
+      },
+      {
+        "name": "Five Points South & UAB",
+        "description": "Restaurant corridors and college energy near the university."
+      }
+    ],
+    "identity_vibe_tags": [
+      "MagicCity",
+      "IndustrialHeritage",
+      "CivilRightsHistory",
+      "FoodScene",
+      "CarCulture",
+      "MetroHub",
+      "ArtsScene"
+    ],
+    "community_vibe": "Birmingham mixes industrial roots with a modern food and arts revival. Neighborhoods feel distinct, and the city carries a proud resilience rooted in its history.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are the most comfortable. Summer is hot and humid, while winter is generally mild with occasional rain.",
+      "safety": "Major attractions are generally safe. Use normal precautions downtown at night and keep vehicles locked in busy areas.",
+      "transportation": "A car is recommended for moving between neighborhoods. Some districts are walkable once you park.",
+      "parking": "Downtown has meters and decks. Event nights near the BJCC or Vulcan can fill quickly.",
+      "local_laws": "Follow open-container rules and posted park regulations. Expect traffic control during major shows and festivals."
+    },
+    "anchors": [
+      "Vulcan Park holds the world's largest cast-iron statue and a signature skyline view.",
+      "The Civil Rights District preserves pivotal sites from the 1960s movement.",
+      "Barber Motorsports Park and its museum anchor the city's car and racing culture.",
+      "Birmingham's rapid growth from iron and steel earned it the Magic City nickname.",
+      "Talladega Superspeedway sits within a short drive for NASCAR fans."
+    ],
+    "must_dos": [
+      {
+        "name": "Vulcan Park and Museum",
+        "type": "History/Sightseeing",
+        "cost": "$",
+        "description": "Visit the iron statue, museum exhibits, and panoramic overlook."
+      },
+      {
+        "name": "Civil Rights District Walk",
+        "type": "History/Culture",
+        "cost": "Free",
+        "description": "See 16th Street Baptist Church, Kelly Ingram Park, and the Civil Rights Institute."
+      },
+      {
+        "name": "Barber Vintage Motorsports Museum",
+        "type": "Museum/Car Culture",
+        "cost": "$$",
+        "description": "Explore an extraordinary collection of motorcycles and performance vehicles."
+      },
+      {
+        "name": "Red Mountain Scenic Drive",
+        "type": "Scenic Drive",
+        "cost": "Free",
+        "description": "Cruise Shades Crest Road for overlooks and sunset views."
+      },
+      {
+        "name": "Oak Mountain State Park",
+        "type": "Outdoors/Nature",
+        "cost": "$ (park entry)",
+        "description": "Hike forest trails, visit Peavine Falls, or relax by the lake."
+      }
+    ],
+    "notable_businesses": [
+      "Saw's BBQ - Popular barbecue spot with tangy sauces.",
+      "Dreamland BBQ - Classic Alabama ribs with a loyal following.",
+      "Niki's West - Legendary meat-and-three cafeteria.",
+      "Barber Vintage Motorsports Museum - World-class motorsports collection.",
+      "BJCC Alabama Auto Show - Annual showcase of new vehicles.",
+      "O'Reilly World of Wheels - Winter custom car expo."
+    ],
+    "local_lore": [
+      "Birmingham was called the Magic City because it seemed to grow overnight.",
+      "The city's iron, coal, and limestone deposits fueled its industrial boom.",
+      "Civil rights milestones from the 1960s remain central to Birmingham's story.",
+      "Vulcan, the iron statue, symbolizes Birmingham's steel heritage.",
+      "Barber's motorcycle museum is recognized as the world's largest collection."
+    ],
+    "place_taxonomy": {
+      "History/Culture": [
+        "Civil Rights Institute",
+        "16th Street Baptist Church",
+        "Kelly Ingram Park",
+        "Vulcan Park and Museum"
+      ],
+      "Outdoors/Nature": [
+        "Red Mountain Park",
+        "Oak Mountain State Park"
+      ],
+      "Car Culture": [
+        "Barber Motorsports Park",
+        "Barber Vintage Motorsports Museum",
+        "O'Reilly World of Wheels",
+        "Alabama Auto Show"
+      ],
+      "Food/Drink": [
+        "Saw's BBQ",
+        "Niki's West",
+        "Dreamland BBQ"
+      ],
+      "Scenic Drives": [
+        "Shades Crest Road",
+        "Talladega Scenic Drive",
+        "Bluff Park overlooks"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Vulcan View",
+        "quest": "Visit Vulcan Park and capture a skyline photo from the overlook."
+      },
+      {
+        "title": "Civil Rights Reflection",
+        "quest": "Walk the Civil Rights District and note one place that moved you."
+      },
+      {
+        "title": "Motor Museum Day",
+        "quest": "Tour Barber's museum and pick a favorite bike or car to remember."
+      },
+      {
+        "title": "Red Mountain Sunset",
+        "quest": "Drive Shades Crest Road and log the best overlook for sunset."
+      },
+      {
+        "title": "BBQ Trail",
+        "quest": "Try two classic Birmingham BBQ spots and compare sauces."
+      }
+    ],
+    "review_prompts": [
+      "How was the view from Vulcan Park?",
+      "Which Civil Rights site left the strongest impression?",
+      "What stood out at the Barber Motorsports Museum?",
+      "Where did you find the best BBQ in Birmingham?",
+      "Did you take a scenic drive along Red Mountain or Talladega?"
+    ],
+    "badges": [
+      {
+        "name": "Magic City Explorer",
+        "criteria": "Visited two major Birmingham landmarks."
+      },
+      {
+        "name": "Civil Rights Walker",
+        "criteria": "Completed a tour of the Civil Rights District."
+      },
+      {
+        "name": "Motor Museum Fan",
+        "criteria": "Visited Barber Motorsports Park or its museum."
+      },
+      {
+        "name": "BBQ Hunter",
+        "criteria": "Tried at least two Birmingham BBQ spots."
+      },
+      {
+        "name": "Overlook Seeker",
+        "criteria": "Visited a Red Mountain or Bluff Park viewpoint."
+      }
+    ],
+    "testing_notes": "Confirm museum hours, car show dates, and park access before scheduling quests."
+  },
+  {
+    "city": "Montgomery, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & State Capitol",
+        "description": "Government buildings, historic sites, and walkable blocks around Dexter Avenue."
+      },
+      {
+        "name": "Civil Rights District",
+        "description": "Museums, memorials, and landmarks tied to the movement."
+      },
+      {
+        "name": "Riverfront & Old Alabama Town",
+        "description": "Riverwalk paths and preserved 19th-century buildings."
+      }
+    ],
+    "identity_vibe_tags": [
+      "StateCapital",
+      "CivilRightsHistory",
+      "SouthernHeritage",
+      "Riverfront",
+      "AutoTown",
+      "FamilyFriendly",
+      "FoodScene"
+    ],
+    "community_vibe": "As the state capital, Montgomery blends government energy with a reflective civil rights legacy and a laid-back riverfront. The mood is respectful, historic, and welcoming.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are mild and ideal for walking tours. Summer is hot and humid, while winter is cooler but still manageable.",
+      "safety": "Tourist corridors are generally safe; use normal caution downtown at night and around large events.",
+      "transportation": "A car helps connect museums and neighborhoods. Downtown is walkable once parked.",
+      "parking": "Street meters and garages are common around the Capitol and riverfront.",
+      "local_laws": "Follow open-container rules and posted museum policies. Expect traffic control during festivals and parades."
+    },
+    "anchors": [
+      "The Alabama State Capitol anchors Montgomery's identity as the state capital.",
+      "Rosa Parks and the 1955 Bus Boycott launched a national civil rights chapter here.",
+      "The Selma to Montgomery National Historic Trail traces voting rights history.",
+      "Hyundai's assembly plant ties the city to Alabama's modern auto economy.",
+      "Legacy Museum and the National Memorial for Peace and Justice are major modern landmarks."
+    ],
+    "must_dos": [
+      {
+        "name": "Alabama State Capitol",
+        "type": "History/Government",
+        "cost": "Free",
+        "description": "Tour the historic capitol building and grounds."
+      },
+      {
+        "name": "Rosa Parks Museum and Civil Rights Memorial",
+        "type": "History/Culture",
+        "cost": "$",
+        "description": "Explore interactive exhibits tied to the Bus Boycott and movement history."
+      },
+      {
+        "name": "Legacy Museum and National Memorial",
+        "type": "Museum/Memorial",
+        "cost": "$$",
+        "description": "Powerful, immersive exhibits focused on American history and justice."
+      },
+      {
+        "name": "Old Alabama Town",
+        "type": "History",
+        "cost": "$",
+        "description": "Walk restored 19th-century buildings and interpretive exhibits."
+      },
+      {
+        "name": "Riverfront Park",
+        "type": "Outdoors/Riverfront",
+        "cost": "Free",
+        "description": "Relax along the Alabama River with paths, amphitheater events, and sunsets."
+      }
+    ],
+    "notable_businesses": [
+      "Chris' Hot Dogs - Century-old hot dog counter with local fame.",
+      "Dreamland BBQ - Famous Alabama ribs with tangy sauce.",
+      "Martin's Restaurant - Classic Southern comfort food.",
+      "Martha's Place - Soul food buffet with local staples.",
+      "Prevail Union Coffee - Downtown coffee spot in the Alley district.",
+      "Montgomery Motor Speedway - Historic half-mile oval track."
+    ],
+    "local_lore": [
+      "Montgomery was the first capital of the Confederacy in 1861.",
+      "The city became Alabama's permanent capital in 1846.",
+      "The 1955 Bus Boycott began here after Rosa Parks' arrest.",
+      "The Wright Brothers opened a flight school in Montgomery in 1910.",
+      "Hyundai's assembly plant opened in 2005 and reshaped the local economy."
+    ],
+    "place_taxonomy": {
+      "History/Culture": [
+        "Alabama State Capitol",
+        "First White House of the Confederacy",
+        "Old Alabama Town"
+      ],
+      "Civil Rights": [
+        "Rosa Parks Museum",
+        "Civil Rights Memorial",
+        "Legacy Museum",
+        "National Memorial for Peace and Justice"
+      ],
+      "Outdoors/Riverfront": [
+        "Riverfront Park",
+        "Alabama Riverwalk"
+      ],
+      "Car Culture": [
+        "Montgomery Motor Speedway",
+        "Montgomery Police Cruise-In",
+        "Lightning Strikes Dragway (nearby)"
+      ],
+      "Food/Drink": [
+        "Chris' Hot Dogs",
+        "Dreamland BBQ",
+        "Martha's Place"
+      ],
+      "Scenic Drives": [
+        "Selma to Montgomery National Historic Trail",
+        "Alabama River countryside drive",
+        "Pike Road backroads"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Civil Rights Trail",
+        "quest": "Visit two civil rights landmarks and note one lesson you want to remember."
+      },
+      {
+        "title": "Capitol Steps",
+        "quest": "Photograph the State Capitol and write down one historical fact you learned."
+      },
+      {
+        "title": "Riverfront Night",
+        "quest": "Walk the riverfront at sunset and capture a favorite view."
+      },
+      {
+        "title": "Speedway Spectator",
+        "quest": "Catch a race night at Montgomery Motor Speedway or track a local cruise-in."
+      },
+      {
+        "title": "Hot Dog History",
+        "quest": "Stop at Chris' Hot Dogs and note the longest-standing place you visited today."
+      }
+    ],
+    "review_prompts": [
+      "Which civil rights site made the biggest impact?",
+      "How was your visit to the State Capitol?",
+      "Did you explore the riverfront or Old Alabama Town?",
+      "What local meal best represented Montgomery for you?",
+      "Would you return for a longer historic tour?"
+    ],
+    "badges": [
+      {
+        "name": "Civil Rights Witness",
+        "criteria": "Visited at least two civil rights landmarks or museums."
+      },
+      {
+        "name": "Capitol Explorer",
+        "criteria": "Toured the Alabama State Capitol or its grounds."
+      },
+      {
+        "name": "Riverfront Rambler",
+        "criteria": "Spent time along the Alabama Riverfront."
+      },
+      {
+        "name": "Speedway Spotter",
+        "criteria": "Attended a race or cruise-in event."
+      },
+      {
+        "name": "Local Flavor",
+        "criteria": "Ate at two classic Montgomery eateries."
+      }
+    ],
+    "testing_notes": "Confirm museum hours, memorial access, and race schedules before recommending event-specific activities."
+  },
+  {
+    "city": "Mobile, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & Dauphin Street",
+        "description": "Historic blocks, nightlife, and classic Mobile architecture."
+      },
+      {
+        "name": "Mobile Bay Waterfront",
+        "description": "Battleship Park, riverfront views, and port activity."
+      },
+      {
+        "name": "Dauphin Island Parkway",
+        "description": "Coastal drive route to beaches, forts, and bay marshes."
+      }
+    ],
+    "identity_vibe_tags": [
+      "PortCity",
+      "MardiGras",
+      "Historic",
+      "Coastal",
+      "Seafood",
+      "CarCulture",
+      "AzaleaCity"
+    ],
+    "community_vibe": "Mobile feels like an old coastal port with a festive Mardi Gras spirit and a proud Gulf Coast identity. The city blends history, seafood, and a relaxed bayfront pace.",
+    "travel_logic": {
+      "best_seasons": "Spring brings azaleas and mild weather. Mardi Gras season is lively in late winter, while fall offers comfortable coastal drives.",
+      "safety": "Downtown entertainment areas are generally safe but stay aware at night and during large festivals.",
+      "transportation": "A car helps for beaches and bayfront drives. Downtown is walkable once parked.",
+      "parking": "Street parking and garages are available downtown; festival nights can fill fast.",
+      "local_laws": "Follow city Mardi Gras rules, open-container policies, and posted beach regulations."
+    },
+    "anchors": [
+      "Mobile is Alabama's oldest city, founded in 1702.",
+      "Mardi Gras celebrations began here in the early 1700s.",
+      "USS Alabama Battleship Park is a signature waterfront landmark.",
+      "The Mobile Bay Causeway offers one of the area's most scenic drives.",
+      "Mobile's port history earned it the Port City nickname."
+    ],
+    "must_dos": [
+      {
+        "name": "USS Alabama Battleship Park",
+        "type": "History/Military",
+        "cost": "$$",
+        "description": "Tour the battleship, submarine, and aviation exhibits on Mobile Bay."
+      },
+      {
+        "name": "Dauphin Street Stroll",
+        "type": "Sightseeing",
+        "cost": "Free",
+        "description": "Explore downtown restaurants, nightlife, and historic facades."
+      },
+      {
+        "name": "Mobile Carnival Museum",
+        "type": "Museum/Culture",
+        "cost": "$",
+        "description": "Learn the history and traditions of Mobile's Mardi Gras."
+      },
+      {
+        "name": "Fort Conde",
+        "type": "History",
+        "cost": "$",
+        "description": "Visit the reconstructed French fort and nearby historic district."
+      },
+      {
+        "name": "Bellingrath Gardens",
+        "type": "Garden/Nature",
+        "cost": "$$",
+        "description": "Stroll seasonal blooms and landscaped grounds along the river."
+      }
+    ],
+    "notable_businesses": [
+      "Wintzell's Oyster House - Classic Gulf Coast oyster bar.",
+      "The Brick Pit - Smokehouse BBQ with a local following.",
+      "Mama's on Dauphin - Creole-influenced coastal cooking.",
+      "Pollman's Bake Shop - Longtime bakery known for seasonal treats.",
+      "Mobile Carnival Museum - Landmark Mardi Gras institution.",
+      "USS Alabama Battleship Park - Major historic attraction."
+    ],
+    "local_lore": [
+      "Mobile is known as the City of Five Flags due to its colonial history.",
+      "The city claims the first Mardi Gras celebration in the United States.",
+      "Mobile's Azalea City nickname comes from spring blooms across town.",
+      "A giant MoonPie drop on New Year's Eve is a local tradition.",
+      "Emancipation Day celebrations on May 25 have deep community roots."
+    ],
+    "place_taxonomy": {
+      "History/Museums": [
+        "USS Alabama Battleship Park",
+        "Fort Conde",
+        "Mobile Carnival Museum"
+      ],
+      "Outdoors/Coast": [
+        "Bellingrath Gardens",
+        "Dauphin Island beaches",
+        "Mobile Bay waterfront"
+      ],
+      "Car Culture": [
+        "Mobile International Speedway",
+        "Cars and Coffee of Mobile Bay",
+        "Bama Coast Cruisin' (nearby)"
+      ],
+      "Food/Drink": [
+        "Wintzell's Oyster House",
+        "West Indies Salad spots",
+        "The Brick Pit"
+      ],
+      "Scenic Drives": [
+        "Mobile Bay Causeway",
+        "Scenic Highway 98",
+        "Dauphin Island Parkway"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Battleship Walk",
+        "quest": "Tour USS Alabama and note one exhibit that surprised you."
+      },
+      {
+        "title": "Mardi Gras Story",
+        "quest": "Visit the Carnival Museum and capture one parade tradition you learned."
+      },
+      {
+        "title": "Causeway Cruise",
+        "quest": "Drive the Mobile Bay Causeway and stop for a waterfront photo."
+      },
+      {
+        "title": "Oyster Stop",
+        "quest": "Try a Gulf Coast seafood dish and write a short review."
+      },
+      {
+        "title": "Azalea Garden",
+        "quest": "Walk Bellingrath Gardens and pick a favorite bloom."
+      }
+    ],
+    "review_prompts": [
+      "What stood out most at USS Alabama or Fort Conde?",
+      "How was the downtown Dauphin Street scene?",
+      "Did you take a scenic drive along the bay or to Dauphin Island?",
+      "Which seafood dish felt most 'Mobile' to you?",
+      "Would you plan another trip around Mardi Gras season?"
+    ],
+    "badges": [
+      {
+        "name": "Port City Explorer",
+        "criteria": "Visited two Mobile historic sites or museums."
+      },
+      {
+        "name": "Mardi Gras Historian",
+        "criteria": "Learned about Mobile's Carnival traditions at the museum."
+      },
+      {
+        "name": "Battleship Buff",
+        "criteria": "Toured USS Alabama or related military exhibits."
+      },
+      {
+        "name": "Seafood Sampler",
+        "criteria": "Tried at least two Gulf Coast seafood dishes."
+      },
+      {
+        "name": "Bayway Driver",
+        "criteria": "Completed a drive along the Mobile Bay Causeway or Scenic Highway 98."
+      }
+    ],
+    "testing_notes": "Confirm museum hours, garden seasonal schedules, and Mardi Gras event dates."
+  },
+  {
+    "city": "Tuscaloosa, Alabama",
+    "sub_areas": [
+      {
+        "name": "University of Alabama Campus",
+        "description": "Historic quad, stadium, and college-town landmarks."
+      },
+      {
+        "name": "Downtown & Riverwalk",
+        "description": "Riverfront paths, amphitheater events, and local dining."
+      },
+      {
+        "name": "Northport Arts District",
+        "description": "Galleries, studios, and the Kentuck Art Center across the river."
+      }
+    ],
+    "identity_vibe_tags": [
+      "CollegeTown",
+      "CrimsonTide",
+      "RiverCity",
+      "BBQ",
+      "CarCulture",
+      "ArtsScene",
+      "Historic"
+    ],
+    "community_vibe": "Tuscaloosa feels like a classic college town with deep football pride, riverfront energy, and a strong local food culture. Game days bring big crowds; weekdays are relaxed and friendly.",
+    "travel_logic": {
+      "best_seasons": "Fall is peak for football and festivals, while spring brings mild weather for the Riverwalk. Summer is hot but lively with concerts.",
+      "safety": "Campus and downtown are generally safe. Expect heavy crowds and traffic on game days.",
+      "transportation": "A car helps for outlying attractions, but campus and downtown are walkable once parked.",
+      "parking": "Meters and decks are available downtown; game-day parking requires extra planning.",
+      "local_laws": "Follow campus and city event rules, especially during football weekends."
+    },
+    "anchors": [
+      "Bryant-Denny Stadium and the University of Alabama define the city.",
+      "Tuscaloosa was Alabama's state capital from 1826 to 1846.",
+      "The Druid City nickname honors the area's historic oak trees.",
+      "The Riverwalk offers a signature sunset path along the Black Warrior River.",
+      "Mercedes-Benz's nearby plant ties the region to modern auto industry pride."
+    ],
+    "must_dos": [
+      {
+        "name": "University of Alabama Quad and Denny Chimes",
+        "type": "Campus/Sightseeing",
+        "cost": "Free",
+        "description": "Walk the iconic campus core and historic bell tower."
+      },
+      {
+        "name": "Paul W. Bryant Museum",
+        "type": "Museum/Sports",
+        "cost": "$",
+        "description": "Learn the Crimson Tide's legendary football history."
+      },
+      {
+        "name": "Tuscaloosa Riverwalk",
+        "type": "Outdoors/Riverfront",
+        "cost": "Free",
+        "description": "Stroll or bike along the Black Warrior River."
+      },
+      {
+        "name": "Capitol Park",
+        "type": "History",
+        "cost": "Free",
+        "description": "See the ruins of Alabama's former state capitol."
+      },
+      {
+        "name": "Dreamland or Archibald's BBQ",
+        "type": "Food",
+        "cost": "$",
+        "description": "Try Tuscaloosa's most famous barbecue traditions."
+      }
+    ],
+    "notable_businesses": [
+      "Dreamland Bar-B-Que - Iconic Tuscaloosa ribs and sauce.",
+      "Archibald's BBQ - Legendary small-shop smoked ribs.",
+      "Rama Jama's - Stadium-side diner with Crimson Tide decor.",
+      "Chuck's Fish - Popular downtown seafood and sushi.",
+      "Kentuck Art Center - Arts hub in nearby Northport.",
+      "Paul W. Bryant Museum - Home of Crimson Tide history."
+    ],
+    "local_lore": [
+      "The Druid City nickname comes from Tuscaloosa's historic oak trees.",
+      "The city was once Alabama's capital, and Capitol Park preserves the ruins.",
+      "Tuscaloosa honors Chief Tuskaloosa, a Muskogean leader from the 1500s.",
+      "Game-day traditions revolve around Bryant-Denny and the Crimson Tide.",
+      "Mercedes-Benz's presence nearby connects the city to global car culture."
+    ],
+    "place_taxonomy": {
+      "Campus/Football": [
+        "Bryant-Denny Stadium",
+        "Denny Chimes",
+        "Paul W. Bryant Museum"
+      ],
+      "Outdoors/River": [
+        "Tuscaloosa Riverwalk",
+        "Capitol Park",
+        "Black Warrior River overlooks"
+      ],
+      "Arts/Culture": [
+        "Kentuck Art Center",
+        "Tuscaloosa Amphitheater"
+      ],
+      "Car Culture": [
+        "Mercedes-Benz Visitor Center (nearby)",
+        "Tuscaloosa Classic Car Show"
+      ],
+      "Food/Drink": [
+        "Dreamland Bar-B-Que",
+        "Archibald's BBQ",
+        "Rama Jama's"
+      ],
+      "Scenic Drives": [
+        "Jack Warner Parkway",
+        "Moundville route via AL-69",
+        "Bankhead National Forest drive"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Crimson Tide Walk",
+        "quest": "Walk the UA Quad and capture a photo of Denny Chimes."
+      },
+      {
+        "title": "Riverwalk Sunset",
+        "quest": "Spend 30 minutes on the Riverwalk and note your favorite view."
+      },
+      {
+        "title": "BBQ Duel",
+        "quest": "Try Dreamland and Archibald's, then compare sauces."
+      },
+      {
+        "title": "Capitol Columns",
+        "quest": "Visit Capitol Park and write down one historical fact."
+      },
+      {
+        "title": "Auto Heritage Stop",
+        "quest": "Visit the Mercedes-Benz Visitor Center or a local car show."
+      }
+    ],
+    "review_prompts": [
+      "How was the campus and game-day atmosphere?",
+      "What was your favorite stop along the Riverwalk?",
+      "Which BBQ spot won your vote and why?",
+      "Did you explore the arts scene in Northport or downtown?",
+      "Would you plan a return trip around a football weekend?"
+    ],
+    "badges": [
+      {
+        "name": "Crimson Tide Fan",
+        "criteria": "Visited a UA football landmark or museum."
+      },
+      {
+        "name": "Riverwalk Regular",
+        "criteria": "Spent time on the Tuscaloosa Riverwalk."
+      },
+      {
+        "name": "BBQ Judge",
+        "criteria": "Sampled two classic Tuscaloosa BBQ spots."
+      },
+      {
+        "name": "History Hunter",
+        "criteria": "Visited Capitol Park or another historic site."
+      },
+      {
+        "name": "Auto Heritage",
+        "criteria": "Stopped by a car show or Mercedes-Benz visitor exhibit."
+      }
+    ],
+    "testing_notes": "Verify museum hours, football weekend logistics, and car show schedules before assigning quests."
+  },
+  {
+    "city": "Hoover, Alabama",
+    "sub_areas": [
+      {
+        "name": "Riverchase Galleria & Highway 280",
+        "description": "Major shopping, dining, and entertainment corridor."
+      },
+      {
+        "name": "Bluff Park & Shades Mountain",
+        "description": "Scenic neighborhoods and overlooks above the valley."
+      },
+      {
+        "name": "Hoover Met & Sports Complex",
+        "description": "Stadiums, fields, and event spaces for regional tournaments."
+      }
+    ],
+    "identity_vibe_tags": [
+      "SuburbanHub",
+      "Shopping",
+      "OutdoorTrails",
+      "FamilyFriendly",
+      "CarCulture",
+      "FoodScene",
+      "SportsTown"
+    ],
+    "community_vibe": "Hoover is a modern suburban hub with top-notch shopping, family parks, and easy access to Birmingham. The pace is comfortable and community-focused.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are ideal for parks and outdoor overlooks. Summer is warm but active with sports events.",
+      "safety": "Generally safe and family-friendly. Use standard precautions in busy retail areas.",
+      "transportation": "A car is essential for moving between districts and parks.",
+      "parking": "Parking is abundant at the Galleria, parks, and the Hoover Met.",
+      "local_laws": "Follow posted park rules and event traffic plans during tournaments."
+    },
+    "anchors": [
+      "Riverchase Galleria is Alabama's largest enclosed shopping mall.",
+      "Hoover hosted Olympic soccer matches at the Hoover Met in 1996.",
+      "Moss Rock Preserve and Aldridge Gardens showcase local outdoor escapes.",
+      "Shades Crest Road offers signature overlooks above the metro.",
+      "Hoover residents often participate in Birmingham-area car events and shows."
+    ],
+    "must_dos": [
+      {
+        "name": "Riverchase Galleria",
+        "type": "Shopping/Entertainment",
+        "cost": "Free to browse",
+        "description": "Explore Alabama's biggest mall with dining and entertainment options."
+      },
+      {
+        "name": "Moss Rock Preserve",
+        "type": "Outdoors/Nature",
+        "cost": "Free",
+        "description": "Hike boulder fields, waterfalls, and wooded trails."
+      },
+      {
+        "name": "Aldridge Gardens",
+        "type": "Garden/Nature",
+        "cost": "$",
+        "description": "Peaceful lakeside gardens with hydrangea collections."
+      },
+      {
+        "name": "Hoover Met Complex",
+        "type": "Sports/Events",
+        "cost": "Varies",
+        "description": "Catch a game, tournament, or community event."
+      },
+      {
+        "name": "Shades Crest Road Overlook",
+        "type": "Scenic Drive",
+        "cost": "Free",
+        "description": "Drive the ridge for Birmingham skyline views."
+      }
+    ],
+    "notable_businesses": [
+      "Riverchase Galleria - Regional shopping destination.",
+      "Aldridge Gardens - Public garden and event venue.",
+      "Tip Top Grill - Classic overlook dining on Shades Mountain.",
+      "The Fish Market - Greek-inspired seafood cafeteria.",
+      "The Pie Lab - Popular pie and dessert spot.",
+      "Dreamland BBQ (Hoover) - Local outpost of the Tuscaloosa favorite."
+    ],
+    "local_lore": [
+      "Hoover hosted Olympic soccer matches during the 1996 Atlanta Games.",
+      "The city was incorporated in 1967 and grew quickly as a suburb.",
+      "Hoover High's football team gained fame from the MTV series Two-A-Days.",
+      "A rare hole-in-one on a par-4 was recorded at Greystone Golf Course in 1998.",
+      "The Regions Tradition senior golf event built a long-running sports legacy in the area."
+    ],
+    "place_taxonomy": {
+      "Shopping/Entertainment": [
+        "Riverchase Galleria",
+        "Hoover Met events"
+      ],
+      "Outdoors/Nature": [
+        "Moss Rock Preserve",
+        "Aldridge Gardens",
+        "Oak Mountain State Park (nearby)"
+      ],
+      "Scenic Drives": [
+        "Shades Crest Road",
+        "Bluff Park overlooks",
+        "Ross Bridge area"
+      ],
+      "Car Culture": [
+        "Birmingham Cars and Coffee (Hoover area)",
+        "World of Wheels (nearby)",
+        "Steele Dragway (nearby)"
+      ],
+      "Food/Drink": [
+        "The Fish Market",
+        "Dreamland BBQ",
+        "The Pie Lab"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Galleria Crawl",
+        "quest": "Browse Riverchase Galleria and pick one local shop or cafe to remember."
+      },
+      {
+        "title": "Moss Rock Hike",
+        "quest": "Walk a trail at Moss Rock Preserve and snap a photo of the boulders."
+      },
+      {
+        "title": "Garden Calm",
+        "quest": "Spend time at Aldridge Gardens and log your favorite view by the lake."
+      },
+      {
+        "title": "Shades Crest View",
+        "quest": "Drive to a Shades Mountain overlook and capture a skyline photo."
+      },
+      {
+        "title": "Cars and Coffee Spot",
+        "quest": "Attend a nearby Cars and Coffee meet and record the best classic car you saw."
+      }
+    ],
+    "review_prompts": [
+      "What was your favorite Hoover shopping or dining stop?",
+      "How were the trails or gardens you visited?",
+      "Did you catch a game or event at the Hoover Met?",
+      "How was the view from Shades Crest Road?",
+      "Would you return to Hoover for another day trip?"
+    ],
+    "badges": [
+      {
+        "name": "Mall Navigator",
+        "criteria": "Spent time at Riverchase Galleria or nearby retail spots."
+      },
+      {
+        "name": "Trail Trekker",
+        "criteria": "Hiked Moss Rock Preserve or another local trail."
+      },
+      {
+        "name": "Garden Walker",
+        "criteria": "Visited Aldridge Gardens."
+      },
+      {
+        "name": "Overlook Seeker",
+        "criteria": "Stopped at a Shades Mountain viewpoint."
+      },
+      {
+        "name": "Car Meet Regular",
+        "criteria": "Attended a Cars and Coffee or nearby auto event."
+      }
+    ],
+    "testing_notes": "Confirm Hoover Met event schedules, garden hours, and Cars and Coffee locations before planning quests."
+  },
+  {
+    "city": "Dothan, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & Peanut District",
+        "description": "Historic core with murals, peanuts statues, and local cafes."
+      },
+      {
+        "name": "Landmark Park & Heritage Zone",
+        "description": "Farm museum, walking trails, and pioneer history."
+      },
+      {
+        "name": "Ross Clark Circle",
+        "description": "Loop highway with retail, restaurants, and easy driving access."
+      }
+    ],
+    "identity_vibe_tags": [
+      "PeanutCapital",
+      "FamilyFriendly",
+      "FestivalCity",
+      "RoadTripTown",
+      "CarCulture",
+      "SouthernFood",
+      "SmallTown"
+    ],
+    "community_vibe": "Dothan carries a friendly Wiregrass energy with strong agricultural roots and easygoing small-town charm. Festivals and community events keep the town lively.",
+    "travel_logic": {
+      "best_seasons": "Fall is prime for the National Peanut Festival. Spring brings mild weather for parks and downtown walks.",
+      "safety": "Generally safe and easy to navigate. Use normal precautions in busy parking lots and at festivals.",
+      "transportation": "A car is essential for moving between attractions and scenic drives.",
+      "parking": "Parking is plentiful downtown and at major parks, with few restrictions.",
+      "local_laws": "Follow festival rules and posted guidelines at parks and fairgrounds."
+    },
+    "anchors": [
+      "Dothan is known as the Peanut Capital of the World.",
+      "The National Peanut Festival has been a major fall tradition since 1938.",
+      "The Peanuts Around Town sculpture trail is a signature local attraction.",
+      "The World's Smallest City Block sits in the downtown core.",
+      "The Wiregrass region's farms and fields define the surrounding landscape."
+    ],
+    "must_dos": [
+      {
+        "name": "Peanuts Around Town",
+        "type": "Sightseeing",
+        "cost": "Free",
+        "description": "Find colorful peanut sculptures scattered across the city."
+      },
+      {
+        "name": "Landmark Park",
+        "type": "History/Nature",
+        "cost": "$",
+        "description": "Visit the living history farm, trails, and heritage museum."
+      },
+      {
+        "name": "Wiregrass Museum of Art",
+        "type": "Museum/Art",
+        "cost": "$",
+        "description": "Explore regional art exhibitions in a historic building."
+      },
+      {
+        "name": "Adventureland and Water World",
+        "type": "Family Fun",
+        "cost": "$$",
+        "description": "Mini-golf, go-karts, and water rides for summer days."
+      },
+      {
+        "name": "World's Smallest City Block",
+        "type": "Quirky Landmark",
+        "cost": "Free",
+        "description": "Snap a photo at the tiny downtown block with its marker."
+      }
+    ],
+    "notable_businesses": [
+      "Hunt's Seafood Restaurant - Local favorite for Gulf seafood.",
+      "Dobbs BBQ - Long-running barbecue institution.",
+      "Full Moon BBQ - Classic Alabama BBQ chain.",
+      "Bella's - Downtown spot with seasonal Southern dishes.",
+      "Dakota Coffee Works - Local coffee roaster and cafe.",
+      "National Peanut Festival Grounds - Hub for fall events."
+    ],
+    "local_lore": [
+      "Dothan's name comes from a biblical reference in Genesis.",
+      "The 1889 Peanut War was a local tax dispute turned legend.",
+      "The National Peanut Festival celebrates the region's farm economy.",
+      "Dothan's downtown stood in for 1950s Tulsa in the film The Gingerbread Man.",
+      "The World's Smallest City Block is recorded as a quirky local claim to fame."
+    ],
+    "place_taxonomy": {
+      "Family Fun": [
+        "Adventureland Theme Park",
+        "Water World"
+      ],
+      "Arts/History": [
+        "Wiregrass Museum of Art",
+        "Landmark Park"
+      ],
+      "Car Culture": [
+        "Wiregrass Antique and Classic Car Club meets",
+        "Houston County Farm Center car shows",
+        "Cottonwood Dragway (nearby)"
+      ],
+      "Food/Drink": [
+        "Hunt's Seafood Restaurant",
+        "Dobbs BBQ",
+        "Boiled peanut stands"
+      ],
+      "Scenic Drives": [
+        "US-84 east of Dothan",
+        "AL-52 toward Geneva",
+        "Ross Clark Circle loop"
+      ],
+      "Festivals": [
+        "National Peanut Festival"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Peanut Hunt",
+        "quest": "Find three peanut sculptures and share your favorite design."
+      },
+      {
+        "title": "Smallest Block Photo",
+        "quest": "Take a photo at the World's Smallest City Block marker."
+      },
+      {
+        "title": "Cruise-In Night",
+        "quest": "Attend a car meet or cruise-in and note the best classic you saw."
+      },
+      {
+        "title": "Landmark Park Time",
+        "quest": "Explore the heritage farm and jot down one local history detail."
+      },
+      {
+        "title": "Boiled Peanut Taste",
+        "quest": "Try boiled peanuts and rate the flavor."
+      }
+    ],
+    "review_prompts": [
+      "Which peanut sculpture was your favorite?",
+      "How did you like Landmark Park or the museum?",
+      "Did you catch a car meet or festival event?",
+      "Where did you find the best Southern food in Dothan?",
+      "Would you time a return trip around the Peanut Festival?"
+    ],
+    "badges": [
+      {
+        "name": "Peanut Capital",
+        "criteria": "Visited Peanuts Around Town or the Peanut Festival grounds."
+      },
+      {
+        "name": "Festival Fan",
+        "criteria": "Attended a Dothan festival or community event."
+      },
+      {
+        "name": "Classic Car Spotter",
+        "criteria": "Went to a Wiregrass car show or cruise-in."
+      },
+      {
+        "name": "Wiregrass Explorer",
+        "criteria": "Visited Landmark Park or the Wiregrass Museum of Art."
+      },
+      {
+        "name": "Roadside Snacker",
+        "criteria": "Tried boiled peanuts or a local snack specialty."
+      }
+    ],
+    "testing_notes": "Confirm festival dates, Adventureland seasonal hours, and local car show schedules."
+  },
+  {
+    "city": "Auburn, Alabama",
+    "sub_areas": [
+      {
+        "name": "Campus & Samford Hall",
+        "description": "Iconic Auburn University landmarks and green spaces."
+      },
+      {
+        "name": "Downtown & Toomer's Corner",
+        "description": "College-town hub with traditions, shops, and restaurants."
+      },
+      {
+        "name": "Chewacla State Park",
+        "description": "Waterfalls, trails, and lake activities just outside town."
+      }
+    ],
+    "identity_vibe_tags": [
+      "CollegeTown",
+      "WarEagle",
+      "TraditionRich",
+      "OutdoorAdventure",
+      "CarCulture",
+      "FoodScene",
+      "ArtsScene"
+    ],
+    "community_vibe": "Auburn is a lively college town with deep traditions and game-day excitement. The campus brings energy, while nearby parks add a relaxing outdoor escape.",
+    "travel_logic": {
+      "best_seasons": "Fall is peak for football and campus events. Spring offers mild weather and blooming trees.",
+      "safety": "Campus and downtown are generally safe; expect crowds and traffic on game weekends.",
+      "transportation": "Downtown and campus are walkable, but a car is needed for parks and scenic drives.",
+      "parking": "Game days require advance planning and paid lots; weekdays are easier.",
+      "local_laws": "Follow campus event rules and posted tailgate policies."
+    },
+    "anchors": [
+      "Auburn University defines the city's character and traditions.",
+      "Toomer's Corner rolling is one of the most famous college rituals.",
+      "Chewacla State Park adds waterfalls and lake adventures to the mix.",
+      "Samford Hall is Auburn's most iconic campus image.",
+      "War Eagle traditions unify locals and visitors on game days."
+    ],
+    "must_dos": [
+      {
+        "name": "Samford Hall and Campus Walk",
+        "type": "Campus/Sightseeing",
+        "cost": "Free",
+        "description": "Stroll the main quad and photograph the clock tower."
+      },
+      {
+        "name": "Toomer's Drugs Lemonade",
+        "type": "Food/Tradition",
+        "cost": "$",
+        "description": "Grab the famous lemonade at Toomer's Corner."
+      },
+      {
+        "name": "Jule Collins Smith Museum of Fine Art",
+        "type": "Museum/Art",
+        "cost": "$",
+        "description": "Enjoy galleries and a peaceful sculpture garden."
+      },
+      {
+        "name": "Chewacla State Park",
+        "type": "Outdoors/Nature",
+        "cost": "$ (park entry)",
+        "description": "Hike to the waterfall or kayak on Lake Chewacla."
+      },
+      {
+        "name": "Plainsman Park Game",
+        "type": "Sports/Entertainment",
+        "cost": "$",
+        "description": "Catch Auburn baseball at one of the country's top collegiate parks."
+      }
+    ],
+    "notable_businesses": [
+      "Toomer's Drugs - Auburn's historic soda fountain and lemonade stop.",
+      "Byron's Smokehouse - Beloved local BBQ and banana pudding.",
+      "Little Italy - Late-night pizza favorite for students.",
+      "The Hound - Auburn alumni restaurant with Southern-inspired menus.",
+      "Acre - Farm-to-table dining with local ingredients.",
+      "Gigi's Cupcakes - Sweet stop for game-day treats."
+    ],
+    "local_lore": [
+      "Auburn is called the Loveliest Village on the Plains.",
+      "Rolling Toomer's Corner after wins is a signature Auburn tradition.",
+      "The War Eagle battle cry and eagle flight are iconic game-day rituals.",
+      "The 1972 Punt Bama Punt game remains a legendary Auburn moment.",
+      "Auburn alum Jimmy Wales went on to co-found Wikipedia."
+    ],
+    "place_taxonomy": {
+      "Campus/Traditions": [
+        "Samford Hall",
+        "Toomer's Corner",
+        "Auburn Arena"
+      ],
+      "Outdoors/Nature": [
+        "Chewacla State Park",
+        "Auburn University Arboretum"
+      ],
+      "Arts/Culture": [
+        "Jule Collins Smith Museum of Fine Art"
+      ],
+      "Car Culture": [
+        "Tiger Motors car show",
+        "Opelika Sunset Cruise-Ins",
+        "East Alabama Auto Fair"
+      ],
+      "Food/Drink": [
+        "Toomer's Drugs",
+        "Byron's Smokehouse",
+        "The Hound"
+      ],
+      "Scenic Drives": [
+        "Moores Mill Road",
+        "AL-14 to Tuskegee",
+        "Lake Martin route"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Toomer's Tradition",
+        "quest": "Get a lemonade at Toomer's and take a photo at the corner."
+      },
+      {
+        "title": "War Eagle Walk",
+        "quest": "Walk the campus, visit Samford Hall, and note your favorite landmark."
+      },
+      {
+        "title": "Chewacla Falls",
+        "quest": "Hike to the waterfall and log the trail you took."
+      },
+      {
+        "title": "Tiger Motors Snapshot",
+        "quest": "Attend a car show or cruise-in and share a favorite ride."
+      },
+      {
+        "title": "Lake Martin Drive",
+        "quest": "Take a scenic drive toward Lake Martin and capture a lakeside photo."
+      }
+    ],
+    "review_prompts": [
+      "How was the campus atmosphere when you visited?",
+      "Did you try Toomer's lemonade or another Auburn classic?",
+      "What was your favorite outdoor spot around Auburn?",
+      "Did you spot any interesting cars at a show or meet?",
+      "Would you return for a football or baseball weekend?"
+    ],
+    "badges": [
+      {
+        "name": "War Eagle",
+        "criteria": "Visited Auburn University landmarks or attended a game."
+      },
+      {
+        "name": "Campus Explorer",
+        "criteria": "Completed a walk around Samford Hall and campus core."
+      },
+      {
+        "name": "State Park Trekker",
+        "criteria": "Visited Chewacla State Park."
+      },
+      {
+        "name": "Tradition Keeper",
+        "criteria": "Stopped at Toomer's Corner and learned about the rolling tradition."
+      },
+      {
+        "name": "Lemonade Lover",
+        "criteria": "Tried Toomer's lemonade or a local Auburn sweet treat."
+      }
+    ],
+    "testing_notes": "Confirm museum hours, car show dates, and campus event schedules before planning quests."
+  },
+  {
+    "city": "Decatur, Alabama",
+    "sub_areas": [
+      {
+        "name": "Downtown & Bank Street",
+        "description": "Historic core with restaurants, theaters, and cruise-in nights."
+      },
+      {
+        "name": "Riverfront & Rhodes Ferry Park",
+        "description": "Tennessee River views, festivals, and picnic spaces."
+      },
+      {
+        "name": "Point Mallard & Flint Creek",
+        "description": "Family recreation, golf, and water park attractions."
+      }
+    ],
+    "identity_vibe_tags": [
+      "RiverCity",
+      "BBQHeritage",
+      "WildlifeRefuge",
+      "FamilyFriendly",
+      "CarCulture",
+      "FestivalTown",
+      "Historic"
+    ],
+    "community_vibe": "Decatur feels like a relaxed river city with strong food traditions and easy access to wildlife refuges. Community events keep downtown active through the year.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are best for outdoor activities and festivals. Summers are hot but ideal for water park days.",
+      "safety": "Generally safe and walkable downtown. Use normal precautions at busy festivals and trailheads.",
+      "transportation": "A car is recommended for reaching parks and scenic drives.",
+      "parking": "Downtown and park parking is typically free and easy to find.",
+      "local_laws": "Observe park hours and posted rules at wildlife refuges and festival areas."
+    },
+    "anchors": [
+      "Decatur is known as the River City on the Tennessee River.",
+      "Big Bob Gibson created Alabama's white BBQ sauce here in 1925.",
+      "Wheeler Wildlife Refuge is a major birding destination.",
+      "Point Mallard introduced one of the nation's first wave pools.",
+      "The Alabama Jubilee balloon festival is a signature local event."
+    ],
+    "must_dos": [
+      {
+        "name": "Wheeler Wildlife Refuge",
+        "type": "Outdoors/Nature",
+        "cost": "Free",
+        "description": "Drive the refuge and watch for migratory birds and wildlife."
+      },
+      {
+        "name": "Point Mallard Park",
+        "type": "Family Fun",
+        "cost": "$",
+        "description": "Enjoy the water park, golf, and trails along Flint Creek."
+      },
+      {
+        "name": "Cook Museum of Natural Science",
+        "type": "Museum/Science",
+        "cost": "$$",
+        "description": "Hands-on exhibits and immersive science displays."
+      },
+      {
+        "name": "Old State Bank",
+        "type": "History",
+        "cost": "$",
+        "description": "Tour a rare 1830s bank building and museum."
+      },
+      {
+        "name": "Big Bob Gibson Bar-B-Q",
+        "type": "Food",
+        "cost": "$",
+        "description": "Sample the original white sauce at a legendary BBQ stop."
+      }
+    ],
+    "notable_businesses": [
+      "Big Bob Gibson Bar-B-Q - Famous for white sauce barbecue.",
+      "Cook Museum of Natural Science - Top regional science museum.",
+      "Point Mallard Park - Recreation complex and water park.",
+      "Princess Theatre - Historic downtown performance venue.",
+      "Morgan Price Candy - Southern pralines and toffee.",
+      "CB and SB (Chicken Burger and Shake Bureau) - Retro burger and shake spot."
+    ],
+    "local_lore": [
+      "Decatur's white BBQ sauce started at Big Bob Gibson's in 1925.",
+      "Point Mallard opened one of America's first wave pools in 1970.",
+      "The Old State Bank survived the Civil War and now serves as a museum.",
+      "The Alabama Jubilee Hot Air Balloon Festival fills the skies each Memorial Day weekend.",
+      "Steamboat Bill Memorial Bridge is a signature river crossing with sunset views."
+    ],
+    "place_taxonomy": {
+      "Outdoors/Nature": [
+        "Wheeler Wildlife Refuge",
+        "Joe Wheeler State Park (nearby)"
+      ],
+      "Museums/Family": [
+        "Cook Museum of Natural Science",
+        "Old State Bank",
+        "Point Mallard Park"
+      ],
+      "Car Culture": [
+        "Bank Street Cruise-In",
+        "Cars by the River show",
+        "River City Rumble"
+      ],
+      "Food/Drink": [
+        "Big Bob Gibson Bar-B-Q",
+        "Morgan Price Candy",
+        "CB and SB"
+      ],
+      "Scenic Drives": [
+        "Steamboat Bill Memorial Bridge",
+        "AL-67 toward Brindlee Mountain",
+        "Market Street toward Bankhead Forest"
+      ],
+      "Events": [
+        "Alabama Jubilee Hot Air Balloon Festival"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "White Sauce Pilgrimage",
+        "quest": "Eat at Big Bob Gibson and rate the white sauce."
+      },
+      {
+        "title": "River Bridge Sunset",
+        "quest": "Drive across the Steamboat Bill bridge at sunset and capture a photo."
+      },
+      {
+        "title": "Wildlife Spotting",
+        "quest": "Visit Wheeler Refuge and note three birds or animals you see."
+      },
+      {
+        "title": "Cruise-In Friday",
+        "quest": "Attend a downtown cruise-in and choose a favorite classic car."
+      },
+      {
+        "title": "Balloon Festival Plan",
+        "quest": "Check the Alabama Jubilee schedule and plan a future visit."
+      }
+    ],
+    "review_prompts": [
+      "What did you enjoy most at Wheeler Refuge or Point Mallard?",
+      "How was the white sauce BBQ experience?",
+      "Did you visit the Cook Museum or Old State Bank?",
+      "What was your favorite downtown spot in Decatur?",
+      "Would you return for the balloon festival or a cruise-in night?"
+    ],
+    "badges": [
+      {
+        "name": "River City Rover",
+        "criteria": "Visited two Decatur riverfront locations."
+      },
+      {
+        "name": "BBQ Pioneer",
+        "criteria": "Ate at Big Bob Gibson and tried white sauce."
+      },
+      {
+        "name": "Wildlife Watcher",
+        "criteria": "Logged wildlife sightings at Wheeler Refuge."
+      },
+      {
+        "name": "Cruise-In Regular",
+        "criteria": "Attended a Decatur car event or cruise-in."
+      },
+      {
+        "name": "Museum Explorer",
+        "criteria": "Visited the Cook Museum or Old State Bank."
+      }
+    ],
+    "testing_notes": "Verify Point Mallard seasonal hours, festival dates, and cruise-in schedules."
+  },
+  {
+    "city": "Madison, Alabama",
+    "sub_areas": [
+      {
+        "name": "Historic Downtown Madison",
+        "description": "Railroad-era buildings, the roundhouse depot, and local cafes."
+      },
+      {
+        "name": "Toyota Field & Clift Farms",
+        "description": "Baseball games, shopping, and community events."
+      },
+      {
+        "name": "Rainbow Mountain Nature Preserve",
+        "description": "Hiking trails and overlooks just outside town."
+      }
+    ],
+    "identity_vibe_tags": [
+      "FastGrowing",
+      "FamilyFriendly",
+      "RocketCityNeighbor",
+      "OutdoorTrails",
+      "CarCulture",
+      "MinorLeagueBaseball",
+      "FoodScene"
+    ],
+    "community_vibe": "Madison balances small-town charm with rapid growth fueled by nearby tech and aerospace jobs. Families, young professionals, and long-time residents share a calm, friendly vibe.",
+    "travel_logic": {
+      "best_seasons": "Spring and fall are best for trails and outdoor events. Summer is hot but busy with baseball and festivals.",
+      "safety": "Generally safe and family-oriented. Use standard precautions at busy event parking lots.",
+      "transportation": "A car is recommended for reaching parks and new development areas.",
+      "parking": "Parking is easy at downtown lots and Toyota Field, with overflow during game nights.",
+      "local_laws": "Follow park rules, event guidelines, and posted hours at nature preserves."
+    },
+    "anchors": [
+      "Toyota Field is home to the Rocket City Trash Pandas.",
+      "Historic Downtown Madison centers on the restored roundhouse depot.",
+      "Rainbow Mountain offers a quick nature escape with rocky overlooks.",
+      "Madison's growth ties closely to Huntsville's tech and aerospace boom.",
+      "Community car shows at Toyota Field highlight local auto culture."
+    ],
+    "must_dos": [
+      {
+        "name": "Toyota Field (Trash Pandas Game)",
+        "type": "Sports/Entertainment",
+        "cost": "$",
+        "description": "Catch minor league baseball and enjoy the stadium atmosphere."
+      },
+      {
+        "name": "Rainbow Mountain Nature Preserve",
+        "type": "Outdoors/Nature",
+        "cost": "Free",
+        "description": "Hike to rock outcrops and scenic viewpoints."
+      },
+      {
+        "name": "Historic Downtown Walk",
+        "type": "Sightseeing",
+        "cost": "Free",
+        "description": "See the old depot, local shops, and Main Street Cafe."
+      },
+      {
+        "name": "Insanity Skate Park",
+        "type": "Family Fun",
+        "cost": "$",
+        "description": "Skate, play arcade games, or try the mini-golf course."
+      },
+      {
+        "name": "Old Black Bear Brewery",
+        "type": "Food/Drink",
+        "cost": "$$",
+        "description": "Enjoy local brews and a casual meal in a historic building."
+      }
+    ],
+    "notable_businesses": [
+      "Old Black Bear Brewery - Downtown brewery and eatery.",
+      "Main Street Cafe - Jailhouse cafe with local comfort food.",
+      "Madison Frosty Morn - Old-school ice cream shop.",
+      "Big Bob Gibson's BBQ (Madison) - White sauce BBQ favorite.",
+      "Toyota Field - Home of the Trash Pandas.",
+      "Insanity Skate Park - Skate, arcade, and family fun complex."
+    ],
+    "local_lore": [
+      "Madison started as a railroad stop called Madison Station.",
+      "The 1864 Affair at Madison Station was a Civil War skirmish nearby.",
+      "The Trash Pandas mascot name won a public vote and became an instant hit.",
+      "Madison is among Alabama's fastest-growing cities.",
+      "Many residents work in nearby research parks and aerospace labs."
+    ],
+    "place_taxonomy": {
+      "Outdoors/Nature": [
+        "Rainbow Mountain Nature Preserve",
+        "Madison County Nature Trail (nearby)"
+      ],
+      "Family Fun": [
+        "Insanity Skate Park",
+        "Toyota Field events"
+      ],
+      "History": [
+        "Madison Roundhouse Depot",
+        "Historic Downtown Madison"
+      ],
+      "Car Culture": [
+        "Trash Pandas Tune-Up Car Show",
+        "Madison Motorsports dyno days",
+        "Cruise-In for Toys"
+      ],
+      "Food/Drink": [
+        "Old Black Bear Brewery",
+        "Main Street Cafe",
+        "Madison Frosty Morn"
+      ],
+      "Scenic Drives": [
+        "Hughes Road and Madison Pike",
+        "Browns Ferry Road",
+        "Green Mountain drive (nearby)"
+      ]
+    },
+    "quest_templates": [
+      {
+        "title": "Trash Panda Night",
+        "quest": "Attend a game at Toyota Field and grab a photo with the mascot."
+      },
+      {
+        "title": "Rainbow Mountain Hike",
+        "quest": "Walk a trail and log your favorite overlook."
+      },
+      {
+        "title": "Depot Photo",
+        "quest": "Visit the roundhouse depot and snap a historic downtown photo."
+      },
+      {
+        "title": "Car Show Check-In",
+        "quest": "Find a local car event and record your favorite build."
+      },
+      {
+        "title": "Ice Cream Finish",
+        "quest": "End the day with a treat at Madison Frosty Morn."
+      }
+    ],
+    "review_prompts": [
+      "How was the Trash Pandas game-day atmosphere?",
+      "What was your favorite view on Rainbow Mountain?",
+      "Did you explore the historic downtown core?",
+      "Which local food spot stood out most?",
+      "Would you return for another Madison car show or festival?"
+    ],
+    "badges": [
+      {
+        "name": "Trash Panda Fan",
+        "criteria": "Attended a Toyota Field game or event."
+      },
+      {
+        "name": "Mountain Walker",
+        "criteria": "Completed a hike at Rainbow Mountain."
+      },
+      {
+        "name": "Historic Core Explorer",
+        "criteria": "Visited the roundhouse depot or downtown landmarks."
+      },
+      {
+        "name": "Car Culture Ally",
+        "criteria": "Attended a Madison-area car show or cruise-in."
+      },
+      {
+        "name": "Family Fun",
+        "criteria": "Visited Insanity Skate Park or a community event."
+      }
+    ],
+    "testing_notes": "Confirm Toyota Field schedule, car show dates, and Insanity Skate Park hours before planning quests."
+  },
+  {
     "city": "Cedar Grove, Alabama",
     "sub_areas": [
       {

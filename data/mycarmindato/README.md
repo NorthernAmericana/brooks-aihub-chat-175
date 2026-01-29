@@ -8,10 +8,10 @@ This directory contains data files used by the MyCarMindATO agent (`/MyCarMindAT
 
 A comprehensive JSON file containing information about cities that MyCarMindATO can provide information about. The agent uses this data to match user queries with city information and provide contextual travel assistance.
 
-**Season 1 Status**: Maximum capacity of 200 cities. Currently includes 7 real Florida cities with comprehensive data, plus additional test/placeholder entries.
+**Season 1 Status**: Maximum capacity of 200 cities. Currently includes 17 real cities (10 Alabama + 7 Florida) with comprehensive data, plus additional test/placeholder entries.
 
-**Current count**: 206 total entries in file (7 complete Florida cities + test/placeholder data)
-**Capacity**: 7/200 real cities (193 slots remaining)
+**Current count**: 216 total entries in file (17 complete cities + test/placeholder data)
+**Capacity**: 17/200 real cities (183 slots remaining)
 
 **Structure**: Each city entry contains:
 
@@ -30,13 +30,23 @@ A comprehensive JSON file containing information about cities that MyCarMindATO 
 - `place_taxonomy` (object): Categorized places (optional)
 
 **Season 1 Cities** (complete, comprehensive data):
-1. Pensacola, Florida (original)
-2. Jacksonville, Florida (added January 2026)
-3. Miami, Florida (added January 2026)
-4. Tampa, Florida (added January 2026)
-5. Orlando, Florida (added January 2026)
-6. St. Petersburg, Florida (added January 2026)
-7. Pace/Milton/Avalon, Florida (added January 2026)
+1. Huntsville, Alabama (added January 2026)
+2. Birmingham, Alabama (added January 2026)
+3. Montgomery, Alabama (added January 2026)
+4. Mobile, Alabama (added January 2026)
+5. Tuscaloosa, Alabama (added January 2026)
+6. Hoover, Alabama (added January 2026)
+7. Dothan, Alabama (added January 2026)
+8. Auburn, Alabama (added January 2026)
+9. Decatur, Alabama (added January 2026)
+10. Madison, Alabama (added January 2026)
+11. Pensacola, Florida (original)
+12. Jacksonville, Florida (added January 2026)
+13. Miami, Florida (added January 2026)
+14. Tampa, Florida (added January 2026)
+15. Orlando, Florida (added January 2026)
+16. St. Petersburg, Florida (added January 2026)
+17. Pace/Milton/Avalon, Florida (added January 2026)
 
 ### season-1-plaza-rest-stops.json
 
