@@ -1,0 +1,410 @@
+[
+  {
+    "name": "Snapper Creek Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike (HEFT)",
+    "mile_marker": "19",
+    "location": {
+      "city": "Miami, Florida",
+      "state": "Florida",
+      "notes": "Southernmost plaza on Florida's Turnpike (Homestead Extension)."
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": false
+      },
+      "dining": ["Dunkin'"],
+      "ev_charging": {
+        "available": true,
+        "types": ["Level 2"],
+        "notes": "On-site chargers for EVs."
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Travel info kiosk", "Well-lit with security/patrol presence reported"]
+    },
+    "highlights": [
+      "Clean restrooms and compact, modernized footprint",
+      "Convenient gateway stop for Miami metro / Florida Keys routes"
+    ],
+    "road_tripper_tip": "Great last/first stop around Miami without detouring off the turnpike: restroom, coffee, quick refuel, then back on the road.",
+    "sources": [
+      "floridasturnpike.com",
+      "yelp.com",
+      "plugshare.com",
+      "en.wikipedia.org"
+    ]
+  },
+  {
+    "name": "West Palm Beach Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "94",
+    "location": {
+      "city": "Lake Worth, Florida",
+      "county": "Palm Beach County",
+      "state": "Florida"
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true
+      },
+      "dining": ["KFC", "Burger King", "Dunkin'"],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger", "Universal charging (varies)"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Sunshine Market convenience store", "High-traffic plaza with frequent cleaning reported"]
+    },
+    "highlights": [
+      "One of the original 1950s turnpike plazas; heavily modernized in early 2010s",
+      "Big food court and strong EV charging coverage"
+    ],
+    "road_tripper_tip": "A logical Palm Beach County break for fuel + food before long turnpike stretches toward Orlando or Miami.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org"]
+  },
+  {
+    "name": "Port St. Lucie / Fort Pierce Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "144",
+    "location": {
+      "city": "Fort Pierce / Port St. Lucie area, Florida",
+      "county": "St. Lucie County",
+      "state": "Florida"
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": true
+      },
+      "dining": ["Dunkin'", "Burger King", "Villa Italian Kitchen"],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger", "Other charging (varies)"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Information desk / brochures", "Large indoor seating area"]
+    },
+    "highlights": [
+      "Essential Treasure Coast services with modern, spacious rebuild (2010s)",
+      "Good midway hub between South Florida and Orlando"
+    ],
+    "road_tripper_tip": "Useful “reset” point before long rural stretches—fuel, restroom, and a real meal without leaving the turnpike.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org", "ohla-usa.com"]
+  },
+  {
+    "name": "Fort Drum Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "184",
+    "location": {
+      "city": "Yeehaw Junction area, Florida",
+      "state": "Florida",
+      "notes": "Remote interior stretch; frequently described as an “oasis.”"
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": true
+      },
+      "dining": ["Wendy's", "Subway (or similar)", "Dunkin'", "Villa Italian Kitchen (varies)"],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger", "Other charging (varies)"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Well-lit, security/patrol presence reported"]
+    },
+    "highlights": [
+      "Big modern rebuild (2010s) in a sparsely-served stretch of the turnpike",
+      "Strong “safety + clean restrooms” reputation among travelers"
+    ],
+    "road_tripper_tip": "If you’re tired on the long interior segment, this is a reliable bailout stop for food, fuel, and a clean restroom.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org", "ohla-usa.com"]
+  },
+  {
+    "name": "Canoe Creek Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "229",
+    "location": {
+      "city": "St. Cloud / Osceola County area, Florida",
+      "state": "Florida"
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": true
+      },
+      "dining": [
+        "Wendy's",
+        "Dunkin'",
+        "Villa Italian Kitchen",
+        "Auntie Anne's",
+        "Nature's Table"
+      ],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Fenced dog park with water fountains", "Well-kept grounds and lighting reported"]
+    },
+    "highlights": [
+      "A “quiet-but-full-service” plaza south of Orlando attractions",
+      "Good mix of fast food + lighter options"
+    ],
+    "road_tripper_tip": "A dependable, less-crowded stop: good bathrooms, solid food variety, and a pet break without leaving the turnpike.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org"]
+  },
+  {
+    "name": "Turkey Lake Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "263",
+    "location": {
+      "city": "Orlando, Florida",
+      "state": "Florida",
+      "notes": "Often described as the flagship Turnpike plaza; operations HQ adjacent."
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": true
+      },
+      "dining": [
+        "Wendy's",
+        "KFC",
+        "Nathan's Famous",
+        "Dunkin'",
+        "Nature's Table",
+        "Villa Pizza (or similar)"
+      ],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger", "Other charging (varies)"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": [
+        "WheelRight tire diagnostic system (reported)",
+        "SunPass transponders available (reported)",
+        "Information counter / brochures"
+      ]
+    },
+    "highlights": [
+      "Huge dining + services footprint; central Orlando-area anchor stop",
+      "Great “one-stop reset” for groups: restrooms, meals, fuel, EV charge"
+    ],
+    "road_tripper_tip": "If you only pick one Turnpike plaza to plan around, make it this one—max amenities and a reliable break point around Orlando traffic.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org", "ohla-usa.com"]
+  },
+  {
+    "name": "Okahumpka Service Plaza",
+    "kind": "service_plaza",
+    "highway": "Florida's Turnpike",
+    "mile_marker": "299",
+    "location": {
+      "city": "Wildwood, Florida",
+      "state": "Florida",
+      "notes": "Northernmost service plaza on the Turnpike mainline; key junction-area stop."
+    },
+    "access": {
+      "center_median": true,
+      "directions": "Both directions (turnpike center median)."
+    },
+    "hours": "Open 24/7",
+    "amenities": {
+      "fuel": {
+        "brand": "Shell",
+        "gasoline": true,
+        "diesel": true,
+        "e85": false
+      },
+      "dining": ["Wendy's", "KFC", "Dunkin'", "Pizza/pasta counter (varies)"],
+      "ev_charging": {
+        "available": true,
+        "types": ["Tesla Supercharger", "Level 3 / DC fast charging (reported)"]
+      },
+      "wifi": true,
+      "atm": true,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Welcome center desk / brochures", "High-volume stop with occasional crowding reported"]
+    },
+    "highlights": [
+      "Major crossroads stop between Turnpike and I-75 corridor",
+      "Modern rebuild (2010s) with strong EV support"
+    ],
+    "road_tripper_tip": "Use this as your “transition checkpoint” before/after the Wildwood interchange—fuel, restroom, snacks, then tackle the next highway segment.",
+    "sources": ["floridasturnpike.com", "yelp.com", "en.wikipedia.org", "tripadvisor.com"]
+  },
+  {
+    "name": "Florida Welcome Center (I-95)",
+    "kind": "welcome_center",
+    "highway": "I-95",
+    "location": {
+      "city": "Yulee, Florida",
+      "county": "Nassau County",
+      "state": "Florida",
+      "notes": "Near the Florida/Georgia line; classic “Florida Welcomes You” stop."
+    },
+    "access": {
+      "center_median": false,
+      "directions": "Southbound side (entering Florida)."
+    },
+    "hours": "Staffed hours vary (often daytime); restrooms generally accessible daily",
+    "amenities": {
+      "fuel": {
+        "available": false
+      },
+      "dining": ["Free orange/grapefruit juice sample (during staffed hours)", "Vending machines"],
+      "ev_charging": {
+        "available": false
+      },
+      "wifi": false,
+      "atm": false,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Tourism info, brochures, maps, coupons (during staffed hours)"]
+    },
+    "highlights": [
+      "Free citrus juice tradition + big rack of statewide travel info",
+      "Clean, celebratory “welcome to Florida” ritual stop"
+    ],
+    "road_tripper_tip": "Perfect first-stop to reset after the border: stretch, restroom, grab free OJ (if open), and pick up maps/coupons for the trip.",
+    "sources": ["en.wikipedia.org", "tripadvisor.com"]
+  },
+  {
+    "name": "Florida Welcome Center (I-75)",
+    "kind": "welcome_center",
+    "highway": "I-75",
+    "location": {
+      "city": "Jennings, Florida",
+      "county": "Hamilton County",
+      "state": "Florida",
+      "notes": "Near the Florida/Georgia line on I-75."
+    },
+    "access": {
+      "center_median": false,
+      "directions": "Southbound side (entering Florida)."
+    },
+    "hours": "Staffed hours vary (often daytime); restrooms generally accessible daily",
+    "amenities": {
+      "fuel": {
+        "available": false
+      },
+      "dining": ["Free orange/grapefruit juice sample (during staffed hours)", "Vending machines"],
+      "ev_charging": {
+        "available": false
+      },
+      "wifi": false,
+      "atm": false,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Tourism info, brochures, maps, coupons (during staffed hours)"]
+    },
+    "highlights": [
+      "Low-stress border welcome stop with clean restrooms and travel counselors",
+      "Good “plan the rest of Florida” info rack for I-75 travelers"
+    ],
+    "road_tripper_tip": "If you’re starting a long Florida run from Georgia, this is an easy first break to refresh, grab brochures, and confirm your route.",
+    "sources": ["en.wikipedia.org", "tripadvisor.com", "yelp.com"]
+  },
+  {
+    "name": "Florida Welcome Center (I-10)",
+    "kind": "welcome_center",
+    "highway": "I-10",
+    "location": {
+      "city": "Pensacola area, Florida",
+      "state": "Florida",
+      "notes": "Just east of the Florida/Alabama line for eastbound I-10 traffic."
+    },
+    "access": {
+      "center_median": false,
+      "directions": "Eastbound side (entering Florida)."
+    },
+    "hours": "Staffed hours vary (often daytime); restrooms generally accessible daily",
+    "amenities": {
+      "fuel": {
+        "available": false
+      },
+      "dining": ["Free orange/grapefruit juice sample (during staffed hours)", "Vending machines"],
+      "ev_charging": {
+        "available": false
+      },
+      "wifi": false,
+      "atm": false,
+      "pet_area": true,
+      "picnic_area": true,
+      "other": ["Tourism info, brochures, maps (during staffed hours)", "Covered picnic pavilions"]
+    },
+    "highlights": [
+      "Panhandle “arrival moment” for road-trippers coming from Alabama/Gulf Coast states",
+      "Calm, park-like grounds with shade and travel info"
+    ],
+    "road_tripper_tip": "A smart first Florida stop on I-10: restroom + free juice + maps to orient your Panhandle or cross-state trip.",
+    "sources": ["en.wikipedia.org", "tripadvisor.com"]
+  }
+]
