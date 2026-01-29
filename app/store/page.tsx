@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 const INSTALL_KEYS = {
   brooksBears: "ato-app-installed:brooksbears",
   myCarMindAto: "ato-app-installed:mycarmindato",
+  myFlowerAi: "ato-app-installed:myflowerai",
   namc: "ato-app-installed:namc",
 } as const;
 
@@ -51,17 +52,15 @@ const apps = [
   {
     id: 3,
     name: "MyFlowerAI",
-    path: "/MyFlowerAI/",
+    path: "/MyFlowerAI",
+    storePath: "/myflowerai-app",
+    installKey: INSTALL_KEYS.myFlowerAi,
     description: "Cannabis tracking and data analysis for harm reduction",
     icon: "/icons/myflowerai-appicon.png",
     category: "Health & Wellness",
     rating: 4.8,
     downloads: "15K+",
-    routes: [
-      { path: "/MyFlowerAI/", description: "Main interface" },
-      { path: "/MyFlowerAI/quiz", description: "Cannabis personality quiz" },
-      { path: "/MyFlowerAI/image-gen", description: "Psychedelic art generator" },
-    ],
+    routes: [],
   },
   {
     id: 4,
