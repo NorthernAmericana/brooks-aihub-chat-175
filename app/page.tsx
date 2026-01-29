@@ -63,10 +63,10 @@ export default function IntroPage() {
   }, [router, status]);
 
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#140d12] text-white">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#0a1511] text-white">
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_55%)]" />
+      <div className="intro-mist absolute inset-0" />
 
       <div className="absolute right-6 top-6 z-20">
         {session?.user && !isSigningOut ? (
@@ -94,8 +94,8 @@ export default function IntroPage() {
       <div className="intro-card intro-float-slow absolute right-[10%] top-[14%] hidden h-32 w-56 rounded-2xl border border-white/20 sm:block" />
       <div className="intro-card intro-float absolute bottom-[18%] right-[18%] hidden h-24 w-44 rounded-2xl border border-white/20 md:block" />
 
-      <div className="intro-sparkle absolute right-[22%] top-[22%] h-3 w-3 rotate-45 rounded-sm bg-white/80 shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
-      <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-white/70 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
+      <div className="intro-sparkle absolute right-[22%] top-[22%] h-3 w-3 rotate-45 rounded-sm bg-emerald-200/80 shadow-[0_0_12px_rgba(150,255,210,0.8)]" />
+      <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-emerald-100/70 shadow-[0_0_10px_rgba(140,240,200,0.7)]" />
 
       <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 px-6 text-center">
         <div className="intro-glass w-full rounded-[32px] px-6 py-10 sm:px-10 sm:py-12">
