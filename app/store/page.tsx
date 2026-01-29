@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 const INSTALL_KEYS = {
   brooksBears: "ato-app-installed:brooksbears",
   myCarMindAto: "ato-app-installed:mycarmindato",
+  namc: "ato-app-installed:namc",
 } as const;
 
 const apps = [
@@ -66,13 +67,20 @@ const apps = [
     id: 4,
     name: "NAMC",
     path: "/NAMC/",
+    storePath: "/namc-app",
+    installKey: INSTALL_KEYS.namc,
     description:
       "Northern Americana Media Collection - Your curated media library and lore explorer",
     icon: "/icons/namc-appicon.png",
     category: "Media & Entertainment",
     rating: 4.9,
     downloads: "8K+",
-    routes: [{ path: "/NAMC/", description: "Media curator interface" }],
+    routes: [
+      { path: "/NAMC/", description: "Streaming-style homepage and featured picks" },
+      { path: "/NAMC/library", description: "Collection shelves and playlists" },
+      { path: "/NAMC/search", description: "Search across media and lore" },
+      { path: "/NAMC/campfire", description: "Cozy campfire mode (coming soon)" },
+    ],
   },
 ];
 
@@ -171,7 +179,19 @@ export default function StorePage() {
               <div
                 className="store-app-card group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 cursor-pointer"
                 key={app.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => {
+                  const targetPath = app.storePath ?? app.path;
+                  if (targetPath) {
+                    router.push(targetPath);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                  }
+                  event.preventDefault();
                   const targetPath = app.storePath ?? app.path;
                   if (targetPath) {
                     router.push(targetPath);
