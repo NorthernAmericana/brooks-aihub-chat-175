@@ -1,0 +1,412 @@
+"use client";
+
+import {
+  CircleUserRound,
+  Flame,
+  Home,
+  Library,
+  Plus,
+  Search,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+type NamcCardKind = "video" | "game" | "album" | "lore";
+
+type NamcCard = {
+  id: string;
+  title: string;
+  subtitle: string;
+  kind: NamcCardKind;
+  badge?: string;
+  durationLabel?: string;
+  metricLabel?: string;
+};
+
+const collections: NamcCard[] = [
+  {
+    id: "collection-cabin",
+    title: "Cabin Vibes",
+    subtitle: "Playlist",
+    kind: "album",
+    badge: "Cozy",
+  },
+  {
+    id: "collection-mountain",
+    title: "Mountain Melodies",
+    subtitle: "Playlist",
+    kind: "album",
+    badge: "New",
+  },
+  {
+    id: "collection-load",
+    title: "Load Playlist",
+    subtitle: "Shortcut",
+    kind: "album",
+  },
+  {
+    id: "collection-enter",
+    title: "Enter a Story",
+    subtitle: "Lore shelf",
+    kind: "lore",
+  },
+] as const;
+
+const trending: NamcCard[] = [
+  {
+    id: "trend-indie-docs",
+    title: "Indie Docs: The Crafted Life",
+    subtitle: "Documentary",
+    kind: "video",
+    durationLabel: "10:53",
+    metricLabel: "5.9K views",
+  },
+  {
+    id: "trend-live-barn",
+    title: "Live from the Barn",
+    subtitle: "Session",
+    kind: "video",
+    durationLabel: "10:52",
+    metricLabel: "107K views",
+  },
+  {
+    id: "trend-dank-time",
+    title: "The Dank Time",
+    subtitle: "Series",
+    kind: "video",
+    durationLabel: "12:08",
+    metricLabel: "101K views",
+  },
+] as const;
+
+const newGames: NamcCard[] = [
+  {
+    id: "game-ghost-girl",
+    title: "Ghost Girl",
+    subtitle: "Interactive story",
+    kind: "game",
+    badge: "Coming soon",
+    metricLabel: "Prototype build",
+  },
+  {
+    id: "game-my-daughter-death",
+    title: "My Daughter, Death",
+    subtitle: "Narrative game",
+    kind: "game",
+    badge: "In progress",
+    metricLabel: "Act 1 draft",
+  },
+  {
+    id: "game-night-drive",
+    title: "Night Drive Notes",
+    subtitle: "Ambient exploration",
+    kind: "game",
+    badge: "Wishlist",
+    metricLabel: "Playable demo",
+  },
+] as const;
+
+const kindLabel: Record<NamcCardKind, string> = {
+  video: "Video",
+  game: "Game",
+  album: "Playlist",
+  lore: "Lore",
+} as const;
+
+const matchesQuery = (query: string, item: NamcCard) => {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+  return `${item.title} ${item.subtitle} ${kindLabel[item.kind]}`
+    .toLowerCase()
+    .includes(normalized);
+};
+
+function SectionHeader({
+  title,
+  href,
+}: {
+  title: string;
+  href: string;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4">
+      <h2 className="text-lg font-semibold text-[#f6e6c8] pixel-text-shadow">
+        {title}
+      </h2>
+      <Link
+        className="text-xs font-semibold text-[#f6e6c8]/80 transition hover:text-[#f6e6c8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+        href={href}
+      >
+        Show all
+      </Link>
+    </div>
+  );
+}
+
+function CardBase({
+  item,
+  variant,
+}: {
+  item: NamcCard;
+  variant: "tile" | "thumb";
+}) {
+  const badge = item.badge;
+  const duration = item.durationLabel;
+  const metric = item.metricLabel;
+
+  const bg =
+    item.kind === "album"
+      ? "bg-[radial-gradient(circle_at_25%_15%,rgba(255,215,140,0.35),transparent_55%),linear-gradient(135deg,rgba(115,74,42,0.95),rgba(40,24,15,0.92))]"
+      : item.kind === "game"
+        ? "bg-[radial-gradient(circle_at_20%_20%,rgba(120,198,255,0.30),transparent_55%),linear-gradient(135deg,rgba(35,48,64,0.92),rgba(12,18,28,0.92))]"
+        : item.kind === "lore"
+          ? "bg-[radial-gradient(circle_at_30%_20%,rgba(255,165,126,0.25),transparent_55%),linear-gradient(135deg,rgba(60,32,26,0.92),rgba(20,12,14,0.92))]"
+          : "bg-[radial-gradient(circle_at_20%_15%,rgba(255,236,196,0.22),transparent_55%),linear-gradient(135deg,rgba(64,40,28,0.90),rgba(20,13,18,0.92))]";
+
+  if (variant === "tile") {
+    return (
+      <div className="relative h-[92px] w-[132px] overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+        <div className={`absolute inset-0 ${bg}`} />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.75))]" />
+        {badge && (
+          <div className="absolute left-2 top-2 rounded-full border border-white/20 bg-black/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80 backdrop-blur-sm">
+            {badge}
+          </div>
+        )}
+        <div className="relative z-10 flex h-full flex-col justify-end p-3">
+          <p className="text-sm font-semibold text-[#f6e6c8]">{item.title}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative w-[240px] overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+      <div className={`absolute inset-0 ${bg}`} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.82))]" />
+      <div className="relative z-10 flex aspect-[16/9] items-end p-3">
+        <div className="flex w-full items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[#f6e6c8]">
+              {item.title}
+            </p>
+            <p className="truncate text-xs text-[#f6e6c8]/75">{metric ?? item.subtitle}</p>
+          </div>
+          {duration && (
+            <div className="rounded-lg bg-black/55 px-2 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
+              {duration}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100">
+        <div className="absolute inset-0 bg-white/5" />
+      </div>
+    </div>
+  );
+}
+
+export default function NamcHomePage() {
+  const [query, setQuery] = useState("");
+
+  const filteredCollections = useMemo(
+    () => collections.filter((item) => matchesQuery(query, item)),
+    [query]
+  );
+  const filteredTrending = useMemo(
+    () => trending.filter((item) => matchesQuery(query, item)),
+    [query]
+  );
+  const filteredGames = useMemo(
+    () => newGames.filter((item) => matchesQuery(query, item)),
+    [query]
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 woodsy-base soft-vignette">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,236,196,0.20),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,6,4,0.15),rgba(10,6,4,0.72))]" />
+
+      <div className="relative flex h-dvh flex-col text-white">
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-black/25 px-4 py-3 backdrop-blur-md">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+            <Link
+              className="font-pixel text-xl text-[#f6e6c8] pixel-text-shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC"
+            >
+              /NAMC/
+            </Link>
+
+            <div className="flex flex-1 items-center justify-end gap-3">
+              <div className="relative hidden w-full max-w-xl md:block">
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+                <label className="sr-only" htmlFor="namc-search">
+                  Search NAMC
+                </label>
+                <input
+                  className="w-full rounded-full border border-white/15 bg-black/30 py-2.5 pl-11 pr-4 text-sm text-white placeholder:text-white/55 focus:border-white/30 focus:bg-black/40 focus:outline-none"
+                  id="namc-search"
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search projects, playlists, lore…"
+                  type="search"
+                  value={query}
+                />
+              </div>
+              <button
+                aria-label="Open profile"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 text-white/80 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                type="button"
+              >
+                <CircleUserRound className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 overflow-y-auto px-4 pb-24 pt-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
+          <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-black/25 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.5)] backdrop-blur-md">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_10%,rgba(255,215,140,0.20),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.82))]" />
+              <div className="relative">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/65">
+                  Featured
+                </p>
+                <h1 className="mt-3 text-3xl font-bold text-[#f6e6c8] pixel-text-shadow">
+                  LOST CREEK FOLK
+                </h1>
+                <p className="mt-2 text-sm text-white/75">
+                  A cozy-dread collection shelf. Watch, listen, or dive into lore
+                  notes.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button
+                    className="rounded-full bg-[#f6e6c8] px-5 py-2 text-sm font-semibold text-[#1b0f0f] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                    type="button"
+                  >
+                    Watch now
+                  </button>
+                  <button
+                    className="rounded-full border border-white/20 bg-black/35 px-5 py-2 text-sm font-semibold text-white/90 backdrop-blur-sm transition hover:bg-black/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                    type="button"
+                  >
+                    Add to list
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <section className="rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+                <SectionHeader href="/NAMC/library" title="Your Collection" />
+                <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+                  {filteredCollections.map((item) => (
+                    <Link
+                      className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                      href="/NAMC/library"
+                      key={item.id}
+                    >
+                      <CardBase item={item} variant="tile" />
+                    </Link>
+                  ))}
+                  {filteredCollections.length === 0 && (
+                    <div className="flex items-center text-sm text-white/65">
+                      No matches in your collection.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+                <SectionHeader href="/NAMC/library" title="Trending Now" />
+                <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+                  {filteredTrending.map((item) => (
+                    <Link
+                      className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                      href="/NAMC/library"
+                      key={item.id}
+                    >
+                      <CardBase item={item} variant="thumb" />
+                    </Link>
+                  ))}
+                  {filteredTrending.length === 0 && (
+                    <div className="flex items-center text-sm text-white/65">
+                      No trending matches.
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+            <SectionHeader href="/NAMC/library" title="Games & Interactive" />
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+              {filteredGames.map((item) => (
+                <Link
+                  className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                  href="/NAMC/library"
+                  key={item.id}
+                >
+                  <CardBase item={item} variant="thumb" />
+                </Link>
+              ))}
+              {filteredGames.length === 0 && (
+                <div className="flex items-center text-sm text-white/65">
+                  No game matches.
+                </div>
+              )}
+            </div>
+          </section>
+        </main>
+
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-black/35 backdrop-blur-md">
+          <div className="mx-auto grid w-full max-w-6xl grid-cols-5 gap-2 px-4 py-3">
+            <Link
+              aria-label="Home"
+              className="flex flex-col items-center gap-1 rounded-2xl px-3 py-2 text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC"
+            >
+              <Home className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Home</span>
+            </Link>
+            <Link
+              aria-label="Search"
+              className="flex flex-col items-center gap-1 rounded-2xl px-3 py-2 text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/search"
+            >
+              <Search className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Search</span>
+            </Link>
+            <Link
+              aria-label="Create"
+              className="flex flex-col items-center gap-1 rounded-2xl px-3 py-2 text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/library"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Add</span>
+            </Link>
+            <Link
+              aria-label="Library"
+              className="flex flex-col items-center gap-1 rounded-2xl px-3 py-2 text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/library"
+            >
+              <Library className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Library</span>
+            </Link>
+            <Link
+              aria-label="Campfire"
+              className="flex flex-col items-center gap-1 rounded-2xl px-3 py-2 text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/campfire"
+            >
+              <Flame className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Campfire</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
+    </div>
+  );
+}

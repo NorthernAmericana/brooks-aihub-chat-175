@@ -43,6 +43,37 @@ Start with the [Master Docs landing page](docs/README.md) to navigate project sc
 Use the [Vercel deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
 
+## Routing model: agentic chat subroutes vs UI pages (ATO apps)
+
+Brooks AI HUB uses **two different kinds of routes**, and it’s important to keep them conceptually separate:
+
+### 1) Agentic chat subroutes (conversation “commands”)
+
+These are the **slash-style routes** you see inside prompts (for example: `/BrooksBears/BenjaminBear/ ...`).
+They’re used to **select an agent/persona/mode inside the chat system**.
+
+- They typically live under `app/(chat)/...`
+- UI “app” pages can forward into chat by constructing a query string that starts with one of these routes.
+
+Example:
+- The `/BrooksBears/` UI route can push the user into chat by routing a transcript to `/brooks-ai-hub/?query=/BrooksBears/BenjaminBear/ ...`
+
+### 2) Normal page routes (UI pages)
+
+These are standard Next.js pages (for example: `/namc-app`, `/NAMC/`, `/MyCarMindATO/`).
+They’re used to render **interactive UI surfaces**.
+
+### ATO apps: “tiny apps inside one large app”
+
+In practice, an **ATO app** should behave like a **single-page UI playground**:
+
+- **App detail/description page** (store-like page): explains what the app is and lists the available slash routes.
+  - Example: `/brooksbears-app`, `/mycarmindato-app`, `/namc-app`
+- **App UI page**: a focused UI that can *optionally* launch chat interactions by generating a query that targets an agentic subroute.
+  - Example: `/BrooksBears/` can route to `/BrooksBears/BenjaminBear/ ...`
+
+This keeps Brooks AI HUB as the “big app,” while ATO pages act as lightweight, themed surfaces that **drive** agentic chat subroutes when needed.
+
 ## Features
 
 - [Next.js](https://nextjs.org) App Router
