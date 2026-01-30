@@ -1,26 +1,58 @@
-import { format } from "date-fns";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getAgentConfigById } from "@/lib/ai/agents/registry";
-import { getApprovedMemoriesByUserId } from "@/lib/db/queries";
+import {
+  getApprovedMemoriesByUserId,
+  getChatsByIds,
+} from "@/lib/db/queries";
+import { MemoriesClient, type MemoryItem } from "./memories-client";
 
-const formatRoute = (route: string | null) => {
-  if (!route) {
-    return "Unknown route";
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const parseChatSource = (sourceUri: string) => {
+  let candidate: string | null = null;
+  let isChatSource = false;
+
+  if (sourceUri.startsWith("chat:")) {
+    const trimmed = sourceUri.slice("chat:".length).trim();
+    isChatSource = true;
+    candidate = trimmed.length > 0 ? trimmed : null;
   }
 
-  const trimmed = route.replace(/^\/|\/$/g, "");
-  return `/${trimmed}/`;
+  const match = sourceUri.match(/^chat:\/\/conversation\/([^#]+)/i);
+  if (match?.[1]) {
+    isChatSource = true;
+    candidate = match[1];
+  }
+
+  const chatId =
+    candidate && UUID_REGEX.test(candidate) ? candidate : null;
+
+  return { chatId, isChatSource };
 };
 
-const formatDate = (date: Date | null) => {
-  if (!date) {
-    return "Unknown date";
+const buildSource = (
+  sourceUri: string,
+  chatTitles: Map<string, string>
+) => {
+  const { chatId, isChatSource } = parseChatSource(sourceUri);
+  if (!chatId) {
+    return {
+      type: isChatSource ? ("chat" as const) : ("unknown" as const),
+      uri: sourceUri,
+      label: isChatSource ? "Chat reference" : sourceUri,
+      href: null,
+    };
   }
 
-  return format(date, "MMM d");
+  const chatTitle = chatTitles.get(chatId);
+  return {
+    type: "chat" as const,
+    uri: sourceUri,
+    label: chatTitle ? `Chat: ${chatTitle}` : "Chat conversation",
+    href: `/chat/${chatId}`,
+  };
 };
 
 export default async function MemoriesPage() {
@@ -38,55 +70,44 @@ export default async function MemoriesPage() {
     userId: session.user.id,
   });
 
+  const chatIds = new Set<string>();
+  for (const memory of memories) {
+    const { chatId } = parseChatSource(memory.sourceUri);
+    if (chatId) {
+      chatIds.add(chatId);
+    }
+  }
+
+  const chats =
+    chatIds.size > 0 ? await getChatsByIds({ ids: Array.from(chatIds) }) : [];
+  const chatTitleMap = new Map<string, string>();
+  for (const chat of chats) {
+    chatTitleMap.set(chat.id, chat.title);
+  }
+
+  const memoryItems: MemoryItem[] = memories.map((memory) => {
+    const agentLabel =
+      memory.agentLabel ??
+      (memory.agentId
+        ? getAgentConfigById(memory.agentId)?.label
+        : undefined) ??
+      "Unknown agent";
+
+    return {
+      id: memory.id,
+      rawText: memory.rawText,
+      route: memory.route,
+      agentLabel,
+      approvedAt: (memory.approvedAt ?? memory.createdAt).toISOString(),
+      createdAt: memory.createdAt.toISOString(),
+      tags: memory.tags,
+      source: buildSource(memory.sourceUri, chatTitleMap),
+    };
+  });
+
   return (
-    <div className="flex h-full flex-col px-6 py-8">
-      <div className="max-w-3xl">
-        <h1 className="text-2xl font-semibold text-foreground">Memories</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Approved memories saved from chat appear here with the route and agent
-          that captured them.
-        </p>
-      </div>
-
-      <div className="mt-6 grid gap-4">
-        {memories.length === 0 ? (
-          <Card>
-            <CardContent className="py-6 text-sm text-muted-foreground">
-              No approved memories yet. When you approve a saved memory in chat,
-              it will show up here with its route and agent.
-            </CardContent>
-          </Card>
-        ) : (
-          memories.map((memory) => {
-            const agentLabel =
-              memory.agentLabel ??
-              (memory.agentId
-                ? getAgentConfigById(memory.agentId)?.label
-                : undefined) ??
-              "Unknown agent";
-
-            return (
-              <Card key={memory.id}>
-                <CardHeader className="gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">{formatRoute(memory.route)}</Badge>
-                    <Badge variant="secondary">{agentLabel}</Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Saved {formatDate(memory.approvedAt ?? memory.createdAt)}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-foreground">{memory.rawText}</p>
-                  <div className="text-xs text-muted-foreground">
-                    Source: {memory.sourceUri}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+    <div className="flex h-full flex-col overflow-y-auto px-6 py-8">
+      <MemoriesClient memories={memoryItems} />
     </div>
   );
 }

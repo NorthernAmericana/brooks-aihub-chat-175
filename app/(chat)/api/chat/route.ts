@@ -60,6 +60,7 @@ import {
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import { getDefaultVoice } from "@/lib/voice";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -378,14 +379,20 @@ export async function POST(request: Request) {
           ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
           : null;
 
+      const fallbackRouteKey =
+        initialRouteKey ?? getDefaultAgentConfig().id ?? "default";
+      const defaultVoice = getDefaultVoice(fallbackRouteKey);
+      const ttsVoiceId = activeAto?.defaultVoiceId ?? defaultVoice.id;
+      const ttsVoiceLabel = activeAto?.defaultVoiceLabel ?? defaultVoice.label;
+
       await saveChat({
         id,
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
         routeKey: initialRouteKey,
-        ttsVoiceId: activeAto?.defaultVoiceId ?? null,
-        ttsVoiceLabel: activeAto?.defaultVoiceLabel ?? null,
+        ttsVoiceId,
+        ttsVoiceLabel,
       });
       titlePromise = generateTitleFromUserMessage({
         message,

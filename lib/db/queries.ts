@@ -9,6 +9,7 @@ import {
   gt,
   gte,
   inArray,
+  lte,
   lt,
   sql,
   type SQL,
@@ -249,6 +250,64 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories by project route"
+    );
+  }
+}
+
+export async function deleteApprovedMemoriesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    const deletedMemories = await db
+      .delete(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .returning({ id: memory.id });
+
+    return { deletedCount: deletedMemories.length };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete approved memories"
+    );
+  }
+}
+
+export async function deleteApprovedMemoriesByUserIdInRange({
+  userId,
+  startDate,
+  endDate,
+}: {
+  userId: string;
+  startDate: Date;
+  endDate: Date;
+}) {
+  try {
+    const deletedMemories = await db
+      .delete(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          gte(memory.createdAt, startDate),
+          lte(memory.createdAt, endDate)
+        )
+      )
+      .returning({ id: memory.id });
+
+    return { deletedCount: deletedMemories.length };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete approved memories by date range"
     );
   }
 }
@@ -885,6 +944,24 @@ export async function getChatById({ id }: { id: string }) {
     return selectedChat;
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
+  }
+}
+
+export async function getChatsByIds({ ids }: { ids: string[] }) {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  try {
+    return await db
+      .select({ id: chat.id, title: chat.title })
+      .from(chat)
+      .where(inArray(chat.id, ids));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chats by ids"
+    );
   }
 }
 

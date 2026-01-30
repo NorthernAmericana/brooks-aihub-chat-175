@@ -327,7 +327,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind",
-    label: "My Car Mind ATO",
+    label: "MyCarMindATO",
     slash: "MyCarMindATO",
     tools: [
       "getDirections",
@@ -341,7 +341,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind-driver",
-    label: "My Car Mind ATO - Driver",
+    label: "MyCarMindATO - Driver",
     slash: "MyCarMindATO/Driver",
     tools: [
       "getDirections",
@@ -355,7 +355,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind-trucker",
-    label: "My Car Mind ATO - Trucker",
+    label: "MyCarMindATO - Trucker",
     slash: "MyCarMindATO/Trucker",
     tools: [
       "getDirections",
@@ -369,7 +369,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind-delivery-driver",
-    label: "My Car Mind ATO - Delivery Driver",
+    label: "MyCarMindATO - Delivery Driver",
     slash: "MyCarMindATO/DeliveryDriver",
     tools: [
       "getDirections",
@@ -383,7 +383,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind-traveler",
-    label: "My Car Mind ATO - Traveler",
+    label: "MyCarMindATO - Traveler",
     slash: "MyCarMindATO/Traveler",
     tools: [
       "getDirections",

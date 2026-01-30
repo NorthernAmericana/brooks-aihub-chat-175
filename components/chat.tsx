@@ -632,6 +632,7 @@ export function Chat({
           <Messages
             addToolApprovalResponse={addToolApprovalResponse}
             chatId={id}
+            chatRouteKey={chatRouteKey}
             chatTitle={initialChatTitle}
             isArtifactVisible={isArtifactVisible}
             isReadonly={isReadonly}
@@ -673,6 +674,7 @@ export function Chat({
         addToolApprovalResponse={addToolApprovalResponse}
         attachments={attachments}
         chatId={id}
+        chatRouteKey={chatRouteKey}
         chatTitle={initialChatTitle}
         input={input}
         isReadonly={isReadonly}
