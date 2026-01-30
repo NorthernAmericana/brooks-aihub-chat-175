@@ -4,7 +4,6 @@ import { ArrowLeft, Library } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
-import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 
 const preorderWindow = "Preorder until early 2027";
 const comboPrice = "$24.99";
