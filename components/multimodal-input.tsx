@@ -5,6 +5,7 @@ import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -34,12 +35,16 @@ import {
   getAgentConfigById,
   getAgentConfigBySlash,
 } from "@/lib/ai/agents/registry";
+import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
+import {
+  parseSlashAction,
+  rememberSlashAction,
+} from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher } from "@/lib/utils";
 import {
@@ -55,7 +60,17 @@ import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import type { VisibilityType } from "./visibility-selector";
+
+const TRAILER_PROMPT_REGEX = /^(?:let's|lets)\s+watch\s+trailers\b/i;
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365; // 1 year
@@ -101,6 +116,7 @@ function PureMultimodalInput({
   onSelectAto?: (atoId: string | null) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
   const { width } = useWindowSize();
   const { data: session } = useSession();
   const { entitlements } = useEntitlements(session?.user?.id);
@@ -227,6 +243,7 @@ function PureMultimodalInput({
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
+  const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
     currentRoute: string;
@@ -249,6 +266,7 @@ function PureMultimodalInput({
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
   const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
+  const isNamcChatRoute = (chatRouteKey ?? "").toLowerCase() === "namc";
 
   // Detect when user types "/" at the start to show suggestions
   useEffect(() => {
@@ -381,6 +399,18 @@ function PureMultimodalInput({
     window.history.pushState({}, "", nextUrl);
 
     const parsedAction = parseSlashAction(input);
+    const promptText = parsedAction?.prompt ?? input;
+    if (
+      isNamcChatRoute &&
+      TRAILER_PROMPT_REGEX.test(promptText.trim()) &&
+      attachments.length === 0
+    ) {
+      setIsTrailerMenuOpen(true);
+      setLocalStorageInput("");
+      resetHeight();
+      setInput("");
+      return;
+    }
 
     // Check for route change if chat has existing messages and routeKey
     if (parsedAction && messages.length > 0 && chatRouteKey) {
@@ -445,6 +475,7 @@ function PureMultimodalInput({
     resetHeight,
     messages.length,
     chatRouteKey,
+    isNamcChatRoute,
   ]);
 
   const isPdfFile = (file: File) =>
@@ -844,6 +875,60 @@ function PureMultimodalInput({
           )}
         </PromptInputToolbar>
       </PromptInput>
+
+      <Dialog onOpenChange={setIsTrailerMenuOpen} open={isTrailerMenuOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Let's watch trailers</DialogTitle>
+            <DialogDescription>
+              Choose a concept trailer and we'll open the NAMC player.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            {NAMC_TRAILERS.map((trailer) => (
+              <button
+                className="flex flex-col gap-1 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-left text-sm transition hover:border-foreground/40 hover:bg-muted/50"
+                key={trailer.id}
+                onClick={() => {
+                  setIsTrailerMenuOpen(false);
+                  router.push(
+                    `/NAMC/library/trailers?trailer=${encodeURIComponent(
+                      trailer.id
+                    )}`
+                  );
+                }}
+                type="button"
+              >
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  {trailer.category}
+                </span>
+                <span className="font-semibold">{trailer.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {trailer.subtitle}
+                </span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setIsTrailerMenuOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setIsTrailerMenuOpen(false);
+                router.push("/NAMC/library/trailers");
+              }}
+              type="button"
+            >
+              Open player
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Slash suggestions dropdown */}
       {showSlashSuggestions && (

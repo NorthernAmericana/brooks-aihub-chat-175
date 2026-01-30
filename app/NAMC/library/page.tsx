@@ -3,6 +3,7 @@
 import { ArrowLeft, Library } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 
 const preorderWindow = "Preorder until early 2027";
 const comboPrice = "$24.99";
@@ -25,6 +26,8 @@ const preorderEntries = [
     standalonePrice: "$9.99",
   },
 ] as const;
+
+const conceptTrailers = NAMC_TRAILERS;
 
 export default function NamcLibraryPage() {
   const router = useRouter();
@@ -137,6 +140,60 @@ export default function NamcLibraryPage() {
                     Preorder link coming soon
                   </button>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/25 p-6 backdrop-blur-md">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">
+                  Video game library
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold text-[#f6e6c8]">
+                  My Daughter, Death: The Video Game
+                </h2>
+                <p className="mt-2 text-sm text-white/75">
+                  Concept trailers ready to stream in the NAMC player.
+                </p>
+              </div>
+              <Link
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                href="/NAMC/library/trailers"
+              >
+                Open trailer player
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {conceptTrailers.map((trailer) => (
+                <Link
+                  className="group flex h-full flex-col rounded-3xl border border-white/10 bg-black/30 p-5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] transition hover:border-white/25 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                  href={{
+                    pathname: "/NAMC/library/trailers",
+                    query: { trailer: trailer.id },
+                  }}
+                  key={trailer.id}
+                >
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                    <span>{trailer.category}</span>
+                    <span className="rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[9px] text-white/70">
+                      Video
+                    </span>
+                  </div>
+                  <h3 className="mt-3 text-lg font-semibold text-[#f6e6c8]">
+                    {trailer.title}
+                  </h3>
+                  <p className="mt-1 text-xs font-semibold text-white/70">
+                    {trailer.subtitle}
+                  </p>
+                  <p className="mt-3 text-sm text-white/75">
+                    {trailer.description}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+                    Watch trailer
+                  </span>
+                </Link>
               ))}
             </div>
           </section>
