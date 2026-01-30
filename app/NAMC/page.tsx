@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 
 type NamcCardKind = "video" | "game" | "album" | "lore";
 
@@ -139,6 +140,8 @@ const newGames: NamcCard[] = [
     metricLabel: "Playable demo",
   },
 ] as const;
+
+const conceptTrailers = NAMC_TRAILERS;
 
 const gameGallery: GalleryItem[] = [
   {
@@ -321,6 +324,46 @@ function GalleryCard({ item }: { item: GalleryItem }) {
           <p className="text-sm font-semibold text-[#f6e6c8]">{item.title}</p>
           <p className="mt-1 text-xs text-white/70">{item.description}</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TrailerCard({
+  trailer,
+}: {
+  trailer: (typeof conceptTrailers)[number];
+}) {
+  return (
+    <div className="flex w-[280px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/25 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:w-[320px]">
+      <div className="relative aspect-video w-full">
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+          src={trailer.embedUrl}
+          title={`${trailer.title} trailer`}
+        />
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+          {trailer.category}
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-[#f6e6c8]">
+            {trailer.title}
+          </p>
+          <p className="text-xs text-white/70">{trailer.subtitle}</p>
+        </div>
+        <Link
+          className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6e6c8] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+          href={{
+            pathname: "/NAMC/library/trailers",
+            query: { trailer: trailer.id },
+          }}
+        >
+          Open player
+        </Link>
       </div>
     </div>
   );
@@ -518,6 +561,29 @@ export default function NamcHomePage() {
                   No game matches.
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="text-lg font-semibold text-[#f6e6c8] pixel-text-shadow">
+                Concept Trailers
+              </h2>
+              <Link
+                className="text-xs font-semibold text-[#f6e6c8]/80 transition hover:text-[#f6e6c8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                href="/NAMC/library/trailers"
+              >
+                Open player
+              </Link>
+            </div>
+            <p className="mt-2 text-sm text-white/70">
+              Stream the My Daughter, Death concept trailers right from the
+              NAMC home screen.
+            </p>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+              {conceptTrailers.map((trailer) => (
+                <TrailerCard key={trailer.id} trailer={trailer} />
+              ))}
             </div>
           </section>
 
