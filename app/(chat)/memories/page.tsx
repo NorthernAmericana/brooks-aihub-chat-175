@@ -7,26 +7,41 @@ import {
 } from "@/lib/db/queries";
 import { MemoriesClient, type MemoryItem } from "./memories-client";
 
-const parseChatId = (sourceUri: string) => {
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const parseChatSource = (sourceUri: string) => {
+  let candidate: string | null = null;
+  let isChatSource = false;
+
   if (sourceUri.startsWith("chat:")) {
     const trimmed = sourceUri.slice("chat:".length).trim();
-    return trimmed.length > 0 ? trimmed : null;
+    isChatSource = true;
+    candidate = trimmed.length > 0 ? trimmed : null;
   }
 
   const match = sourceUri.match(/^chat:\/\/conversation\/([^#]+)/i);
-  return match?.[1] ?? null;
+  if (match?.[1]) {
+    isChatSource = true;
+    candidate = match[1];
+  }
+
+  const chatId =
+    candidate && UUID_REGEX.test(candidate) ? candidate : null;
+
+  return { chatId, isChatSource };
 };
 
 const buildSource = (
   sourceUri: string,
   chatTitles: Map<string, string>
 ) => {
-  const chatId = parseChatId(sourceUri);
+  const { chatId, isChatSource } = parseChatSource(sourceUri);
   if (!chatId) {
     return {
-      type: "unknown" as const,
+      type: isChatSource ? ("chat" as const) : ("unknown" as const),
       uri: sourceUri,
-      label: sourceUri,
+      label: isChatSource ? "Chat reference" : sourceUri,
       href: null,
     };
   }
@@ -57,7 +72,7 @@ export default async function MemoriesPage() {
 
   const chatIds = new Set<string>();
   for (const memory of memories) {
-    const chatId = parseChatId(memory.sourceUri);
+    const { chatId } = parseChatSource(memory.sourceUri);
     if (chatId) {
       chatIds.add(chatId);
     }
