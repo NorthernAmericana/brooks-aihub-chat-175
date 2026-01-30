@@ -106,7 +106,7 @@ export default async function MemoriesPage() {
   });
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-6 py-8">
+    <div className="flex h-full flex-col overflow-y-auto px-6 py-8">
       <MemoriesClient memories={memoryItems} />
     </div>
   );

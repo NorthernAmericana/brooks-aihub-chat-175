@@ -317,6 +317,200 @@ const MemoriesTable = ({
   );
 };
 
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const buildCalendarDays = (currentMonth: Date) => {
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+
+  const calendarDays: Date[] = [];
+  let day = calendarStart;
+  while (day <= calendarEnd) {
+    calendarDays.push(day);
+    day = addDays(day, 1);
+  }
+
+  return calendarDays;
+};
+
+type CalendarGridProps = {
+  currentMonth: Date;
+  memoriesByDate: Map<string, MemoryItem[]>;
+  selectedDay: string | null;
+  onSelectDay: (dayKey: string) => void;
+  variant?: "compact" | "full";
+};
+
+const CalendarGrid = ({
+  currentMonth,
+  memoriesByDate,
+  selectedDay,
+  onSelectDay,
+  variant = "full",
+}: CalendarGridProps) => {
+  const calendarDays = useMemo(
+    () => buildCalendarDays(currentMonth),
+    [currentMonth]
+  );
+  const today = new Date();
+  const isCompact = variant === "compact";
+  const maxSlots = isCompact ? 1 : 2;
+
+  return (
+    <div className="grid gap-2">
+      <div className="grid grid-cols-7 text-xs text-muted-foreground">
+        {WEEKDAY_LABELS.map((label) => (
+          <div className="px-2 py-1 text-center font-medium" key={label}>
+            {label}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-2 text-xs">
+        {calendarDays.map((calendarDay) => {
+          const dayKey = format(calendarDay, "yyyy-MM-dd");
+          const dayMemories = memoriesByDate.get(dayKey) ?? [];
+          const isSelected = selectedDay === dayKey;
+          const isCurrentMonth = isSameMonth(calendarDay, currentMonth);
+          const isToday = isSameDay(calendarDay, today);
+
+          return (
+            <button
+              className={cn(
+                "group flex min-h-[96px] flex-col gap-2 rounded-lg border border-border/60 p-2 text-left transition hover:border-primary/50 hover:bg-muted/40",
+                isCurrentMonth ? "bg-background" : "bg-muted/40",
+                isSelected ? "ring-2 ring-primary/60" : null,
+                isCompact ? "min-h-[88px]" : "min-h-[120px]"
+              )}
+              key={dayKey}
+              onClick={() => onSelectDay(dayKey)}
+              type="button"
+            >
+              <div className="flex items-center justify-between text-left font-medium">
+                <span
+                  className={cn(
+                    "text-sm",
+                    isToday ? "text-primary" : "text-foreground",
+                    !isCurrentMonth ? "opacity-60" : null
+                  )}
+                >
+                  {format(calendarDay, "d")}
+                </span>
+                {dayMemories.length > 0 ? (
+                  <Badge variant="secondary">{dayMemories.length}</Badge>
+                ) : null}
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                {dayMemories.slice(0, maxSlots).map((memory) => (
+                  <div
+                    className={cn(
+                      "rounded-md border border-border/60 bg-muted/40 px-2 py-1 text-[10px] text-muted-foreground",
+                      isCompact ? "line-clamp-1" : "line-clamp-2"
+                    )}
+                    key={memory.id}
+                  >
+                    {memory.rawText}
+                  </div>
+                ))}
+                {dayMemories.length > maxSlots ? (
+                  <span className="text-[10px] text-primary">
+                    +{dayMemories.length - maxSlots} more
+                  </span>
+                ) : null}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const CalendarDayDetails = ({
+  selectedDay,
+  memories,
+  onSpeak,
+  onBack,
+}: {
+  selectedDay: string | null;
+  memories: MemoryItem[];
+  onSpeak: (memory: MemoryItem) => void;
+  onBack?: () => void;
+}) => {
+  return (
+    <div className="grid gap-3">
+      {selectedDay ? (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {format(parseISO(selectedDay), "EEEE, MMMM d")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {memories.length > 0
+                ? `${memories.length} memories saved`
+                : "No memories saved for this day."}
+            </p>
+          </div>
+          {onBack ? (
+            <Button onClick={onBack} size="sm" type="button" variant="ghost">
+              Back to calendar
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {memories.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          Pick a day to explore the memories saved on that date.
+        </div>
+      ) : (
+        memories.map((memory) => {
+          const scope = getScopeInfo(memory.route);
+          return (
+            <div
+              className="rounded-lg border border-border/60 bg-background p-3"
+              key={memory.id}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+                <Badge variant="secondary">{memory.agentLabel}</Badge>
+                <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+              </div>
+              <p className="mt-2 text-sm text-foreground">{memory.rawText}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {memory.source.href ? (
+                  <Link
+                    className="text-primary hover:underline"
+                    href={memory.source.href}
+                  >
+                    {memory.source.label}
+                  </Link>
+                ) : (
+                  <span>{memory.source.label}</span>
+                )}
+                <span>•</span>
+                <span>{scope.detail}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  onClick={() => onSpeak(memory)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Speak
+                </Button>
+                <MemoryDialog memory={memory} scope={scope} />
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
 const CalendarView = ({
   memories,
   onSpeak,
@@ -328,7 +522,10 @@ const CalendarView = ({
     startOfMonth(new Date())
   );
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMode, setCalendarMode] = useState<"calendar" | "day">(
+    "calendar"
+  );
 
   const memoriesByDate = useMemo(() => {
     const map = new Map<string, MemoryItem[]>();
@@ -357,30 +554,44 @@ const CalendarView = ({
     }
   }, [memories, selectedDay]);
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const calendarStart = startOfWeek(monthStart);
-  const calendarEnd = endOfWeek(monthEnd);
+  const openCalendar = () => {
+    setCalendarMode("calendar");
+    setCalendarOpen(true);
+  };
 
-  const calendarDays: Date[] = [];
-  let day = calendarStart;
-  while (day <= calendarEnd) {
-    calendarDays.push(day);
-    day = addDays(day, 1);
-  }
+  const openDay = (dayKey: string) => {
+    setSelectedDay(dayKey);
+    setCalendarMode("day");
+    setCalendarOpen(true);
+  };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr),minmax(0,0.8fr)]">
+    <>
       <Card>
         <CardHeader className="border-b border-border/60">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-base font-semibold">
-                {format(currentMonth, "MMMM yyyy")}
+                Calendar overview
               </CardTitle>
               <CardDescription>
-                Tap a day to explore memories or use quick slots below.
+                Press any date to open a full-screen calendar view.
               </CardDescription>
+            </div>
+            <Button onClick={openCalendar} type="button" variant="outline">
+              Open full calendar
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {format(currentMonth, "MMMM yyyy")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {memories.length} memories across your calendar.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -409,150 +620,98 @@ const CalendarView = ({
               </Button>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-7 text-xs text-muted-foreground">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label) => (
-              <div className="px-2 py-1 text-center font-medium" key={label}>
-                {label}
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 grid grid-cols-7 gap-2 text-xs">
-            {calendarDays.map((calendarDay) => {
-              const dayKey = format(calendarDay, "yyyy-MM-dd");
-              const dayMemories = memoriesByDate.get(dayKey) ?? [];
-              const isSelected = selectedDay === dayKey;
-              const isCurrentMonth = isSameMonth(calendarDay, currentMonth);
-
-              return (
-                <div
-                  className={cn(
-                    "flex min-h-[110px] flex-col gap-2 rounded-md border border-border/60 p-2",
-                    isCurrentMonth ? "bg-background" : "bg-muted/40",
-                    isSelected ? "ring-2 ring-primary/60" : null
-                  )}
-                  key={dayKey}
-                >
-                  <button
-                    className={cn(
-                      "flex items-center justify-between text-left font-medium",
-                      isSameDay(calendarDay, new Date())
-                        ? "text-primary"
-                        : "text-foreground"
-                    )}
-                    onClick={() => {
-                      setSelectedDay(dayKey);
-                      setSelectedMemoryId(null);
-                    }}
-                    type="button"
-                  >
-                    <span className="text-sm">{format(calendarDay, "d")}</span>
-                    {dayMemories.length > 0 ? (
-                      <Badge variant="secondary">{dayMemories.length}</Badge>
-                    ) : null}
-                  </button>
-                  <div className="flex flex-1 flex-col gap-1">
-                    {dayMemories.slice(0, 2).map((memory) => (
-                      <button
-                        className={cn(
-                          "rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-left text-[11px] text-muted-foreground transition hover:bg-muted/60",
-                          selectedMemoryId === memory.id
-                            ? "border-primary/60 text-foreground"
-                            : null
-                        )}
-                        key={memory.id}
-                        onClick={() => {
-                          setSelectedDay(dayKey);
-                          setSelectedMemoryId(memory.id);
-                        }}
-                        type="button"
-                      >
-                        {memory.rawText}
-                      </button>
-                    ))}
-                    {dayMemories.length > 2 ? (
-                      <button
-                        className="text-left text-[11px] text-primary hover:underline"
-                        onClick={() => {
-                          setSelectedDay(dayKey);
-                          setSelectedMemoryId(null);
-                        }}
-                        type="button"
-                      >
-                        +{dayMemories.length - 2} more
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-4">
+            <CalendarGrid
+              currentMonth={currentMonth}
+              memoriesByDate={memoriesByDate}
+              onSelectDay={openDay}
+              selectedDay={selectedDay}
+              variant="compact"
+            />
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader className="border-b border-border/60">
-          <CardTitle className="text-base font-semibold">
-            {selectedDay
-              ? format(parseISO(selectedDay), "EEE, MMM d")
-              : "Select a day"}
-          </CardTitle>
-          <CardDescription>
-            {selectedMemories.length > 0
-              ? `${selectedMemories.length} memory summaries`
-              : "No memories saved for this day."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 p-4">
-          {selectedMemories.map((memory) => {
-            const scope = getScopeInfo(memory.route);
-            return (
-              <div
-                className={cn(
-                  "rounded-lg border border-border/60 p-3",
-                  selectedMemoryId === memory.id
-                    ? "border-primary/60 bg-muted/40"
-                    : "bg-background"
-                )}
-                key={memory.id}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{formatRoute(memory.route)}</Badge>
-                  <Badge variant="secondary">{memory.agentLabel}</Badge>
-                  <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
-                </div>
-                <p className="mt-2 text-sm text-foreground">{memory.rawText}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  {memory.source.href ? (
-                    <Link
-                      className="text-primary hover:underline"
-                      href={memory.source.href}
-                    >
-                      {memory.source.label}
-                    </Link>
-                  ) : (
-                    <span>{memory.source.label}</span>
-                  )}
-                  <span>•</span>
-                  <span>{scope.detail}</span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+
+      <Dialog onOpenChange={setCalendarOpen} open={calendarOpen}>
+        <DialogContent className="h-dvh w-dvw max-w-none rounded-none border-none p-0">
+          <div className="flex h-dvh flex-col bg-background">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 px-4 py-4">
+              <DialogHeader className="space-y-1 text-left">
+                <DialogTitle className="text-lg font-semibold">
+                  {calendarMode === "calendar"
+                    ? "Memory calendar"
+                    : selectedDay
+                      ? format(parseISO(selectedDay), "MMMM d, yyyy")
+                      : "Day details"}
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">
+                  {calendarMode === "calendar"
+                    ? "Tap a date to explore memories on that day."
+                    : "Review the memories saved on this date."}
+                </p>
+              </DialogHeader>
+              <div className="flex items-center gap-2">
+                {calendarMode === "day" ? (
                   <Button
-                    onClick={() => onSpeak(memory)}
+                    onClick={() => setCalendarMode("calendar")}
                     size="sm"
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                   >
-                    Speak
+                    Back to calendar
                   </Button>
-                  <MemoryDialog memory={memory} scope={scope} />
-                </div>
+                ) : null}
+                <Button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Prev
+                </Button>
+                <Button
+                  onClick={() => setCurrentMonth(startOfMonth(new Date()))}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Today
+                </Button>
+                <Button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Next
+                </Button>
               </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {calendarMode === "calendar" ? (
+                <CalendarGrid
+                  currentMonth={currentMonth}
+                  memoriesByDate={memoriesByDate}
+                  onSelectDay={(dayKey) => {
+                    setSelectedDay(dayKey);
+                    setCalendarMode("day");
+                  }}
+                  selectedDay={selectedDay}
+                  variant="full"
+                />
+              ) : (
+                <CalendarDayDetails
+                  memories={selectedMemories}
+                  onBack={() => setCalendarMode("calendar")}
+                  onSpeak={onSpeak}
+                  selectedDay={selectedDay}
+                />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -724,7 +883,7 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
   const isRangeReady = Boolean(rangeStart && rangeEnd);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex min-h-full flex-col gap-6 pb-24">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Memories</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -886,13 +1045,11 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
         </CardContent>
       </Card>
 
-      <div className="flex-1 overflow-y-auto">
-        {view === "calendar" ? (
-          <CalendarView memories={filteredMemories} onSpeak={handleSpeak} />
-        ) : (
-          <MemoriesTable memories={filteredMemories} onSpeak={handleSpeak} />
-        )}
-      </div>
+      {view === "calendar" ? (
+        <CalendarView memories={filteredMemories} onSpeak={handleSpeak} />
+      ) : (
+        <MemoriesTable memories={filteredMemories} onSpeak={handleSpeak} />
+      )}
     </div>
   );
 };
