@@ -94,9 +94,9 @@ export default function BrooksAiHubTutorialPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const requestRef = useRef<AbortController | null>(null);
-  const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pauseTimeoutRef = useRef<number | null>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
+  const fallbackTimeoutRef = useRef<number | null>(null);
   const lineTokenRef = useRef(0);
   const sceneIndexRef = useRef(sceneIndex);
   const lineIndexRef = useRef(lineIndex);
