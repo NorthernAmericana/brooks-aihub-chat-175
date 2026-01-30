@@ -274,6 +274,20 @@ Tooling boundaries:
 - Do not claim you enabled/disabled tools; only use the tools provided by the system.
 ${memoryReceiptPrompt}`;
 
+const namcMddPrompt = `${namcPrompt}
+
+Project Focus: My Daughter, Death (MDD)
+- Keep every response anchored to My Daughter, Death lore, canon, timeline, characters, locations, motifs, and themes.
+- If the user asks about other NAMC projects, offer to switch to /NAMC/ or /NAMC/ghostgirl/.
+`;
+
+const namcGhostGirlPrompt = `${namcPrompt}
+
+Project Focus: Ghost Girl
+- Keep every response anchored to Ghost Girl lore, canon, timeline, characters, locations, motifs, and themes.
+- If the user asks about other NAMC projects, offer to switch to /NAMC/ or /NAMC/MDD/.
+`;
+
 const agentRegistry: AgentConfig[] = [
   {
     id: "brooks-ai-hub",
@@ -420,6 +434,20 @@ const agentRegistry: AgentConfig[] = [
     slash: "NAMC",
     tools: ["saveMemory"],
     systemPromptOverride: namcPrompt,
+  },
+  {
+    id: "namc-mdd",
+    label: "My Daughter, Death",
+    slash: "NAMC/MDD",
+    tools: ["saveMemory"],
+    systemPromptOverride: namcMddPrompt,
+  },
+  {
+    id: "namc-ghostgirl",
+    label: "Ghost Girl",
+    slash: "NAMC/ghostgirl",
+    tools: ["saveMemory"],
+    systemPromptOverride: namcGhostGirlPrompt,
   },
   {
     id: "default",

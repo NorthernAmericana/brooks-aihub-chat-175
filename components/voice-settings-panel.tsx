@@ -27,6 +27,8 @@ const getRouteDisplayName = (routeKey: string): string => {
   const routeNames: Record<string, string> = {
     "brooks-ai-hub": "/Brooks AI HUB/",
     namc: "/NAMC/",
+    "namc-mdd": "/NAMC/MDD/",
+    "namc-ghostgirl": "/NAMC/ghostgirl/",
     "brooks-bears": "/BrooksBears/",
     brooksbears: "/BrooksBears/",
     "my-car-mind": "/MyCarMindATO/",

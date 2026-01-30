@@ -81,6 +81,17 @@ const extractQueryTerms = (message: string): string[] => {
   return [...new Set(matches)];
 };
 
+const collectQueryTerms = (
+  message: string,
+  requiredTerms: string[] = []
+): string[] => {
+  const combined = [
+    ...extractQueryTerms(message),
+    ...requiredTerms.map((term) => term.toLowerCase()),
+  ];
+  return [...new Set(combined)].filter((term) => term.length >= 3);
+};
+
 const estimateTokenCount = (text: string): number => Math.ceil(text.length / 4);
 
 const truncateToTokenBudget = (text: string, tokenBudget: number): string => {
@@ -120,25 +131,32 @@ const scoreDocument = (document: NamcLoreDocument, terms: string[]): number => {
   }, 0);
 };
 
-export const getRelevantNamcLoreSnippets = async (
+const getRelevantNamcLoreSnippetsFromDocuments = (
+  documents: NamcLoreDocument[],
   message: string,
-  options: { maxSnippets?: number } = {}
-): Promise<NamcLoreSnippet[]> => {
-  const terms = extractQueryTerms(message);
+  options: { maxSnippets?: number; requiredTerms?: string[] } = {}
+): NamcLoreSnippet[] => {
+  const terms = collectQueryTerms(message, options.requiredTerms);
   if (terms.length === 0) {
     return [];
   }
 
-  const documents = await getNamcLoreDocuments();
-  const scoredDocuments = documents
+  return documents
     .map((document) => ({
       ...document,
       score: scoreDocument(document, terms),
     }))
     .filter((document) => document.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score)
+    .slice(0, options.maxSnippets ?? DEFAULT_MAX_SNIPPETS);
+};
 
-  return scoredDocuments.slice(0, options.maxSnippets ?? DEFAULT_MAX_SNIPPETS);
+export const getRelevantNamcLoreSnippets = async (
+  message: string,
+  options: { maxSnippets?: number } = {}
+): Promise<NamcLoreSnippet[]> => {
+  const documents = await getNamcLoreDocuments();
+  return getRelevantNamcLoreSnippetsFromDocuments(documents, message, options);
 };
 
 export const buildNamcLoreContext = async (
@@ -151,6 +169,85 @@ export const buildNamcLoreContext = async (
   }
 
   let context = "NAMC LORE CONTEXT\n";
+  const maxTokens = options.maxTokens ?? MAX_CONTEXT_TOKENS;
+  let usedTokens = estimateTokenCount(context);
+
+  for (const [index, snippet] of snippets.entries()) {
+    if (usedTokens >= maxTokens) {
+      break;
+    }
+
+    const header = `\n[${index + 1}] ${snippet.filePath}\n`;
+    const headerTokens = estimateTokenCount(header);
+    if (usedTokens + headerTokens > maxTokens) {
+      break;
+    }
+
+    context += header;
+    usedTokens += headerTokens;
+
+    const content = snippet.content.trim();
+    const contentTokens = estimateTokenCount(content);
+    const remainingTokens = maxTokens - usedTokens;
+    if (contentTokens > remainingTokens) {
+      context += truncateToTokenBudget(content, remainingTokens);
+      usedTokens = maxTokens;
+      break;
+    }
+
+    context += content;
+    usedTokens += contentTokens;
+  }
+
+  return context.trim();
+};
+
+export type NamcProjectFocus = {
+  slug: string;
+  label: string;
+  route: string;
+  extraTerms?: string[];
+};
+
+export const buildNamcProjectLoreContext = async (
+  message: string,
+  project: NamcProjectFocus,
+  options: { maxSnippets?: number; maxTokens?: number } = {}
+): Promise<string | null> => {
+  const documents = await getNamcLoreDocuments();
+  const projectPath = `namc/projects/${project.slug}/`;
+  const projectDocuments = documents.filter((document) =>
+    document.filePath.includes(projectPath)
+  );
+
+  const requiredTerms = [
+    ...extractQueryTerms(project.label),
+    ...extractQueryTerms(project.slug),
+    ...(project.extraTerms ?? []),
+  ];
+
+  const snippets = getRelevantNamcLoreSnippetsFromDocuments(
+    projectDocuments,
+    message,
+    {
+      maxSnippets: options.maxSnippets,
+      requiredTerms,
+    }
+  );
+
+  const projectFocusHeader = [
+    "NAMC PROJECT FOCUS",
+    `Route: /${project.route}/`,
+    `Project: ${project.label}`,
+    `Scope: Only discuss ${project.label} lore and canon.`,
+    "If the user asks about other NAMC projects, offer to switch to /NAMC/.",
+  ].join("\n");
+
+  if (snippets.length === 0) {
+    return projectFocusHeader;
+  }
+
+  let context = `${projectFocusHeader}\n\nNAMC LORE CONTEXT\n`;
   const maxTokens = options.maxTokens ?? MAX_CONTEXT_TOKENS;
   let usedTokens = estimateTokenCount(context);
 

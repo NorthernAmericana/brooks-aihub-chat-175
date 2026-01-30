@@ -14,6 +14,10 @@ import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
 import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
 import {
+  buildNamcProjectLoreContext,
+  type NamcProjectFocus,
+} from "@/lib/ai/namc-lore";
+import {
   type AgentConfig,
   type AgentToolId,
   getAgentConfigById,
@@ -72,7 +76,28 @@ const FREE_SUBROUTES = [
   "MyCarMindATO/Driver",
   "MyCarMindATO/DeliveryDriver",
   "MyCarMindATO/Traveler",
+  "NAMC/MDD",
+  "NAMC/ghostgirl",
 ];
+
+const NAMC_PROJECT_FOCUS = {
+  "namc-mdd": {
+    slug: "my-daughter-death",
+    label: "My Daughter, Death",
+    route: "NAMC/MDD",
+    extraTerms: ["mdd"],
+  },
+  "namc-ghostgirl": {
+    slug: "ghost-girl",
+    label: "Ghost Girl",
+    route: "NAMC/ghostgirl",
+  },
+} satisfies Record<string, NamcProjectFocus>;
+
+const NAMC_AGENT_IDS = new Set<string>([
+  "namc",
+  ...Object.keys(NAMC_PROJECT_FOCUS),
+]);
 
 const UNOFFICIAL_ATO_ROUTE_KEY = "unofficial-ato";
 
@@ -532,7 +557,7 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        const isNamcAgent = selectedAgent.id === "namc";
+        const isNamcAgent = NAMC_AGENT_IDS.has(selectedAgent.id);
         const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
@@ -578,13 +603,22 @@ export async function POST(request: Request) {
           activeToolIds.map((toolId) => [toolId, toolImplementations[toolId]])
         ) as Record<AgentToolId, ToolDefinition>;
 
+        const namcProjectFocus = NAMC_PROJECT_FOCUS[selectedAgent.id] ?? null;
+
         if (isNamcAgent && !isNamcDocumentRequest) {
           const lastUserMessage = [...uiMessages]
             .reverse()
             .find((currentMessage) => currentMessage.role === "user");
+          const projectLoreContext = namcProjectFocus
+            ? await buildNamcProjectLoreContext(
+                lastUserText ?? "",
+                namcProjectFocus
+              )
+            : null;
           const responseText = await runNamcMediaCurator({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
+            loreContext: projectLoreContext,
             memoryContext,
           });
           const responseId = generateUUID();
