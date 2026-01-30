@@ -33,6 +33,14 @@ const VOICE_ROUTING_MAP: Record<string, RouteVoiceConfig> = {
     voices: [VOICES.BRUCE, VOICES.SELENA],
     defaultVoiceId: VOICES.BRUCE.id,
   },
+  "namc-mdd": {
+    voices: [VOICES.BRUCE, VOICES.SELENA],
+    defaultVoiceId: VOICES.BRUCE.id,
+  },
+  "namc-ghostgirl": {
+    voices: [VOICES.BRUCE, VOICES.SELENA],
+    defaultVoiceId: VOICES.BRUCE.id,
+  },
   "brooks-bears": {
     voices: [VOICES.BENJAMIN_BEAR],
     defaultVoiceId: VOICES.BENJAMIN_BEAR.id,

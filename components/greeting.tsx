@@ -137,6 +137,8 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true, badge: "gem" },
       { slash: "NAT", foundersOnly: false },
       { slash: "NAMC", foundersOnly: false },
+      { slash: "NAMC/MDD", foundersOnly: false, badge: "free" },
+      { slash: "NAMC/ghostgirl", foundersOnly: false, badge: "free" },
     ];
 
     const agentBySlash = new Map(
