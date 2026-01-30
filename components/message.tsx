@@ -30,6 +30,7 @@ const SLASH_PREFIX_REGEX = /^\/(.+)\/\s*/;
 const PurePreviewMessage = ({
   addToolApprovalResponse,
   chatId,
+  chatRouteKey,
   chatTitle,
   message,
   vote,
@@ -41,6 +42,7 @@ const PurePreviewMessage = ({
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatRouteKey?: string | null;
   chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
@@ -486,6 +488,7 @@ const PurePreviewMessage = ({
           {!isReadonly && (
             <MessageActions
               chatId={chatId}
+              chatRouteKey={chatRouteKey}
               chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}
