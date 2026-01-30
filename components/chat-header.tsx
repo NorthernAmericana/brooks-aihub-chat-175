@@ -32,7 +32,6 @@ import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 type ThemeOption = {
   id: string;
   label: string;
-  audioFile: string;
   badge?: "free";
 };
 
@@ -142,7 +141,7 @@ function PureChatHeader({
                 >
                   {themeOptions?.map((theme) => (
                     <DropdownMenuRadioItem
-                      className="flex flex-col items-start gap-0.5"
+                      className="flex flex-col items-start"
                       key={theme.id}
                       value={theme.id}
                     >
@@ -153,9 +152,6 @@ function PureChatHeader({
                             Free
                           </span>
                         ) : null}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {theme.audioFile}
                       </span>
                     </DropdownMenuRadioItem>
                   ))}
