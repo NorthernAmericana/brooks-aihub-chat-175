@@ -117,4 +117,4 @@ npx tsx tests/unit/mycarmindato/rest-stop-data.test.ts
 
 For detailed source material and research notes, see:
 - `florida_cities_overview.md` - Overview information for Florida cities
-- `docs/mycarmindato-location-knowledge.md` - Combined national location dictionary and Season 1 city coverage
+- `docs/mycarmindato/location-knowledge.md` - Combined national location dictionary and Season 1 city coverage

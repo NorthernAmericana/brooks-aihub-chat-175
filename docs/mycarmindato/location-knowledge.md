@@ -2,6 +2,12 @@
 
 This document merges the national reference list of U.S. cities with the MyCarMindATO Season 1 city dataset so the agent can ground responses in a wider geographic vocabulary while still prioritizing its detailed city profiles.
 
+## MyCarMindATO Agent Usage Notes
+
+- Use the **Season 1 detailed city profiles** for high-confidence answers when a city is present in `season-1-cities.json`.
+- If a user mentions a U.S. city **not** in `season-1-cities.json`, explicitly say the city is not yet in the internal database and perform a web search to fill any missing details before responding.
+- This document is intended for the MyCarMindATO agentic route and should be referenced when the agent needs broader U.S. location recognition.
+
 ## Source Inputs
 
 - `research/location-dictionary.md`: National reference list of U.S. cities and notable locations grouped by state.
@@ -9,9 +15,9 @@ This document merges the national reference list of U.S. cities with the MyCarMi
 
 ## MyCarMindATO Season 1 Detailed City Coverage
 
-Total entries in `season-1-cities.json`: **216** (includes full cities plus test/placeholder entries).
+Total entries in `season-1-cities.json`: **216** (includes full cities plus placeholder entries).
 
-### City Entries (as stored in the dataset)
+### Real City Profiles
 
 - Pensacola, Florida
 - Huntsville, Alabama
@@ -24,6 +30,17 @@ Total entries in `season-1-cities.json`: **216** (includes full cities plus test
 - Auburn, Alabama
 - Decatur, Alabama
 - Madison, Alabama
+- Jacksonville, Florida
+- Miami, Florida
+- Tampa, Florida
+- Orlando, Florida
+- St. Petersburg, Florida
+- Pace/Milton/Avalon, Florida
+
+### Placeholder Entries (not real cities)
+
+These entries are placeholders for testing and should not be treated as real-world locations when answering user questions.
+
 - Cedar Grove, Alabama
 - Lakeside, Alabama
 - Summit, Alabama
@@ -223,12 +240,6 @@ Total entries in `season-1-cities.json`: **216** (includes full cities plus test
 - Cedar Grove, District of Columbia
 - Lakeside, District of Columbia
 - Summit, District of Columbia
-- Jacksonville, Florida
-- Miami, Florida
-- Tampa, Florida
-- Orlando, Florida
-- St. Petersburg, Florida
-- Pace/Milton/Avalon, Florida
 
 ## National USA Location Dictionary (State → Cities)
 
