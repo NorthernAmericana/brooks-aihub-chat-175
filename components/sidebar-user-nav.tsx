@@ -20,7 +20,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { guestRegex } from "@/lib/constants";
+import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
 import { CodeRedemptionDialog } from "./code-redemption-dialog";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
@@ -31,6 +33,8 @@ export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, resolvedTheme } = useTheme();
   const { hasInstallPrompt, isStandalone, promptInstall } = usePwaInstall();
   const [showCodeDialog, setShowCodeDialog] = useState(false);
+  const [showProfilePicker, setShowProfilePicker] = useState(false);
+  const { profileIcon, setProfileIcon } = useProfileIcon();
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
 
@@ -80,7 +84,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                     alt={user.email ?? "User Avatar"}
                     className="rounded-full"
                     height={24}
-                    src={`https://avatar.vercel.sh/${user.email}`}
+                    src={profileIcon ?? `https://avatar.vercel.sh/${user.email}`}
                     width={24}
                   />
                   <span className="truncate" data-testid="user-email">
@@ -110,6 +114,13 @@ export function SidebarUserNav({ user }: { user: User }) {
                 }
               >
                 {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                data-testid="user-nav-item-profile-icon"
+                onSelect={() => setShowProfilePicker(true)}
+              >
+                Change Profile Icon
               </DropdownMenuItem>
               {!isStandalone && hasInstallPrompt && (
                 <DropdownMenuItem
@@ -156,6 +167,60 @@ export function SidebarUserNav({ user }: { user: User }) {
         onOpenChange={setShowCodeDialog}
         open={showCodeDialog}
       />
+      {showProfilePicker && (
+        <div className="fixed inset-0 z-50 flex min-h-svh flex-col bg-background/95 px-6 py-8 backdrop-blur">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Profile Icon
+              </p>
+              <h2 className="text-2xl font-semibold">Choose your look</h2>
+            </div>
+            <button
+              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+              onClick={() => setShowProfilePicker(false)}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {PROFILE_ICON_OPTIONS.map((option) => {
+              const isSelected = profileIcon === option.src;
+
+              return (
+                <button
+                  className="group flex flex-col items-center gap-4 rounded-2xl border border-border bg-muted/30 px-4 py-6 text-left transition hover:border-primary hover:bg-muted/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  key={option.id}
+                  onClick={() => {
+                    setProfileIcon(option.src);
+                    setShowProfilePicker(false);
+                  }}
+                  type="button"
+                >
+                  <div
+                    className={`relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 ${
+                      isSelected ? "border-primary" : "border-transparent"
+                    }`}
+                  >
+                    <Image
+                      alt={option.label}
+                      className="h-full w-full object-cover"
+                      height={96}
+                      src={option.src}
+                      width={96}
+                    />
+                  </div>
+                  <div className="text-sm font-semibold">{option.label}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isSelected ? "Selected" : "Tap to select"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </>
   );
 }
