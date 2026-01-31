@@ -5,6 +5,8 @@ const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 // Resources to precache during service worker installation
 const PRECACHE_URLS = [
   "/",
+  "/brooks-ai-hub/",
+  "/brooks-ai-hub/?source=pwa",
   "/welcome",
   "/offline",
   "/icons/icon-192.png",
