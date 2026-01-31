@@ -169,8 +169,8 @@ export function SidebarUserNav({ user }: { user: User }) {
       />
       {showProfilePicker && (
         <div className="fixed inset-0 z-[999] flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-black/80" />
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 bg-black/90" />
             <Image
               alt=""
               className="h-full w-full object-cover opacity-20"
@@ -180,7 +180,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               width={1920}
             />
           </div>
-          <div className="relative flex items-center justify-between">
+          <div className="relative z-10 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
                 Profile Icon
@@ -195,13 +195,13 @@ export function SidebarUserNav({ user }: { user: User }) {
               Close
             </button>
           </div>
-          <div className="relative mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative z-10 mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PROFILE_ICON_OPTIONS.map((option) => {
               const isSelected = profileIcon === option.src;
 
               return (
                 <button
-                  className="group flex flex-col items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-6 text-left text-white transition hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                  className="group flex flex-col items-center gap-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-6 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
                   key={option.id}
                   onClick={() => {
                     setProfileIcon(option.src);
