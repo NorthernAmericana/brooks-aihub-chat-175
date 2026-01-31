@@ -226,7 +226,239 @@
         "criteria": "Hiked, biked, or paddled in at least two different outdoor sites (e.g., kayaked a bayou, hiked at Bay Bluffs or Big Lagoon Park)."
       }
     ],
-    "testing_notes": "Ensure all attractions listed are open as of 2026 (Naval Aviation Museum reopened Nov 2025 with public access29). Check seasonality: Fort Barrancas is open seasonally30; confirm availability. Verify quest tasks (like finding the de Luna statue or climbing the lighthouse) are feasible year-round (lighthouse may have seasonal hours). All citations are for reference; content should be verified for accuracy and relevance. No major search errors encountered; local laws and culture notes derived from official sources and local testimonies."
+    "testing_notes": "Ensure all attractions listed are open as of 2026 (Naval Aviation Museum reopened Nov 2025 with public access29). Check seasonality: Fort Barrancas is open seasonally30; confirm availability. Verify quest tasks (like finding the de Luna statue or climbing the lighthouse) are feasible year-round (lighthouse may have seasonal hours). All citations are for reference; content should be verified for accuracy and relevance. No major search errors encountered; local laws and culture notes derived from official sources and local testimonies.",
+    "business_directory": {
+      "thrift_shops": [
+        {
+          "name": "Rusty Relic",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "West Navy Blvd"
+          },
+          "description": "Vintage shop and estate liquidation gallery with antiques and quirky home decor.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Rusty+Relic+Pensacola+FL"
+        },
+        {
+          "name": "Teen Challenge SuperThrift",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "N 9th Ave"
+          },
+          "description": "Large charity thrift store with rotating inventory; proceeds support addiction recovery programs.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Teen+Challenge+SuperThrift+Pensacola+9th+Ave"
+        },
+        {
+          "name": "All About Antiques",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "W Navy Blvd"
+          },
+          "description": "Long-established antiques mall with collectibles, art, furniture, and vintage décor.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=All+About+Antiques+3940+W+Navy+Blvd+Pensacola+FL"
+        },
+        {
+          "name": "The Redemption Store",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "Gulf Beach Highway"
+          },
+          "description": "Volunteer-run thrift ministry selling donated goods to fund church outreach.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=The+Redemption+Store+Pensacola+FL"
+        },
+        {
+          "name": "St. Vincent de Paul Thrift Store",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "description": "Catholic charity thrift store with multiple locations and a wide variety of clothing and home goods.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=St.+Vincent+de+Paul+Thrift+Store+Pensacola+FL"
+        },
+        {
+          "name": "Loaves & Fishes Thrift",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "North Palafox"
+          },
+          "description": "Thrift store supporting the Loaves & Fishes Soup Kitchen with low-priced goods.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Loaves+%26+Fishes+Thrift+Pensacola+FL"
+        },
+        {
+          "name": "UB – The Unique Boutique",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "West Garden Street"
+          },
+          "description": "Curated resale boutique with home decor, artisan goods, and designer women’s clothing.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=UB+The+Unique+Boutique+Pensacola+FL"
+        },
+        {
+          "name": "Marcus Pointe Thrift Store",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "description": "Mission-driven thrift shop supporting military families and overseas missions.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Marcus+Pointe+Thrift+Store+Pensacola+FL"
+        },
+        {
+          "name": "Goodwill",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro",
+            "neighborhood": "East Olive Road"
+          },
+          "description": "Large nonprofit store with clothing, electronics, and furniture supporting job training programs.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Goodwill+East+Olive+Road+Pensacola+FL"
+        },
+        {
+          "name": "Back to the Rack",
+          "location": {
+            "city": "Cantonment",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "description": "Community-focused resale shop in Cantonment with apparel and occasional home goods.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Back+to+the+Rack+Cantonment+FL"
+        }
+      ],
+      "coffee_shops": [
+        {
+          "name": "Fosko Coffee Bar",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "503 E. Government Street, Pensacola, FL 32502",
+          "description": "Bright downtown cafe with pour-overs, lattes, and house-made cold brew.",
+          "website": "https://fosko.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=503+E.+Government+Street%2C+Pensacola%2C+FL+32502"
+        },
+        {
+          "name": "Lucky Goat Coffee",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "7175 N. Davis Highway #B, Pensacola, FL 32504",
+          "description": "Neighborhood favorite with artisanal espresso drinks and seasonal single-origin coffees.",
+          "website": "https://luckygoatcoffee.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=7175+N.+Davis+Highway+%23B%2C+Pensacola%2C+FL+32504"
+        },
+        {
+          "name": "The Drowsy Poet",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "86 Brent Lane, Pensacola, FL 32503",
+          "description": "Local roaster with signature espresso drinks and plenty of seating.",
+          "website": "https://drowsypoetcoffee.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=86+Brent+Lane%2C+Pensacola%2C+FL+32503"
+        },
+        {
+          "name": "The Coffee Guy",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "6700 N. Davis Highway, Pensacola, FL 32504",
+          "description": "Award-winning cafe known for creative drinks like the Mocha Cola and a relaxed vibe.",
+          "website": "https://coffeeguycafe.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=6700+N.+Davis+Highway%2C+Pensacola%2C+FL+32504"
+        },
+        {
+          "name": "Polonza Bistro",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "286 N. Palafox Street, Pensacola, FL 32502",
+          "description": "Downtown cafe and wine bar with espresso drinks and a full brunch menu.",
+          "website": "https://polonza.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=286+N.+Palafox+Street%2C+Pensacola%2C+FL+32502"
+        },
+        {
+          "name": "Bon Beans Coffee & Tea",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "875 E. Nine Mile Road, Ste. 3, Pensacola, FL 32514",
+          "description": "Neighborhood cafe with locally roasted beans, smoothies, and vegan-friendly snacks.",
+          "website": "https://bonbeans.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=875+E.+Nine+Mile+Road%2C+Ste.+3%2C+Pensacola%2C+FL+32514"
+        },
+        {
+          "name": "Jitterbug Beverage Co.",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "2050 N. 12th Avenue, Pensacola, FL 32503",
+          "description": "Artsy East Hill cafe with gluten-free menu, cold brew, and record-store vibes.",
+          "website": "https://drinkjitterbug.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=2050+N.+12th+Avenue%2C+Pensacola%2C+FL+32503"
+        },
+        {
+          "name": "The Leisure Club",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "1151 Office Woods Drive, Ste. A, Pensacola, FL 32504",
+          "description": "Vegan-friendly cafe near Cordova Mall with coffee and a full brunch menu.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=1151+Office+Woods+Drive%2C+Ste.+A%2C+Pensacola%2C+FL+32504"
+        },
+        {
+          "name": "Black Café & Bookstore",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "3498 Dr. Martin Luther King Jr. Drive, Pensacola, FL 32503",
+          "description": "Community-oriented cafe and bookstore with a welcoming space for creatives.",
+          "website": "https://blackcafeandbooks.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=3498+Dr.+Martin+Luther+King+Jr.+Drive%2C+Pensacola%2C+FL+32503"
+        },
+        {
+          "name": "Coastal Cat Café",
+          "location": {
+            "city": "Pensacola",
+            "state": "FL",
+            "area": "Pensacola Metro"
+          },
+          "address": "1508 W. Garden Street, Pensacola, FL 32502",
+          "description": "Cat cafe serving coffee and pastries alongside adoptable cats.",
+          "website": "https://coastalcatpcola.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=1508+W.+Garden+Street%2C+Pensacola%2C+FL+32502"
+        }
+      ]
+    }
   },
   {
     "city": "Huntsville, Alabama",
@@ -35617,6 +35849,230 @@
         "criteria": "Embraced the Canoe Capital spirit: both paddled the river and explored a historic site or nature trail in the area."
       }
     ],
-    "testing_notes": "All locations and businesses mentioned are verified open as of 2026 (Milton Quality Bakery open daily; Arcadia Mill museum open Wed–Sat). Bands on the Blackwater runs summer through fall; Scratch Ankle Festival was held April 2024, assume continuation. Garcon Point Bridge toll is $5 (SunPass or toll-by-plate) – noted for travel logic. No search errors; local insights were cross-checked via news (e.g., Milton nickname, Canoe Capital claim, friendly vibe quote). Ensure cultural notes (like Sunday alcohol sales) reflect current law (updated in 2017 to allow 7-day sales). Overall, information is up-to-date and reflective of the community character."
+    "testing_notes": "All locations and businesses mentioned are verified open as of 2026 (Milton Quality Bakery open daily; Arcadia Mill museum open Wed–Sat). Bands on the Blackwater runs summer through fall; Scratch Ankle Festival was held April 2024, assume continuation. Garcon Point Bridge toll is $5 (SunPass or toll-by-plate) – noted for travel logic. No search errors; local insights were cross-checked via news (e.g., Milton nickname, Canoe Capital claim, friendly vibe quote). Ensure cultural notes (like Sunday alcohol sales) reflect current law (updated in 2017 to allow 7-day sales). Overall, information is up-to-date and reflective of the community character.",
+    "business_directory": {
+      "thrift_shops": [
+        {
+          "name": "Waterfront Thrift",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "description": "Mission-run thrift shop on Avalon Blvd with a rotating mix of clothing, furniture, home goods, and vintage collectibles.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Waterfront+Thrift+Milton+FL"
+        },
+        {
+          "name": "Helping Hand Missions",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "description": "Faith-based nonprofit thrift on Hwy 90 known for a huge inventory of donated goods and bargain pricing.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Helping+Hand+Missions+Pace+FL"
+        },
+        {
+          "name": "Helping Hand Missions",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "description": "Sister store on Stewart Street with a large, organized selection of community-donated home décor, clothing, and furniture.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Helping+Hand+Missions+Milton+FL"
+        },
+        {
+          "name": "Goodwill",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Woodbine Road"
+          },
+          "description": "Nonprofit thrift with affordable clothing, housewares, and furniture in a spacious, well-reviewed Pace store.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Goodwill+Woodbine+Road+Pace+FL"
+        },
+        {
+          "name": "Alyssa’s",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Chumuckla Hwy"
+          },
+          "description": "Large consignment warehouse with 250+ vendor booths featuring antiques, home décor, boutique clothing, and furniture.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Alyssa%27s+consignment+Pace+FL"
+        },
+        {
+          "name": "Blackwater Trail Antiques & More",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Berryhill Street"
+          },
+          "description": "Local antiques and vintage consignment shop with eclectic furniture, décor, signs, and jewelry.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Blackwater+Trail+Antiques+%26+More+Milton+FL"
+        },
+        {
+          "name": "Emilee’s Closet",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Hwy 90"
+          },
+          "description": "Women’s and children’s consignment boutique with gently used clothing and accessories.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Emilee%27s+Closet+Milton+FL"
+        },
+        {
+          "name": "Lollipops Children’s Consignment",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Woodbine Road"
+          },
+          "description": "Kids’ consignment focused on clothing, toys, and baby gear organized by size and season.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Lollipops+Children%27s+Consignment+Milton+FL"
+        },
+        {
+          "name": "2nd Fold Men’s Resale",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Hwy 90"
+          },
+          "description": "Men’s resale shop with tidy racks of name-brand clothing, shoes, and accessories.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=2nd+Fold+Men%27s+Resale+Milton+FL"
+        },
+        {
+          "name": "Vision of Hope Thrift",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon",
+            "neighborhood": "Woodbine Road"
+          },
+          "description": "Church-run thrift store with low-cost clothing, household items, and furniture benefiting local charities.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=Vision+of+Hope+Thrift+Milton+FL"
+        }
+      ],
+      "coffee_shops": [
+        {
+          "name": "Coffee Break Cafe",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "4265 Woodbine Road, Pace, FL 32571",
+          "description": "Community-focused cafe serving Drowsy Poet coffee with a full espresso menu plus breakfast and lunch.",
+          "website": "https://mycoffeebreakcafe.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=4265+Woodbine+Road%2C+Pace%2C+FL+32571"
+        },
+        {
+          "name": "Mama Lattes",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "5412 Stewart Street, Milton, FL 32570",
+          "description": "Cozy, family-friendly coffee shop known for creative drinks like the apple-pie latte.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=5412+Stewart+Street%2C+Milton%2C+FL+32570"
+        },
+        {
+          "name": "Covington Mercantile & Coffee Co.",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "5675 Highway 90, Milton, FL 32570",
+          "description": "Family-owned cafe and gift shop pairing strong coffee with hearty burritos in a rustic space.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=5675+Highway+90%2C+Milton%2C+FL+32570"
+        },
+        {
+          "name": "Revival Coffee Co.",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "5085 US-90, Pace, FL 32571",
+          "description": "Modern cafe known for creative lattes like the Banana Foster and house-made pastries.",
+          "website": "https://revivalcoffeeco.com",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=5085+US-90%2C+Pace%2C+FL+32571"
+        },
+        {
+          "name": "The Clean Cup",
+          "location": {
+            "city": "Pace",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "description": "Mobile coffee stand that pops up at local events and markets with friendly service and strong espresso drinks.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=The+Clean+Cup+Pace+FL"
+        },
+        {
+          "name": "Crazy Axe Coffee",
+          "location": {
+            "city": "Milton",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "2209 Dog Track Road, Milton, FL 32570",
+          "description": "Rustic, axe-themed cafe serving espresso drinks in Milton (with a nearby Pace presence).",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=2209+Dog+Track+Road%2C+Milton%2C+FL+32570"
+        },
+        {
+          "name": "Perfect Blend Coffee Co.",
+          "location": {
+            "city": "Navarre",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "7552 Navarre Parkway, Ste 29, Navarre, FL 32566",
+          "description": "Community-focused cafe training youth with developmental disabilities while serving quality coffee and tea.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=7552+Navarre+Parkway%2C+Ste+29%2C+Navarre%2C+FL+32566"
+        },
+        {
+          "name": "Alaska Bean Coffee Co.",
+          "location": {
+            "city": "Navarre",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "8402 Little John Junction, Navarre, FL 32566",
+          "description": "Drive-thru coffee stand with an Alaskan theme and popular iced coffee drinks.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=8402+Little+John+Junction%2C+Navarre%2C+FL+32566"
+        },
+        {
+          "name": "Barista at the Beach",
+          "location": {
+            "city": "Navarre Beach",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "1005 Gulf Boulevard, Navarre Beach, FL 32566",
+          "description": "Beachfront cafe serving espresso drinks and smoothies with Gulf views.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=1005+Gulf+Boulevard%2C+Navarre+Beach%2C+FL+32566"
+        },
+        {
+          "name": "The Coffee Klatch & Citrus Signage",
+          "location": {
+            "city": "Navarre",
+            "state": "FL",
+            "area": "Pace/Milton/Avalon"
+          },
+          "address": "8753 Navarre Parkway, Navarre, FL 32566",
+          "description": "Quirky local coffee spot known for creative signage and strong espresso.",
+          "google_maps_url": "https://www.google.com/maps/search/?api=1&query=8753+Navarre+Parkway%2C+Navarre%2C+FL+32566"
+        }
+      ]
+    }
   }
 ]
