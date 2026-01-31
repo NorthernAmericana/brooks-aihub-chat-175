@@ -168,12 +168,12 @@ export function SidebarUserNav({ user }: { user: User }) {
         open={showCodeDialog}
       />
       {showProfilePicker && (
-        <div className="fixed inset-0 z-[999] flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
+        <div className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-0 bg-black/90" />
+            <div className="absolute inset-0 bg-black" />
             <Image
               alt=""
-              className="h-full w-full object-cover opacity-20"
+              className="h-full w-full object-cover opacity-15"
               height={1080}
               priority
               src="/backgrounds/brooksaihub-landingpage-background.png"
