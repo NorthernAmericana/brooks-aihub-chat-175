@@ -168,29 +168,40 @@ export function SidebarUserNav({ user }: { user: User }) {
         open={showCodeDialog}
       />
       {showProfilePicker && (
-        <div className="fixed inset-0 z-50 flex min-h-svh flex-col bg-background/95 px-6 py-8 backdrop-blur">
-          <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-[999] flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-black/80" />
+            <Image
+              alt=""
+              className="h-full w-full object-cover opacity-20"
+              height={1080}
+              priority
+              src="/backgrounds/brooksaihub-landingpage-background.png"
+              width={1920}
+            />
+          </div>
+          <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
                 Profile Icon
               </p>
               <h2 className="text-2xl font-semibold">Choose your look</h2>
             </div>
             <button
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
               onClick={() => setShowProfilePicker(false)}
               type="button"
             >
               Close
             </button>
           </div>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PROFILE_ICON_OPTIONS.map((option) => {
               const isSelected = profileIcon === option.src;
 
               return (
                 <button
-                  className="group flex flex-col items-center gap-4 rounded-2xl border border-border bg-muted/30 px-4 py-6 text-left transition hover:border-primary hover:bg-muted/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="group flex flex-col items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-6 text-left text-white transition hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
                   key={option.id}
                   onClick={() => {
                     setProfileIcon(option.src);
@@ -200,7 +211,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 >
                   <div
                     className={`relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 ${
-                      isSelected ? "border-primary" : "border-transparent"
+                      isSelected ? "border-white" : "border-transparent"
                     }`}
                   >
                     <Image
@@ -212,7 +223,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                     />
                   </div>
                   <div className="text-sm font-semibold">{option.label}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-white/60">
                     {isSelected ? "Selected" : "Tap to select"}
                   </div>
                 </button>
