@@ -8,8 +8,10 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 
 type NamcCardKind = "video" | "game" | "album" | "lore";
@@ -371,6 +373,7 @@ function TrailerCard({
 
 export default function NamcHomePage() {
   const [query, setQuery] = useState("");
+  const { profileIcon } = useProfileIcon();
 
   const filteredCollections = useMemo(
     () => collections.filter((item) => matchesQuery(query, item)),
@@ -420,7 +423,17 @@ export default function NamcHomePage() {
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 text-white/80 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
                 type="button"
               >
-                <CircleUserRound className="h-5 w-5" />
+                {profileIcon ? (
+                  <Image
+                    alt="Profile icon"
+                    className="h-8 w-8 rounded-full object-cover"
+                    height={32}
+                    src={profileIcon}
+                    width={32}
+                  />
+                ) : (
+                  <CircleUserRound className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
