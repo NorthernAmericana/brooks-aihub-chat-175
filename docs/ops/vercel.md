@@ -6,6 +6,8 @@ Review the required environment variables in [`.env.example`](../../.env.example
 
 **Metadata base URL:** Production metadata uses the deployment URL provided by Vercel (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL`). Ensure the project is deployed on Vercel so these values are injected automatically. For non-Vercel deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
 
+**Production-only env check:** In Vercel, confirm `NEXT_PUBLIC_SITE_URL` is defined in the **Production** environment (not just Preview). After changing env vars, trigger a new production deploy so `/manifest.webmanifest` uses the correct origin.
+
 ## Vercel configuration files
 
 - [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that Vercel applies to every deployment.
@@ -43,6 +45,10 @@ Run these checks against the production URL **https://chat.vercel.ai/** after ea
    - **How**: Run the repo check with the production base URL to validate manifest settings and confirm `/welcome` does not redirect or fail.
    - **Command**: `PWA_CHECK_BASE_URL=https://chat.vercel.ai pnpm check:pwa`
    - **Expected outcome**: Script exits successfully with "PWA installability checks passed."
+6. **Manifest + service worker endpoints**
+   - **URL**: https://chat.vercel.ai/manifest.webmanifest and https://chat.vercel.ai/sw.js
+   - **How**: Open each URL directly in a browser or use `curl -I`.
+   - **Expected outcome**: Both return `200` in production with the correct `content-type` and no redirects.
 
 ## Mobile installability notes
 
