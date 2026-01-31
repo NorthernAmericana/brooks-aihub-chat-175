@@ -1,5 +1,6 @@
 "use client";
 
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogOverlay,
+  DialogPortal,
+} from "@/components/ui/dialog";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -167,71 +173,75 @@ export function SidebarUserNav({ user }: { user: User }) {
         onOpenChange={setShowCodeDialog}
         open={showCodeDialog}
       />
-      {showProfilePicker && (
-        <div className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-0 bg-black" />
-            <Image
-              alt=""
-              className="h-full w-full object-cover opacity-15"
-              height={1080}
-              priority
-              src="/backgrounds/brooksaihub-landingpage-background.png"
-              width={1920}
-            />
-          </div>
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-                Profile Icon
-              </p>
-              <h2 className="text-2xl font-semibold">Choose your look</h2>
+      <Dialog onOpenChange={setShowProfilePicker} open={showProfilePicker}>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-[9998] bg-black/80" />
+          <DialogPrimitive.Content className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-0 bg-black" />
+              <Image
+                alt=""
+                className="h-full w-full object-cover opacity-15"
+                height={1080}
+                priority
+                src="/backgrounds/brooksaihub-landingpage-background.png"
+                width={1920}
+              />
             </div>
-            <button
-              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-              onClick={() => setShowProfilePicker(false)}
-              type="button"
-            >
-              Close
-            </button>
-          </div>
-          <div className="relative z-10 mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PROFILE_ICON_OPTIONS.map((option) => {
-              const isSelected = profileIcon === option.src;
-
-              return (
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
+                  Profile Icon
+                </p>
+                <h2 className="text-2xl font-semibold">Choose your look</h2>
+              </div>
+              <DialogPrimitive.Close asChild>
                 <button
-                  className="group flex flex-col items-center gap-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-6 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-                  key={option.id}
-                  onClick={() => {
-                    setProfileIcon(option.src);
-                    setShowProfilePicker(false);
-                  }}
+                  className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
                   type="button"
                 >
-                  <div
-                    className={`relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 ${
-                      isSelected ? "border-white" : "border-transparent"
-                    }`}
-                  >
-                    <Image
-                      alt={option.label}
-                      className="h-full w-full object-cover"
-                      height={96}
-                      src={option.src}
-                      width={96}
-                    />
-                  </div>
-                  <div className="text-sm font-semibold">{option.label}</div>
-                  <div className="text-xs text-white/60">
-                    {isSelected ? "Selected" : "Tap to select"}
-                  </div>
+                  Close
                 </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+              </DialogPrimitive.Close>
+            </div>
+            <div className="relative z-10 mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {PROFILE_ICON_OPTIONS.map((option) => {
+                const isSelected = profileIcon === option.src;
+
+                return (
+                  <button
+                    className="group flex flex-col items-center gap-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-6 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                    key={option.id}
+                    onClick={() => {
+                      setProfileIcon(option.src);
+                      setShowProfilePicker(false);
+                    }}
+                    type="button"
+                  >
+                    <div
+                      className={`relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 ${
+                        isSelected ? "border-white" : "border-transparent"
+                      }`}
+                    >
+                      <Image
+                        alt={option.label}
+                        className="h-full w-full object-cover"
+                        height={96}
+                        src={option.src}
+                        width={96}
+                      />
+                    </div>
+                    <div className="text-sm font-semibold">{option.label}</div>
+                    <div className="text-xs text-white/60">
+                      {isSelected ? "Selected" : "Tap to select"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
     </>
   );
 }
