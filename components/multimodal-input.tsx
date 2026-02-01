@@ -755,8 +755,8 @@ function PureMultimodalInput({
             className="min-w-0 flex-1 justify-start sm:justify-center"
             items={
               [
-                { id: "history", label: "History" },
                 { id: "profile", label: "Profile" },
+                { id: "history", label: "History" },
               ] as const
             }
             onChange={setActiveMenu}
