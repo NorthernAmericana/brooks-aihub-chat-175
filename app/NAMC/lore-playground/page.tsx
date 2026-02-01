@@ -3,9 +3,24 @@
 import { ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function NamcLorePlaygroundPage() {
   const router = useRouter();
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
+
+  const handleCopyRoute = async () => {
+    try {
+      await navigator.clipboard.writeText("/NAMC/Lore-Playground/");
+      setCopyStatus("success");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    } catch (error) {
+      setCopyStatus("error");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 woodsy-base soft-vignette">
@@ -97,7 +112,11 @@ export default function NamcLorePlaygroundPage() {
               </h3>
               <p className="mt-2 text-sm text-white/75">
                 To use the Lore Playground agent, start a new chat in Brooks AI
-                HUB and type <code className="rounded bg-white/10 px-2 py-1 font-mono text-xs">/NAMC/Lore-Playground/</code> followed by your question.
+                HUB and type{" "}
+                <code className="rounded bg-white/10 px-2 py-1 font-mono text-xs">
+                  /NAMC/Lore-Playground/
+                </code>{" "}
+                followed by your question.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
@@ -107,14 +126,21 @@ export default function NamcLorePlaygroundPage() {
                   Open Brooks AI HUB
                 </Link>
                 <button
-                  className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
-                  onClick={() => {
-                    // Copy the route command to clipboard
-                    navigator.clipboard.writeText("/NAMC/Lore-Playground/");
-                  }}
+                  className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40 ${
+                    copyStatus === "success"
+                      ? "border-green-500/50 bg-green-500/20 text-green-200"
+                      : copyStatus === "error"
+                        ? "border-red-500/50 bg-red-500/20 text-red-200"
+                        : "border-white/20 bg-white/10 text-white/90 hover:bg-white/20"
+                  }`}
+                  onClick={handleCopyRoute}
                   type="button"
                 >
-                  Copy route command
+                  {copyStatus === "success"
+                    ? "Copied!"
+                    : copyStatus === "error"
+                      ? "Failed to copy"
+                      : "Copy route command"}
                 </button>
               </div>
             </div>
