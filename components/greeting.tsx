@@ -69,6 +69,12 @@ const TreeNodeItem = ({
         <span className="flex items-center gap-2 text-xs font-semibold">
           <span className="text-muted-foreground">📁</span>
           <span>{label}</span>
+          {hasChildren ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[0.5rem] uppercase tracking-[0.2em] text-muted-foreground">
+              {node.children.length} subroute
+              {node.children.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
           {node.badge === "gem" ? (
             <span className="text-sm" title="Founders access only">
               💎
@@ -411,115 +417,137 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="mb-6 grid w-full gap-4 text-left sm:grid-cols-2">
-          <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
-            <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-              Official ATO file system
+        <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
+            <div>
+              <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                ATO Explorer Widgets
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Browse official and custom ATO routes like a file explorer.
+              </p>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Officially made ATOs with routes and subroutes.
-            </p>
-            <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
-              <ul className="space-y-2 text-xs">
-                {officialTree.map((node) => (
-                  <TreeNodeItem
-                    key={node.path}
-                    node={node}
-                    onSelectFolder={onSelectFolder}
-                  />
-                ))}
-              </ul>
+            <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+              {suggestedFolders.length + customAtoFolders.length} total folders
             </div>
           </div>
-          <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
-            <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-              Custom ATO file system
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Your custom-made ATOs with editable settings.
-            </p>
-            <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
-              {customAtoFolders.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  No custom ATOs yet. Create one to see it listed here.
-                </p>
-              ) : (
+          <div className="mt-4 grid w-full gap-4 text-left sm:grid-cols-2">
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Official ATO file system</span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                  Verified
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Officially made ATOs with routes and subroutes.
+              </p>
+              <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
                 <ul className="space-y-2 text-xs">
-                  {customAtoFolders.map((folder) => (
-                    <li
-                      className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2"
-                      key={folder.folder}
-                    >
-                      <button
-                        aria-pressed={selectedAtoId === folder.atoId}
-                        className={cn(
-                          "flex flex-1 flex-col items-start gap-1 text-left text-xs font-medium",
-                          selectedAtoId === folder.atoId
-                            ? "text-foreground"
-                            : "text-foreground/80"
-                        )}
-                        onClick={() => {
-                          setSelectedAtoId(folder.atoId);
-                          onSelectFolder?.(folder.folder, {
-                            atoId: folder.atoId,
-                          });
-                        }}
-                        type="button"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>{folder.label}</span>
-                          <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-amber-500">
-                            Custom
-                          </span>
-                        </span>
-                        <span className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">
-                          {folder.folder}
-                        </span>
-                      </button>
-                      <DropdownMenu
-                        onOpenChange={(open) => {
-                          if (open) {
-                            setSelectedAtoId(folder.atoId);
-                          }
-                        }}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-label={`Manage ${folder.label}`}
-                            className="h-8 w-8 rounded-full bg-background/70 p-0 text-muted-foreground hover:bg-background hover:text-foreground"
-                            size="icon-sm"
-                            type="button"
-                            variant="ghost"
-                          >
-                            <MoreVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              router.push(`/create-ato/${folder.atoId}`);
-                            }}
-                          >
-                            Customize settings
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() =>
-                              setDeleteTarget({
-                                id: folder.atoId,
-                                name: folder.label,
-                              })
-                            }
-                          >
-                            Delete ATO
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </li>
+                  {officialTree.map((node) => (
+                    <TreeNodeItem
+                      key={node.path}
+                      node={node}
+                      onSelectFolder={onSelectFolder}
+                    />
                   ))}
                 </ul>
-              )}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Custom ATO file system</span>
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-amber-500">
+                  Your builds
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Your custom-made ATOs with editable settings.
+              </p>
+              <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
+                {customAtoFolders.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No custom ATOs yet. Create one to see it listed here.
+                  </p>
+                ) : (
+                  <ul className="space-y-2 text-xs">
+                    {customAtoFolders.map((folder) => (
+                      <li
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2"
+                        key={folder.folder}
+                      >
+                        <button
+                          aria-pressed={selectedAtoId === folder.atoId}
+                          className={cn(
+                            "flex flex-1 flex-col items-start gap-1 text-left text-xs font-medium",
+                            selectedAtoId === folder.atoId
+                              ? "text-foreground"
+                              : "text-foreground/80"
+                          )}
+                          onClick={() => {
+                            setSelectedAtoId(folder.atoId);
+                            onSelectFolder?.(folder.folder, {
+                              atoId: folder.atoId,
+                            });
+                          }}
+                          type="button"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-muted-foreground">📁</span>
+                            <span>{folder.label}</span>
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-amber-500">
+                              Custom
+                            </span>
+                          </span>
+                          <span className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">
+                            {folder.folder}
+                          </span>
+                        </button>
+                        <DropdownMenu
+                          onOpenChange={(open) => {
+                            if (open) {
+                              setSelectedAtoId(folder.atoId);
+                            }
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-label={`Manage ${folder.label}`}
+                              className="h-8 w-8 rounded-full bg-background/70 p-0 text-muted-foreground hover:bg-background hover:text-foreground"
+                              size="icon-sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <MoreVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                router.push(`/create-ato/${folder.atoId}`);
+                              }}
+                            >
+                              Customize settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() =>
+                                setDeleteTarget({
+                                  id: folder.atoId,
+                                  name: folder.label,
+                                })
+                              }
+                            >
+                              Delete ATO
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
