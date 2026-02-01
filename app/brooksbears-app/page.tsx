@@ -1,412 +1,131 @@
 "use client";
 
-import { ArrowLeft, Download, Check, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Mic, Phone, Keyboard } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback, useEffect } from "react";
+
+const messages = [
+  {
+    id: 1,
+    sender: "bear",
+    text: "Hi friend! I missed you. Want to hear a story or play a game?",
+    time: "9:41 AM",
+  },
+  {
+    id: 2,
+    sender: "user",
+    text: "Let\'s hear the story about the starlit forest!",
+    time: "9:42 AM",
+  },
+  {
+    id: 3,
+    sender: "bear",
+    text: "Once upon a time, a tiny bear found a glowing path that sang like crickets...",
+    time: "9:42 AM",
+  },
+];
 
 export default function BrooksBearsAppPage() {
-  const router = useRouter();
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [hasHydratedInstallState, setHasHydratedInstallState] = useState(false);
-  const [showDeletePrompt, setShowDeletePrompt] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Swipe gesture handling
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-  const startX = useRef<number>(0);
-
-  // Gallery images - using the BrooksBears icon for demonstration
-  const galleryImages = [
-    "/icons/brooksbears-appicon.png",
-    "/icons/brooksbears-appicon.png",
-    "/icons/brooksbears-appicon.png",
-  ];
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const storedValue = window.localStorage.getItem(
-      "ato-app-installed:brooksbears"
-    );
-    setIsInstalled(storedValue === "true");
-    setHasHydratedInstallState(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hasHydratedInstallState || typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(
-      "ato-app-installed:brooksbears",
-      String(isInstalled)
-    );
-  }, [hasHydratedInstallState, isInstalled]);
-
-  const handleInstallClick = () => {
-    if (!isInstalled) {
-      // Install the app
-      setIsInstalled(true);
-    } else {
-      // Show delete prompt
-      setShowDeletePrompt(true);
-    }
-  };
-
-  const handleDeleteConfirm = () => {
-    setIsInstalled(false);
-    setShowDeletePrompt(false);
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeletePrompt(false);
-  };
-
-  const handleGoToApp = () => {
-    router.push("/BrooksBears");
-  };
-
-  // Touch swipe handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    const swipeDistance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50;
-
-    if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance < 0) {
-        // Swipe right (finger moves right) - go to homepage
-        router.push("/");
-      } else {
-        // Swipe left (finger moves left) - go back
-        router.back();
-      }
-    }
-
-    touchStartX.current = 0;
-    touchEndX.current = 0;
-  }, [router]);
-
-  // Mouse drag handlers for desktop
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Don't start drag if clicking on interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('button, a, input, textarea, select')) {
-      return;
-    }
-    
-    e.preventDefault();
-    isDragging.current = true;
-    startX.current = e.clientX;
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    touchEndX.current = e.clientX;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging.current) return;
-    
-    const swipeDistance = startX.current - touchEndX.current;
-    const minSwipeDistance = 100;
-
-    if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance < 0) {
-        // Drag right - go to homepage
-        router.push("/");
-      } else {
-        // Drag left - go back
-        router.back();
-      }
-    }
-
-    isDragging.current = false;
-    startX.current = 0;
-    touchEndX.current = 0;
-  }, [router]);
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? galleryImages.length - 1 : prev - 1
-    );
-  };
-
-  // Handle Escape key for delete dialog
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showDeletePrompt) {
-        setShowDeletePrompt(false);
-      }
-    };
-
-    if (showDeletePrompt) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [showDeletePrompt]);
-
   return (
-    <div
-      ref={containerRef}
-      className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#140d12] via-[#1a0f16] to-[#120c16] overflow-hidden"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {/* Header */}
-      <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#140d12]/95 px-4 py-3 backdrop-blur-sm">
-        <button
-          aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-          onClick={() => router.back()}
-          type="button"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="font-pixel text-lg text-white">BrooksBears</h1>
-      </div>
-
-      {/* Content */}
-      <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        {/* Hero Section with Device Frame */}
-        <div className="hero-section flex flex-col items-center space-y-4">
-          {/* Device Frame with Mascot */}
-          <div className="device-frame relative w-full max-w-sm">
-            <div className="aspect-[9/16] rounded-3xl border-4 border-white/20 bg-gradient-to-br from-white/10 to-white/5 p-6 backdrop-blur-sm overflow-hidden shadow-2xl">
-              {/* Mascot/Icon */}
-              <div className="flex items-center justify-center h-full">
-                <div className="relative w-48 h-48">
-                  <Image
-                    src="/icons/brooksbears-appicon.png"
-                    alt="BrooksBears Mascot"
-                    width={192}
-                    height={192}
-                    className="object-contain drop-shadow-2xl"
-                    priority
-                  />
-                </div>
-              </div>
-              
-              {/* Tap to Speak UI Element */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-48">
-                <div className="rounded-full bg-white/10 border border-white/20 backdrop-blur-md px-6 py-3 text-center">
-                  <p className="text-white/90 text-sm font-medium">Tap to Speak</p>
-                  <div className="flex justify-center gap-1 mt-2">
-                    <div className="w-1 h-3 bg-white/60 rounded-full animate-pulse" />
-                    <div className="w-1 h-4 bg-white/70 rounded-full animate-pulse delay-75" />
-                    <div className="w-1 h-3 bg-white/60 rounded-full animate-pulse delay-150" />
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#140d12] via-[#1a0f16] to-[#120c16] text-white">
+      <header className="flex items-center justify-between border-b border-white/10 bg-[#140d12]/90 px-6 py-4 backdrop-blur">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/50">/BrooksBears/</p>
+          <h1 className="font-pixel text-lg text-white">Benjamin Bear</h1>
+        </div>
+        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-white/10">
+            <Image
+              src="/icons/brooksbears-appicon.png"
+              alt="Benjamin Bear"
+              fill
+              className="object-cover"
+              sizes="40px"
+              priority
+            />
           </div>
-
-          {/* App Title and Basic Info */}
-          <div className="text-center space-y-2 max-w-md">
-            <h2 className="text-2xl font-bold text-white">BrooksBears</h2>
-            <p className="text-white/60 text-sm">Entertainment • 13+</p>
-            <div className="flex items-center justify-center gap-4 text-sm text-white/50">
-              <span className="flex items-center gap-1">⭐ 4.5</span>
-              <span>10K+ downloads</span>
+          <div className="text-left">
+            <p className="text-sm font-semibold">Benjamin</p>
+            <div className="flex items-center gap-2 text-xs text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Listening
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Description */}
-        <div className="description-section space-y-3 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">About</h3>
-          <p className="text-white/70 leading-relaxed">
-            AI teddy bear companion for ages 13 and up. BrooksBears provides a friendly, 
-            interactive experience with Benjamin Bear, your personal AI companion. Chat, 
-            play, and explore with this lovable virtual friend.
-          </p>
-        </div>
-
-        {/* Routes Information */}
-        <div className="routes-section space-y-3 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Routes in Brooks AI HUB</h3>
-          <div className="space-y-4">
-            {/* Main route */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-white/70">
-                <div className="w-2 h-2 rounded-full bg-blue-400" />
-                <span className="text-sm font-mono">/BrooksBears/</span>
-              </div>
-              <p className="text-xs text-white/50 ml-4">
-                Main chat interface with Benjamin Bear agent
-              </p>
-            </div>
-            
-            {/* Subroute */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-white/70">
-                <div className="w-2 h-2 rounded-full bg-purple-400" />
-                <span className="text-sm font-mono">/BrooksBears/BenjaminBear/</span>
-              </div>
-              <p className="text-xs text-white/50 ml-4">
-                Direct conversation route with Benjamin Bear persona
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Image Gallery */}
-        <div className="gallery-section space-y-3 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Screenshots</h3>
-          
-          {/* Gallery Carousel */}
-          <div className="relative">
-            <div className="aspect-[16/9] rounded-xl overflow-hidden bg-white/5 border border-white/10">
-              <Image
-                src={galleryImages[currentImageIndex]}
-                alt={`Screenshot ${currentImageIndex + 1}`}
-                width={400}
-                height={225}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            
-            {/* Navigation Buttons */}
-            <button
-              onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
-              aria-label="Previous image"
-              type="button"
+      <main className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="space-y-6">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${
+                message.sender === "user" ? "justify-end" : "justify-start"
+              }`}
             >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
-              aria-label="Next image"
-              type="button"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            
-            {/* Dots Indicator */}
-            <div className="flex justify-center gap-2 mt-3">
-              {galleryImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`h-2 w-2 rounded-full transition focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none ${
-                    index === currentImageIndex
-                      ? "bg-white w-6"
-                      : "bg-white/30"
+              <div
+                className={`max-w-[80%] space-y-2 rounded-3xl px-5 py-4 text-sm shadow-lg ${
+                  message.sender === "user"
+                    ? "bg-[#3a2533] text-white"
+                    : "bg-white/10 text-white/90"
+                }`}
+              >
+                <p>{message.text}</p>
+                <p
+                  className={`text-xs ${
+                    message.sender === "user" ? "text-white/60" : "text-white/50"
                   }`}
-                  aria-label={`Go to image ${index + 1}`}
-                  type="button"
-                />
-              ))}
+                >
+                  {message.time}
+                </p>
+              </div>
             </div>
+          ))}
+        </div>
+      </main>
+
+      <div className="border-t border-white/10 bg-[#140d12]/95 px-6 py-4">
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center gap-3 text-white/60">
+            <Keyboard className="h-5 w-5" />
+            <span className="text-sm">Type a message...</span>
           </div>
-        </div>
-
-        {/* Install/Action Buttons */}
-        <div className="actions-section space-y-3">
-          <button
-            onClick={handleInstallClick}
-            className={`w-full flex items-center justify-center gap-2 rounded-full py-4 text-base font-semibold transition ${
-              isInstalled
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
-            }`}
-            type="button"
-          >
-            {isInstalled ? (
-              <>
-                <Check className="h-5 w-5" />
-                Installed
-              </>
-            ) : (
-              <>
-                <Download className="h-5 w-5" />
-                Install
-              </>
-            )}
-          </button>
-
-          {/* Go to ATO App Button (appears after install) */}
-          {isInstalled && (
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleGoToApp}
-              className="w-full flex items-center justify-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 py-4 text-base font-semibold text-white transition"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
               type="button"
+              aria-label="Start voice message"
             >
-              Go to ATO app
+              <Mic className="h-5 w-5" />
             </button>
-          )}
-        </div>
-
-        {/* Swipe Hint */}
-        <div className="swipe-hint text-center text-xs text-white/40 py-4">
-          <p>Swipe right to return home • Swipe left to go back</p>
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3a2533] text-white transition hover:bg-[#4a3141]"
+              type="button"
+              aria-label="Start call"
+            >
+              <Phone className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      {showDeletePrompt && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-dialog-title"
-          aria-describedby="delete-dialog-description"
-        >
-          <div className="delete-prompt rounded-2xl border border-white/20 bg-[#1a0f16] p-6 max-w-sm w-full space-y-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 mx-auto">
-              <Trash2 className="h-6 w-6 text-red-400" />
-            </div>
-            
-            <h3 id="delete-dialog-title" className="text-lg font-semibold text-white text-center">
-              Delete BrooksBears?
-            </h3>
-            
-            <p id="delete-dialog-description" className="text-white/70 text-sm text-center">
-              This will remove the ATO app while keeping your memories and conversations safe.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={handleDeleteCancel}
-                className="flex-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 py-3 text-sm font-medium text-white transition"
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="flex-1 rounded-full bg-red-600 hover:bg-red-700 py-3 text-sm font-medium text-white transition"
-                type="button"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+      <nav className="border-t border-white/10 bg-[#120c16] px-6 py-3">
+        <div className="flex items-center justify-around">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-sm font-semibold text-white"
+          >
+            <span className="h-1.5 w-6 rounded-full bg-emerald-400" />
+            Chat
+          </button>
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-sm font-semibold text-white/50"
+          >
+            <span className="h-1.5 w-6 rounded-full bg-transparent" />
+            History
+          </button>
         </div>
-      )}
+      </nav>
     </div>
   );
 }
