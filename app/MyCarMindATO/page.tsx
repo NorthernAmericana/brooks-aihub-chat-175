@@ -3,6 +3,7 @@
 import {
   ArrowLeft,
   Compass,
+  Home,
   MapPin,
   Navigation,
   Search,
@@ -36,6 +37,28 @@ type TownResponse = {
   groupedTowns: TownGroup[];
 };
 
+type HomeLocation = {
+  rawText: string;
+  normalizedText?: string | null;
+  updatedAt?: string | null;
+};
+
+type NearbyBusiness = {
+  id: string;
+  name: string;
+  category: string;
+  description?: string | null;
+  location?: {
+    city?: string | null;
+    state?: string | null;
+    area?: string | null;
+    neighborhood?: string | null;
+    address?: string | null;
+  } | null;
+  googleMapsUrl?: string | null;
+  source?: string | null;
+};
+
 const MAP_PIN_POSITIONS = [
   "top-8 left-12",
   "top-16 right-16",
@@ -52,6 +75,21 @@ const truncateText = (text: string, maxLength = 140) =>
 const buildMapSearchUrl = (query: string) =>
   `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}`;
 
+const formatLocationLabel = (location?: NearbyBusiness["location"]) => {
+  if (!location) {
+    return "";
+  }
+  return [
+    location.neighborhood,
+    location.area,
+    location.city,
+    location.state,
+    location.address,
+  ]
+    .filter((value) => value && value.trim())
+    .join(", ");
+};
+
 export default function MyCarMindATOPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +100,18 @@ export default function MyCarMindATOPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isMapOnly, setIsMapOnly] = useState(false);
   const [activeTab, setActiveTab] = useState<"map" | "dictionary">("map");
+  const [homeLocation, setHomeLocation] = useState<HomeLocation | null>(null);
+  const [homeLocationError, setHomeLocationError] = useState<string | null>(
+    null
+  );
+  const [homeLocationLoaded, setHomeLocationLoaded] = useState(false);
+  const [locationMode, setLocationMode] = useState<"home" | "custom">("home");
+  const [customLocation, setCustomLocation] = useState("");
+  const [nearbyQuery, setNearbyQuery] = useState("");
+  const [nearbyResults, setNearbyResults] = useState<NearbyBusiness[]>([]);
+  const [nearbySource, setNearbySource] = useState<string | null>(null);
+  const [nearbyError, setNearbyError] = useState<string | null>(null);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -97,6 +147,54 @@ export default function MyCarMindATOPage() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHomeLocation = async () => {
+      setHomeLocationError(null);
+      setHomeLocationLoaded(false);
+
+      try {
+        const response = await fetch("/api/mycarmindato/home-location");
+        if (!response.ok) {
+          throw new Error("Unable to load home location.");
+        }
+        const data = (await response.json()) as {
+          homeLocation: HomeLocation | null;
+        };
+        if (isActive) {
+          setHomeLocation(data.homeLocation);
+        }
+      } catch (error) {
+        if (isActive) {
+          setHomeLocationError(
+            error instanceof Error ? error.message : "Unable to load location."
+          );
+        }
+      } finally {
+        if (isActive) {
+          setHomeLocationLoaded(true);
+        }
+      }
+    };
+
+    void loadHomeLocation();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!homeLocationLoaded) {
+      return;
+    }
+
+    if (!homeLocation) {
+      setLocationMode("custom");
+    }
+  }, [homeLocation, homeLocationLoaded]);
 
   const filteredTowns = useMemo(() => {
     const normalizedQuery = normalizeQueryValue(searchQuery);
@@ -174,6 +272,11 @@ export default function MyCarMindATOPage() {
     setSearchQuery(town.city);
   };
 
+  const selectedLocationText =
+    locationMode === "home"
+      ? homeLocation?.normalizedText || homeLocation?.rawText || ""
+      : customLocation.trim();
+
   const mapQuery = selectedTown?.city || searchQuery.trim() || "United States";
   const mapSearchUrl = buildMapSearchUrl(mapQuery);
 
@@ -182,6 +285,49 @@ export default function MyCarMindATOPage() {
     if (tab !== "map") {
       setIsMapOnly(false);
     }
+  };
+
+  const handleFindLocalSpots = async () => {
+    if (!selectedLocationText) {
+      setNearbyError("Add a location to search nearby spots.");
+      return;
+    }
+
+    setNearbyLoading(true);
+    setNearbyError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("text", selectedLocationText);
+      if (nearbyQuery.trim()) {
+        params.set("query", nearbyQuery.trim());
+      }
+      const response = await fetch(`/api/mycarmindato/nearby?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch nearby spots.");
+      }
+      const data = (await response.json()) as {
+        source?: string | null;
+        results: NearbyBusiness[];
+      };
+      setNearbyResults(data.results);
+      setNearbySource(data.source ?? null);
+    } catch (error) {
+      setNearbyError(
+        error instanceof Error ? error.message : "Unable to load nearby spots."
+      );
+      setNearbyResults([]);
+      setNearbySource(null);
+    } finally {
+      setNearbyLoading(false);
+    }
+  };
+
+  const buildReviewPrompt = (business: NearbyBusiness) => {
+    const locationLabel = formatLocationLabel(business.location || undefined);
+    return `/MyCarMindATO/ Review ${business.name}${
+      locationLabel ? ` in ${locationLabel}` : ""
+    }`;
   };
 
   return (
@@ -388,6 +534,240 @@ export default function MyCarMindATOPage() {
 
         {activeTab === "map" && !isMapOnly && (
           <>
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Location settings
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    Pick a home base or enter a custom spot when you are
+                    traveling.
+                  </p>
+                </div>
+                <div className="text-xs text-white/50">
+                  {homeLocationLoaded
+                    ? homeLocation
+                      ? "Home location ready."
+                      : "No home location saved yet."
+                    : "Loading home location..."}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-[240px,1fr]">
+                <div className="space-y-3">
+                  <button
+                    aria-pressed={locationMode === "home"}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                      locationMode === "home"
+                        ? "border-emerald-400/60 bg-emerald-400/10 text-white"
+                        : "border-white/10 bg-black/30 text-white/70 hover:border-white/20"
+                    }`}
+                    disabled={!homeLocation}
+                    onClick={() => setLocationMode("home")}
+                    type="button"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Home className="h-4 w-4 text-emerald-200" />
+                      Home location
+                    </span>
+                    <span className="text-xs text-white/50">
+                      {homeLocation ? "Saved" : "None"}
+                    </span>
+                  </button>
+                  <button
+                    aria-pressed={locationMode === "custom"}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                      locationMode === "custom"
+                        ? "border-emerald-400/60 bg-emerald-400/10 text-white"
+                        : "border-white/10 bg-black/30 text-white/70 hover:border-white/20"
+                    }`}
+                    onClick={() => setLocationMode("custom")}
+                    type="button"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-emerald-200" />
+                      Custom location
+                    </span>
+                    <span className="text-xs text-white/50">
+                      {customLocation ? "Set" : "Enter"}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  {locationMode === "home" ? (
+                    <>
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                        Saved home
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {homeLocation?.normalizedText ||
+                          homeLocation?.rawText ||
+                          "Set a home location in chat to use it here."}
+                      </p>
+                      {homeLocation?.rawText &&
+                        homeLocation.normalizedText &&
+                        homeLocation.normalizedText !==
+                          homeLocation.rawText && (
+                          <p className="mt-1 text-xs text-white/50">
+                            Original: {homeLocation.rawText}
+                          </p>
+                        )}
+                      {homeLocationError && (
+                        <p className="mt-3 text-xs text-red-200">
+                          {homeLocationError}
+                        </p>
+                      )}
+                      {!homeLocation && (
+                        <div className="mt-3 text-xs text-white/60">
+                          Save your home location in the MyCarMindATO chat so it
+                          can auto-fill here.
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label
+                        className="text-xs uppercase tracking-[0.2em] text-white/50"
+                        htmlFor="custom-location"
+                      >
+                        Custom location
+                      </label>
+                      <input
+                        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
+                        id="custom-location"
+                        onChange={(event) =>
+                          setCustomLocation(event.target.value)
+                        }
+                        placeholder="Enter a city, neighborhood, or landmark"
+                        type="text"
+                        value={customLocation}
+                      />
+                      <p className="mt-2 text-xs text-white/60">
+                        Tip: use this when you are away from home so nearby
+                        suggestions stay relevant.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Find local spots
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    Pull nearby businesses for quick reviews and routing.
+                  </p>
+                </div>
+                {nearbySource && (
+                  <div className="text-xs text-white/50">
+                    Source: {nearbySource}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-[1fr,auto]">
+                <label className="sr-only" htmlFor="nearby-query">
+                  Search local spots
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
+                    id="nearby-query"
+                    onChange={(event) => setNearbyQuery(event.target.value)}
+                    placeholder="Try coffee shops, thrift, or brunch"
+                    type="text"
+                    value={nearbyQuery}
+                  />
+                </div>
+                <button
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                  disabled={nearbyLoading}
+                  onClick={handleFindLocalSpots}
+                  type="button"
+                >
+                  {nearbyLoading ? "Searching..." : "Find local spots"}
+                </button>
+              </div>
+
+              {nearbyError && (
+                <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {nearbyError}
+                </div>
+              )}
+
+              {!nearbyError && nearbyResults.length === 0 && (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/60">
+                  Add a location and search to see nearby recommendations.
+                </div>
+              )}
+
+              {nearbyResults.length > 0 && (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {nearbyResults.map((business) => {
+                    const locationLabel = formatLocationLabel(
+                      business.location || undefined
+                    );
+                    const reviewUrl = `/brooks-ai-hub?query=${encodeURIComponent(
+                      buildReviewPrompt(business)
+                    )}`;
+                    return (
+                      <div
+                        className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                        key={business.id}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-white">
+                              {business.name}
+                            </p>
+                            <p className="text-xs text-white/60">
+                              {business.category}
+                            </p>
+                          </div>
+                          <a
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
+                            href={reviewUrl}
+                          >
+                            Review
+                          </a>
+                        </div>
+                        {locationLabel && (
+                          <p className="mt-2 text-xs text-white/60">
+                            {locationLabel}
+                          </p>
+                        )}
+                        {business.description && (
+                          <p className="mt-2 text-xs text-white/60">
+                            {truncateText(business.description, 120)}
+                          </p>
+                        )}
+                        <div className="mt-3 flex items-center justify-between text-xs text-white/50">
+                          <span>Local spot</span>
+                          {business.googleMapsUrl && (
+                            <a
+                              className="inline-flex items-center gap-1 text-emerald-200 transition hover:text-emerald-100"
+                              href={business.googleMapsUrl}
+                              rel="noopener"
+                              target="_blank"
+                            >
+                              Open maps
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
             <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
