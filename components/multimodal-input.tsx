@@ -55,6 +55,8 @@ import {
   PromptInputTools,
 } from "./elements/prompt-input";
 import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ChatProfilePanel } from "./chat-profile-panel";
+import { ChatSwipeMenu } from "./chat-swipe-menu";
 import { PreviewAttachment } from "./preview-attachment";
 import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
@@ -243,6 +245,9 @@ function PureMultimodalInput({
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
+  const [activeMenu, setActiveMenu] = useState<"history" | "profile" | null>(
+    "history"
+  );
   const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
@@ -709,18 +714,34 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const shouldShowMenuPanel =
+    messages.length === 0 &&
+    attachments.length === 0 &&
+    uploadQueue.length === 0;
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            chatId={chatId}
-            messages={messages}
-            selectedVisibilityType={selectedVisibilityType}
-            sendMessage={sendMessage}
+      {shouldShowMenuPanel && (
+        <div className="flex flex-col gap-3">
+          <ChatSwipeMenu
+            activeItemId={activeMenu}
+            items={[
+              { id: "history", label: "History" },
+              { id: "profile", label: "Profile" },
+            ]}
+            onChange={setActiveMenu}
           />
-        )}
+          {activeMenu === "history" && (
+            <SuggestedActions
+              chatId={chatId}
+              messages={messages}
+              selectedVisibilityType={selectedVisibilityType}
+              sendMessage={sendMessage}
+            />
+          )}
+          {activeMenu === "profile" && <ChatProfilePanel />}
+        </div>
+      )}
 
       <input
         accept={
