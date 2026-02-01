@@ -1,6 +1,6 @@
 {
   "packageId": "com.brooks.aihub.chat",
-  "host": "chat.vercel.ai",
+  "host": "https://www.brooksaihub.app",
   "name": "Brooks AI HUB",
   "launcherName": "Brooks AI HUB",
   "themeColor": "#ffffff",
@@ -9,7 +9,7 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "iconUrl": "https://chat.vercel.ai/icons/icon-512.png",
+  "iconUrl": "https://www.brooksaihub.app/icons/icon-512.png",
   "signingKey": {
     "path": "keystore/brooks-aihub.keystore",
     "alias": "brooks-aihub",
