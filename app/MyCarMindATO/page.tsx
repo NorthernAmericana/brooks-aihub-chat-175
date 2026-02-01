@@ -1,9 +1,18 @@
 "use client";
 
-import { ArrowLeft, Compass, MapPin, Navigation, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  Compass,
+  MapPin,
+  Navigation,
+  Search,
+  Square,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+
+import MapView from "@/components/mycarmindato/map-view";
 
 type TownSummary = {
   id: string;
@@ -27,9 +36,6 @@ const MAP_PIN_POSITIONS = [
   "top-24 left-1/2",
 ] as const;
 
-const DEFAULT_MAP_SRC =
-  "https://www.openstreetmap.org/export/embed.html?bbox=-125.0,24.0,-66.5,49.5&layer=mapnik";
-
 const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
 
 const truncateText = (text: string, maxLength = 140) =>
@@ -45,6 +51,7 @@ export default function MyCarMindATOPage() {
   const [selectedTownId, setSelectedTownId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isMapOnly, setIsMapOnly] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -131,7 +138,7 @@ export default function MyCarMindATOPage() {
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#0d1620] via-[#0f1c27] to-[#0b151d]">
-      <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#0b151d]/90 px-4 py-3 backdrop-blur-sm">
+      <div className="app-page-header sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-[#0b151d]/90 px-4 py-3 backdrop-blur-sm">
         <button
           aria-label="Go back"
           className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
@@ -155,49 +162,73 @@ export default function MyCarMindATOPage() {
             <p className="text-xs text-white/60">Live map experience</p>
           </div>
         </div>
+        <button
+          aria-pressed={isMapOnly}
+          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+          onClick={() => setIsMapOnly((current) => !current)}
+          type="button"
+        >
+          <Square className="h-4 w-4" />
+          <span>{isMapOnly ? "Exit map only" : "Map only"}</span>
+          <span className="sr-only">
+            {isMapOnly
+              ? "Disable map only mode"
+              : "Enable map only mode to focus on the map"}
+          </span>
+        </button>
       </div>
 
-      <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                Mapbox-style layout
-              </p>
-              <h2 className="text-xl font-semibold text-white">
-                Town discovery map
-              </h2>
-              <p className="text-sm text-white/60">
-                Explore destinations and route them to the MyCarMindATO agent.
-              </p>
+      <div
+        className={`app-page-content flex-1 ${
+          isMapOnly ? "flex flex-col overflow-hidden px-0 py-0" : "space-y-6 overflow-y-auto px-4 py-6"
+        }`}
+      >
+        <section
+          className={`rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm ${
+            isMapOnly ? "flex h-full flex-col" : "p-5"
+          }`}
+        >
+          {!isMapOnly && (
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                  Mapbox-style layout
+                </p>
+                <h2 className="text-xl font-semibold text-white">
+                  Town discovery map
+                </h2>
+                <p className="text-sm text-white/60">
+                  Explore destinations and route them to the MyCarMindATO agent.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => handleAskAgent(selectedTown?.city)}
+                  type="button"
+                >
+                  <Navigation className="h-4 w-4" />
+                  Ask MyCarMindATO
+                </button>
+                <a
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                  href={mapSearchUrl}
+                  rel="noopener"
+                  target="_blank"
+                >
+                  Open in maps
+                </a>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-                onClick={() => handleAskAgent(selectedTown?.city)}
-                type="button"
-              >
-                <Navigation className="h-4 w-4" />
-                Ask MyCarMindATO
-              </button>
-              <a
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-                href={mapSearchUrl}
-                rel="noopener"
-                target="_blank"
-              >
-                Open in maps
-              </a>
-            </div>
-          </div>
+          )}
 
-          <div className="mt-5">
-            <div className="relative aspect-[16/10] min-h-[320px] overflow-hidden rounded-3xl border border-white/10 bg-[#0b1f2a] shadow-xl">
-              <iframe
-                className="absolute inset-0 h-full w-full border-0"
-                loading="lazy"
-                src={DEFAULT_MAP_SRC}
-                title="MyCarMindATO map"
+          <div className={isMapOnly ? "flex-1 p-4" : "mt-5"}>
+            <div className="relative h-full min-h-[320px] overflow-hidden rounded-3xl border border-white/10 bg-[#0b1f2a] shadow-xl">
+              <MapView
+                ariaLabel="MyCarMindATO map"
+                className="absolute inset-0 h-full w-full"
+                containerClassName="absolute inset-0"
+                query={mapQuery}
               />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,15,24,0.1),rgba(5,15,24,0.75))] pointer-events-none" />
 
@@ -269,171 +300,177 @@ export default function MyCarMindATOPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                Destination search
-              </h3>
-              <p className="text-sm text-white/60">
-                Search towns from the MyCarMindATO discovery index.
-              </p>
-            </div>
-            <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/70">
-              {isLoading ? "Loading..." : `${towns.length} towns loaded`}
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label className="sr-only" htmlFor="town-search">
-              Search towns
-            </label>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
-                id="town-search"
-                onChange={(event) => {
-                  setSearchQuery(event.target.value);
-                  setSelectedTownId(null);
-                }}
-                placeholder="Search for a town or landmark"
-                type="text"
-                value={searchQuery}
-              />
-            </div>
-          </div>
-
-          {loadError && (
-            <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-              {loadError}
-            </div>
-          )}
-
-          {!loadError && (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {filteredTowns.map((town) => (
-                <div
-                  className={`rounded-2xl border p-4 transition ${
-                    selectedTownId === town.id
-                      ? "border-emerald-400/60 bg-emerald-400/10"
-                      : "border-white/10 bg-white/5"
-                  }`}
-                  key={town.id}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {town.city}
-                      </p>
-                      <p className="text-xs text-white/60">
-                        {town.subAreas.slice(0, 2).join(", ") ||
-                          "Town profile available"}
-                      </p>
-                    </div>
-                    <button
-                      className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
-                      onClick={() => handleTownSelect(town)}
-                      type="button"
-                    >
-                      Preview
-                    </button>
-                  </div>
-
-                  {town.vibes.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {town.vibes.slice(0, 3).map((vibe) => (
-                        <span
-                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/70"
-                          key={`${town.id}-${vibe}`}
-                        >
-                          {vibe}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="text-xs text-white/50">
-                      {town.anchors.at(0) ||
-                        "Known for immersive travel missions"}
-                    </div>
-                    <button
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-200 transition hover:text-emerald-100"
-                      onClick={() => handleAskAgent(town.city)}
-                      type="button"
-                    >
-                      <Navigation className="h-3 w-3" />
-                      Route
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                Missions and mastery
-              </h3>
-              <p className="text-sm text-white/60">
-                Syncs with MyCarMindATO town discovery progress.
-              </p>
-            </div>
-            <button
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
-              onClick={() => handleAskAgent(selectedTown?.city)}
-              type="button"
-            >
-              <Navigation className="h-4 w-4" />
-              Start mission
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {[
-              {
-                title: "Weekly mission",
-                detail: "Explore 3 new points of interest",
-                progress: 0.62,
-              },
-              {
-                title: "Town mastery",
-                detail: "8 towns at 60% completion",
-                progress: 0.6,
-              },
-              {
-                title: "Review streak",
-                detail: "4 days of new destination notes",
-                progress: 0.4,
-              },
-            ].map((mission) => (
-              <div
-                className="rounded-2xl border border-white/10 bg-black/30 p-4"
-                key={mission.title}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">
-                    {mission.title}
+        {!isMapOnly && (
+          <>
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Destination search
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    Search towns from the MyCarMindATO discovery index.
                   </p>
-                  <span className="text-xs text-white/50">
-                    {Math.round(mission.progress * 100)}%
-                  </span>
                 </div>
-                <p className="mt-1 text-xs text-white/60">{mission.detail}</p>
-                <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-emerald-400"
-                    style={{ width: `${mission.progress * 100}%` }}
+                <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/70">
+                  {isLoading ? "Loading..." : `${towns.length} towns loaded`}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="sr-only" htmlFor="town-search">
+                  Search towns
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
+                    id="town-search"
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                      setSelectedTownId(null);
+                    }}
+                    placeholder="Search for a town or landmark"
+                    type="text"
+                    value={searchQuery}
                   />
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
+
+              {loadError && (
+                <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {loadError}
+                </div>
+              )}
+
+              {!loadError && (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {filteredTowns.map((town) => (
+                    <div
+                      className={`rounded-2xl border p-4 transition ${
+                        selectedTownId === town.id
+                          ? "border-emerald-400/60 bg-emerald-400/10"
+                          : "border-white/10 bg-white/5"
+                      }`}
+                      key={town.id}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {town.city}
+                          </p>
+                          <p className="text-xs text-white/60">
+                            {town.subAreas.slice(0, 2).join(", ") ||
+                              "Town profile available"}
+                          </p>
+                        </div>
+                        <button
+                          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
+                          onClick={() => handleTownSelect(town)}
+                          type="button"
+                        >
+                          Preview
+                        </button>
+                      </div>
+
+                      {town.vibes.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {town.vibes.slice(0, 3).map((vibe) => (
+                            <span
+                              className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/70"
+                              key={`${town.id}-${vibe}`}
+                            >
+                              {vibe}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="text-xs text-white/50">
+                          {town.anchors.at(0) ||
+                            "Known for immersive travel missions"}
+                        </div>
+                        <button
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-200 transition hover:text-emerald-100"
+                          onClick={() => handleAskAgent(town.city)}
+                          type="button"
+                        >
+                          <Navigation className="h-3 w-3" />
+                          Route
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Missions and mastery
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    Syncs with MyCarMindATO town discovery progress.
+                  </p>
+                </div>
+                <button
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => handleAskAgent(selectedTown?.city)}
+                  type="button"
+                >
+                  <Navigation className="h-4 w-4" />
+                  Start mission
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {[
+                  {
+                    title: "Weekly mission",
+                    detail: "Explore 3 new points of interest",
+                    progress: 0.62,
+                  },
+                  {
+                    title: "Town mastery",
+                    detail: "8 towns at 60% completion",
+                    progress: 0.6,
+                  },
+                  {
+                    title: "Review streak",
+                    detail: "4 days of new destination notes",
+                    progress: 0.4,
+                  },
+                ].map((mission) => (
+                  <div
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                    key={mission.title}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-white">
+                        {mission.title}
+                      </p>
+                      <span className="text-xs text-white/50">
+                        {Math.round(mission.progress * 100)}%
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/60">
+                      {mission.detail}
+                    </p>
+                    <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-emerald-400"
+                        style={{ width: `${mission.progress * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
