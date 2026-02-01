@@ -375,6 +375,12 @@ export default function MyCarMindATOPage() {
       { id: challengeId, completedAt: now },
     ];
     saveCompletedChallenges(next);
+    
+    // Navigate to agent with mission completion context
+    const completedIds = next.map(c => c.id).join(", ");
+    const prompt = `/MyCarMindATO/ I completed mission ${challengeId}. Recent missions: ${completedIds}. What's next?`;
+    router.push(`/brooks-ai-hub?query=${encodeURIComponent(prompt)}`);
+    
     void loadChallenges({
       randomize: true,
       excludeIds: next.map((entry) => entry.id),
@@ -499,7 +505,28 @@ export default function MyCarMindATOPage() {
       router.push("/brooks-ai-hub");
       return;
     }
-    const prompt = `/MyCarMindATO/ Plan a route to ${queryText}`;
+    
+    // Build enhanced prompt with context
+    let prompt = `/MyCarMindATO/ Plan a route to ${queryText}`;
+    
+    // Add home location context if available
+    if (selectedLocationText) {
+      prompt += ` from ${selectedLocationText}`;
+    }
+    
+    // Add current location context if available
+    if (currentLocation) {
+      const locationStr = currentLocation.label || 
+        `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`;
+      prompt += ` (currently at ${locationStr})`;
+    }
+    
+    // Add mission progress context if available
+    if (recentCompletedChallenges.length > 0) {
+      const completedIds = recentCompletedChallenges.map(c => c.id).join(", ");
+      prompt += `. Recently completed missions: ${completedIds}`;
+    }
+    
     router.push(`/brooks-ai-hub?query=${encodeURIComponent(prompt)}`);
   };
 
@@ -530,7 +557,100 @@ export default function MyCarMindATOPage() {
       router.push("/brooks-ai-hub");
       return;
     }
-    router.push(`/brooks-ai-hub?query=${encodeURIComponent(route)}`);
+    
+    // Build enhanced route with context
+    let enhancedRoute = route;
+    
+    // Add location context to the route query
+    const contextParts: string[] = [];
+    
+    if (selectedLocationText) {
+      contextParts.push(`Home: ${selectedLocationText}`);
+    }
+    
+    if (currentLocation) {
+      const locationStr = currentLocation.label || 
+        `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`;
+      contextParts.push(`Current location: ${locationStr}`);
+    }
+    
+    if (selectedTown) {
+      contextParts.push(`Selected destination: ${selectedTown.city}`);
+    }
+    
+    if (contextParts.length > 0) {
+      enhancedRoute += ` [${contextParts.join(", ")}]`;
+    }
+    
+    router.push(`/brooks-ai-hub?query=${encodeURIComponent(enhancedRoute)}`);
+  };
+
+  const handleSyncWithAgent = () => {
+    // Build comprehensive sync prompt with all travel stats
+    const syncParts: string[] = ["/MyCarMindATO/ Here's my current travel status:"];
+    
+    if (selectedLocationText) {
+      syncParts.push(`Home base: ${selectedLocationText}`);
+    }
+    
+    if (currentLocation) {
+      const locationStr = currentLocation.label || 
+        `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`;
+      syncParts.push(`Current location: ${locationStr}`);
+    }
+    
+    if (selectedTown) {
+      syncParts.push(`Exploring: ${selectedTown.city}, ${selectedTown.stateName}`);
+      if (selectedTown.communityVibe) {
+        syncParts.push(`Vibe: ${selectedTown.communityVibe}`);
+      }
+    }
+    
+    if (recentCompletedChallenges.length > 0) {
+      const missionCount = recentCompletedChallenges.length;
+      const completedIds = recentCompletedChallenges.map(c => c.id).slice(0, 3).join(", ");
+      syncParts.push(`Completed ${missionCount} missions recently: ${completedIds}`);
+    }
+    
+    if (nearbyResults.length > 0) {
+      syncParts.push(`Found ${nearbyResults.length} nearby spots`);
+    }
+    
+    syncParts.push("What do you recommend?");
+    
+    const prompt = syncParts.join(". ");
+    router.push(`/brooks-ai-hub?query=${encodeURIComponent(prompt)}`);
+  };
+
+  const handleNearbySearch = async (townCity: string) => {
+    setNearbyQuery(townCity);
+    setNearbyLoading(true);
+    setNearbyError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("location", townCity);
+      params.set("limit", "10");
+
+      const response = await fetch(
+        `/api/mycarmindato/nearby?${params.toString()}`
+      );
+      if (!response.ok) {
+        throw new Error("Unable to find nearby spots.");
+      }
+      const data = (await response.json()) as {
+        businesses: NearbyBusiness[];
+        source?: string;
+      };
+      setNearbyResults(data.businesses);
+      setNearbySource(data.source ?? null);
+    } catch (error) {
+      setNearbyError(
+        error instanceof Error ? error.message : "Unable to search nearby."
+      );
+    } finally {
+      setNearbyLoading(false);
+    }
   };
 
   const handleFindLocalSpots = async () => {
@@ -1019,6 +1139,14 @@ export default function MyCarMindATOPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
+                    onClick={handleSyncWithAgent}
+                    type="button"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Sync with Agent
+                  </button>
+                  <button
                     className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
                     onClick={() => handleAskAgent(selectedTown?.city)}
                     type="button"
@@ -1046,12 +1174,24 @@ export default function MyCarMindATOPage() {
                   containerClassName="absolute inset-0"
                   query={mapQuery}
                   onReady={() => setGoogleMapsReady(true)}
+                  pinnedTowns={pinnedTowns.map(t => ({
+                    id: t.id,
+                    city: t.city,
+                    cityName: t.cityName,
+                  }))}
+                  homeLocation={selectedLocationText || null}
+                  currentLocation={currentLocation}
+                  isSyncing={isLoading}
+                  isLiveTracking={!!currentLocation}
                 />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,15,24,0.1),rgba(5,15,24,0.75))] pointer-events-none" />
 
                 <div className="absolute inset-0 z-10 p-6 pointer-events-none">
                   <div className="flex items-center justify-between text-white pointer-events-auto">
-                    <div className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/70">
+                    <div className={`rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/70 flex items-center gap-2 ${currentLocation ? 'animate-pulse' : ''}`}>
+                      {currentLocation && (
+                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                      )}
                       Live map
                     </div>
                     <div className="flex items-center gap-2 text-xs text-white/60">
@@ -1797,13 +1937,26 @@ export default function MyCarMindATOPage() {
                             {group.towns.length} towns
                           </p>
                         </div>
-                        <button
-                          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
-                          onClick={() => handleAskAgent(group.stateName)}
-                          type="button"
-                        >
-                          Plan in {group.stateName}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
+                            onClick={() => {
+                              const townsList = group.towns.map(t => t.cityName).slice(0, 5).join(", ");
+                              const prompt = `/MyCarMindATO/ Plan a route through ${group.stateName}. Towns to visit: ${townsList}${group.towns.length > 5 ? ` and ${group.towns.length - 5} more` : ''}`;
+                              router.push(`/brooks-ai-hub?query=${encodeURIComponent(prompt)}`);
+                            }}
+                            type="button"
+                          >
+                            Route All
+                          </button>
+                          <button
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
+                            onClick={() => handleAskAgent(group.stateName)}
+                            type="button"
+                          >
+                            Plan in {group.stateName}
+                          </button>
+                        </div>
                       </div>
                       <div className="grid gap-3 px-4 py-4 md:grid-cols-2">
                         {group.towns.map((town) => (
@@ -1837,21 +1990,31 @@ export default function MyCarMindATOPage() {
                                 town.anchors.at(0) ||
                                 "Town profile available"}
                             </p>
-                            <div className="mt-3 flex items-center justify-between">
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                               <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
                                 {town.vibes.at(0) || "MyCarMindATO catalog"}
                               </span>
-                              <button
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-200 transition hover:text-emerald-100"
-                                onClick={() => {
-                                  handleTownSelect(town);
-                                  handleTabChange("map");
-                                }}
-                                type="button"
-                              >
-                                <Navigation className="h-3 w-3" />
-                                View map
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-blue-200 transition hover:text-blue-100"
+                                  onClick={() => handleNearbySearch(town.city)}
+                                  type="button"
+                                >
+                                  <MapPin className="h-3 w-3" />
+                                  Nearby
+                                </button>
+                                <button
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-200 transition hover:text-emerald-100"
+                                  onClick={() => {
+                                    handleTownSelect(town);
+                                    handleTabChange("map");
+                                  }}
+                                  type="button"
+                                >
+                                  <Navigation className="h-3 w-3" />
+                                  View map
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
