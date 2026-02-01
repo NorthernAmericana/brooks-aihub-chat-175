@@ -4,6 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -31,6 +32,7 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import { useEntitlements } from "@/hooks/use-entitlements";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
 import {
   getAgentConfigById,
   getAgentConfigBySlash,
@@ -121,7 +123,10 @@ function PureMultimodalInput({
   const router = useRouter();
   const { width } = useWindowSize();
   const { data: session } = useSession();
+  const { profileIcon } = useProfileIcon();
   const { entitlements } = useEntitlements(session?.user?.id);
+  const avatarEmail = session?.user?.email ?? "guest";
+  const avatarSrc = profileIcon ?? `https://avatar.vercel.sh/${avatarEmail}`;
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -722,16 +727,41 @@ function PureMultimodalInput({
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       <div className="flex flex-col gap-3">
-        <ChatSwipeMenu
-          activeItemId={activeMenu}
-          items={
-            [
-              { id: "history", label: "History" },
-              { id: "profile", label: "Profile" },
-            ] as const
-          }
-          onChange={setActiveMenu}
-        />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            aria-label="Toggle profile panel"
+            aria-pressed={activeMenu === "profile"}
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background shadow-sm transition hover:border-border",
+              activeMenu === "profile" && "border-primary/60 ring-2 ring-primary/20"
+            )}
+            onClick={() =>
+              setActiveMenu((current) =>
+                current === "profile" ? null : "profile"
+              )
+            }
+            type="button"
+          >
+            <Image
+              alt={avatarEmail}
+              className="rounded-full"
+              height={32}
+              src={avatarSrc}
+              width={32}
+            />
+          </button>
+          <ChatSwipeMenu
+            activeItemId={activeMenu}
+            className="min-w-0 flex-1 justify-start sm:justify-center"
+            items={
+              [
+                { id: "profile", label: "Profile" },
+                { id: "history", label: "History" },
+              ] as const
+            }
+            onChange={setActiveMenu}
+          />
+        </div>
         {activeMenu === "history" && shouldShowMenuPanel && (
           <SuggestedActions
             chatId={chatId}
