@@ -721,29 +721,27 @@ function PureMultimodalInput({
 
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
-      {shouldShowMenuPanel && (
-        <div className="flex flex-col gap-3">
-          <ChatSwipeMenu
-            activeItemId={activeMenu}
-            items={
-              [
-                { id: "history", label: "History" },
-                { id: "profile", label: "Profile" },
-              ] as const
-            }
-            onChange={setActiveMenu}
+      <div className="flex flex-col gap-3">
+        <ChatSwipeMenu
+          activeItemId={activeMenu}
+          items={
+            [
+              { id: "history", label: "History" },
+              { id: "profile", label: "Profile" },
+            ] as const
+          }
+          onChange={setActiveMenu}
+        />
+        {activeMenu === "history" && shouldShowMenuPanel && (
+          <SuggestedActions
+            chatId={chatId}
+            messages={messages}
+            selectedVisibilityType={selectedVisibilityType}
+            sendMessage={sendMessage}
           />
-          {activeMenu === "history" && (
-            <SuggestedActions
-              chatId={chatId}
-              messages={messages}
-              selectedVisibilityType={selectedVisibilityType}
-              sendMessage={sendMessage}
-            />
-          )}
-          {activeMenu === "profile" && <ChatProfilePanel />}
-        </div>
-      )}
+        )}
+        {activeMenu === "profile" && <ChatProfilePanel />}
+      </div>
 
       <input
         accept={
