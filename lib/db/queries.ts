@@ -95,6 +95,7 @@ export async function saveChat({
   title,
   visibility,
   routeKey,
+  sessionType,
   ttsVoiceId,
   ttsVoiceLabel,
 }: {
@@ -103,6 +104,7 @@ export async function saveChat({
   title: string;
   visibility: VisibilityType;
   routeKey?: string | null;
+  sessionType?: "chat" | "video-call" | null;
   ttsVoiceId?: string | null;
   ttsVoiceLabel?: string | null;
 }) {
@@ -114,6 +116,7 @@ export async function saveChat({
       title,
       visibility,
       routeKey: routeKey ?? null,
+      sessionType: sessionType ?? "chat",
       ttsVoiceId: ttsVoiceId ?? null,
       ttsVoiceLabel: ttsVoiceLabel ?? null,
     });

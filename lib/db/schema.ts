@@ -34,6 +34,9 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   routeKey: text("routeKey"),
+  sessionType: varchar("sessionType", { enum: ["chat", "video-call"] })
+    .notNull()
+    .default("chat"),
   ttsEnabled: boolean("ttsEnabled").default(true),
   ttsVoiceId: text("ttsVoiceId"),
   ttsVoiceLabel: text("ttsVoiceLabel"),
