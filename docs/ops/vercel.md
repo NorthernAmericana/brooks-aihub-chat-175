@@ -23,30 +23,30 @@ Review the required environment variables in [`.env.example`](../../.env.example
 
 ## Post-deploy verification checklist (Vercel)
 
-Run these checks against the production URL **https://chat.vercel.ai/** after each deploy.
+Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
 
 1. **Lighthouse PWA audit**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Lighthouse → select **Progressive Web App** → Analyze.
    - **Expected outcome**: PWA audit completes successfully with no critical failures (installable, service worker detected).
 2. **Service worker registration**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers.
    - **Expected outcome**: A service worker is registered for the site, is active, and controls the page.
 3. **Install prompt on Android/Chrome**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Open the site in Chrome on Android, wait for eligibility, and check for the install banner or "Add to Home screen" from the menu.
    - **Expected outcome**: The install prompt appears and the app can be added to the home screen.
 4. **Offline fallback**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers → check **Offline**, then refresh.
    - **Expected outcome**: The app serves a cached/offline experience instead of a network error.
 5. **PWA manifest/installability script**
    - **How**: Run the repo check with the production base URL to validate manifest settings and confirm `/welcome` does not redirect or fail.
-   - **Command**: `PWA_CHECK_BASE_URL=https://chat.vercel.ai pnpm check:pwa`
+   - **Command**: `PWA_CHECK_BASE_URL=https://www.brooksaihub.app pnpm check:pwa`
    - **Expected outcome**: Script exits successfully with "PWA installability checks passed."
 6. **Manifest + service worker endpoints**
-   - **URL**: https://chat.vercel.ai/manifest.webmanifest and https://chat.vercel.ai/sw.js
+   - **URL**: https://www.brooksaihub.app/manifest.webmanifest and https://www.brooksaihub.app/sw.js
    - **How**: Open each URL directly in a browser or use `curl -I`.
    - **Expected outcome**: Both return `200` in production with the correct `content-type` and no redirects.
 
@@ -63,10 +63,10 @@ If native Android install is required (Play Store or full-screen app shell), shi
    - Run the Lighthouse PWA audit and fix any blocking issues (manifest fetch, service worker, HTTPS).
 2. **Generate Android project**
    - Use Bubblewrap (`bubblewrap`) to create a TWA project pointing at the production URL.
-   - Example: `npx @bubblewrap/cli init --manifest=https://brooks-aihub-chat-175.vercel.app/manifest.webmanifest`
+   - Example: `npx @bubblewrap/cli init --manifest=https://www.brooksaihub.app/manifest.webmanifest`
 3. **Configure signing + Digital Asset Links**
    - Generate a signing key (keystore).
-   - Host the `assetlinks.json` file at `https://brooks-aihub-chat-175.vercel.app/.well-known/assetlinks.json`.
+   - Host the `assetlinks.json` file at `https://www.brooksaihub.app/.well-known/assetlinks.json`.
    - The file must include the app package name and the signing certificate fingerprint.
 4. **Build & test on device**
    - Build an APK/AAB, install on an Android device, and confirm it launches the PWA in full-screen mode.

@@ -19,7 +19,7 @@
 
             <meta-data
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                android:value="https://chat.vercel.ai/welcome" />
+                android:value="https://www.brooksaihub.app/welcome" />
             <meta-data
                 android:name="android.support.customtabs.trusted.SPLASH_SCREEN_THEME"
                 android:resource="@style/Theme.App.SplashScreen" />

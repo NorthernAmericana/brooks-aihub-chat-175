@@ -1,4 +1,4 @@
-<a href="https://chat.vercel.ai/">
+<a href="https://www.brooksaihub.app/">
   <img alt="Brooks AI HUB conversational app." src="app/(chat)/opengraph-image.png">
   <h1 align="center">Brooks AI HUB</h1>
 </a>
