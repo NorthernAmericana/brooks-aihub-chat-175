@@ -7,8 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
-// Ensure preview deployments always get fresh builds
-// Set revalidate to 0 to disable caching in preview environments
+// Control page caching: disable for preview (fresh content), 1 hour for production (performance)
+// This affects rendered page cache, not the build process
 export const revalidate = process.env.VERCEL_ENV === "preview" ? 0 : 3600;
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;

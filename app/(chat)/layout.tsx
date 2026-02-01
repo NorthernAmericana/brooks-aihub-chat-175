@@ -7,7 +7,7 @@ import { SwipeGestureProvider } from "@/components/swipe-gesture-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "../(auth)/auth";
 
-// Ensure preview deployments always get fresh builds
+// Control page caching: disable for preview (fresh content), 1 hour for production (performance)
 export const revalidate = process.env.VERCEL_ENV === "preview" ? 0 : 3600;
 
 export default function Layout({ children }: { children: React.ReactNode }) {
