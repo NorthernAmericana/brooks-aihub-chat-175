@@ -8,10 +8,12 @@ import {
   Navigation,
   Search,
   Square,
+  Star,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import MapView from "@/components/mycarmindato/map-view";
 
@@ -67,6 +69,15 @@ const MAP_PIN_POSITIONS = [
   "top-24 left-1/2",
 ] as const;
 
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
 const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
 
 const truncateText = (text: string, maxLength = 140) =>
@@ -74,6 +85,9 @@ const truncateText = (text: string, maxLength = 140) =>
 
 const buildMapSearchUrl = (query: string) =>
   `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}`;
+
+const buildGoogleReviewUrl = (placeId: string) =>
+  `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
 
 const formatLocationLabel = (location?: NearbyBusiness["location"]) => {
   if (!location) {
@@ -112,6 +126,20 @@ export default function MyCarMindATOPage() {
   const [nearbySource, setNearbySource] = useState<string | null>(null);
   const [nearbyError, setNearbyError] = useState<string | null>(null);
   const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<NearbyBusiness | null>(
+    null
+  );
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoSuccess, setPhotoSuccess] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -328,6 +356,149 @@ export default function MyCarMindATOPage() {
     return `/MyCarMindATO/ Review ${business.name}${
       locationLabel ? ` in ${locationLabel}` : ""
     }`;
+  };
+
+  const handlePlaceSelect = (business: NearbyBusiness) => {
+    setSelectedPlace(business);
+    setReviewId(null);
+    setReviewText("");
+    setPhotoFiles([]);
+    setReviewError(null);
+    setReviewSuccess(null);
+    setPhotoError(null);
+    setPhotoSuccess(null);
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!selectedPlace) {
+      setReviewError("Select a place to review.");
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      setReviewError("Write a short review before submitting.");
+      return;
+    }
+
+    setReviewSubmitting(true);
+    setReviewError(null);
+    setReviewSuccess(null);
+
+    try {
+      const response = await fetch("/api/mycarmindato/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placeId: selectedPlace.id,
+          placeName: selectedPlace.name,
+          placeSource: selectedPlace.source,
+          googleMapsUrl: selectedPlace.googleMapsUrl,
+          rating: reviewRating,
+          reviewText: reviewText.trim(),
+        }),
+      });
+
+      const data = (await response.json()) as {
+        review?: { id: string };
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to submit review.");
+      }
+
+      setReviewSuccess("Review saved. Thank you!");
+      setReviewText("");
+      setReviewId(data.review?.id ?? null);
+      setShowReviewModal(true);
+    } catch (error) {
+      setReviewError(
+        error instanceof Error ? error.message : "Unable to submit review."
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handlePhotoFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    const invalidFiles = files.filter(
+      (file) =>
+        file.size > MAX_PHOTO_SIZE || !ALLOWED_PHOTO_TYPES.includes(file.type)
+    );
+
+    if (invalidFiles.length > 0) {
+      setPhotoError(
+        "Photos must be JPG, PNG, WEBP, or HEIC and under 5MB each."
+      );
+    } else {
+      setPhotoError(null);
+    }
+
+    setPhotoFiles(
+      files.filter(
+        (file) =>
+          file.size <= MAX_PHOTO_SIZE &&
+          ALLOWED_PHOTO_TYPES.includes(file.type)
+      )
+    );
+  };
+
+  const handlePhotoSubmit = async () => {
+    if (!selectedPlace) {
+      setPhotoError("Select a place before uploading photos.");
+      return;
+    }
+
+    if (photoFiles.length === 0) {
+      setPhotoError("Choose at least one photo to upload.");
+      return;
+    }
+
+    setPhotoUploading(true);
+    setPhotoError(null);
+    setPhotoSuccess(null);
+
+    try {
+      await Promise.all(
+        photoFiles.map(async (file) => {
+          if (
+            !ALLOWED_PHOTO_TYPES.includes(file.type) ||
+            file.size > MAX_PHOTO_SIZE
+          ) {
+            throw new Error("Invalid file detected.");
+          }
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("placeId", selectedPlace.id);
+          formData.append("placeName", selectedPlace.name);
+          if (reviewId) {
+            formData.append("reviewId", reviewId);
+          }
+
+          const response = await fetch("/api/mycarmindato/reviews", {
+            method: "PUT",
+            body: formData,
+          });
+
+          const data = (await response.json()) as { error?: string };
+
+          if (!response.ok) {
+            throw new Error(data.error || "Upload failed.");
+          }
+        })
+      );
+
+      setPhotoSuccess("Photos uploaded successfully.");
+      setPhotoFiles([]);
+    } catch (error) {
+      setPhotoError(
+        error instanceof Error ? error.message : "Upload failed."
+      );
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   return (
@@ -717,9 +888,14 @@ export default function MyCarMindATOPage() {
                     const reviewUrl = `/brooks-ai-hub?query=${encodeURIComponent(
                       buildReviewPrompt(business)
                     )}`;
+                    const isSelectedPlace = selectedPlace?.id === business.id;
                     return (
                       <div
-                        className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                        className={`rounded-2xl border p-4 ${
+                          isSelectedPlace
+                            ? "border-emerald-400/60 bg-emerald-400/10"
+                            : "border-white/10 bg-black/30"
+                        }`}
                         key={business.id}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -731,12 +907,21 @@ export default function MyCarMindATOPage() {
                               {business.category}
                             </p>
                           </div>
-                          <a
-                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
-                            href={reviewUrl}
-                          >
-                            Review
-                          </a>
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              className="rounded-full border border-emerald-300/60 bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                              onClick={() => handlePlaceSelect(business)}
+                              type="button"
+                            >
+                              {isSelectedPlace ? "Selected" : "Select"}
+                            </button>
+                            <a
+                              className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20"
+                              href={reviewUrl}
+                            >
+                              Draft review
+                            </a>
+                          </div>
                         </div>
                         {locationLabel && (
                           <p className="mt-2 text-xs text-white/60">
@@ -764,6 +949,138 @@ export default function MyCarMindATOPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Submit photos & reviews
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    Select a nearby place to share your photos and notes.
+                  </p>
+                </div>
+                <div className="text-xs text-white/50">
+                  {selectedPlace
+                    ? `Selected: ${selectedPlace.name}`
+                    : "No place selected"}
+                </div>
+              </div>
+
+              {!selectedPlace && (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/60">
+                  Choose a place above to unlock photo uploads and reviews.
+                </div>
+              )}
+
+              {selectedPlace && (
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-white">
+                        Write review
+                      </h4>
+                      <span className="inline-flex items-center gap-1 text-xs text-white/60">
+                        <Star className="h-3 w-3 text-emerald-200" />
+                        Rating
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs text-white/60" htmlFor="review-rating">
+                        Rating
+                      </label>
+                      <select
+                        className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+                        id="review-rating"
+                        onChange={(event) =>
+                          setReviewRating(Number(event.target.value))
+                        }
+                        value={reviewRating}
+                      >
+                        {[5, 4, 3, 2, 1].map((value) => (
+                          <option key={value} value={value}>
+                            {value} stars
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs text-white/60" htmlFor="review-text">
+                        Review
+                      </label>
+                      <textarea
+                        className="mt-1 min-h-[120px] w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+                        id="review-text"
+                        onChange={(event) => setReviewText(event.target.value)}
+                        placeholder="What stood out? Share the vibe, service, or must-know tips."
+                        value={reviewText}
+                      />
+                    </div>
+                    {reviewError && (
+                      <p className="mt-3 text-xs text-red-200">{reviewError}</p>
+                    )}
+                    {reviewSuccess && (
+                      <p className="mt-3 text-xs text-emerald-200">
+                        {reviewSuccess}
+                      </p>
+                    )}
+                    <button
+                      className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                      disabled={reviewSubmitting}
+                      onClick={handleReviewSubmit}
+                      type="button"
+                    >
+                      {reviewSubmitting ? "Submitting..." : "Submit review"}
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-white">
+                        Submit photos
+                      </h4>
+                      <span className="text-xs text-white/60">
+                        JPG, PNG, WEBP, or HEIC · 5MB max
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <input
+                        accept={ALLOWED_PHOTO_TYPES.join(",")}
+                        className="w-full text-sm text-white/70 file:mr-4 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                        multiple
+                        onChange={handlePhotoFilesChange}
+                        type="file"
+                      />
+                    </div>
+                    {photoFiles.length > 0 && (
+                      <ul className="mt-3 space-y-1 text-xs text-white/60">
+                        {photoFiles.map((file) => (
+                          <li key={`${file.name}-${file.size}`}>
+                            {file.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {photoError && (
+                      <p className="mt-3 text-xs text-red-200">{photoError}</p>
+                    )}
+                    {photoSuccess && (
+                      <p className="mt-3 text-xs text-emerald-200">
+                        {photoSuccess}
+                      </p>
+                    )}
+                    <button
+                      className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                      disabled={photoUploading}
+                      onClick={handlePhotoSubmit}
+                      type="button"
+                    >
+                      {photoUploading ? "Uploading..." : "Upload photos"}
+                    </button>
+                  </div>
                 </div>
               )}
             </section>
@@ -1071,6 +1388,48 @@ export default function MyCarMindATOPage() {
           </section>
         )}
       </div>
+      {showReviewModal && selectedPlace && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0b151d] p-6 text-white shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  Thanks for sharing your review!
+                </h3>
+                <p className="mt-2 text-sm text-white/70">
+                  Want to post it on Google Maps too? Local Guides love reviews
+                  like this.
+                </p>
+              </div>
+              <button
+                aria-label="Close"
+                className="rounded-full border border-white/10 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
+                onClick={() => setShowReviewModal(false)}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a
+                className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                href={buildGoogleReviewUrl(selectedPlace.id)}
+                rel="noopener"
+                target="_blank"
+              >
+                Open Google review
+              </a>
+              <button
+                className="inline-flex flex-1 items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                onClick={() => setShowReviewModal(false)}
+                type="button"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
