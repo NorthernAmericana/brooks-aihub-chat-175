@@ -87,6 +87,13 @@ const collections: NamcCard[] = [
     subtitle: "Lore shelf",
     kind: "lore",
   },
+  {
+    id: "collection-lore-playground",
+    title: "Lore Playground",
+    subtitle: "AI Assistant",
+    kind: "lore",
+    badge: "Chat",
+  },
 ] as const;
 
 const trending: NamcCard[] = [
@@ -521,7 +528,11 @@ export default function NamcHomePage() {
                   {filteredCollections.map((item) => (
                     <Link
                       className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
-                      href="/NAMC/library"
+                      href={
+                        item.id === "collection-lore-playground"
+                          ? "/NAMC/lore-playground"
+                          : "/NAMC/library"
+                      }
                       key={item.id}
                     >
                       <CardBase item={item} variant="tile" />
