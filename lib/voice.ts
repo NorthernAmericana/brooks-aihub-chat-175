@@ -33,6 +33,10 @@ const VOICE_ROUTING_MAP: Record<string, RouteVoiceConfig> = {
     voices: [VOICES.BRUCE, VOICES.SELENA],
     defaultVoiceId: VOICES.BRUCE.id,
   },
+  "namc-lore-playground": {
+    voices: [VOICES.BRUCE, VOICES.SELENA],
+    defaultVoiceId: VOICES.BRUCE.id,
+  },
   "brooks-bears": {
     voices: [VOICES.BENJAMIN_BEAR],
     defaultVoiceId: VOICES.BENJAMIN_BEAR.id,
