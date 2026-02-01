@@ -83,7 +83,13 @@ const apps = [
     category: "Media & Entertainment",
     rating: 4.9,
     downloads: "8K+",
-    routes: [],
+    routes: [
+      { path: "/NAMC/", description: "Main media curator" },
+      {
+        path: "/NAMC/Lore-Playground/",
+        description: "Lore exploration & headcanon support",
+      },
+    ],
   },
 ];
 
