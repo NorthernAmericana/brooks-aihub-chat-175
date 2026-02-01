@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -273,6 +274,40 @@ export const atoFile = pgTable("AtoFile", {
 });
 
 export type AtoFile = InferSelectModel<typeof atoFile>;
+
+export const review = pgTable("Review", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  placeId: text("placeId").notNull(),
+  placeName: text("placeName").notNull(),
+  placeSource: varchar("placeSource", { length: 32 }),
+  googleMapsUrl: text("googleMapsUrl"),
+  rating: integer("rating").notNull(),
+  reviewText: text("reviewText").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Review = InferSelectModel<typeof review>;
+
+export const reviewPhoto = pgTable("ReviewPhoto", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  reviewId: uuid("reviewId").references(() => review.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  placeId: text("placeId").notNull(),
+  placeName: text("placeName").notNull(),
+  blobUrl: text("blobUrl").notNull(),
+  blobPathname: text("blobPathname").notNull(),
+  contentType: text("contentType").notNull(),
+  size: integer("size").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type ReviewPhoto = InferSelectModel<typeof reviewPhoto>;
 
 // Entitlements table for product ownership
 export const entitlement = pgTable("Entitlement", {
