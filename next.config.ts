@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable static page generation optimization for preview environments
+  // to ensure fresh builds on every deployment
+  generateBuildId: async () => {
+    // Use timestamp + random string for preview builds to force fresh deployment
+    return process.env.VERCEL_GIT_COMMIT_SHA || `build-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  },
   async redirects() {
     return [
       {

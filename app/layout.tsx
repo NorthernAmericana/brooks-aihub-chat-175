@@ -7,6 +7,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
+// Ensure preview deployments always get fresh builds
+// Set revalidate to 0 to disable caching in preview environments
+export const revalidate = process.env.VERCEL_ENV === "preview" ? 0 : 3600;
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const metadataBase =
   siteUrl && URL.canParse(siteUrl) ? new URL(siteUrl) : undefined;
