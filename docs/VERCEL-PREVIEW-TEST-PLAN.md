@@ -26,8 +26,7 @@ Verify that changes are now visible on Vercel preview environments after the fix
 
 **Expected Result**: 
 - The change should be visible immediately on the preview deployment
-- No hard refresh or cache clearing should be needed
-- The changed text should display as expected
+- The preview deployment should use the commit SHA as its build ID
 
 **Pass Criteria**: Changes are visible on first load of the preview URL
 
@@ -53,33 +52,14 @@ Verify that changes are now visible on Vercel preview environments after the fix
 
 ---
 
-### Test Case 3: Verify Production Deployment Performance
-**Purpose**: Confirm that production deployments still benefit from caching
-
-**Steps**:
-1. Merge the PR to the production branch
-2. Wait for production deployment to complete
-3. Access the production URL
-4. Check browser DevTools Network tab for cache headers
-5. Reload the page and check if content is served from cache
-
-**Expected Result**:
-- Production should have `Cache-Control` headers with appropriate values
-- Subsequent page loads should be fast due to caching
-- The production site should not have performance degradation
-
-**Pass Criteria**: Production maintains good performance with appropriate caching
-
----
-
-### Test Case 4: Verify Build ID Uniqueness
+### Test Case 3: Verify Build ID Uniqueness
 **Purpose**: Confirm that each deployment has a unique build ID
 
 **Steps**:
 1. Open a preview deployment
 2. View the page source (right-click → View Page Source)
 3. Search for "buildId" in the JSON data embedded in the page
-4. Note the build ID
+4. Note the build ID (should be the commit SHA)
 5. Make a small change and push to trigger a new preview deployment
 6. View the page source of the new deployment
 7. Compare the build IDs
@@ -87,9 +67,28 @@ Verify that changes are now visible on Vercel preview environments after the fix
 **Expected Result**:
 - Each deployment should have a different build ID
 - Preview builds should use the commit SHA as the build ID
-- No two deployments should share the same build ID
+- The build ID should match the Git commit hash
 
-**Pass Criteria**: Build IDs are unique across deployments
+**Pass Criteria**: Build IDs are unique across deployments and match commit SHAs
+
+---
+
+### Test Case 4: Verify Production Deployment
+**Purpose**: Confirm that production deployments work correctly
+
+**Steps**:
+1. Merge the PR to the production branch
+2. Wait for production deployment to complete
+3. Access the production URL
+4. Verify the site loads correctly
+5. Check that the production build uses the production commit SHA
+
+**Expected Result**:
+- Production deployment completes successfully
+- Site functions normally
+- Build ID matches the production commit SHA
+
+**Pass Criteria**: Production deployment succeeds without issues
 
 ---
 
@@ -121,22 +120,22 @@ Verify that changes are now visible on Vercel preview environments after the fix
 
 1. **Check Browser Cache**: Try opening in an incognito/private window
 2. **Check Vercel Logs**: Review the build logs on Vercel dashboard for errors
-3. **Verify Environment Variables**: Ensure `VERCEL_ENV` is set correctly on Vercel
-4. **Check Build ID**: Verify that the build ID is changing between deployments
+3. **Verify Build ID**: Check that the build ID matches the commit SHA
+4. **Check Commit SHA**: Ensure the commit was pushed and Vercel is deploying the correct commit
 5. **Clear Vercel Cache**: In Vercel dashboard, try clearing the build cache
 
-### If production is slow:
+### If build fails:
 
-1. **Check Revalidation**: Verify that `revalidate = 3600` for production
-2. **Check Cache Headers**: Use browser DevTools to inspect response headers
-3. **Monitor Performance**: Use Vercel Analytics to monitor performance metrics
+1. **Check Build Logs**: Review the full build log on Vercel
+2. **Verify Config Syntax**: Ensure `next.config.ts` is valid
+3. **Test Locally**: Run `pnpm build` locally to reproduce the issue
 
 ## Success Criteria
 
 The fix is considered successful if:
 - ✅ All test cases pass
 - ✅ Preview deployments show changes immediately
-- ✅ Production maintains good performance
+- ✅ Build completes successfully
 - ✅ No security vulnerabilities introduced
 - ✅ Local development works correctly
 - ✅ Build IDs are unique per deployment
@@ -145,7 +144,6 @@ The fix is considered successful if:
 
 If issues are discovered after deployment:
 
-1. Revert the changes in `next.config.ts`, `app/layout.tsx`, and `app/(chat)/layout.tsx`
-2. Restore the minimal `vercel.json` configuration
-3. Push the revert commit
-4. Investigate the issue further before attempting another fix
+1. Revert the changes in `next.config.ts` and `vercel.json`
+2. Push the revert commit
+3. Investigate the issue further before attempting another fix
