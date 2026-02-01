@@ -143,7 +143,7 @@ January 27, 2026
 
 ## Technical Highlights
 
-- **Framework**: Next.js 16, React 19
+- **Framework**: App Router-based React framework, React 19
 - **Language**: TypeScript with full type safety
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **State Management**: React hooks (useState, useEffect)

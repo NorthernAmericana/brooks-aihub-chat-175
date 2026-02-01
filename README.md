@@ -25,7 +25,7 @@
 
 ### Mobile Edition (Primary)
 
-This repository (`NorthernAmericana/brooks-aihub-chat-175`) is the **primary Mobile Edition** – a Next.js-based conversational AI application designed for web and mobile deployments with modern chat UI, multi-provider model access, and cloud infrastructure.
+This repository (`NorthernAmericana/brooks-aihub-chat-175`) is the **primary Mobile Edition** – an App Router-based conversational AI application designed for web and mobile deployments with modern chat UI, multi-provider model access, and cloud infrastructure.
 
 ### Console Edition
 
@@ -40,7 +40,7 @@ The **[Console Edition](https://github.com/NorthernAmericana/brooks-ai-hub-conso
 ## Master Docs
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
-Use the [Vercel deployment guide](docs/ops/vercel.md) for production deployment steps.
+Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
 
 ## Routing model: agentic chat subroutes vs UI pages (ATO apps)
@@ -60,7 +60,7 @@ Example:
 
 ### 2) Normal page routes (UI pages)
 
-These are standard Next.js pages (for example: `/namc-app`, `/NAMC/`, `/MyCarMindATO/`).
+These are standard App Router pages (for example: `/namc-app`, `/NAMC/`, `/MyCarMindATO/`).
 They’re used to render **interactive UI surfaces**.
 
 ### ATO apps: “tiny apps inside one large app”
@@ -76,7 +76,7 @@ This keeps Brooks AI HUB as the “big app,” while ATO pages act as lightweigh
 
 ## Features
 
-- [Next.js](https://nextjs.org) App Router
+- App Router framework
   - Advanced routing for seamless navigation and performance
   - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
 - [AI SDK](https://ai-sdk.dev/docs/introduction)
@@ -88,36 +88,36 @@ This keeps Brooks AI HUB as the “big app,” while ATO pages act as lightweigh
   - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
 - Data Persistence
   - [Neon Serverless Postgres](https://vercel.com/marketplace/neon) for saving chat history and user data
-  - [Vercel Blob](https://vercel.com/storage/blob) for efficient file storage
+  - Managed blob storage for efficient file storage
 - [Auth.js](https://authjs.dev)
   - Simple and secure authentication
 
 ## Model Providers
 
-Brooks AI HUB uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. The default configuration includes [xAI](https://x.ai) models (`grok-2-vision-1212`, `grok-3-mini`) routed through the gateway.
+Brooks AI HUB uses a managed AI Gateway to access multiple AI models through a unified interface. The default configuration includes [xAI](https://x.ai) models (`grok-2-vision-1212`, `grok-3-mini`) routed through the gateway.
 
 ### AI Gateway Authentication
 
-**For Vercel deployments**: Authentication is handled automatically via OIDC tokens.
+**For managed hosting deployments**: Authentication is handled automatically via OIDC tokens.
 
-**For non-Vercel deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
+**For self-hosted or other deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
 
 With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
 
 ## Deploy Your Own
 
-You can deploy your own version of Brooks AI HUB to Vercel with one click:
+You can deploy your own version of Brooks AI HUB to a managed hosting platform with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+[![Deploy with your hosting platform](https://vercel.com/button)](https://vercel.com/new)
 
 ## Running locally
 
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
+You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. It's recommended you use your hosting platform's environment variables for this, but a `.env` file is all that is necessary.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
+1. Install your hosting platform CLI: `npm i -g vercel`
+2. Link local instance with your hosting platform and GitHub accounts (creates `.vercel` directory): `vercel link`
 3. Download your environment variables: `vercel env pull`
 
 ```bash
@@ -150,7 +150,7 @@ The PWA functionality is implemented using:
 
 2. **Web App Manifest** (`app/manifest.ts`): Defines app metadata and install behavior
    - App name, icons, theme colors, and display mode
-   - Served at `/manifest.webmanifest` via Next.js metadata route
+   - Served at `/manifest.webmanifest` via the framework metadata route
 
 3. **Service Worker Registration** (`components/pwa-register.tsx`): Registers the service worker on client load
 
