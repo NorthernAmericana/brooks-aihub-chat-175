@@ -743,7 +743,7 @@ function PureMultimodalInput({
             type="button"
           >
             <Image
-              alt={avatarEmail}
+              alt={session?.user?.email ?? "Guest"}
               className="rounded-full"
               height={32}
               src={avatarSrc}
