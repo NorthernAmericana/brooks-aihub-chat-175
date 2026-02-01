@@ -1,10 +1,10 @@
 <a href="https://www.brooksaihub.app/">
   <img alt="Brooks AI HUB conversational app." src="app/(chat)/opengraph-image.png">
-  <h1 align="center">Brooks AI HUB</h1>
+  <h1 align="center">Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media</h1>
 </a>
 
 <p align="center">
-    Brooks AI HUB is a conversational AI experience built with Next.js and the AI SDK for fast, powerful chatbot applications.
+    Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media
 </p>
 
 <p align="center">

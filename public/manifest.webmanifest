@@ -1,6 +1,6 @@
 {
-  "name": "Brooks AI HUB",
-  "short_name": "Brooks AI",
+  "name": "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
+  "short_name": "Brooks AI HUB",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
