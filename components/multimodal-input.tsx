@@ -48,6 +48,7 @@ import {
   rememberSlashAction,
 } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
+import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn, fetcher } from "@/lib/utils";
 import {
   PromptInput,
@@ -125,8 +126,7 @@ function PureMultimodalInput({
   const { data: session } = useSession();
   const { profileIcon } = useProfileIcon();
   const { entitlements } = useEntitlements(session?.user?.id);
-  const avatarEmail = session?.user?.email ?? "guest";
-  const avatarSrc = profileIcon ?? `https://avatar.vercel.sh/${avatarEmail}`;
+  const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {

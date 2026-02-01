@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
-import { guestRegex } from "@/lib/constants";
+import { DEFAULT_AVATAR_SRC, guestRegex } from "@/lib/constants";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
 import { CodeRedemptionDialog } from "./code-redemption-dialog";
 import { LoaderIcon } from "./icons";
@@ -90,7 +90,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                     alt={user.email ?? "User Avatar"}
                     className="rounded-full"
                     height={24}
-                    src={profileIcon ?? `https://avatar.vercel.sh/${user.email}`}
+                    src={profileIcon ?? user.image ?? DEFAULT_AVATAR_SRC}
                     width={24}
                   />
                   <span className="truncate" data-testid="user-email">

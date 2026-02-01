@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
+import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import {
@@ -20,9 +21,7 @@ export function ChatProfilePanel() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const { profileIcon, setProfileIcon } = useProfileIcon();
 
-  const fallbackEmail = session?.user?.email ?? "user";
-  const avatarSrc =
-    profileIcon ?? session?.user?.image ?? `https://avatar.vercel.sh/${fallbackEmail}`;
+  const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/70 p-3">
