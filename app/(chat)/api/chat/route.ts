@@ -264,8 +264,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      selectedChatModel,
+      selectedVisibilityType,
+      sessionType,
+    } = requestBody;
 
     const session = await auth();
 
@@ -391,6 +397,7 @@ export async function POST(request: Request) {
         title: "New chat",
         visibility: selectedVisibilityType,
         routeKey: initialRouteKey,
+        sessionType,
         ttsVoiceId,
         ttsVoiceLabel,
       });
