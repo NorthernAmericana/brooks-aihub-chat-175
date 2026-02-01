@@ -1,0 +1,56 @@
+[
+  {
+    "id": "sunrise-route",
+    "title": "Sunrise route capture",
+    "missionText": "Start a route 30 minutes before sunrise and capture three golden-hour photos.",
+    "rotationCadenceDays": 1
+  },
+  {
+    "id": "local-legend-log",
+    "title": "Local legend log",
+    "missionText": "Ask a resident about a legendary spot and add the location note in your journal.",
+    "rotationCadenceDays": 2
+  },
+  {
+    "id": "coastal-quiet",
+    "title": "Coastal quiet loop",
+    "missionText": "Drive a coastal stretch and log three moments of quiet for your reflection feed.",
+    "rotationCadenceDays": 3
+  },
+  {
+    "id": "main-street-scout",
+    "title": "Main street scout",
+    "missionText": "Find a new main street, list two standout businesses, and mark one to revisit.",
+    "rotationCadenceDays": 2
+  },
+  {
+    "id": "market-day-pulse",
+    "title": "Market day pulse",
+    "missionText": "Visit a local market, collect one vendor story, and tag the town vibe.",
+    "rotationCadenceDays": 4
+  },
+  {
+    "id": "night-drive-notes",
+    "title": "Night drive notes",
+    "missionText": "Take a nighttime loop, note lighting hotspots, and capture one skyline photo.",
+    "rotationCadenceDays": 5
+  },
+  {
+    "id": "food-trail",
+    "title": "Food trail mini-tour",
+    "missionText": "Create a three-stop food trail and add a quick taste note for each stop.",
+    "rotationCadenceDays": 3
+  },
+  {
+    "id": "historic-marker",
+    "title": "Historic marker sweep",
+    "missionText": "Locate a historic marker, summarize the story, and pin it to your map.",
+    "rotationCadenceDays": 6
+  },
+  {
+    "id": "bridge-view",
+    "title": "Bridge view perspective",
+    "missionText": "Drive to a bridge overlook, capture one wide shot, and record the mood.",
+    "rotationCadenceDays": 4
+  }
+]

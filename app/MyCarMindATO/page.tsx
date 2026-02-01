@@ -6,6 +6,7 @@ import {
   Home,
   MapPin,
   Navigation,
+  RefreshCw,
   Search,
   Square,
   Star,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import MapView from "@/components/mycarmindato/map-view";
 
@@ -37,6 +38,18 @@ type TownResponse = {
   count: number;
   towns: TownSummary[];
   groupedTowns: TownGroup[];
+};
+
+type Challenge = {
+  id: string;
+  title: string;
+  missionText: string;
+  rotationCadenceDays: number;
+};
+
+type ChallengeResponse = {
+  challenges: Challenge[];
+  generatedAt: string;
 };
 
 type HomeLocation = {
@@ -77,6 +90,9 @@ const ALLOWED_PHOTO_TYPES = [
   "image/heic",
   "image/heif",
 ];
+const COMPLETED_CHALLENGE_STORAGE_KEY =
+  "mycarmindato.completedChallenges.v1";
+const COMPLETED_CHALLENGE_RETENTION_DAYS = 21;
 
 const normalizeQueryValue = (value: string) => value.trim().toLowerCase();
 
@@ -140,6 +156,17 @@ export default function MyCarMindATOPage() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoSuccess, setPhotoSuccess] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [challengeLoading, setChallengeLoading] = useState(false);
+  const [challengeError, setChallengeError] = useState<string | null>(null);
+  const [challengeUpdatedAt, setChallengeUpdatedAt] = useState<string | null>(
+    null
+  );
+  const [completedChallenges, setCompletedChallenges] = useState<
+    { id: string; completedAt: string }[]
+  >([]);
+  const [completedChallengesLoaded, setCompletedChallengesLoaded] =
+    useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -175,6 +202,108 @@ export default function MyCarMindATOPage() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const stored =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem(COMPLETED_CHALLENGE_STORAGE_KEY)
+        : null;
+    if (!stored) {
+      setCompletedChallengesLoaded(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as { id: string; completedAt: string }[];
+      if (Array.isArray(parsed)) {
+        setCompletedChallenges(parsed);
+      }
+    } catch {
+      setCompletedChallenges([]);
+    } finally {
+      setCompletedChallengesLoaded(true);
+    }
+  }, []);
+
+  const recentCompletedChallenges = useMemo(() => {
+    const cutoff = Date.now() - COMPLETED_CHALLENGE_RETENTION_DAYS * 86400000;
+    return completedChallenges.filter((entry) => {
+      const completedAt = Date.parse(entry.completedAt);
+      return Number.isFinite(completedAt) && completedAt >= cutoff;
+    });
+  }, [completedChallenges]);
+
+  const saveCompletedChallenges = (next: { id: string; completedAt: string }[]) => {
+    setCompletedChallenges(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        COMPLETED_CHALLENGE_STORAGE_KEY,
+        JSON.stringify(next)
+      );
+    }
+  };
+
+  const loadChallenges = useCallback(
+    async ({
+      randomize = false,
+      excludeIds,
+    }: {
+      randomize?: boolean;
+      excludeIds?: string[];
+    } = {}) => {
+      setChallengeLoading(true);
+      setChallengeError(null);
+      try {
+        const excluded =
+          excludeIds ?? recentCompletedChallenges.map((entry) => entry.id);
+        const params = new URLSearchParams({
+          count: "3",
+          exclude: excluded.join(","),
+          random: randomize ? "1" : "0",
+        });
+        const response = await fetch(
+          `/api/mycarmindato/challenges?${params.toString()}`
+        );
+        if (!response.ok) {
+          throw new Error("Unable to load challenges.");
+        }
+        const data = (await response.json()) as ChallengeResponse;
+        setChallenges(data.challenges);
+        setChallengeUpdatedAt(data.generatedAt);
+      } catch (error) {
+        setChallengeError(
+          error instanceof Error ? error.message : "Unable to load challenges."
+        );
+      } finally {
+        setChallengeLoading(false);
+      }
+    },
+    [recentCompletedChallenges]
+  );
+
+  useEffect(() => {
+    if (!completedChallengesLoaded) {
+      return;
+    }
+    void loadChallenges();
+  }, [completedChallengesLoaded, loadChallenges]);
+
+  const handleChallengeComplete = (challengeId: string) => {
+    const now = new Date().toISOString();
+    const next = [
+      ...recentCompletedChallenges.filter((entry) => entry.id !== challengeId),
+      { id: challengeId, completedAt: now },
+    ];
+    saveCompletedChallenges(next);
+    void loadChallenges({
+      randomize: true,
+      excludeIds: next.map((entry) => entry.id),
+    });
+  };
+
+  const completedChallengeIds = useMemo(
+    () => new Set(recentCompletedChallenges.map((entry) => entry.id)),
+    [recentCompletedChallenges]
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -1199,58 +1328,83 @@ export default function MyCarMindATOPage() {
                     Syncs with MyCarMindATO town discovery progress.
                   </p>
                 </div>
-                <button
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
-                  onClick={() => handleAskAgent(selectedTown?.city)}
-                  type="button"
-                >
-                  <Navigation className="h-4 w-4" />
-                  Start mission
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => loadChallenges({ randomize: true })}
+                    type="button"
+                    disabled={challengeLoading}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${challengeLoading ? "animate-spin" : ""}`}
+                    />
+                    {challengeLoading ? "Refreshing" : "Refresh"}
+                  </button>
+                  <button
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                    onClick={() => handleAskAgent(selectedTown?.city)}
+                    type="button"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Start mission
+                  </button>
+                </div>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {[
-                  {
-                    title: "Weekly mission",
-                    detail: "Explore 3 new points of interest",
-                    progress: 0.62,
-                  },
-                  {
-                    title: "Town mastery",
-                    detail: "8 towns at 60% completion",
-                    progress: 0.6,
-                  },
-                  {
-                    title: "Review streak",
-                    detail: "4 days of new destination notes",
-                    progress: 0.4,
-                  },
-                ].map((mission) => (
-                  <div
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4"
-                    key={mission.title}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">
-                        {mission.title}
-                      </p>
-                      <span className="text-xs text-white/50">
-                        {Math.round(mission.progress * 100)}%
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-white/60">
-                      {mission.detail}
-                    </p>
-                    <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+              {challengeError && (
+                <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {challengeError}
+                </div>
+              )}
+
+              {!challengeError && (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {challenges.map((mission) => {
+                    const isCompleted = completedChallengeIds.has(mission.id);
+                    return (
                       <div
-                        className="h-full rounded-full bg-emerald-400"
-                        style={{ width: `${mission.progress * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-black/30 p-4"
+                        key={mission.id}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-white">
+                              {mission.title}
+                            </p>
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                              {`Every ${mission.rotationCadenceDays}d`}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs text-white/60">
+                            {mission.missionText}
+                          </p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-xs text-white/50">
+                          <span>
+                            {isCompleted
+                              ? "Completed recently"
+                              : "Ready for action"}
+                          </span>
+                          <button
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => handleChallengeComplete(mission.id)}
+                            type="button"
+                            disabled={isCompleted}
+                          >
+                            {isCompleted ? "Completed" : "Mark done"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {challengeUpdatedAt && (
+                <p className="mt-4 text-xs text-white/40">
+                  Updated {new Date(challengeUpdatedAt).toLocaleString()}
+                </p>
+              )}
             </section>
           </>
         )}
