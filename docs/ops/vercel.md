@@ -1,27 +1,27 @@
-# Vercel deployment guide
+# Managed hosting deployment guide
 
 ## Required environment variables
 
 Review the required environment variables in [`.env.example`](../../.env.example). Keep this file as your single source of truth for everything you need to configure before deploying.
 
-**Metadata base URL:** Production metadata uses the deployment URL provided by Vercel (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL`). Ensure the project is deployed on Vercel so these values are injected automatically. For non-Vercel deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
+**Metadata base URL:** Production metadata uses the deployment URL provided by your hosting platform (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL` when available). Ensure the project is deployed on your platform so these values are injected automatically. For self-hosted or alternative deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
 
-**Production-only env check:** In Vercel, confirm `NEXT_PUBLIC_SITE_URL` is defined in the **Production** environment (not just Preview). After changing env vars, trigger a new production deploy so `/manifest.webmanifest` uses the correct origin.
+**Production-only env check:** In your hosting platform, confirm `NEXT_PUBLIC_SITE_URL` is defined in the **Production** environment (not just Preview). After changing env vars, trigger a new production deploy so `/manifest.webmanifest` uses the correct origin.
 
-## Vercel configuration files
+## Hosting platform configuration files
 
-- [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that Vercel applies to every deployment.
-- [`vercel-template.json`](../../vercel-template.json) powers the Vercel “Deploy” button flow by defining the template metadata, required environment variables, and the onboarding copy shown during project creation.
+- [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that the hosting platform applies to every deployment.
+- [`vercel-template.json`](../../vercel-template.json) powers the hosted “Deploy” button flow by defining the template metadata, required environment variables, and the onboarding copy shown during project creation.
 
 ## Minimal deployment checklist
 
-- **Environment variables**: Load every variable listed in `.env.example` into your Vercel project.
+- **Environment variables**: Load every variable listed in `.env.example` into your hosting project.
 - **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic.
-- **Blob storage**: Enable Vercel Blob and provide the required blob credentials.
+- **Blob storage**: Enable your blob storage provider and provide the required blob credentials.
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
-## Post-deploy verification checklist (Vercel)
+## Post-deploy verification checklist (managed hosting)
 
 Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
 
