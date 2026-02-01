@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Generate unique build ID per deployment to prevent build cache reuse issues
+  // Uses commit SHA on Vercel, or 'development' for local builds
+  generateBuildId: async () => {
+    return process.env.VERCEL_GIT_COMMIT_SHA || "development";
+  },
   async redirects() {
     return [
       {
