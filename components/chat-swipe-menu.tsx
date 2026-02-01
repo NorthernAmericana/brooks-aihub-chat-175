@@ -2,20 +2,20 @@
 
 import { cn } from "@/lib/utils";
 
-export type ChatSwipeMenuItem = {
-  id: string;
+export type ChatSwipeMenuItem<T extends string = string> = {
+  id: T;
   label: string;
 };
 
-export function ChatSwipeMenu({
+export function ChatSwipeMenu<T extends string>({
   activeItemId,
   items,
   onChange,
   className,
 }: {
-  activeItemId: string | null;
-  items: ChatSwipeMenuItem[];
-  onChange: (id: string | null) => void;
+  activeItemId: T | null;
+  items: ChatSwipeMenuItem<T>[];
+  onChange: (id: T | null) => void;
   className?: string;
 }) {
   return (

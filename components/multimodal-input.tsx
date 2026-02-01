@@ -725,10 +725,12 @@ function PureMultimodalInput({
         <div className="flex flex-col gap-3">
           <ChatSwipeMenu
             activeItemId={activeMenu}
-            items={[
-              { id: "history", label: "History" },
-              { id: "profile", label: "Profile" },
-            ]}
+            items={
+              [
+                { id: "history", label: "History" },
+                { id: "profile", label: "Profile" },
+              ] as const
+            }
             onChange={setActiveMenu}
           />
           {activeMenu === "history" && (
