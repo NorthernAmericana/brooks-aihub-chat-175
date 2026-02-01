@@ -8,6 +8,7 @@ type MapViewProps = {
   className?: string;
   containerClassName?: string;
   ariaLabel?: string;
+  onReady?: () => void;
 };
 
 const DEFAULT_CENTER = { lat: 39.8283, lng: -98.5795 };
@@ -22,6 +23,7 @@ export default function MapView({
   className,
   containerClassName,
   ariaLabel = "MyCarMindATO map view",
+  onReady,
 }: MapViewProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -108,6 +110,7 @@ export default function MapView({
         onLoad={() => {
           setIsApiReady(true);
           setLoadError(null);
+          onReady?.();
         }}
         onError={() =>
           setLoadError("Unable to load Google Maps. Please try again later.")

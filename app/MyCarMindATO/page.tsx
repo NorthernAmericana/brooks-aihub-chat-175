@@ -15,7 +15,14 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 
 import MapView from "@/components/mycarmindato/map-view";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
@@ -59,6 +66,14 @@ type ChallengeResponse = {
 type HomeLocation = {
   rawText: string;
   normalizedText?: string | null;
+  updatedAt?: string | null;
+};
+
+type CurrentLocation = {
+  lat: number;
+  lng: number;
+  label?: string | null;
+  accuracy?: number | null;
   updatedAt?: string | null;
 };
 
@@ -141,8 +156,28 @@ export default function MyCarMindATOPage() {
     null
   );
   const [homeLocationLoaded, setHomeLocationLoaded] = useState(false);
-  const [locationMode, setLocationMode] = useState<"home" | "custom">("home");
-  const [customLocation, setCustomLocation] = useState("");
+  const [homeLocationDraft, setHomeLocationDraft] = useState<{
+    rawText: string;
+    normalizedText?: string | null;
+  } | null>(null);
+  const [homeLocationInput, setHomeLocationInput] = useState("");
+  const [homeLocationSaving, setHomeLocationSaving] = useState(false);
+  const [homeLocationSaveError, setHomeLocationSaveError] = useState<
+    string | null
+  >(null);
+  const [homeLocationSaveSuccess, setHomeLocationSaveSuccess] = useState<
+    string | null
+  >(null);
+  const [googleMapsReady, setGoogleMapsReady] = useState(false);
+  const homeLocationInputRef = useRef<HTMLInputElement | null>(null);
+  const homeLocationAutocompleteRef = useRef<any>(null);
+  const [currentLocation, setCurrentLocation] =
+    useState<CurrentLocation | null>(null);
+  const [locationPermissionOpen, setLocationPermissionOpen] = useState(false);
+  const [locationPermissionError, setLocationPermissionError] = useState<
+    string | null
+  >(null);
+  const [locationRequesting, setLocationRequesting] = useState(false);
   const [nearbyQuery, setNearbyQuery] = useState("");
   const [nearbyResults, setNearbyResults] = useState<NearbyBusiness[]>([]);
   const [nearbySource, setNearbySource] = useState<string | null>(null);
@@ -176,25 +211,16 @@ export default function MyCarMindATOPage() {
 
   const routeCards = useMemo(() => {
     const desiredOrder = [
-      "Brooks AI HUB",
-      "BrooksBears",
-      "BrooksBears/BenjaminBear",
       "MyCarMindATO",
       "MyCarMindATO/Driver",
       "MyCarMindATO/Trucker",
       "MyCarMindATO/DeliveryDriver",
       "MyCarMindATO/Traveler",
-      "MyFlowerAI",
-      "Brooks AI HUB/Summaries",
-      "NAT",
-      "NAMC",
     ];
     const agentBySlash = new Map(
       listAgentConfigs().map((agent) => [agent.slash, agent])
     );
-    const labelOverrides: Record<string, string> = {
-      NAT: "Northern Americana Tech Agent",
-    };
+    const labelOverrides: Record<string, string> = {};
 
     return desiredOrder
       .map((slash) => {
@@ -399,14 +425,12 @@ export default function MyCarMindATOPage() {
   }, []);
 
   useEffect(() => {
-    if (!homeLocationLoaded) {
-      return;
+    if (homeLocation) {
+      setHomeLocationInput(
+        homeLocation.normalizedText || homeLocation.rawText || ""
+      );
     }
-
-    if (!homeLocation) {
-      setLocationMode("custom");
-    }
-  }, [homeLocation, homeLocationLoaded]);
+  }, [homeLocation]);
 
   const filteredTowns = useMemo(() => {
     const normalizedQuery = normalizeQueryValue(searchQuery);
@@ -485,9 +509,11 @@ export default function MyCarMindATOPage() {
   };
 
   const selectedLocationText =
-    locationMode === "home"
-      ? homeLocation?.normalizedText || homeLocation?.rawText || ""
-      : customLocation.trim();
+    homeLocation?.normalizedText || homeLocation?.rawText || "";
+  const selectedLocationLabel = currentLocation
+    ? currentLocation.label ||
+      `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`
+    : selectedLocationText;
 
   const mapQuery = selectedTown?.city || searchQuery.trim() || "United States";
   const mapSearchUrl = buildMapSearchUrl(mapQuery);
@@ -508,8 +534,8 @@ export default function MyCarMindATOPage() {
   };
 
   const handleFindLocalSpots = async () => {
-    if (!selectedLocationText) {
-      setNearbyError("Add a location to search nearby spots.");
+    if (!selectedLocationText && !currentLocation) {
+      setNearbyError("Set a home location or enable current location.");
       return;
     }
 
@@ -518,7 +544,12 @@ export default function MyCarMindATOPage() {
 
     try {
       const params = new URLSearchParams();
-      params.set("text", selectedLocationText);
+      if (currentLocation) {
+        params.set("lat", currentLocation.lat.toString());
+        params.set("lng", currentLocation.lng.toString());
+      } else {
+        params.set("text", selectedLocationText);
+      }
       if (nearbyQuery.trim()) {
         params.set("query", nearbyQuery.trim());
       }
@@ -692,6 +723,140 @@ export default function MyCarMindATOPage() {
       setPhotoUploading(false);
     }
   };
+
+  const requestCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setLocationPermissionError(
+        "Geolocation is not supported in this browser."
+      );
+      return;
+    }
+
+    setLocationRequesting(true);
+    setLocationPermissionError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        let label: string | null = null;
+
+        if (googleMapsReady && (window as typeof window & { google?: any })) {
+          const googleMaps = (window as typeof window & { google?: any }).google;
+          if (googleMaps?.maps?.Geocoder) {
+            const geocoder = new googleMaps.maps.Geocoder();
+            label = await new Promise((resolve) => {
+              geocoder.geocode(
+                { location: { lat: latitude, lng: longitude } },
+                (results: any, status: string) => {
+                  if (status === "OK" && results?.length) {
+                    resolve(results[0].formatted_address);
+                  } else {
+                    resolve(null);
+                  }
+                }
+              );
+            });
+          }
+        }
+
+        setCurrentLocation({
+          lat: latitude,
+          lng: longitude,
+          accuracy: Number.isFinite(accuracy) ? accuracy : null,
+          label,
+          updatedAt: new Date().toISOString(),
+        });
+        setLocationRequesting(false);
+        setLocationPermissionOpen(false);
+      },
+      (error) => {
+        setLocationPermissionError(
+          error.message || "Unable to retrieve your location."
+        );
+        setLocationRequesting(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [googleMapsReady]);
+
+  const handleSaveHomeLocation = useCallback(async () => {
+    if (!homeLocationDraft?.rawText) {
+      setHomeLocationSaveError("Select a Google Maps location first.");
+      return;
+    }
+
+    setHomeLocationSaving(true);
+    setHomeLocationSaveError(null);
+    setHomeLocationSaveSuccess(null);
+
+    try {
+      const response = await fetch("/api/mycarmindato/home-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText: homeLocationDraft.rawText,
+          normalizedText: homeLocationDraft.normalizedText,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        homeLocation?: HomeLocation;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save home location.");
+      }
+
+      if (data.homeLocation) {
+        setHomeLocation(data.homeLocation);
+        setHomeLocationSaveSuccess("Home location saved.");
+        setHomeLocationDraft(null);
+      }
+    } catch (error) {
+      setHomeLocationSaveError(
+        error instanceof Error ? error.message : "Unable to save home location."
+      );
+    } finally {
+      setHomeLocationSaving(false);
+    }
+  }, [homeLocationDraft]);
+
+  useEffect(() => {
+    if (!googleMapsReady || !homeLocationInputRef.current) {
+      return;
+    }
+
+    if (homeLocationAutocompleteRef.current) {
+      return;
+    }
+
+    const googleMaps = (window as typeof window & { google?: any }).google;
+    if (!googleMaps?.maps?.places?.Autocomplete) {
+      return;
+    }
+
+    homeLocationAutocompleteRef.current =
+      new googleMaps.maps.places.Autocomplete(homeLocationInputRef.current, {
+        fields: ["formatted_address", "name", "place_id"],
+      });
+
+    homeLocationAutocompleteRef.current.addListener("place_changed", () => {
+      const place = homeLocationAutocompleteRef.current?.getPlace?.();
+      const formatted =
+        place?.formatted_address || place?.name || homeLocationInput.trim();
+      if (!formatted) {
+        return;
+      }
+      setHomeLocationInput(formatted);
+      setHomeLocationDraft({
+        rawText: formatted,
+        normalizedText: place?.formatted_address ?? formatted,
+      });
+      setHomeLocationSaveError(null);
+      setHomeLocationSaveSuccess(null);
+    });
+  }, [googleMapsReady, homeLocationInput]);
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#0d1620] via-[#0f1c27] to-[#0b151d]">
@@ -880,6 +1045,7 @@ export default function MyCarMindATOPage() {
                   className="absolute inset-0 h-full w-full"
                   containerClassName="absolute inset-0"
                   query={mapQuery}
+                  onReady={() => setGoogleMapsReady(true)}
                 />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,15,24,0.1),rgba(5,15,24,0.75))] pointer-events-none" />
 
@@ -961,8 +1127,7 @@ export default function MyCarMindATOPage() {
                     Location settings
                   </h3>
                   <p className="text-sm text-white/60">
-                    Pick a home base or enter a custom spot when you are
-                    traveling.
+                    Save a Google Maps home base or use your current location.
                   </p>
                 </div>
                 <div className="text-xs text-white/50">
@@ -974,102 +1139,134 @@ export default function MyCarMindATOPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-[240px,1fr]">
-                <div className="space-y-3">
-                  <button
-                    aria-pressed={locationMode === "home"}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      locationMode === "home"
-                        ? "border-emerald-400/60 bg-emerald-400/10 text-white"
-                        : "border-white/10 bg-black/30 text-white/70 hover:border-white/20"
-                    }`}
-                    disabled={!homeLocation}
-                    onClick={() => setLocationMode("home")}
-                    type="button"
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/50">
+                    <span>Home location</span>
+                    <span className="text-[0.65rem] normal-case text-white/60">
+                      {homeLocation ? "Saved" : "Not set"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-white">
+                    {homeLocation?.normalizedText ||
+                      homeLocation?.rawText ||
+                      "Pick a Google Maps location to save your home base."}
+                  </p>
+                  {homeLocation?.rawText &&
+                    homeLocation.normalizedText &&
+                    homeLocation.normalizedText !== homeLocation.rawText && (
+                      <p className="mt-1 text-xs text-white/50">
+                        Original: {homeLocation.rawText}
+                      </p>
+                    )}
+                  {homeLocationError && (
+                    <p className="mt-3 text-xs text-red-200">
+                      {homeLocationError}
+                    </p>
+                  )}
+
+                  <label
+                    className="mt-4 block text-xs uppercase tracking-[0.2em] text-white/50"
+                    htmlFor="home-location"
                   >
-                    <span className="flex items-center gap-2">
-                      <Home className="h-4 w-4 text-emerald-200" />
-                      Home location
-                    </span>
+                    Set home on Google Maps
+                  </label>
+                  <input
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
+                    id="home-location"
+                    onChange={(event) => {
+                      setHomeLocationInput(event.target.value);
+                      setHomeLocationDraft(null);
+                      setHomeLocationSaveError(null);
+                      setHomeLocationSaveSuccess(null);
+                    }}
+                    placeholder="Search an address or landmark"
+                    ref={homeLocationInputRef}
+                    type="text"
+                    value={homeLocationInput}
+                  />
+                  {!googleMapsReady && (
+                    <p className="mt-2 text-xs text-white/50">
+                      Google Maps must load before you can save a location.
+                    </p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={
+                        homeLocationSaving ||
+                        !homeLocationDraft ||
+                        !googleMapsReady
+                      }
+                      onClick={handleSaveHomeLocation}
+                      type="button"
+                    >
+                      <Home className="h-4 w-4" />
+                      {homeLocationSaving ? "Saving..." : "Save home location"}
+                    </button>
                     <span className="text-xs text-white/50">
-                      {homeLocation ? "Saved" : "None"}
+                      Select a Google Maps result before saving.
                     </span>
-                  </button>
-                  <button
-                    aria-pressed={locationMode === "custom"}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      locationMode === "custom"
-                        ? "border-emerald-400/60 bg-emerald-400/10 text-white"
-                        : "border-white/10 bg-black/30 text-white/70 hover:border-white/20"
-                    }`}
-                    onClick={() => setLocationMode("custom")}
-                    type="button"
-                  >
-                    <span className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-emerald-200" />
-                      Custom location
-                    </span>
-                    <span className="text-xs text-white/50">
-                      {customLocation ? "Set" : "Enter"}
-                    </span>
-                  </button>
+                  </div>
+                  {homeLocationSaveError && (
+                    <p className="mt-3 text-xs text-red-200">
+                      {homeLocationSaveError}
+                    </p>
+                  )}
+                  {homeLocationSaveSuccess && (
+                    <p className="mt-3 text-xs text-emerald-200">
+                      {homeLocationSaveSuccess}
+                    </p>
+                  )}
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                  {locationMode === "home" ? (
-                    <>
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                        Saved home
-                      </p>
-                      <p className="mt-2 text-sm font-semibold text-white">
-                        {homeLocation?.normalizedText ||
-                          homeLocation?.rawText ||
-                          "Set a home location in chat to use it here."}
-                      </p>
-                      {homeLocation?.rawText &&
-                        homeLocation.normalizedText &&
-                        homeLocation.normalizedText !==
-                          homeLocation.rawText && (
-                          <p className="mt-1 text-xs text-white/50">
-                            Original: {homeLocation.rawText}
-                          </p>
-                        )}
-                      {homeLocationError && (
-                        <p className="mt-3 text-xs text-red-200">
-                          {homeLocationError}
-                        </p>
-                      )}
-                      {!homeLocation && (
-                        <div className="mt-3 text-xs text-white/60">
-                          Save your home location in the MyCarMindATO chat so it
-                          can auto-fill here.
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <label
-                        className="text-xs uppercase tracking-[0.2em] text-white/50"
-                        htmlFor="custom-location"
-                      >
-                        Custom location
-                      </label>
-                      <input
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none"
-                        id="custom-location"
-                        onChange={(event) =>
-                          setCustomLocation(event.target.value)
-                        }
-                        placeholder="Enter a city, neighborhood, or landmark"
-                        type="text"
-                        value={customLocation}
-                      />
-                      <p className="mt-2 text-xs text-white/60">
-                        Tip: use this when you are away from home so nearby
-                        suggestions stay relevant.
-                      </p>
-                    </>
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/50">
+                    <span>Current location</span>
+                    <span className="text-[0.65rem] normal-case text-white/60">
+                      {currentLocation ? "Tracking enabled" : "Not enabled"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-white">
+                    {currentLocation?.label ||
+                      (currentLocation
+                        ? `${currentLocation.lat.toFixed(
+                            4
+                          )}, ${currentLocation.lng.toFixed(4)}`
+                        : "Allow access to use your real-time position.")}
+                  </p>
+                  {currentLocation?.updatedAt && (
+                    <p className="mt-1 text-xs text-white/50">
+                      Updated {new Date(currentLocation.updatedAt).toLocaleTimeString()}.
+                    </p>
                   )}
+                  {locationPermissionError && (
+                    <p className="mt-3 text-xs text-red-200">
+                      {locationPermissionError}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={locationRequesting}
+                      onClick={() => {
+                        setLocationPermissionError(null);
+                        setLocationPermissionOpen(true);
+                      }}
+                      type="button"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {currentLocation ? "Refresh current location" : "Enable current location"}
+                    </button>
+                    {currentLocation && (
+                      <span className="text-xs text-white/50">
+                        Accuracy:{" "}
+                        {currentLocation.accuracy
+                          ? `${Math.round(currentLocation.accuracy)}m`
+                          : "Unknown"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -1084,12 +1281,17 @@ export default function MyCarMindATOPage() {
                     Pull nearby businesses for quick reviews and routing.
                   </p>
                 </div>
-                {nearbySource && (
-                  <div className="text-xs text-white/50">
-                    Source: {nearbySource}
-                  </div>
-                )}
+                <div className="text-xs text-white/50">
+                  {selectedLocationLabel
+                    ? `Near: ${selectedLocationLabel}`
+                    : "Set a home location or enable current location."}
+                </div>
               </div>
+              {nearbySource && (
+                <div className="mt-2 text-xs text-white/50">
+                  Source: {nearbySource}
+                </div>
+              )}
 
               <div className="mt-4 grid gap-3 md:grid-cols-[1fr,auto]">
                 <label className="sr-only" htmlFor="nearby-query">
@@ -1662,6 +1864,49 @@ export default function MyCarMindATOPage() {
           </section>
         )}
       </div>
+      {locationPermissionOpen && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0b151d] p-6 text-white shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  Use your current location?
+                </h3>
+                <p className="mt-2 text-sm text-white/70">
+                  MyCarMindATO uses your location to find nearby spots and
+                  improve live map routing. Your location is only used for this
+                  session unless you save a home location.
+                </p>
+              </div>
+              <button
+                aria-label="Close"
+                className="rounded-full border border-white/10 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
+                onClick={() => setLocationPermissionOpen(false)}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <button
+                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                onClick={() => setLocationPermissionOpen(false)}
+                type="button"
+              >
+                Not now
+              </button>
+              <button
+                className="inline-flex items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={locationRequesting}
+                onClick={requestCurrentLocation}
+                type="button"
+              >
+                {locationRequesting ? "Requesting..." : "Allow current location"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showReviewModal && selectedPlace && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0b151d] p-6 text-white shadow-xl">
