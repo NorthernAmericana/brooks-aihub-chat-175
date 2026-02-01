@@ -14,9 +14,13 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import MapView from "@/components/mycarmindato/map-view";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
+import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 
 type TownSummary = {
   id: string;
@@ -122,6 +126,8 @@ const formatLocationLabel = (location?: NearbyBusiness["location"]) => {
 
 export default function MyCarMindATOPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const { profileIcon } = useProfileIcon();
   const [searchQuery, setSearchQuery] = useState("");
   const [towns, setTowns] = useState<TownSummary[]>([]);
   const [townGroups, setTownGroups] = useState<TownGroup[]>([]);
@@ -167,6 +173,55 @@ export default function MyCarMindATOPage() {
   >([]);
   const [completedChallengesLoaded, setCompletedChallengesLoaded] =
     useState(false);
+
+  const routeCards = useMemo(() => {
+    const desiredOrder = [
+      "Brooks AI HUB",
+      "BrooksBears",
+      "BrooksBears/BenjaminBear",
+      "MyCarMindATO",
+      "MyCarMindATO/Driver",
+      "MyCarMindATO/Trucker",
+      "MyCarMindATO/DeliveryDriver",
+      "MyCarMindATO/Traveler",
+      "MyFlowerAI",
+      "Brooks AI HUB/Summaries",
+      "NAT",
+      "NAMC",
+    ];
+    const agentBySlash = new Map(
+      listAgentConfigs().map((agent) => [agent.slash, agent])
+    );
+    const labelOverrides: Record<string, string> = {
+      NAT: "Northern Americana Tech Agent",
+    };
+
+    return desiredOrder
+      .map((slash) => {
+        const agent = agentBySlash.get(slash);
+        if (!agent) {
+          return null;
+        }
+        const label = labelOverrides[agent.slash] ?? agent.label;
+        const route = `/${agent.slash}/`;
+        return {
+          label,
+          route,
+          slash: agent.slash,
+        };
+      })
+      .filter(
+        (
+          card
+        ): card is {
+          label: string;
+          route: string;
+          slash: string;
+        } => Boolean(card)
+      );
+  }, []);
+
+  const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -444,6 +499,14 @@ export default function MyCarMindATOPage() {
     }
   };
 
+  const handleRouteCardClick = (route: string) => {
+    if (route === "/Brooks AI HUB/") {
+      router.push("/brooks-ai-hub");
+      return;
+    }
+    router.push(`/brooks-ai-hub?query=${encodeURIComponent(route)}`);
+  };
+
   const handleFindLocalSpots = async () => {
     if (!selectedLocationText) {
       setNearbyError("Add a location to search nearby spots.");
@@ -656,22 +719,33 @@ export default function MyCarMindATOPage() {
             <p className="text-xs text-white/60">Live map experience</p>
           </div>
         </div>
-        {activeTab === "map" && (
-          <button
-            aria-pressed={isMapOnly}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
-            onClick={() => setIsMapOnly((current) => !current)}
-            type="button"
-          >
-            <Square className="h-4 w-4" />
-            <span>{isMapOnly ? "Exit map only" : "Map only"}</span>
-            <span className="sr-only">
-              {isMapOnly
-                ? "Disable map only mode"
-                : "Enable map only mode to focus on the map"}
-            </span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {activeTab === "map" && (
+            <button
+              aria-pressed={isMapOnly}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+              onClick={() => setIsMapOnly((current) => !current)}
+              type="button"
+            >
+              <Square className="h-4 w-4" />
+              <span>{isMapOnly ? "Exit map only" : "Map only"}</span>
+              <span className="sr-only">
+                {isMapOnly
+                  ? "Disable map only mode"
+                  : "Enable map only mode to focus on the map"}
+              </span>
+            </button>
+          )}
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5">
+            <Image
+              alt="Profile avatar"
+              className="h-full w-full object-cover"
+              height={40}
+              src={avatarSrc}
+              width={40}
+            />
+          </div>
+        </div>
       </div>
 
       <div
@@ -710,6 +784,52 @@ export default function MyCarMindATOPage() {
                 : "Browse towns grouped by state."}
             </div>
           </div>
+        )}
+
+        {!isMapOnly && (
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                  Brooks AI HUB Routes
+                </p>
+                <h2 className="text-xl font-semibold text-white">
+                  Jump back into the main chat
+                </h2>
+                <p className="text-sm text-white/60">
+                  Open an official ATO route in the Brooks AI HUB chat.
+                </p>
+              </div>
+              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/70">
+                {routeCards.length} routes
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {routeCards.map((card) => (
+                <button
+                  className="group flex flex-col items-start gap-2 rounded-2xl border border-white/10 bg-[#0b151d]/60 p-4 text-left transition hover:border-emerald-300/40 hover:bg-[#0f1c27]"
+                  key={card.route}
+                  onClick={() => handleRouteCardClick(card.route)}
+                  type="button"
+                >
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <div className="text-sm font-semibold text-white">
+                      {card.label}
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[0.55rem] uppercase tracking-[0.2em] text-white/50">
+                      Route
+                    </span>
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+                    {card.route}
+                  </div>
+                  <div className="text-xs text-white/60">
+                    Launch in Brooks AI HUB chat
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
 
         {activeTab === "map" && (
