@@ -13,6 +13,7 @@ import { auth, type UserType } from "@/app/(auth)/auth";
 import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
 import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
+import { runNamcLorePlayground } from "@/lib/ai/agents/namc-lore-playground";
 import {
   type AgentConfig,
   type AgentToolId,
@@ -547,6 +548,7 @@ export async function POST(request: Request) {
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
+        const isNamcLorePlaygroundAgent = selectedAgent.id === "namc-lore-playground";
         const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
@@ -597,6 +599,25 @@ export async function POST(request: Request) {
             .reverse()
             .find((currentMessage) => currentMessage.role === "user");
           const responseText = await runNamcMediaCurator({
+            messages: uiMessages,
+            latestUserMessage: lastUserMessage,
+            memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else if (isNamcLorePlaygroundAgent) {
+          const lastUserMessage = [...uiMessages]
+            .reverse()
+            .find((currentMessage) => currentMessage.role === "user");
+          const responseText = await runNamcLorePlayground({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
             memoryContext,
