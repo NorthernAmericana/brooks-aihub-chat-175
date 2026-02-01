@@ -13,8 +13,10 @@ const metadataBase =
 
 export const metadata: Metadata = {
   ...(metadataBase ? { metadataBase } : {}),
-  title: "Brooks AI HUB",
-  description: "Brooks AI HUB assistant experience.",
+  title:
+    "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
+  description:
+    "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
   manifest: "/manifest.webmanifest",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },

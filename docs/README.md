@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-Brooks AI HUB is a Next.js-based conversational AI application that combines a modern chat UI with multi-provider model access, authentication, and persistence so teams can build and deploy AI experiences quickly.
+Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media.
 
 ## Editions & Repositories
 

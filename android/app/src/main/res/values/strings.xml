@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Brooks AI HUB</string>
+    <string name="app_name">Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media</string>
     <string name="launcher_name">Brooks AI HUB</string>
     <string name="asset_statements">[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.brooks.aihub.chat","sha256_cert_fingerprints":["REPLACE_WITH_SHA256_FINGERPRINT"]}}]</string>
 </resources>
