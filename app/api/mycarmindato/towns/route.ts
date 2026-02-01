@@ -85,7 +85,7 @@ const buildGroupedTowns = (towns: TownSummary[]): TownGroup[] => {
     group.sort((a, b) => a.cityName.localeCompare(b.cityName));
   }
 
-  const stateOrder = new Map(
+  const stateOrder = new Map<string, number>(
     US_STATE_NAMES.map((state, index) => [state, index])
   );
 
