@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         destination: "/brooks-ai-hub/",
         permanent: false,
       },
+      {
+        source: "/NAMC/Lore-Playground",
+        destination: "/NAMC/lore-playground",
+        permanent: false,
+      },
     ];
   },
   async headers() {
