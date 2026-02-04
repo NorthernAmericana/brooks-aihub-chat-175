@@ -7,7 +7,17 @@ const textPartSchema = z.object({
 
 const filePartSchema = z.object({
   type: z.enum(["file"]),
-  mediaType: z.enum(["image/jpeg", "image/png"]),
+  mediaType: z
+    .string()
+    .refine(
+      (value) =>
+        value === "application/pdf" ||
+        value.startsWith("image/") ||
+        value.startsWith("video/"),
+      {
+        message: "Unsupported media type",
+      }
+    ),
   name: z.string().min(1).max(100),
   url: z.string().url(),
 });
