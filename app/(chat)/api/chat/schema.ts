@@ -25,7 +25,7 @@ const filePartSchema = z.object({
 const partSchema = z.union([textPartSchema, filePartSchema]);
 
 const userMessageSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   role: z.enum(["user"]),
   parts: z.array(partSchema),
 });
