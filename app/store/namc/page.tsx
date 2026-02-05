@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { listStoreProducts } from "@/lib/db/queries";
 
+export const dynamic = "force-dynamic";
+
 function formatPrice(priceInCents: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
