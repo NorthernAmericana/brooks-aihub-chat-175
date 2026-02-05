@@ -20,6 +20,8 @@ Review the required environment variables in [`.env.example`](../../.env.example
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
+- **Chat schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Also confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production.
+
 ## Post-deploy verification checklist (managed hosting)
 
 Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
