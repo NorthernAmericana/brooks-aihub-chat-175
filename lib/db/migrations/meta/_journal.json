@@ -148,6 +148,34 @@
       "when": 1770500000000,
       "tag": "0021_add_reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1770500001000,
+      "tag": "0022_route_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1770500002000,
+      "tag": "0023_ato_app_store",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1770500003000,
+      "tag": "0024_custom_ato_avatar_route_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1770500004000,
+      "tag": "0025_store_products",
+      "breakpoints": true
     }
   ]
 }
