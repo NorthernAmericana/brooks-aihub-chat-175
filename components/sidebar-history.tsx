@@ -34,7 +34,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
 
-  const { data, setSize, isValidating, isLoading, mutate } = useChatHistory();
+  const { data, setSize, isValidating, isLoading, mutate } =
+    useChatHistory(user);
   const paginatedChatHistories = data as ChatHistory[] | undefined;
 
   const router = useRouter();

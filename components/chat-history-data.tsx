@@ -2,6 +2,7 @@
 
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import useSWRInfinite from "swr/infinite";
+import type { User } from "next-auth";
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
 
@@ -74,8 +75,18 @@ export function getChatHistoryPaginationKey(
   return `/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
 }
 
-export function useChatHistory() {
-  return useSWRInfinite<ChatHistory>(getChatHistoryPaginationKey, fetcher, {
-    fallbackData: [],
-  });
+export function useChatHistory(user?: User) {
+  return useSWRInfinite<ChatHistory>(
+    (pageIndex, previousPageData) => {
+      if (!user) {
+        return null;
+      }
+
+      return getChatHistoryPaginationKey(pageIndex, previousPageData);
+    },
+    fetcher,
+    {
+      fallbackData: [],
+    }
+  );
 }
