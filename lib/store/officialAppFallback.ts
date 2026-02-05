@@ -1,3 +1,5 @@
+import { NAMC_APP_ICON_PATH } from "@/lib/constants/namc";
+
 export type OfficialAppFallbackItem = {
   slug: string;
   name: string;
@@ -39,7 +41,7 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
   {
     slug: "namc",
     name: "NAMC",
-    iconUrl: "/icons/namc-appicon.png",
+    iconUrl: NAMC_APP_ICON_PATH,
     appPath: "/NAMC",
     storePath: "/namc-app",
     category: "Media & Entertainment",
