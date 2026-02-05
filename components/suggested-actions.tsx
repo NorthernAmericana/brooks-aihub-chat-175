@@ -4,7 +4,9 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { motion } from "framer-motion";
 import { memo, useEffect, useMemo, useState } from "react";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import useSWR from "swr";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { normalizeRouteKey } from "@/lib/routes/utils";
 import {
   formatSlashAction,
   getStoredSlashActions,
@@ -14,7 +16,7 @@ import {
   type SlashAction,
 } from "@/lib/suggested-actions";
 import type { ChatMessage } from "@/lib/types";
-import { getTextFromMessage } from "@/lib/utils";
+import { fetcher, getTextFromMessage } from "@/lib/utils";
 import { Suggestion } from "./elements/suggestion";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -23,6 +25,10 @@ type SuggestedActionsProps = {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedVisibilityType: VisibilityType;
   messages: UIMessage[];
+};
+
+type RoutesResponse = {
+  routes: RouteSuggestion[];
 };
 
 const defaultPromptsByAgentId = new Map([
@@ -40,9 +46,13 @@ function PureSuggestedActions({
   sendMessage,
   messages,
 }: SuggestedActionsProps) {
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const agentConfigs = useMemo(
-    () => listAgentConfigs().filter((agent) => agent.id !== "default"),
-    []
+    () =>
+      (routeData?.routes ?? []).filter(
+        (agent) => agent.kind === "official" && agent.id !== "default"
+      ),
+    [routeData]
   );
   const [storedActions, setStoredActions] = useState<SlashAction[]>([]);
 
@@ -132,7 +142,8 @@ function PureSuggestedActions({
     }
 
     const agent = agentConfigs.find(
-      (config) => normalizeSlash(config.slash) === normalizeSlash(parsed.slash)
+      (config) =>
+        normalizeRouteKey(config.slash) === normalizeRouteKey(parsed.slash)
     );
     if (!agent) {
       return suggestedAction;

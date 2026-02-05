@@ -23,11 +23,14 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
+import useSWR from "swr";
 
 import MapView from "@/components/mycarmindato/map-view";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { normalizeRouteKey } from "@/lib/routes/utils";
+import { fetcher } from "@/lib/utils";
 
 type TownSummary = {
   id: string;
@@ -61,6 +64,10 @@ type Challenge = {
 type ChallengeResponse = {
   challenges: Challenge[];
   generatedAt: string;
+};
+
+type RoutesResponse = {
+  routes: RouteSuggestion[];
 };
 
 type HomeLocation = {
@@ -143,6 +150,7 @@ export default function MyCarMindATOPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { profileIcon } = useProfileIcon();
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const [searchQuery, setSearchQuery] = useState("");
   const [towns, setTowns] = useState<TownSummary[]>([]);
   const [townGroups, setTownGroups] = useState<TownGroup[]>([]);
@@ -217,23 +225,24 @@ export default function MyCarMindATOPage() {
       "MyCarMindATO/DeliveryDriver",
       "MyCarMindATO/Traveler",
     ];
-    const agentBySlash = new Map(
-      listAgentConfigs().map((agent) => [agent.slash, agent])
+    const routeByKey = new Map(
+      (routeData?.routes ?? [])
+        .filter((route) => route.kind === "official")
+        .map((route) => [normalizeRouteKey(route.slash), route])
     );
     const labelOverrides: Record<string, string> = {};
 
     return desiredOrder
       .map((slash) => {
-        const agent = agentBySlash.get(slash);
-        if (!agent) {
+        const route = routeByKey.get(normalizeRouteKey(slash));
+        if (!route) {
           return null;
         }
-        const label = labelOverrides[agent.slash] ?? agent.label;
-        const route = `/${agent.slash}/`;
+        const label = labelOverrides[route.slash] ?? route.label;
         return {
           label,
-          route,
-          slash: agent.slash,
+          route: route.route,
+          slash: route.slash,
         };
       })
       .filter(
@@ -245,7 +254,7 @@ export default function MyCarMindATOPage() {
           slash: string;
         } => Boolean(card)
       );
-  }, []);
+  }, [routeData]);
 
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
 

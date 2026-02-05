@@ -24,7 +24,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import {
+  formatRoutePath,
+  normalizeRouteKey,
+  sanitizeRouteSegment,
+} from "@/lib/routes/utils";
 import { cn, fetcher } from "@/lib/utils";
 
 type GreetingProps = {
@@ -121,17 +126,13 @@ type AtoListResponse = {
   }>;
 };
 
-const formatAtoRoute = (value: string) =>
-  value
-    .trim()
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\s+/g, "")
-    .replace(/\/{2,}/g, "/")
-    .replace(/[^a-zA-Z0-9/_-]/g, "");
-
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const [now, setNow] = useState(() => new Date());
+  const { data: routeData } = useSWR<{ routes: RouteSuggestion[] }>(
+    "/api/routes",
+    fetcher
+  );
   const { data: atoData, mutate: mutateAtos } = useSWR<AtoListResponse>(
     "/api/ato",
     fetcher
@@ -157,14 +158,14 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     return atos
       .map((ato) => {
         const routeSource = ato.route || ato.name;
-        const formattedRoute = formatAtoRoute(routeSource);
+        const formattedRoute = sanitizeRouteSegment(routeSource);
         if (!formattedRoute) {
           return null;
         }
         return {
           label: ato.name,
           slash: formattedRoute,
-          folder: `/${formattedRoute}/`,
+          folder: formatRoutePath(formattedRoute),
           foundersOnly: false,
           badge: "custom" as const,
           atoId: ato.id,
@@ -194,6 +195,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   }, [customAtoFolders, selectedAtoId]);
 
   const suggestedFolders = useMemo(() => {
+    const officialRoutes =
+      routeData?.routes?.filter((route) => route.kind === "official") ?? [];
+    const routeByKey = new Map(
+      officialRoutes.map((route) => [normalizeRouteKey(route.slash), route])
+    );
     const desiredOrder: Array<{
       slash: string;
       foundersOnly: boolean;
@@ -221,10 +227,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "NAMC", foundersOnly: false },
       { slash: "NAMC/Lore-Playground", foundersOnly: false },
     ];
-
-    const agentBySlash = new Map(
-      listAgentConfigs().map((agent) => [agent.slash, agent])
-    );
     const labelOverrides: Record<string, string> = {
       NAT: "Northern Americana Tech Agent",
       "NAMC/Lore-Playground": "Lore Playground",
@@ -232,8 +234,8 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
 
     return desiredOrder
       .map((entry) => {
-        const agent = agentBySlash.get(entry.slash);
-        if (!agent) {
+        const route = routeByKey.get(normalizeRouteKey(entry.slash));
+        if (!route) {
           return null;
         }
 
@@ -244,9 +246,9 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           foundersOnly: boolean;
           badge?: "gem" | "free";
         } = {
-          label: labelOverrides[agent.slash] ?? agent.label,
-          slash: agent.slash,
-          folder: `/${agent.slash}/`,
+          label: labelOverrides[route.slash] ?? route.label,
+          slash: route.slash,
+          folder: route.route,
           foundersOnly: entry.foundersOnly,
         };
 

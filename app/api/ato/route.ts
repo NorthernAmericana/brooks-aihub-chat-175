@@ -8,26 +8,23 @@ import {
   getUnofficialAtoByRoute,
   getUnofficialAtosByOwner,
   getUserById,
+  listRouteRegistryEntries,
   updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { normalizeRouteKey, sanitizeRouteSegment } from "@/lib/routes/utils";
 
 const allowedIntelligenceModes = ["Hive", "ATO-Limited"] as const;
 
-const formatAtoRoute = (value: string) =>
-  value
-    .trim()
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\s+/g, "")
-    .replace(/\/{2,}/g, "/")
-    .replace(/[^a-zA-Z0-9/_-]/g, "");
+const formatAtoRoute = (value: string) => sanitizeRouteSegment(value);
 
-const normalizeAtoRoute = (value: string) => formatAtoRoute(value).toLowerCase();
+const normalizeAtoRoute = (value: string) => normalizeRouteKey(value);
 
-const isReservedAtoRoute = (normalizedRoute: string) =>
-  listAgentConfigs().some(
-    (agent) => normalizeAtoRoute(agent.slash) === normalizedRoute
+const isReservedAtoRoute = async (normalizedRoute: string) => {
+  const routes = await listRouteRegistryEntries();
+  return routes.some(
+    (route) => normalizeRouteKey(route.slash) === normalizedRoute
   );
+};
 
 // Force dynamic rendering to prevent prerendering issues with auth()
 export const dynamic = "force-dynamic";
@@ -94,7 +91,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (isReservedAtoRoute(normalizedRoute)) {
+  if (await isReservedAtoRoute(normalizedRoute)) {
     return NextResponse.json(
       { error: "Slash route conflicts with an existing ATO." },
       { status: 400 }

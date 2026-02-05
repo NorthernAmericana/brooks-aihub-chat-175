@@ -40,6 +40,7 @@ import {
   user,
   userLocation,
   vote,
+  routeRegistry,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -85,6 +86,17 @@ export async function createGuestUser() {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create guest user"
+    );
+  }
+}
+
+export async function listRouteRegistryEntries() {
+  try {
+    return await db.select().from(routeRegistry).orderBy(asc(routeRegistry.label));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to list route registry entries"
     );
   }
 }
