@@ -30,6 +30,9 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
     return apps.filter((app) => app.name.toLowerCase().includes(query));
   }, [apps, searchQuery]);
 
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const isCatalogUnavailable = apps.length === 0;
+
   return (
     <div className="store-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#140d12] via-[#1a0f16] to-[#120c16]">
       <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#140d12]/95 px-4 py-3 backdrop-blur-sm">
@@ -132,7 +135,13 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
           {filteredApps.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-white/50">No apps found</p>
+              {hasSearchQuery ? (
+                <p className="text-white/50">No apps match your search.</p>
+              ) : isCatalogUnavailable ? (
+                <p className="text-white/50">The app catalog is temporarily unavailable.</p>
+              ) : (
+                <p className="text-white/50">No apps found.</p>
+              )}
             </div>
           )}
         </div>
