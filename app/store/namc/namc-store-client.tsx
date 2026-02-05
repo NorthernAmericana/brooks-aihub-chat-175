@@ -14,7 +14,13 @@ function formatPrice(priceInCents: number) {
   }).format(priceInCents / 100);
 }
 
-export function NamcStoreClient({ products }: { products: StoreProduct[] }) {
+export function NamcStoreClient({
+  products,
+  showProductIngestion,
+}: {
+  products: StoreProduct[];
+  showProductIngestion: boolean;
+}) {
   const router = useRouter();
 
   useSwipeGesture({
@@ -61,7 +67,7 @@ export function NamcStoreClient({ products }: { products: StoreProduct[] }) {
       </div>
 
       <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+        <section className="rounded-3xl border border-pink-300/20 bg-gradient-to-br from-pink-500/15 via-white/5 to-transparent p-5 backdrop-blur-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
@@ -78,94 +84,152 @@ export function NamcStoreClient({ products }: { products: StoreProduct[] }) {
                 <p className="text-sm text-white/60">
                   Northern Americana Media Collection
                 </p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-pink-200/90">
+                  Staged Preview
+                </p>
               </div>
             </div>
+          </div>
 
-            <div className="flex w-full flex-col gap-3 md:w-auto">
-              <Link
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-pink-500 py-3 text-sm font-semibold text-white transition hover:bg-pink-600 md:w-56"
-                href="/NAMC"
-              >
-                Enter NAMC
-              </Link>
-              <Link
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                href="/store"
-              >
-                Back to store
-              </Link>
+          <p className="mt-4 max-w-2xl text-sm text-white/70">
+            We are intentionally rolling out categories in phases. Explore the
+            placeholders below to preview what is coming next.
+          </p>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">
+                Category rollout
+              </h3>
+              <p className="mt-1 text-sm text-white/60">
+                Books and Games will appear here first.
+              </p>
             </div>
+            <span className="rounded-full border border-pink-200/30 bg-pink-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-pink-100">
+              Placeholder mode
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {[
+              {
+                name: "Books",
+                message: "No entries yet",
+                subcopy:
+                  "Coming soon: stories, lore collections, and field guides.",
+              },
+              {
+                name: "Games",
+                message: "No entries yet",
+                subcopy:
+                  "Coming soon: playable experiences tied to NAMC worlds.",
+              },
+            ].map((category) => (
+              <article
+                className="rounded-2xl border border-dashed border-white/20 bg-black/20 p-5"
+                key={category.name}
+              >
+                <h4 className="text-base font-semibold text-white">
+                  {category.name}
+                </h4>
+                <p className="mt-3 text-sm font-semibold text-white/90">
+                  {category.message}
+                </p>
+                <p className="mt-1 text-sm text-white/60">{category.subcopy}</p>
+              </article>
+            ))}
           </div>
         </section>
 
         <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Products</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {products.map((product) => {
-              const actionLabel =
-                product.type === "merch"
-                  ? "Buy now"
-                  : product.type === "digital_media"
-                    ? "Open"
-                    : "Redeem";
-
-              return (
-                <article
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                  key={product.id}
-                >
-                  <div className="relative mb-3 h-40 overflow-hidden rounded-xl bg-white/10">
-                    {product.imageUrl ? (
-                      <Image
-                        alt={product.title}
-                        className="h-full w-full object-cover"
-                        fill
-                        src={product.imageUrl}
-                        unoptimized
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="text-xs uppercase tracking-wide text-pink-200/80">
-                    {product.type.replace("_", " ")}
-                  </div>
-                  <h4 className="mt-1 text-base font-semibold text-white">
-                    {product.title}
-                  </h4>
-                  {product.description ? (
-                    <p className="mt-2 text-sm text-white/70">
-                      {product.description}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="text-base font-bold text-white">
-                      {formatPrice(product.price)}
-                    </div>
-                    {product.type === "merch" && product.externalUrl ? (
-                      <a
-                        className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600"
-                        href={product.externalUrl}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {actionLabel}
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      <button
-                        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white"
-                        type="button"
-                      >
-                        {actionLabel}
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+          <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+            <Link
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-pink-500 py-3 text-sm font-semibold text-white transition hover:bg-pink-600 md:w-56"
+              href="/NAMC"
+            >
+              Enter NAMC
+            </Link>
+            <Link
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
+              href="/store"
+            >
+              Back to store
+            </Link>
           </div>
         </section>
+
+        {showProductIngestion ? (
+          <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-white">Products</h3>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {products.map((product) => {
+                const actionLabel =
+                  product.type === "merch"
+                    ? "Buy now"
+                    : product.type === "digital_media"
+                      ? "Open"
+                      : "Redeem";
+
+                return (
+                  <article
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                    key={product.id}
+                  >
+                    <div className="relative mb-3 h-40 overflow-hidden rounded-xl bg-white/10">
+                      {product.imageUrl ? (
+                        <Image
+                          alt={product.title}
+                          className="h-full w-full object-cover"
+                          fill
+                          src={product.imageUrl}
+                          unoptimized
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="text-xs uppercase tracking-wide text-pink-200/80">
+                      {product.type.replace("_", " ")}
+                    </div>
+                    <h4 className="mt-1 text-base font-semibold text-white">
+                      {product.title}
+                    </h4>
+                    {product.description ? (
+                      <p className="mt-2 text-sm text-white/70">
+                        {product.description}
+                      </p>
+                    ) : null}
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <div className="text-base font-bold text-white">
+                        {formatPrice(product.price)}
+                      </div>
+                      {product.type === "merch" && product.externalUrl ? (
+                        <a
+                          className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600"
+                          href={product.externalUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {actionLabel}
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <button
+                          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white"
+                          type="button"
+                        >
+                          {actionLabel}
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
       </div>
     </div>
   );
