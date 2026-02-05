@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { NAMC_APP_ICON_DISPLAY_PATH } from "@/lib/constants/namc";
+import namcAppIcon from "@/public/icons/namc-appicon.png";
 
 const INSTALL_STORAGE_KEY = "ato-app-installed:namc";
 
@@ -59,7 +59,7 @@ export default function NamcAppPage() {
               alt="NAMC icon"
               className="h-full w-full object-contain"
               height={44}
-              src={NAMC_APP_ICON_DISPLAY_PATH}
+              src={namcAppIcon}
               width={44}
             />
           </div>
@@ -81,7 +81,7 @@ export default function NamcAppPage() {
                   alt="NAMC icon"
                   className="h-full w-full object-contain"
                   height={96}
-                  src={NAMC_APP_ICON_DISPLAY_PATH}
+                  src={namcAppIcon}
                   width={96}
                 />
               </div>
