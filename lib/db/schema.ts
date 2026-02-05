@@ -362,6 +362,22 @@ export const avatarAddonPurchases = pgTable("avatar_addon_purchases", {
 
 export type AvatarAddonPurchase = InferSelectModel<typeof avatarAddonPurchases>;
 
+export const storeProducts = pgTable("store_products", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  type: varchar("type", {
+    enum: ["merch", "digital_media", "digital_code"],
+  }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  price: integer("price").notNull(),
+  imageUrl: text("image_url"),
+  externalUrl: text("external_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type StoreProduct = InferSelectModel<typeof storeProducts>;
+
 export const atoFile = pgTable("AtoFile", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   atoId: uuid("atoId")
