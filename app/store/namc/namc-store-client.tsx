@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreProduct } from "@/lib/db/schema";
-import { NAMC_APP_ICON_PATH } from "@/lib/constants/namc";
+import { NAMC_APP_ICON_DISPLAY_PATH } from "@/lib/constants/namc";
 
 function formatPrice(priceInCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -51,13 +51,13 @@ export function NamcStoreClient({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-1">
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-0.5">
             <Image
               alt="NAMC icon"
               className="h-full w-full object-contain"
-              height={40}
-              src={NAMC_APP_ICON_PATH}
-              width={40}
+              height={44}
+              src={NAMC_APP_ICON_DISPLAY_PATH}
+              width={44}
             />
           </div>
           <div>
@@ -71,13 +71,13 @@ export function NamcStoreClient({
         <section className="rounded-3xl border border-pink-300/20 bg-gradient-to-br from-pink-500/15 via-white/5 to-transparent p-5 backdrop-blur-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-2">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-1.5">
                 <Image
                   alt="NAMC icon"
                   className="h-full w-full object-contain"
-                  height={80}
-                  src={NAMC_APP_ICON_PATH}
-                  width={80}
+                  height={96}
+                  src={NAMC_APP_ICON_DISPLAY_PATH}
+                  width={96}
                 />
               </div>
               <div>
