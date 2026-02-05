@@ -118,6 +118,9 @@ export default function NamcLorePlaygroundPage() {
                 </code>{" "}
                 followed by your question.
               </p>
+              <p className="mt-2 text-xs text-emerald-200/90">
+                Free route: no Founders subscription required.
+              </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   className="rounded-full bg-purple-600/80 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"

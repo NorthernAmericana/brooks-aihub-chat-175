@@ -62,6 +62,7 @@ import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { getDefaultVoice } from "@/lib/voice";
+import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
 import { resolveRoute } from "@/lib/routes/resolveRoute";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
@@ -69,13 +70,6 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 export const maxDuration = 60;
 
 const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
-
-// Free subroutes that don't require founders access
-const FREE_SUBROUTES = [
-  "MyCarMindATO/Driver",
-  "MyCarMindATO/DeliveryDriver",
-  "MyCarMindATO/Traveler",
-];
 
 const UNOFFICIAL_ATO_ROUTE_KEY = "unofficial-ato";
 
@@ -399,9 +393,7 @@ export async function POST(request: Request) {
 
       // Check if this subroute requires founders access
       const requiresFoundersForNewChat =
-        !activeAto &&
-        firstMessageSlash?.includes("/") &&
-        !FREE_SUBROUTES.includes(firstMessageSlash);
+        !activeAto && requiresFoundersForSlashRoute(firstMessageSlash);
 
       if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
@@ -514,9 +506,7 @@ export async function POST(request: Request) {
     }
 
     const requiresFoundersAccess =
-      !activeAto &&
-      selectedAgent.slash.includes("/") &&
-      !FREE_SUBROUTES.includes(selectedAgent.slash);
+      !activeAto && requiresFoundersForSlashRoute(selectedAgent.slash);
 
     if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
