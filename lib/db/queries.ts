@@ -58,6 +58,50 @@ async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
   return operation();
 }
 
+function getDbErrorDetails(error: unknown) {
+  const databaseError = error as {
+    code?: string;
+    message?: string;
+  };
+
+  return {
+    code: databaseError?.code,
+    message: databaseError?.message,
+  };
+}
+
+function logDbError({
+  fn,
+  operation,
+  error,
+}: {
+  fn: string;
+  operation: string;
+  error: unknown;
+}) {
+  const details = getDbErrorDetails(error);
+  console.error("[DB_ERROR]", {
+    fn,
+    operation,
+    code: details.code,
+    message: details.message,
+  });
+
+  return details;
+}
+
+function formatDbCause({
+  operation,
+  code,
+  message,
+}: {
+  operation: string;
+  code?: string;
+  message?: string;
+}) {
+  return `${operation} failed${code ? ` (code: ${code})` : ""}${message ? `: ${message}` : ""}`;
+}
+
 export async function getUser(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -156,8 +200,21 @@ export async function saveChat({
         ttsVoiceLabel: ttsVoiceLabel ?? null,
       })
     );
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save chat");
+  } catch (error) {
+    const details = logDbError({
+      fn: "saveChat",
+      operation: "insert_chat",
+      error,
+    });
+
+    throw new ChatSDKError(
+      "bad_request:database",
+      formatDbCause({
+        operation: "save chat",
+        code: details.code,
+        message: details.message,
+      })
+    );
   }
 }
 
@@ -1101,8 +1158,21 @@ export async function getChatsByIds({ ids }: { ids: string[] }) {
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
     return await db.insert(message).values(messages);
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save messages");
+  } catch (error) {
+    const details = logDbError({
+      fn: "saveMessages",
+      operation: "insert_messages",
+      error,
+    });
+
+    throw new ChatSDKError(
+      "bad_request:database",
+      formatDbCause({
+        operation: "save messages",
+        code: details.code,
+        message: details.message,
+      })
+    );
   }
 }
 
@@ -1127,10 +1197,20 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .from(message)
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
-  } catch (_error) {
+  } catch (error) {
+    const details = logDbError({
+      fn: "getMessagesByChatId",
+      operation: "select_messages_by_chat_id",
+      error,
+    });
+
     throw new ChatSDKError(
       "bad_request:database",
-      "Failed to get messages by chat id"
+      formatDbCause({
+        operation: "get messages by chat id",
+        code: details.code,
+        message: details.message,
+      })
     );
   }
 }
@@ -1510,22 +1590,31 @@ export async function getMessageCountByUserId({
       return fallbackStats?.count ?? 0;
     }
   } catch (error) {
-    const databaseError = error as { code?: string; message?: string };
-    console.error("[DB][getMessageCountByUserId] Failed to get message count", {
-      code: databaseError?.code,
-      message: databaseError?.message,
+    const details = logDbError({
+      fn: "getMessageCountByUserId",
+      operation: "count_user_messages",
+      error,
     });
 
     if (isSchemaReadinessError(error)) {
       throw new ChatSDKError(
         "offline:database",
-        "Failed to get message count by user id due to database schema readiness"
+        formatDbCause({
+          operation:
+            "get message count by user id due to database schema readiness",
+          code: details.code,
+          message: details.message,
+        })
       );
     }
 
     throw new ChatSDKError(
       "bad_request:database",
-      "Failed to get message count by user id"
+      formatDbCause({
+        operation: "get message count by user id",
+        code: details.code,
+        message: details.message,
+      })
     );
   }
 }
