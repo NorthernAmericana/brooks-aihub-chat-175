@@ -225,7 +225,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true, badge: "gem" },
       { slash: "NAT", foundersOnly: false },
       { slash: "NAMC", foundersOnly: false },
-      { slash: "NAMC/Lore-Playground", foundersOnly: false },
+      { slash: "NAMC/Lore-Playground", foundersOnly: false, badge: "free" },
     ];
     const labelOverrides: Record<string, string> = {
       NAT: "Northern Americana Tech Agent",
