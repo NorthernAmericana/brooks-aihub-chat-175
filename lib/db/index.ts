@@ -5,8 +5,15 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { ChatSDKError } from "../errors";
 
-// biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
+const databaseUrl = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(
+    "No database URL configured. Set POSTGRES_URL or DATABASE_URL before starting the service."
+  );
+}
+
+const client = postgres(databaseUrl);
 export const db = drizzle(client);
 
 const REQUIRED_CHAT_COLUMNS = [
@@ -42,16 +49,7 @@ let chatRateLimitSchemaVerificationPromise: Promise<void> | null = null;
 let hasLoggedChatRateLimitSchemaFailure = false;
 
 async function verifyChatSchemaColumns() {
-  const rows = await db.execute<{ column_name: string }>(sql`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'Chat';
-  `);
-
-  const existingColumns = new Set(rows.map((row) => row.column_name));
-  const missingColumns = REQUIRED_CHAT_COLUMNS.filter(
-    (columnName) => !existingColumns.has(columnName)
-  );
+  const { missingColumns } = await getChatSchemaHealthSnapshot();
 
   if (missingColumns.length > 0) {
     if (!hasLoggedChatSchemaFailure) {
@@ -66,6 +64,36 @@ async function verifyChatSchemaColumns() {
       `Missing required Chat columns: ${missingColumns.join(", ")}`
     );
   }
+}
+
+export async function getChatSchemaHealthSnapshot() {
+  const rows = await db.execute<{ column_name: string }>(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'Chat';
+  `);
+
+  const existingColumns = new Set(rows.map((row) => row.column_name));
+  const missingColumns = REQUIRED_CHAT_COLUMNS.filter(
+    (columnName) => !existingColumns.has(columnName)
+  );
+
+  let nullSessionTypeCount: number | null = null;
+
+  if (existingColumns.has("sessionType")) {
+    const nullRows = await db.execute<{ count: number }>(sql`
+      SELECT COUNT(*)::int AS count
+      FROM "Chat"
+      WHERE "sessionType" IS NULL;
+    `);
+
+    nullSessionTypeCount = nullRows[0]?.count ?? 0;
+  }
+
+  return {
+    missingColumns,
+    nullSessionTypeCount,
+  };
 }
 
 async function verifyTableColumns({
