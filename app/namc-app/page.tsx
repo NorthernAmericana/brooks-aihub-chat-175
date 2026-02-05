@@ -54,13 +54,13 @@ export default function NamcAppPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-1">
             <Image
               alt="NAMC icon"
-              className="h-full w-full object-cover"
-              height={36}
+              className="h-full w-full object-contain"
+              height={40}
               src={NAMC_APP_ICON_PATH}
-              width={36}
+              width={40}
             />
           </div>
           <div>
@@ -76,13 +76,13 @@ export default function NamcAppPage() {
         <section className="rounded-3xl border border-white/10 bg-black/30 p-5 backdrop-blur-md">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-2">
                 <Image
                   alt="NAMC icon"
-                  className="h-full w-full object-cover"
-                  height={64}
+                  className="h-full w-full object-contain"
+                  height={80}
                   src={NAMC_APP_ICON_PATH}
-                  width={64}
+                  width={80}
                 />
               </div>
               <div>
