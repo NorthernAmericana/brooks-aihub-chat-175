@@ -554,6 +554,17 @@ const CalendarView = ({
     }
   }, [memories, selectedDay]);
 
+  useEffect(() => {
+    if (!selectedDay) {
+      return;
+    }
+
+    if (!memoriesByDate.has(selectedDay)) {
+      const firstAvailableDay = memories[0] ? getMemoryDateKey(memories[0]) : null;
+      setSelectedDay(firstAvailableDay);
+    }
+  }, [memories, memoriesByDate, selectedDay]);
+
   const openCalendar = () => {
     setCalendarMode("calendar");
     setCalendarOpen(true);
@@ -741,20 +752,25 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
   }, [selectedVoiceId]);
 
   const filteredMemories = useMemo(() => {
-    if (scopeFilter === "all") {
-      return localMemories;
-    }
+    const scopedMemories =
+      scopeFilter === "all"
+        ? localMemories
+        : localMemories.filter((memory) => {
+            const scope = getScopeInfo(memory.route);
+            if (scopeFilter === "shared") {
+              return scope.label === "Shared";
+            }
+            if (scopeFilter === "official") {
+              return scope.label === "Official ATO";
+            }
+            return scope.label === "General";
+          });
 
-    return localMemories.filter((memory) => {
-      const scope = getScopeInfo(memory.route);
-      if (scopeFilter === "shared") {
-        return scope.label === "Shared";
-      }
-      if (scopeFilter === "official") {
-        return scope.label === "Official ATO";
-      }
-      return scope.label === "General";
-    });
+    return [...scopedMemories].sort(
+      (a, b) =>
+        new Date(getMemoryDate(b)).getTime() -
+        new Date(getMemoryDate(a)).getTime()
+    );
   }, [localMemories, scopeFilter]);
 
   const resetAudio = () => {

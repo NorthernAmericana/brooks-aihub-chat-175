@@ -61,16 +61,13 @@ export function BrooksBearsHistoryPanel({
     );
   }
 
-  const renderChatGroup = (title: string, chats: Chat[]) => {
+  const renderChatGroup = (chats: Chat[]) => {
     if (!chats.length) {
       return null;
     }
 
     return (
       <div>
-        <div className="px-2 py-1 text-xs uppercase tracking-[0.2em] text-white/40">
-          {title}
-        </div>
         <div className="flex flex-col gap-2">
           {chats.map((chat) => (
             <Link
@@ -91,11 +88,21 @@ export function BrooksBearsHistoryPanel({
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto px-6 py-6">
-      {renderChatGroup("Today", groupedChats.today)}
-      {renderChatGroup("Yesterday", groupedChats.yesterday)}
-      {renderChatGroup("Last 7 days", groupedChats.lastWeek)}
-      {renderChatGroup("Last 30 days", groupedChats.lastMonth)}
-      {renderChatGroup("Older", groupedChats.older)}
+      {groupedChats.map((monthGroup) => (
+        <div className="flex flex-col gap-4" key={monthGroup.id}>
+          <div className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+            {monthGroup.label}
+          </div>
+          {monthGroup.weeks.map((weekGroup) => (
+            <div className="flex flex-col gap-2" key={weekGroup.id}>
+              <div className="px-2 py-1 text-xs uppercase tracking-[0.2em] text-white/40">
+                {weekGroup.label}
+              </div>
+              {renderChatGroup(weekGroup.chats)}
+            </div>
+          ))}
+        </div>
+      ))}
 
       <div>
         {hasReachedEnd ? (
