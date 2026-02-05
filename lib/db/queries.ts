@@ -18,7 +18,11 @@ import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
-import { assertChatTableColumnsReady, db } from "./index";
+import {
+  assertChatRateLimitTablesReady,
+  assertChatTableColumnsReady,
+  db,
+} from "./index";
 import {
   atoApps,
   atoFile,
@@ -31,6 +35,7 @@ import {
   entitlement,
   memory,
   message,
+  messageDeprecated,
   redemption,
   redemptionCode,
   routeRegistry,
@@ -1439,13 +1444,29 @@ export async function getMessageCountByUserId({
   id: string;
   differenceInHours: number;
 }) {
-  try {
-    const twentyFourHoursAgo = new Date(
-      Date.now() - differenceInHours * 60 * 60 * 1000
-    );
+  const twentyFourHoursAgo = new Date(
+    Date.now() - differenceInHours * 60 * 60 * 1000
+  );
 
-    const [stats] = await withChatTableSchemaGuard(() =>
-      db
+  const isSchemaReadinessError = (error: unknown) => {
+    if (error instanceof ChatSDKError) {
+      return error.type === "offline" && error.surface === "database";
+    }
+
+    const databaseError = error as {
+      code?: string;
+      message?: string;
+    };
+    const code = databaseError?.code ?? "";
+
+    return code === "42P01" || code === "42703";
+  };
+
+  try {
+    await assertChatRateLimitTablesReady();
+
+    try {
+      const [stats] = await db
         .select({ count: count(message.id) })
         .from(message)
         .innerJoin(chat, eq(message.chatId, chat.id))
@@ -1456,11 +1477,52 @@ export async function getMessageCountByUserId({
             eq(message.role, "user")
           )
         )
-        .execute()
-    );
+        .execute();
 
-    return stats?.count ?? 0;
-  } catch (_error) {
+      return stats?.count ?? 0;
+    } catch (primaryError) {
+      const primaryDbError = primaryError as {
+        code?: string;
+        message?: string;
+      };
+      console.error("[DB][getMessageCountByUserId] Message_v2 query failed", {
+        code: primaryDbError?.code,
+        message: primaryDbError?.message,
+      });
+
+      if (!isSchemaReadinessError(primaryError)) {
+        throw primaryError;
+      }
+
+      const [fallbackStats] = await db
+        .select({ count: count(messageDeprecated.id) })
+        .from(messageDeprecated)
+        .innerJoin(chat, eq(messageDeprecated.chatId, chat.id))
+        .where(
+          and(
+            eq(chat.userId, id),
+            gte(messageDeprecated.createdAt, twentyFourHoursAgo),
+            eq(messageDeprecated.role, "user")
+          )
+        )
+        .execute();
+
+      return fallbackStats?.count ?? 0;
+    }
+  } catch (error) {
+    const databaseError = error as { code?: string; message?: string };
+    console.error("[DB][getMessageCountByUserId] Failed to get message count", {
+      code: databaseError?.code,
+      message: databaseError?.message,
+    });
+
+    if (isSchemaReadinessError(error)) {
+      throw new ChatSDKError(
+        "offline:database",
+        "Failed to get message count by user id due to database schema readiness"
+      );
+    }
+
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message count by user id"
