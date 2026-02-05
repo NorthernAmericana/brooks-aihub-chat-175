@@ -51,6 +51,33 @@ let hasLoggedChatRateLimitSchemaFailure = false;
 async function verifyChatSchemaColumns() {
   const { missingColumns } = await getChatSchemaHealthSnapshot();
 
+  if (
+    missingColumns.length === 1 &&
+    missingColumns[0] === "sessionType"
+  ) {
+    console.warn(
+      '[DB SCHEMA CHECK] Auto-remediating missing public."Chat"."sessionType" column to avoid downtime. This is a compatibility fallback; run migrations to keep schema in sync.'
+    );
+
+    await db.execute(sql`
+      ALTER TABLE "Chat"
+      ADD COLUMN IF NOT EXISTS "sessionType" varchar DEFAULT 'chat';
+    `);
+
+    await db.execute(sql`
+      UPDATE "Chat"
+      SET "sessionType" = 'chat'
+      WHERE "sessionType" IS NULL;
+    `);
+
+    await db.execute(sql`
+      ALTER TABLE "Chat"
+      ALTER COLUMN "sessionType" SET DEFAULT 'chat';
+    `);
+
+    return;
+  }
+
   if (missingColumns.length > 0) {
     if (!hasLoggedChatSchemaFailure) {
       hasLoggedChatSchemaFailure = true;
