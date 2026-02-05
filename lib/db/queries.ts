@@ -45,6 +45,7 @@ import {
   userLocation,
   vote,
   routeRegistry,
+  storeProducts,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -105,6 +106,17 @@ export async function listRouteRegistryEntries() {
   }
 }
 
+
+export async function listStoreProducts() {
+  try {
+    return await db.select().from(storeProducts).orderBy(asc(storeProducts.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to list store products"
+    );
+  }
+}
 export async function saveChat({
   id,
   userId,
