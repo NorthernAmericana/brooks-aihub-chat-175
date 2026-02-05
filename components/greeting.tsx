@@ -24,11 +24,97 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import {
+  formatRoutePath,
+  normalizeRouteKey,
+  sanitizeRouteSegment,
+} from "@/lib/routes/utils";
 import { cn, fetcher } from "@/lib/utils";
 
 type GreetingProps = {
   onSelectFolder?: (folder: string, options?: { atoId?: string }) => void;
+};
+
+type TreeNode = {
+  segment: string;
+  path: string;
+  label?: string;
+  route?: string;
+  badge?: "gem" | "free" | "custom";
+  foundersOnly?: boolean;
+  children: TreeNode[];
+};
+
+const TreeNodeItem = ({
+  node,
+  depth = 0,
+  onSelectFolder,
+}: {
+  node: TreeNode;
+  depth?: number;
+  onSelectFolder?: (folder: string) => void;
+}) => {
+  const hasChildren = node.children.length > 0;
+  const label = node.label ?? node.segment;
+  return (
+    <li className="space-y-2">
+      <button
+        className={cn(
+          "flex w-full flex-col items-start gap-1 rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-left transition hover:bg-background",
+          depth > 0 ? "ml-4" : null
+        )}
+        onClick={() => {
+          if (node.route) {
+            onSelectFolder?.(node.route);
+          }
+        }}
+        type="button"
+      >
+        <span className="flex items-center gap-2 text-xs font-semibold">
+          <span className="text-muted-foreground">📁</span>
+          <span>{label}</span>
+          {hasChildren ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[0.5rem] uppercase tracking-[0.2em] text-muted-foreground">
+              {node.children.length} subroute
+              {node.children.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
+          {node.badge === "gem" ? (
+            <span className="text-sm" title="Founders access only">
+              💎
+            </span>
+          ) : node.badge === "free" ? (
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+              Free
+            </span>
+          ) : null}
+        </span>
+        {node.route ? (
+          <span className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground">
+            {node.route}
+          </span>
+        ) : null}
+        {node.foundersOnly ? (
+          <span className="text-[0.55rem] uppercase tracking-[0.2em] text-amber-500">
+            Founders only
+          </span>
+        ) : null}
+      </button>
+      {hasChildren ? (
+        <ul className="space-y-2">
+          {node.children.map((child) => (
+            <TreeNodeItem
+              key={child.path}
+              node={child}
+              depth={depth + 1}
+              onSelectFolder={onSelectFolder}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
 };
 
 type AtoListResponse = {
@@ -40,17 +126,13 @@ type AtoListResponse = {
   }>;
 };
 
-const formatAtoRoute = (value: string) =>
-  value
-    .trim()
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\s+/g, "")
-    .replace(/\/{2,}/g, "/")
-    .replace(/[^a-zA-Z0-9/_-]/g, "");
-
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const [now, setNow] = useState(() => new Date());
+  const { data: routeData } = useSWR<{ routes: RouteSuggestion[] }>(
+    "/api/routes",
+    fetcher
+  );
   const { data: atoData, mutate: mutateAtos } = useSWR<AtoListResponse>(
     "/api/ato",
     fetcher
@@ -61,6 +143,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     name: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -75,14 +158,14 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     return atos
       .map((ato) => {
         const routeSource = ato.route || ato.name;
-        const formattedRoute = formatAtoRoute(routeSource);
+        const formattedRoute = sanitizeRouteSegment(routeSource);
         if (!formattedRoute) {
           return null;
         }
         return {
           label: ato.name,
           slash: formattedRoute,
-          folder: `/${formattedRoute}/`,
+          folder: formatRoutePath(formattedRoute),
           foundersOnly: false,
           badge: "custom" as const,
           atoId: ato.id,
@@ -112,6 +195,11 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   }, [customAtoFolders, selectedAtoId]);
 
   const suggestedFolders = useMemo(() => {
+    const officialRoutes =
+      routeData?.routes?.filter((route) => route.kind === "official") ?? [];
+    const routeByKey = new Map(
+      officialRoutes.map((route) => [normalizeRouteKey(route.slash), route])
+    );
     const desiredOrder: Array<{
       slash: string;
       foundersOnly: boolean;
@@ -137,19 +225,17 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       { slash: "Brooks AI HUB/Summaries", foundersOnly: true, badge: "gem" },
       { slash: "NAT", foundersOnly: false },
       { slash: "NAMC", foundersOnly: false },
+      { slash: "NAMC/Lore-Playground", foundersOnly: false },
     ];
-
-    const agentBySlash = new Map(
-      listAgentConfigs().map((agent) => [agent.slash, agent])
-    );
     const labelOverrides: Record<string, string> = {
       NAT: "Northern Americana Tech Agent",
+      "NAMC/Lore-Playground": "Lore Playground",
     };
 
     return desiredOrder
       .map((entry) => {
-        const agent = agentBySlash.get(entry.slash);
-        if (!agent) {
+        const route = routeByKey.get(normalizeRouteKey(entry.slash));
+        if (!route) {
           return null;
         }
 
@@ -160,9 +246,9 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           foundersOnly: boolean;
           badge?: "gem" | "free";
         } = {
-          label: labelOverrides[agent.slash] ?? agent.label,
-          slash: agent.slash,
-          folder: `/${agent.slash}/`,
+          label: labelOverrides[route.slash] ?? route.label,
+          slash: route.slash,
+          folder: route.route,
           foundersOnly: entry.foundersOnly,
         };
 
@@ -184,6 +270,68 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         } => Boolean(folder)
       );
   }, []);
+
+  const officialTree = useMemo<TreeNode[]>(() => {
+    const root: TreeNode = {
+      segment: "",
+      path: "",
+      children: [],
+    };
+
+    suggestedFolders.forEach((folder) => {
+      const segments = folder.slash.split("/").filter(Boolean);
+      let current = root;
+      segments.forEach((segment, index) => {
+        const nextPath = current.path ? `${current.path}/${segment}` : segment;
+        let child = current.children.find((node) => node.segment === segment);
+        if (!child) {
+          child = {
+            segment,
+            path: nextPath,
+            children: [],
+          };
+          current.children.push(child);
+        }
+        if (index === segments.length - 1) {
+          child.label = folder.label;
+          child.route = folder.folder;
+          child.badge = folder.badge;
+          child.foundersOnly = folder.foundersOnly;
+        }
+        current = child;
+      });
+    });
+
+    const sortTree = (nodes: TreeNode[]) => {
+      nodes.sort((a, b) => a.segment.localeCompare(b.segment));
+      nodes.forEach((node) => sortTree(node.children));
+    };
+    sortTree(root.children);
+
+    return root.children;
+  }, [suggestedFolders]);
+
+  const allAtoFolders = useMemo(() => {
+    const combined = [
+      ...suggestedFolders.map((folder) => ({
+        ...folder,
+        badge: folder.badge,
+      })),
+      ...customAtoFolders.map((folder) => ({
+        label: folder.label,
+        slash: folder.slash,
+        folder: folder.folder,
+        foundersOnly: false,
+        badge: "custom" as const,
+        atoId: folder.atoId,
+      })),
+    ];
+
+    const sorted = [...combined].sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+    return sortOrder === "asc" ? sorted : sorted.reverse();
+  }, [customAtoFolders, sortOrder, suggestedFolders]);
 
   const formattedNow = useMemo(
     () =>
@@ -273,102 +421,175 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
-        {customAtoFolders.length > 0 && (
-          <div className="mb-6">
-            <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
-              your custom ATO clouds
+        <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
+            <div>
+              <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                ATO Explorer Widgets
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Browse official and custom ATO routes like a file explorer.
+              </p>
             </div>
-            <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
-              {customAtoFolders.map((folder, index) => (
-                <div
-                  className="relative"
-                  key={folder.folder}
-                  style={cloudStyles[index % cloudStyles.length]}
-                >
-                  <button
-                    aria-pressed={selectedAtoId === folder.atoId}
-                    className={cn(
-                      "cloud-button flex h-full px-4 py-2 text-xs transition hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-3 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40",
-                      selectedAtoId === folder.atoId
-                        ? "ring-2 ring-foreground/40 ring-offset-2 ring-offset-background"
-                        : null
-                    )}
-                    onClick={() => {
-                      setSelectedAtoId(folder.atoId);
-                      onSelectFolder?.(folder.folder, { atoId: folder.atoId });
-                    }}
-                    type="button"
-                  >
-                    <span className="flex w-full flex-col gap-0.5 pr-6 text-left leading-tight">
-                      <span className="text-xs font-medium leading-snug sm:text-sm">
-                        {folder.label}
-                        <span
-                          className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-amber-500 sm:text-[0.55rem]"
-                          title="Custom ATO"
-                        >
-                          CUSTOM
-                        </span>
-                      </span>
-                      <span className="text-[0.6rem] uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[0.65rem]">
-                        {folder.folder}
-                      </span>
-                    </span>
-                  </button>
-                  <DropdownMenu
-                    onOpenChange={(open) => {
-                      if (open) {
-                        setSelectedAtoId(folder.atoId);
-                      }
-                    }}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        aria-label={`Manage ${folder.label}`}
-                        className="absolute right-1 top-1 h-7 w-7 rounded-full bg-background/70 p-0 text-muted-foreground hover:bg-background hover:text-foreground"
-                        size="icon-sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <MoreVertical className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          router.push(`/create-ato/${folder.atoId}`);
-                        }}
-                      >
-                        Customize settings
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onSelect={() =>
-                          setDeleteTarget({
-                            id: folder.atoId,
-                            name: folder.label,
-                          })
-                        }
-                      >
-                        Delete ATO
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
+            <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+              {suggestedFolders.length + customAtoFolders.length} total folders
             </div>
           </div>
-        )}
+          <div className="mt-4 grid w-full gap-4 text-left sm:grid-cols-2">
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Official ATO file system</span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                  Verified
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Officially made ATOs with routes and subroutes.
+              </p>
+              <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
+                <ul className="space-y-2 text-xs">
+                  {officialTree.map((node) => (
+                    <TreeNodeItem
+                      key={node.path}
+                      node={node}
+                      onSelectFolder={onSelectFolder}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Custom ATO file system</span>
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-amber-500">
+                  Your builds
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Your custom-made ATOs with editable settings.
+              </p>
+              <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
+                {customAtoFolders.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No custom ATOs yet. Create one to see it listed here.
+                  </p>
+                ) : (
+                  <ul className="space-y-2 text-xs">
+                    {customAtoFolders.map((folder) => (
+                      <li
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2"
+                        key={folder.folder}
+                      >
+                        <button
+                          aria-pressed={selectedAtoId === folder.atoId}
+                          className={cn(
+                            "flex flex-1 flex-col items-start gap-1 text-left text-xs font-medium",
+                            selectedAtoId === folder.atoId
+                              ? "text-foreground"
+                              : "text-foreground/80"
+                          )}
+                          onClick={() => {
+                            setSelectedAtoId(folder.atoId);
+                            onSelectFolder?.(folder.folder, {
+                              atoId: folder.atoId,
+                            });
+                          }}
+                          type="button"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-muted-foreground">📁</span>
+                            <span>{folder.label}</span>
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-amber-500">
+                              Custom
+                            </span>
+                          </span>
+                          <span className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">
+                            {folder.folder}
+                          </span>
+                        </button>
+                        <DropdownMenu
+                          onOpenChange={(open) => {
+                            if (open) {
+                              setSelectedAtoId(folder.atoId);
+                            }
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-label={`Manage ${folder.label}`}
+                              className="h-8 w-8 rounded-full bg-background/70 p-0 text-muted-foreground hover:bg-background hover:text-foreground"
+                              size="icon-sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <MoreVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                router.push(`/create-ato/${folder.atoId}`);
+                              }}
+                            >
+                              Customize settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() =>
+                                setDeleteTarget({
+                                  id: folder.atoId,
+                                  name: folder.label,
+                                })
+                              }
+                            >
+                              Delete ATO
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
-          all ATO App Folder Clouds
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="greeting-clouds-label text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-[0.6rem] md:text-xs">
+            all ATO App Folder Clouds
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="h-7 rounded-full text-[0.55rem] uppercase tracking-[0.2em]"
+                size="sm"
+                variant="outline"
+              >
+                Sort: {sortOrder === "asc" ? "A-Z" : "Z-A"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setSortOrder("asc")}>
+                Alphabetical (A-Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setSortOrder("desc")}>
+                Reverse (Z-A)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="mt-4 flex w-full flex-wrap justify-center gap-4">
-          {suggestedFolders.map((folder, index) => (
+          {allAtoFolders.map((folder, index) => (
             <button
               className="cloud-button flex h-full px-4 py-2 text-xs transition hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-3 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
               key={folder.folder}
-              onClick={() => onSelectFolder?.(folder.folder)}
+              onClick={() =>
+                onSelectFolder?.(folder.folder, {
+                  atoId: "atoId" in folder ? folder.atoId : undefined,
+                })
+              }
               style={cloudStyles[index % cloudStyles.length]}
               type="button"
             >
@@ -389,6 +610,13 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                       title="Free access - no founders subscription required"
                     >
                       FREE
+                    </span>
+                  ) : folder.badge === "custom" ? (
+                    <span
+                      className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-amber-500 sm:text-[0.55rem]"
+                      title="Custom ATO"
+                    >
+                      CUSTOM
                     </span>
                   ) : null}
                   {folder.badge === "gem" ? (

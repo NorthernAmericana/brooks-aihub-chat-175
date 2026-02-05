@@ -7,7 +7,17 @@ const textPartSchema = z.object({
 
 const filePartSchema = z.object({
   type: z.enum(["file"]),
-  mediaType: z.enum(["image/jpeg", "image/png"]),
+  mediaType: z
+    .string()
+    .refine(
+      (value) =>
+        value === "application/pdf" ||
+        value.startsWith("image/") ||
+        value.startsWith("video/"),
+      {
+        message: "Unsupported media type",
+      }
+    ),
   name: z.string().min(1).max(100),
   url: z.string().url(),
 });
@@ -15,7 +25,7 @@ const filePartSchema = z.object({
 const partSchema = z.union([textPartSchema, filePartSchema]);
 
 const userMessageSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   role: z.enum(["user"]),
   parts: z.array(partSchema),
 });
@@ -35,6 +45,7 @@ export const postRequestBodySchema = z.object({
   selectedChatModel: z.string(),
   selectedVisibilityType: z.enum(["public", "private"]),
   atoId: z.string().uuid().optional(),
+  sessionType: z.enum(["chat", "video-call"]).optional(),
 });
 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;

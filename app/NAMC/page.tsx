@@ -8,8 +8,11 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
+import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 
 type NamcCardKind = "video" | "game" | "album" | "lore";
 
@@ -22,6 +25,40 @@ type NamcCard = {
   durationLabel?: string;
   metricLabel?: string;
 };
+
+type GalleryKind = "video" | "photo";
+
+type GalleryItem = {
+  id: string;
+  title: string;
+  description: string;
+  kind: GalleryKind;
+  badge?: string;
+};
+
+const spotlightBadges = [
+  "Combo Pack",
+  "Game Early Access",
+  "Full Novel Early 2027",
+] as const;
+
+const spotlightLinks = [
+  {
+    id: "spotlight-steam",
+    label: "Steam Early Access",
+    href: "https://store.steampowered.com/",
+  },
+  {
+    id: "spotlight-itch",
+    label: "Itch.io Early Access",
+    href: "https://itch.io/",
+  },
+  {
+    id: "spotlight-novel",
+    label: "Novel preorder (placeholder)",
+    href: "https://example.com/my-daughter-death-novel",
+  },
+] as const;
 
 const collections: NamcCard[] = [
   {
@@ -49,6 +86,13 @@ const collections: NamcCard[] = [
     title: "Enter a Story",
     subtitle: "Lore shelf",
     kind: "lore",
+  },
+  {
+    id: "collection-lore-playground",
+    title: "Lore Playground",
+    subtitle: "AI Assistant",
+    kind: "lore",
+    badge: "Chat",
   },
 ] as const;
 
@@ -90,11 +134,11 @@ const newGames: NamcCard[] = [
   },
   {
     id: "game-my-daughter-death",
-    title: "My Daughter, Death",
+    title: "My Daughter, Death: Frostbitten",
     subtitle: "Narrative game",
     kind: "game",
-    badge: "In progress",
-    metricLabel: "Act 1 draft",
+    badge: "Early access",
+    metricLabel: "Full novel early 2027",
   },
   {
     id: "game-night-drive",
@@ -103,6 +147,64 @@ const newGames: NamcCard[] = [
     kind: "game",
     badge: "Wishlist",
     metricLabel: "Playable demo",
+  },
+] as const;
+
+const conceptTrailers = NAMC_TRAILERS;
+
+const gameGallery: GalleryItem[] = [
+  {
+    id: "game-gallery-teaser",
+    title: "Frostbitten early access teaser",
+    description: "Gameplay vibe reel",
+    kind: "video",
+  },
+  {
+    id: "game-gallery-trailer",
+    title: "Whiteout survival trailer",
+    description: "Story beats preview",
+    kind: "video",
+    badge: "New",
+  },
+  {
+    id: "game-gallery-cabin",
+    title: "Cabin in the drift",
+    description: "Environment concept",
+    kind: "photo",
+  },
+  {
+    id: "game-gallery-forest",
+    title: "Northwood trail",
+    description: "Atmospheric still",
+    kind: "photo",
+  },
+] as const;
+
+const novelGallery: GalleryItem[] = [
+  {
+    id: "novel-gallery-reading",
+    title: "Opening chapter reading",
+    description: "Audio + video tease",
+    kind: "video",
+  },
+  {
+    id: "novel-gallery-cover",
+    title: "Frostbitten cover study",
+    description: "Alternate jacket draft",
+    kind: "photo",
+    badge: "Preview",
+  },
+  {
+    id: "novel-gallery-notes",
+    title: "Field journal inserts",
+    description: "Layout mockup",
+    kind: "photo",
+  },
+  {
+    id: "novel-gallery-mood",
+    title: "Mood reel",
+    description: "Ambient score montage",
+    kind: "video",
   },
 ] as const;
 
@@ -167,7 +269,7 @@ function CardBase({
 
   if (variant === "tile") {
     return (
-      <div className="relative h-[92px] w-[132px] overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+      <div className="relative h-[88px] w-[124px] shrink-0 overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:h-[92px] sm:w-[132px]">
         <div className={`absolute inset-0 ${bg}`} />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.75))]" />
         {badge && (
@@ -183,7 +285,7 @@ function CardBase({
   }
 
   return (
-    <div className="group relative w-[240px] overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+    <div className="group relative w-[210px] shrink-0 overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:w-[240px]">
       <div className={`absolute inset-0 ${bg}`} />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.82))]" />
       <div className="relative z-10 flex aspect-[16/9] items-end p-3">
@@ -208,8 +310,77 @@ function CardBase({
   );
 }
 
+function GalleryCard({ item }: { item: GalleryItem }) {
+  const accent =
+    item.kind === "video"
+      ? "bg-[radial-gradient(circle_at_20%_20%,rgba(121,198,255,0.35),transparent_55%),linear-gradient(135deg,rgba(20,32,48,0.95),rgba(12,18,28,0.95))]"
+      : "bg-[radial-gradient(circle_at_20%_20%,rgba(255,209,140,0.28),transparent_55%),linear-gradient(135deg,rgba(56,38,26,0.95),rgba(20,14,18,0.95))]";
+
+  return (
+    <div className="group relative h-[160px] w-[220px] shrink-0 overflow-hidden rounded-2xl border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:h-[176px] sm:w-[260px]">
+      <div className={`absolute inset-0 ${accent}`} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.82))]" />
+      <div className="relative z-10 flex h-full flex-col justify-between p-4">
+        <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
+          <span>{item.kind === "video" ? "Video" : "Photo"}</span>
+          {item.badge && (
+            <span className="rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[9px] text-white/80">
+              {item.badge}
+            </span>
+          )}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-[#f6e6c8]">{item.title}</p>
+          <p className="mt-1 text-xs text-white/70">{item.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TrailerCard({
+  trailer,
+}: {
+  trailer: (typeof conceptTrailers)[number];
+}) {
+  return (
+    <div className="flex w-[280px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/25 shadow-[0_12px_28px_rgba(0,0,0,0.45)] sm:w-[320px]">
+      <div className="relative aspect-video w-full">
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+          src={trailer.embedUrl}
+          title={`${trailer.title} trailer`}
+        />
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+          {trailer.category}
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-[#f6e6c8]">
+            {trailer.title}
+          </p>
+          <p className="text-xs text-white/70">{trailer.subtitle}</p>
+        </div>
+        <Link
+          className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6e6c8] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+          href={{
+            pathname: "/NAMC/library/trailers",
+            query: { trailer: trailer.id },
+          }}
+        >
+          Open player
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function NamcHomePage() {
   const [query, setQuery] = useState("");
+  const { profileIcon } = useProfileIcon();
 
   const filteredCollections = useMemo(
     () => collections.filter((item) => matchesQuery(query, item)),
@@ -259,42 +430,94 @@ export default function NamcHomePage() {
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 text-white/80 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
                 type="button"
               >
-                <CircleUserRound className="h-5 w-5" />
+                {profileIcon ? (
+                  <Image
+                    alt="Profile icon"
+                    className="h-8 w-8 rounded-full object-cover"
+                    height={32}
+                    src={profileIcon}
+                    width={32}
+                  />
+                ) : (
+                  <CircleUserRound className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 overflow-y-auto px-4 pb-24 pt-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-          <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
+        <main className="mx-auto w-full max-w-6xl flex-1 overflow-y-auto px-4 pb-32 pt-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain sm:px-6">
+          <div className="mb-5 md:hidden">
+            <label className="sr-only" htmlFor="namc-search-mobile">
+              Search NAMC
+            </label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+              <input
+                className="w-full rounded-full border border-white/15 bg-black/30 py-2.5 pl-11 pr-4 text-sm text-white placeholder:text-white/55 focus:border-white/30 focus:bg-black/40 focus:outline-none"
+                id="namc-search-mobile"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search projects, playlists, lore…"
+                type="search"
+                value={query}
+              />
+            </div>
+          </div>
+
+          <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-black/25 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.5)] backdrop-blur-md">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_10%,rgba(255,215,140,0.20),transparent_55%)]" />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.82))]" />
               <div className="relative">
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/65">
-                  Featured
+                  Spotlight
                 </p>
                 <h1 className="mt-3 text-3xl font-bold text-[#f6e6c8] pixel-text-shadow">
-                  LOST CREEK FOLK
+                  My Daughter, Death: Frostbitten
                 </h1>
                 <p className="mt-2 text-sm text-white/75">
-                  A cozy-dread collection shelf. Watch, listen, or dive into lore
-                  notes.
+                  Combo pack spotlight with the video game early access and the
+                  full novel release arriving in early 2027.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <button
-                    className="rounded-full bg-[#f6e6c8] px-5 py-2 text-sm font-semibold text-[#1b0f0f] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
-                    type="button"
-                  >
-                    Watch now
-                  </button>
-                  <button
-                    className="rounded-full border border-white/20 bg-black/35 px-5 py-2 text-sm font-semibold text-white/90 backdrop-blur-sm transition hover:bg-black/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
-                    type="button"
-                  >
-                    Add to list
-                  </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {spotlightBadges.map((badge) => (
+                    <span
+                      className="rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80"
+                      key={badge}
+                    >
+                      {badge}
+                    </span>
+                  ))}
                 </div>
+                <details className="group mt-5 overflow-hidden rounded-2xl border border-white/15 bg-black/35">
+                  <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40">
+                    Open combo pack links
+                    <span className="text-xs text-white/60 group-open:hidden">
+                      Tap to view
+                    </span>
+                    <span className="hidden text-xs text-white/60 group-open:inline">
+                      Tap to close
+                    </span>
+                  </summary>
+                  <div className="border-t border-white/10 p-4">
+                    <div className="grid gap-2">
+                      {spotlightLinks.map((link) => (
+                        <Link
+                          className="flex items-center justify-between rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-black/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                          href={link.href}
+                          key={link.id}
+                        >
+                          <span>{link.label}</span>
+                          <span className="text-xs text-white/60">Open</span>
+                        </Link>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-white/60">
+                      Novel preorder link is a placeholder until the storefront
+                      goes live.
+                    </p>
+                  </div>
+                </details>
               </div>
             </div>
 
@@ -305,7 +528,11 @@ export default function NamcHomePage() {
                   {filteredCollections.map((item) => (
                     <Link
                       className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
-                      href="/NAMC/library"
+                      href={
+                        item.id === "collection-lore-playground"
+                          ? "/NAMC/lore-playground"
+                          : "/NAMC/library"
+                      }
                       key={item.id}
                     >
                       <CardBase item={item} variant="tile" />
@@ -358,6 +585,61 @@ export default function NamcHomePage() {
                   No game matches.
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="text-lg font-semibold text-[#f6e6c8] pixel-text-shadow">
+                Concept Trailers
+              </h2>
+              <Link
+                className="text-xs font-semibold text-[#f6e6c8]/80 transition hover:text-[#f6e6c8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                href="/NAMC/library/trailers"
+              >
+                Open player
+              </Link>
+            </div>
+            <p className="mt-2 text-sm text-white/70">
+              Stream the My Daughter, Death concept trailers right from the
+              NAMC home screen.
+            </p>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+              {conceptTrailers.map((trailer) => (
+                <TrailerCard key={trailer.id} trailer={trailer} />
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="text-lg font-semibold text-[#f6e6c8] pixel-text-shadow">
+                Frostbitten Game Gallery
+              </h2>
+              <span className="text-xs font-semibold text-white/60">
+                Videos + Photos
+              </span>
+            </div>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+              {gameGallery.map((item) => (
+                <GalleryCard item={item} key={item.id} />
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-[28px] border border-white/10 bg-black/20 p-5 backdrop-blur-md">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="text-lg font-semibold text-[#f6e6c8] pixel-text-shadow">
+                Frostbitten Novel Gallery
+              </h2>
+              <span className="text-xs font-semibold text-white/60">
+                Videos + Photos
+              </span>
+            </div>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch">
+              {novelGallery.map((item) => (
+                <GalleryCard item={item} key={item.id} />
+              ))}
             </div>
           </section>
         </main>

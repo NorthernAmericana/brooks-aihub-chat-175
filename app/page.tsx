@@ -162,7 +162,7 @@ export default function IntroPage() {
 
         <Link
           className="intro-start-button rounded-full px-8 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#1b0f0f] transition hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-          href="/brooks-ai-hub/"
+          href="/brooks-ai-hub/tutorial"
         >
           Tap to Start
         </Link>

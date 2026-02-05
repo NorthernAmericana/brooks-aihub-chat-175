@@ -10,45 +10,79 @@ import {
   gte,
   inArray,
   lt,
-  sql,
+  lte,
   type SQL,
+  sql,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
+import {
+  buildDbOperationCause,
+  getDbErrorDetails,
+  rethrowChatSdkErrorOrWrapDbError,
+} from "./query-error-handling";
 import { generateUUID } from "../utils";
 import {
+  assertChatRateLimitTablesReady,
+  assertChatTableColumnsReady,
+  db,
+} from "./index";
+import {
+  atoApps,
   atoFile,
+  atoRoutes,
   type Chat,
   chat,
+  customAtos,
   type DBMessage,
   document,
   entitlement,
   memory,
   message,
+  messageDeprecated,
   redemption,
   redemptionCode,
+  routeRegistry,
   type Suggestion,
+  storeProducts,
   stream,
   suggestion,
   type User,
   type UserLocation,
   unofficialAto,
   user,
+  userInstalls,
   userLocation,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
-// Optionally, if not using email/pass login, you can
-// use the Drizzle adapter for Auth.js / NextAuth
-// https://authjs.dev/reference/adapter/drizzle
+async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
+  await assertChatTableColumnsReady();
+  return operation();
+}
 
-// biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
-const db = drizzle(client);
+function logDbError({
+  fn,
+  operation,
+  error,
+}: {
+  fn: string;
+  operation: string;
+  error: unknown;
+}) {
+  const details = getDbErrorDetails(error);
+  console.error("[DB_ERROR]", {
+    fn,
+    operation,
+    code: details.code,
+    message: details.message,
+  });
+
+  return details;
+}
+
 
 export async function getUser(email: string): Promise<User[]> {
   try {
@@ -88,12 +122,40 @@ export async function createGuestUser() {
   }
 }
 
+export async function listRouteRegistryEntries() {
+  try {
+    return await db
+      .select()
+      .from(routeRegistry)
+      .orderBy(asc(routeRegistry.label));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to list route registry entries"
+    );
+  }
+}
+
+export async function listStoreProducts() {
+  try {
+    return await db
+      .select()
+      .from(storeProducts)
+      .orderBy(asc(storeProducts.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to list store products"
+    );
+  }
+}
 export async function saveChat({
   id,
   userId,
   title,
   visibility,
   routeKey,
+  sessionType,
   ttsVoiceId,
   ttsVoiceLabel,
 }: {
@@ -102,22 +164,35 @@ export async function saveChat({
   title: string;
   visibility: VisibilityType;
   routeKey?: string | null;
+  sessionType?: "chat" | "video-call" | null;
   ttsVoiceId?: string | null;
   ttsVoiceLabel?: string | null;
 }) {
   try {
-    return await db.insert(chat).values({
-      id,
-      createdAt: new Date(),
-      userId,
-      title,
-      visibility,
-      routeKey: routeKey ?? null,
-      ttsVoiceId: ttsVoiceId ?? null,
-      ttsVoiceLabel: ttsVoiceLabel ?? null,
+    return await withChatTableSchemaGuard(() =>
+      db.insert(chat).values({
+        id,
+        createdAt: new Date(),
+        userId,
+        title,
+        visibility,
+        routeKey: routeKey ?? null,
+        sessionType: sessionType ?? "chat",
+        ttsVoiceId: ttsVoiceId ?? null,
+        ttsVoiceLabel: ttsVoiceLabel ?? null,
+      })
+    );
+  } catch (error) {
+    const details = logDbError({
+      fn: "saveChat",
+      operation: "insert_chat",
+      error,
     });
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save chat");
+
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "save chat",
+    });
   }
 }
 
@@ -127,10 +202,9 @@ export async function deleteChatById({ id }: { id: string }) {
     await db.delete(message).where(eq(message.chatId, id));
     await db.delete(stream).where(eq(stream.chatId, id));
 
-    const [chatsDeleted] = await db
-      .delete(chat)
-      .where(eq(chat.id, id))
-      .returning();
+    const [chatsDeleted] = await withChatTableSchemaGuard(() =>
+      db.delete(chat).where(eq(chat.id, id)).returning()
+    );
     return chatsDeleted;
   } catch (_error) {
     throw new ChatSDKError(
@@ -142,10 +216,9 @@ export async function deleteChatById({ id }: { id: string }) {
 
 export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
   try {
-    const userChats = await db
-      .select({ id: chat.id })
-      .from(chat)
-      .where(eq(chat.userId, userId));
+    const userChats = await withChatTableSchemaGuard(() =>
+      db.select({ id: chat.id }).from(chat).where(eq(chat.userId, userId))
+    );
 
     if (userChats.length === 0) {
       return { deletedCount: 0 };
@@ -157,10 +230,9 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
     await db.delete(message).where(inArray(message.chatId, chatIds));
     await db.delete(stream).where(inArray(stream.chatId, chatIds));
 
-    const deletedChats = await db
-      .delete(chat)
-      .where(eq(chat.userId, userId))
-      .returning();
+    const deletedChats = await withChatTableSchemaGuard(() =>
+      db.delete(chat).where(eq(chat.userId, userId)).returning()
+    );
 
     return { deletedCount: deletedChats.length };
   } catch (_error) {
@@ -241,7 +313,7 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
           eq(memory.isApproved, true),
           eq(memory.sourceType, "chat"),
           // Match routes that start with the project route (e.g., /MyCarMindATO/)
-          sql`${memory.route} LIKE ${projectRoute + "%"}`
+          sql`${memory.route} LIKE ${`${projectRoute}%`}`
         )
       )
       .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
@@ -249,6 +321,154 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories by project route"
+    );
+  }
+}
+
+export async function deleteApprovedMemoriesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    const deletedMemories = await db
+      .delete(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .returning({ id: memory.id });
+
+    return { deletedCount: deletedMemories.length };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete approved memories"
+    );
+  }
+}
+
+export async function deleteApprovedMemoriesByUserIdInRange({
+  userId,
+  startDate,
+  endDate,
+}: {
+  userId: string;
+  startDate: Date;
+  endDate: Date;
+}) {
+  try {
+    const deletedMemories = await db
+      .delete(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat"),
+          gte(memory.createdAt, startDate),
+          lte(memory.createdAt, endDate)
+        )
+      )
+      .returning({ id: memory.id });
+
+    return { deletedCount: deletedMemories.length };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete approved memories by date range"
+    );
+  }
+}
+
+export async function createCustomAtoWithInstall({
+  ownerUserId,
+  name,
+  route,
+  description,
+  personalityName,
+  instructions,
+  hasAvatar,
+}: {
+  ownerUserId: string;
+  name: string;
+  route: string;
+  description?: string | null;
+  personalityName?: string | null;
+  instructions?: string | null;
+  hasAvatar?: boolean;
+}) {
+  try {
+    return await db.transaction(async (tx) => {
+      const [customAto] = await tx
+        .insert(customAtos)
+        .values({
+          ownerUserId,
+          name,
+          route,
+          description: description ?? null,
+          personalityName: personalityName ?? null,
+          instructions: instructions ?? null,
+          hasAvatar: hasAvatar ?? false,
+        })
+        .returning();
+
+      if (!customAto) {
+        return null;
+      }
+
+      const slugBase = route
+        .toLowerCase()
+        .replace(/[^a-z0-9-_/]/g, "")
+        .replace(/\//g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      const suffix = customAto.id.replace(/-/g, "").slice(0, 8);
+      const appSlug = `custom-ato-${slugBase || "route"}-${suffix}`.slice(
+        0,
+        64
+      );
+
+      const [app] = await tx
+        .insert(atoApps)
+        .values({
+          slug: appSlug,
+          name,
+          description: description ?? null,
+          category: "Custom ATO",
+          storePath: `/store/ato/${appSlug}`,
+          appPath: `/custom/${route}/`,
+          isOfficial: false,
+        })
+        .returning();
+
+      if (!app) {
+        return null;
+      }
+
+      await tx.insert(atoRoutes).values({
+        appId: app.id,
+        slash: `/custom/${route}/`,
+        label: name,
+        description: description ?? null,
+        agentId: `custom-ato-${customAto.id}`,
+        toolPolicy: {},
+        isFoundersOnly: false,
+      });
+
+      await tx
+        .insert(userInstalls)
+        .values({ userId: ownerUserId, appId: app.id })
+        .onConflictDoNothing();
+
+      return { customAto, app };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create custom ATO with install"
     );
   }
 }
@@ -814,25 +1034,25 @@ export async function getChatsByUserId({
     const extendedLimit = limit + 1;
 
     const query = (whereCondition?: SQL<any>) =>
-      db
-        .select()
-        .from(chat)
-        .where(
-          whereCondition
-            ? and(whereCondition, eq(chat.userId, id))
-            : eq(chat.userId, id)
-        )
-        .orderBy(desc(chat.createdAt))
-        .limit(extendedLimit);
+      withChatTableSchemaGuard(() =>
+        db
+          .select()
+          .from(chat)
+          .where(
+            whereCondition
+              ? and(whereCondition, eq(chat.userId, id))
+              : eq(chat.userId, id)
+          )
+          .orderBy(desc(chat.createdAt))
+          .limit(extendedLimit)
+      );
 
     let filteredChats: Chat[] = [];
 
     if (startingAfter) {
-      const [selectedChat] = await db
-        .select()
-        .from(chat)
-        .where(eq(chat.id, startingAfter))
-        .limit(1);
+      const [selectedChat] = await withChatTableSchemaGuard(() =>
+        db.select().from(chat).where(eq(chat.id, startingAfter)).limit(1)
+      );
 
       if (!selectedChat) {
         throw new ChatSDKError(
@@ -843,11 +1063,9 @@ export async function getChatsByUserId({
 
       filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
     } else if (endingBefore) {
-      const [selectedChat] = await db
-        .select()
-        .from(chat)
-        .where(eq(chat.id, endingBefore))
-        .limit(1);
+      const [selectedChat] = await withChatTableSchemaGuard(() =>
+        db.select().from(chat).where(eq(chat.id, endingBefore)).limit(1)
+      );
 
       if (!selectedChat) {
         throw new ChatSDKError(
@@ -867,7 +1085,12 @@ export async function getChatsByUserId({
       chats: hasMore ? filteredChats.slice(0, limit) : filteredChats,
       hasMore,
     };
-  } catch (_error) {
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+
+    console.error("Failed to get chats by user id", error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by user id"
@@ -877,22 +1100,60 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const [selectedChat] = await withChatTableSchemaGuard(() =>
+      db.select().from(chat).where(eq(chat.id, id))
+    );
     if (!selectedChat) {
       return null;
     }
 
     return selectedChat;
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
+  } catch (error) {
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "get chat by id",
+    });
+  }
+}
+
+export async function getChatsByIds({ ids }: { ids: string[] }) {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  try {
+    return await withChatTableSchemaGuard(() =>
+      db
+        .select({ id: chat.id, title: chat.title })
+        .from(chat)
+        .where(inArray(chat.id, ids))
+    );
+  } catch (error) {
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "get chats by ids",
+    });
   }
 }
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
     return await db.insert(message).values(messages);
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save messages");
+  } catch (error) {
+    const details = logDbError({
+      fn: "saveMessages",
+      operation: "insert_messages",
+      error,
+    });
+
+    throw new ChatSDKError(
+      "bad_request:database",
+      buildDbOperationCause({
+        operation: "save messages",
+        code: details.code,
+        message: details.message,
+      })
+    );
   }
 }
 
@@ -917,10 +1178,20 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .from(message)
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
-  } catch (_error) {
+  } catch (error) {
+    const details = logDbError({
+      fn: "getMessagesByChatId",
+      operation: "select_messages_by_chat_id",
+      error,
+    });
+
     throw new ChatSDKError(
       "bad_request:database",
-      "Failed to get messages by chat id"
+      buildDbOperationCause({
+        operation: "get messages by chat id",
+        code: details.code,
+        message: details.message,
+      })
     );
   }
 }
@@ -1152,7 +1423,9 @@ export async function updateChatVisibilityById({
   visibility: "private" | "public";
 }) {
   try {
-    return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    return await withChatTableSchemaGuard(() =>
+      db.update(chat).set({ visibility }).where(eq(chat.id, chatId))
+    );
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -1169,7 +1442,9 @@ export async function updateChatTitleById({
   title: string;
 }) {
   try {
-    return await db.update(chat).set({ title }).where(eq(chat.id, chatId));
+    return await withChatTableSchemaGuard(() =>
+      db.update(chat).set({ title }).where(eq(chat.id, chatId))
+    );
   } catch (error) {
     console.warn("Failed to update title for chat", chatId, error);
     return;
@@ -1206,11 +1481,13 @@ export async function updateChatTtsSettings({
       return null;
     }
 
-    const [updatedChat] = await db
-      .update(chat)
-      .set(updates)
-      .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
-      .returning();
+    const [updatedChat] = await withChatTableSchemaGuard(() =>
+      db
+        .update(chat)
+        .set(updates)
+        .where(and(eq(chat.id, chatId), eq(chat.userId, userId)))
+        .returning()
+    );
 
     return updatedChat ?? null;
   } catch (_error) {
@@ -1228,29 +1505,97 @@ export async function getMessageCountByUserId({
   id: string;
   differenceInHours: number;
 }) {
+  const twentyFourHoursAgo = new Date(
+    Date.now() - differenceInHours * 60 * 60 * 1000
+  );
+
+  const isSchemaReadinessError = (error: unknown) => {
+    if (error instanceof ChatSDKError) {
+      return error.type === "offline" && error.surface === "database";
+    }
+
+    const databaseError = error as {
+      code?: string;
+      message?: string;
+    };
+    const code = databaseError?.code ?? "";
+
+    return code === "42P01" || code === "42703";
+  };
+
   try {
-    const twentyFourHoursAgo = new Date(
-      Date.now() - differenceInHours * 60 * 60 * 1000
-    );
+    await assertChatRateLimitTablesReady();
 
-    const [stats] = await db
-      .select({ count: count(message.id) })
-      .from(message)
-      .innerJoin(chat, eq(message.chatId, chat.id))
-      .where(
-        and(
-          eq(chat.userId, id),
-          gte(message.createdAt, twentyFourHoursAgo),
-          eq(message.role, "user")
+    try {
+      const [stats] = await db
+        .select({ count: count(message.id) })
+        .from(message)
+        .innerJoin(chat, eq(message.chatId, chat.id))
+        .where(
+          and(
+            eq(chat.userId, id),
+            gte(message.createdAt, twentyFourHoursAgo),
+            eq(message.role, "user")
+          )
         )
-      )
-      .execute();
+        .execute();
 
-    return stats?.count ?? 0;
-  } catch (_error) {
+      return stats?.count ?? 0;
+    } catch (primaryError) {
+      const primaryDbError = primaryError as {
+        code?: string;
+        message?: string;
+      };
+      console.error("[DB][getMessageCountByUserId] Message_v2 query failed", {
+        code: primaryDbError?.code,
+        message: primaryDbError?.message,
+      });
+
+      if (!isSchemaReadinessError(primaryError)) {
+        throw primaryError;
+      }
+
+      const [fallbackStats] = await db
+        .select({ count: count(messageDeprecated.id) })
+        .from(messageDeprecated)
+        .innerJoin(chat, eq(messageDeprecated.chatId, chat.id))
+        .where(
+          and(
+            eq(chat.userId, id),
+            gte(messageDeprecated.createdAt, twentyFourHoursAgo),
+            eq(messageDeprecated.role, "user")
+          )
+        )
+        .execute();
+
+      return fallbackStats?.count ?? 0;
+    }
+  } catch (error) {
+    const details = logDbError({
+      fn: "getMessageCountByUserId",
+      operation: "count_user_messages",
+      error,
+    });
+
+    if (isSchemaReadinessError(error)) {
+      throw new ChatSDKError(
+        "offline:database",
+        buildDbOperationCause({
+          operation:
+            "get message count by user id due to database schema readiness",
+          code: details.code,
+          message: details.message,
+        })
+      );
+    }
+
     throw new ChatSDKError(
       "bad_request:database",
-      "Failed to get message count by user id"
+      buildDbOperationCause({
+        operation: "get message count by user id",
+        code: details.code,
+        message: details.message,
+      })
     );
   }
 }
@@ -1300,7 +1645,9 @@ export async function updateChatRouteKey({
   routeKey: string;
 }) {
   try {
-    return await db.update(chat).set({ routeKey }).where(eq(chat.id, chatId));
+    return await withChatTableSchemaGuard(() =>
+      db.update(chat).set({ routeKey }).where(eq(chat.id, chatId))
+    );
   } catch (error) {
     console.warn("Failed to update routeKey for chat", chatId, error);
     return;

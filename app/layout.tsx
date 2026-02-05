@@ -8,20 +8,15 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-const deploymentHost =
-  process.env.VERCEL_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL;
-const deploymentUrl = deploymentHost ? `https://${deploymentHost}` : undefined;
-const isDevelopment = process.env.NODE_ENV === "development";
-const metadataBaseCandidate = deploymentUrl ?? siteUrl;
 const metadataBase =
-  !isDevelopment && metadataBaseCandidate && URL.canParse(metadataBaseCandidate)
-    ? new URL(metadataBaseCandidate)
-    : undefined;
+  siteUrl && URL.canParse(siteUrl) ? new URL(siteUrl) : undefined;
 
 export const metadata: Metadata = {
   ...(metadataBase ? { metadataBase } : {}),
-  title: "Brooks AI HUB",
-  description: "Brooks AI HUB assistant experience.",
+  title:
+    "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
+  description:
+    "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
   manifest: "/manifest.webmanifest",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },

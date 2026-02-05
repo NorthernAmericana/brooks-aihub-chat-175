@@ -5,7 +5,7 @@ import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
+import { getChatRouteKey, getOfficialVoiceId } from "@/lib/voice";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
@@ -17,6 +17,7 @@ import {
 
 export function PureMessageActions({
   chatId,
+  chatRouteKey,
   chatTitle,
   message,
   vote,
@@ -24,6 +25,7 @@ export function PureMessageActions({
   setMode,
 }: {
   chatId: string;
+  chatRouteKey?: string | null;
   chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
@@ -104,7 +106,10 @@ export function PureMessageActions({
       }
 
       // Determine voice ID: use persisted setting or route default
-      const routeKey = getRouteKey(chatTitle);
+      const routeKey = getChatRouteKey({
+        routeKey: chatRouteKey,
+        title: chatTitle,
+      });
       const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
 
       const controller = new AbortController();

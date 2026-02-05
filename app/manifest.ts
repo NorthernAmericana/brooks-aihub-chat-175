@@ -2,12 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Brooks AI HUB",
+    name: "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
     short_name: "Brooks AI HUB",
-    description: "Brooks AI HUB assistant experience.",
-    id: "/",
-    start_url: "/",
-    scope: "/",
+    description:
+      "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
+    id: "/brooks-ai-hub/?source=pwa",
+    start_url: "/brooks-ai-hub/?source=pwa",
+    scope: "/brooks-ai-hub/",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#ffffff",

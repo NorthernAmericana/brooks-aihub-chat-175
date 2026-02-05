@@ -8,12 +8,22 @@ config({
 });
 
 const runMigrate = async () => {
-  if (!process.env.POSTGRES_URL) {
-    console.log("⏭️  POSTGRES_URL not defined, skipping migrations");
-    process.exit(0);
+  const databaseUrl = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    console.error(
+      "❌ No database URL configured. Set POSTGRES_URL or DATABASE_URL before running migrations.",
+    );
+    process.exit(1);
   }
 
-  const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
+  const databaseUrlEnvVar = process.env.POSTGRES_URL
+    ? "POSTGRES_URL"
+    : "DATABASE_URL";
+
+  console.log(`ℹ️  Using ${databaseUrlEnvVar} for migrations`);
+
+  const connection = postgres(databaseUrl, { max: 1 });
   const db = drizzle(connection);
 
   console.log("⏳ Running migrations...");

@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Check, Download } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -145,9 +146,30 @@ export default function NamcAppPage() {
             Agent routes in Brooks AI HUB
           </h3>
           <p className="mt-2 text-sm text-white/75">
-            None yet. NAMC doesn’t have agentic chat subroutes in Brooks AI HUB
-            right now.
+            NAMC has agentic chat subroutes in Brooks AI HUB for specialized
+            assistance. The main /NAMC/ route will suggest Lore Playground when
+            users want lore or headcanon help for any media.
           </p>
+          <div className="mt-4 space-y-3">
+            <Link
+              className="flex items-center justify-between rounded-2xl border border-white/15 bg-black/20 px-4 py-3 transition hover:bg-black/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/lore-playground"
+            >
+              <div>
+                <div className="text-sm font-semibold text-white">
+                  /NAMC/Lore-Playground/
+                </div>
+                <div className="mt-0.5 text-xs text-white/70">
+                  Explore NAMC lore + external media lore, headcanon support,
+                  and spoiler-aware discussions
+                </div>
+                <div className="mt-1 text-[11px] font-medium text-emerald-200/90">
+                  Free route · no Founders subscription required
+                </div>
+              </div>
+              <div className="text-xs text-white/60">Open</div>
+            </Link>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-black/30 p-5 backdrop-blur-md">

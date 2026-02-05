@@ -141,6 +141,48 @@
       "when": 1769967600000,
       "tag": "0020_add_unofficial_ato_route",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1770500000000,
+      "tag": "0021_add_reviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1770500001000,
+      "tag": "0022_route_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1770500002000,
+      "tag": "0023_ato_app_store",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1770500003000,
+      "tag": "0024_custom_ato_avatar_route_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1770500004000,
+      "tag": "0025_store_products",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1770315651759,
+      "tag": "0026_chat_session_type_not_null",
+      "breakpoints": true
     }
   ]
 }

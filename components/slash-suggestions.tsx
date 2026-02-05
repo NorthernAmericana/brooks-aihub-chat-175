@@ -4,84 +4,47 @@ import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { normalizeRouteKey, sanitizeRouteSegment } from "@/lib/routes/utils";
 import { getStoredSlashActions, normalizeSlash } from "@/lib/suggested-actions";
 import { fetcher } from "@/lib/utils";
 
-type AtoListResponse = {
-  atos: Array<{
-    id: string;
-    name: string;
-    route: string | null;
-  }>;
+type RoutesResponse = {
+  routes: RouteSuggestion[];
 };
-
-type SlashSuggestion = {
-  id: string;
-  label: string;
-  slash: string;
-  atoId?: string;
-};
-
-const formatAtoRoute = (value: string) =>
-  value
-    .trim()
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\s+/g, "")
-    .replace(/\/{2,}/g, "/")
-    .replace(/[^a-zA-Z0-9/_-]/g, "");
 
 export function SlashSuggestions({
   onSelect,
   onClose,
+  routes,
+  title,
 }: {
   onSelect: (slash: string, options?: { atoId?: string }) => void;
   onClose: () => void;
+  routes?: RouteSuggestion[];
+  title?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const agentConfigs = useMemo(() => listAgentConfigs(), []);
-  const { data: atoData } = useSWR<AtoListResponse>("/api/ato", fetcher);
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
-  const customAtos = useMemo(() => {
-    const atos = atoData?.atos ?? [];
-    const results: SlashSuggestion[] = [];
-    for (const ato of atos) {
-      const routeSource = ato.route || ato.name;
-      const formattedRoute = formatAtoRoute(routeSource);
-      if (!formattedRoute) {
-        continue;
-      }
-      results.push({
-        id: `custom-${ato.id}`,
-        label: ato.name,
-        slash: formattedRoute,
-        atoId: ato.id,
-      });
-    }
-    return results;
-  }, [atoData]);
-
   const suggestions = useMemo(() => {
-    const byRoute = new Map<string, SlashSuggestion>();
-    for (const item of customAtos) {
-      byRoute.set(normalizeSlash(item.slash), item);
+    if (routes?.length) {
+      return routes;
     }
-    for (const agent of agentConfigs) {
-      const key = normalizeSlash(agent.slash);
+
+    const byRoute = new Map<string, RouteSuggestion>();
+    for (const route of routeData?.routes ?? []) {
+      const key = normalizeRouteKey(route.slash);
       if (!byRoute.has(key)) {
-        byRoute.set(key, {
-          id: agent.id,
-          label: agent.label,
-          slash: agent.slash,
-        });
+        byRoute.set(key, route);
       }
     }
     return Array.from(byRoute.values());
-  }, [agentConfigs, customAtos]);
+  }, [routeData, routes]);
 
   const filteredSuggestions = useMemo(() => {
-    const query = normalizeSlash(searchQuery);
+    const query = sanitizeRouteSegment(searchQuery).toLowerCase();
 
     // Get unique agents from recent actions
     const recentSlashKeys = new Set(
@@ -95,11 +58,11 @@ export function SlashSuggestions({
         if (!query) {
           return true;
         }
-        const normalized = normalizeSlash(agent.slash);
+        const normalized = sanitizeRouteSegment(agent.slash).toLowerCase();
         const labelLower = agent.label.toLowerCase();
         return (
           normalized.includes(query) ||
-          labelLower.includes(query.toLowerCase()) ||
+          labelLower.includes(query) ||
           agent.id.includes(query.toLowerCase())
         );
       });
@@ -117,6 +80,11 @@ export function SlashSuggestions({
   return (
     <div className="absolute bottom-full left-0 z-10 mb-2 w-full rounded-lg border border-border bg-background p-3 shadow-lg">
       {/* Search input */}
+      {title ? (
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </div>
+      ) : null}
       <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
         <SearchIcon className="size-4 text-muted-foreground" />
         <input

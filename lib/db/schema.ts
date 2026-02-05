@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -34,6 +35,9 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   routeKey: text("routeKey"),
+  sessionType: varchar("sessionType", { enum: ["chat", "video-call"] })
+    .notNull()
+    .default("chat"),
   ttsEnabled: boolean("ttsEnabled").default(true),
   ttsVoiceId: text("ttsVoiceId"),
   ttsVoiceLabel: text("ttsVoiceLabel"),
@@ -253,6 +257,127 @@ export const unofficialAto = pgTable("UnofficialAto", {
 
 export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
 
+export const routeRegistry = pgTable("RouteRegistry", {
+  id: varchar("id", { length: 64 }).primaryKey().notNull(),
+  label: text("label").notNull(),
+  slash: text("slash").notNull(),
+  description: text("description"),
+});
+
+export type RouteRegistry = InferSelectModel<typeof routeRegistry>;
+
+export const atoApps = pgTable("ato_apps", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  iconUrl: text("icon_url"),
+  category: text("category"),
+  storePath: text("store_path"),
+  appPath: text("app_path"),
+  isOfficial: boolean("is_official").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type AtoApp = InferSelectModel<typeof atoApps>;
+
+export const atoRoutes = pgTable("ato_routes", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  appId: uuid("app_id")
+    .notNull()
+    .references(() => atoApps.id),
+  slash: text("slash").notNull(),
+  label: text("label").notNull(),
+  description: text("description"),
+  agentId: text("agent_id"),
+  toolPolicy: json("tool_policy")
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default({}),
+  isFoundersOnly: boolean("is_founders_only").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type AtoRoute = InferSelectModel<typeof atoRoutes>;
+
+export const userInstalls = pgTable("user_installs", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  appId: uuid("app_id")
+    .notNull()
+    .references(() => atoApps.id),
+  installedAt: timestamp("installed_at").notNull().defaultNow(),
+  lastOpenedAt: timestamp("last_opened_at"),
+});
+
+export type UserInstall = InferSelectModel<typeof userInstalls>;
+
+export const entitlements = pgTable("entitlements", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  productId: varchar("product_id", { length: 64 }).notNull(),
+  grantedAt: timestamp("granted_at").notNull().defaultNow(),
+  grantedBy: varchar("granted_by", { length: 64 }).notNull(),
+  expiresAt: timestamp("expires_at"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type EntitlementRecord = InferSelectModel<typeof entitlements>;
+
+export const customAtos = pgTable("custom_atos", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ownerUserId: uuid("owner_user_id")
+    .notNull()
+    .references(() => user.id),
+  name: text("name").notNull(),
+  route: text("route"),
+  description: text("description"),
+  personalityName: text("personality_name"),
+  instructions: text("instructions"),
+  toolPolicy: json("tool_policy").$type<Record<string, unknown>>(),
+  hasAvatar: boolean("has_avatar").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CustomAto = InferSelectModel<typeof customAtos>;
+
+export const avatarAddonPurchases = pgTable("avatar_addon_purchases", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  addonSku: varchar("addon_sku", { length: 64 }).notNull(),
+  purchasedAt: timestamp("purchased_at").notNull().defaultNow(),
+  priceCents: integer("price_cents"),
+  currency: varchar("currency", { length: 3 }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+});
+
+export type AvatarAddonPurchase = InferSelectModel<typeof avatarAddonPurchases>;
+
+export const storeProducts = pgTable("store_products", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  type: varchar("type", {
+    enum: ["merch", "digital_media", "digital_code"],
+  }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  price: integer("price").notNull(),
+  imageUrl: text("image_url"),
+  externalUrl: text("external_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type StoreProduct = InferSelectModel<typeof storeProducts>;
+
 export const atoFile = pgTable("AtoFile", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   atoId: uuid("atoId")
@@ -270,6 +395,40 @@ export const atoFile = pgTable("AtoFile", {
 });
 
 export type AtoFile = InferSelectModel<typeof atoFile>;
+
+export const review = pgTable("Review", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  placeId: text("placeId").notNull(),
+  placeName: text("placeName").notNull(),
+  placeSource: varchar("placeSource", { length: 32 }),
+  googleMapsUrl: text("googleMapsUrl"),
+  rating: integer("rating").notNull(),
+  reviewText: text("reviewText").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Review = InferSelectModel<typeof review>;
+
+export const reviewPhoto = pgTable("ReviewPhoto", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  reviewId: uuid("reviewId").references(() => review.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  placeId: text("placeId").notNull(),
+  placeName: text("placeName").notNull(),
+  blobUrl: text("blobUrl").notNull(),
+  blobPathname: text("blobPathname").notNull(),
+  contentType: text("contentType").notNull(),
+  size: integer("size").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type ReviewPhoto = InferSelectModel<typeof reviewPhoto>;
 
 // Entitlements table for product ownership
 export const entitlement = pgTable("Entitlement", {

@@ -1,0 +1,32 @@
+export const NAMC_TRAILERS = [
+  {
+    id: "cutz-bounty-hunter",
+    title: "Cutz, The Bounty Hunter",
+    subtitle: "My Daughter, Death: The Video Game Concept Trailer",
+    description: "A concept trailer spotlighting Cutz on the hunt.",
+    project: "My Daughter, Death: The Video Game",
+    category: "Concept Trailer",
+    youtubeId: "fK6aPXrMzTE",
+    embedUrl: "https://www.youtube.com/embed/fK6aPXrMzTE",
+  },
+  {
+    id: "daughter-death",
+    title: "Daughter Death",
+    subtitle: "My Daughter, Death: The Video Game Concept Trailer",
+    description: "A core concept trailer for the video game.",
+    project: "My Daughter, Death: The Video Game",
+    category: "Concept Trailer",
+    youtubeId: "bC3jTm4h92M",
+    embedUrl: "https://www.youtube.com/embed/bC3jTm4h92M",
+  },
+  {
+    id: "the-watcher",
+    title: "The Watcher",
+    subtitle: "My Daughter, Death: The Video Game Concept Trailer",
+    description: "A concept trailer focused on The Watcher.",
+    project: "My Daughter, Death: The Video Game",
+    category: "Concept Trailer",
+    youtubeId: "-VteTMK5WRw",
+    embedUrl: "https://www.youtube.com/embed/-VteTMK5WRw",
+  },
+] as const;

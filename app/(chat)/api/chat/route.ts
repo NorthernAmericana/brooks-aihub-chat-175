@@ -13,6 +13,7 @@ import { auth, type UserType } from "@/app/(auth)/auth";
 import { runMyCarMindAtoWorkflow } from "@/lib/ai/agents/mycarmindato-workflow";
 import { runMyFlowerAIWorkflow } from "@/lib/ai/agents/myflowerai-workflow";
 import { runNamcMediaCurator } from "@/lib/ai/agents/namc-media-curator";
+import { runNamcLorePlayground } from "@/lib/ai/agents/namc-lore-playground";
 import {
   type AgentConfig,
   type AgentToolId,
@@ -60,19 +61,15 @@ import {
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import { getDefaultVoice } from "@/lib/voice";
+import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
+import { resolveRoute } from "@/lib/routes/resolveRoute";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
 
 const MY_CAR_MIND_ROUTE = "/MyCarMindATO/";
-
-// Free subroutes that don't require founders access
-const FREE_SUBROUTES = [
-  "MyCarMindATO/Driver",
-  "MyCarMindATO/DeliveryDriver",
-  "MyCarMindATO/Traveler",
-];
 
 const UNOFFICIAL_ATO_ROUTE_KEY = "unofficial-ato";
 
@@ -89,8 +86,10 @@ const formatUnofficialAtoPrompt = (ato: UnofficialAto) => {
   return sections.filter(Boolean).join("\n\n");
 };
 
-const buildUnofficialAtoAgent = (ato: UnofficialAto): AgentConfig => {
-  const defaultAgent = getDefaultAgentConfig();
+const buildUnofficialAtoAgent = async (
+  ato: UnofficialAto
+): Promise<AgentConfig> => {
+  const defaultAgent = await getDefaultAgentConfig();
   return {
     id: `unofficial-ato-${ato.id}`,
     label: ato.name,
@@ -254,6 +253,7 @@ function isHomeLocationRequest(text: string | null): boolean {
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
+  const vercelId = request.headers.get("x-vercel-id");
 
   try {
     const json = await request.json();
@@ -263,8 +263,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      selectedChatModel,
+      selectedVisibilityType,
+      sessionType,
+    } = requestBody;
 
     const session = await auth();
 
@@ -302,12 +308,30 @@ export async function POST(request: Request) {
       });
     }
 
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
+    let quotaLookupDegraded = false;
+    let messageCount: number | null = null;
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    try {
+      messageCount = await getMessageCountByUserId({
+        id: session.user.id,
+        differenceInHours: 24,
+      });
+    } catch (error) {
+      quotaLookupDegraded = true;
+      console.warn("Quota lookup degraded in chat API", {
+        vercelId,
+        userId: session.user.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Quota lookup is degradable telemetry: if this DB read transiently fails,
+    // we allow the request so users can still chat and avoid a total outage.
+    if (
+      !quotaLookupDegraded &&
+      messageCount !== null &&
+      messageCount > entitlementsByUserType[userType].maxMessagesPerDay
+    ) {
       return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
@@ -349,23 +373,28 @@ export async function POST(request: Request) {
     } else if (message?.role === "user") {
       // Determine initial route key from the first message
       const firstMessageSlash = getSlashTriggerFromMessages([message]);
+      const resolvedFirstRoute = firstMessageSlash
+        ? await resolveRoute({
+            route: firstMessageSlash,
+            ownerUserId: session.user.id,
+          })
+        : null;
+
       if (
         !activeAto &&
-        firstMessageSlash &&
-        !getAgentConfigBySlash(firstMessageSlash)
+        resolvedFirstRoute?.kind === "custom" &&
+        resolvedFirstRoute.atoId
       ) {
-        activeAto = await getUnofficialAtoByRoute({
+        activeAto = await getUnofficialAtoById({
+          id: resolvedFirstRoute.atoId,
           ownerUserId: session.user.id,
-          route: firstMessageSlash,
         });
       }
-      
+
       // Check if this subroute requires founders access
       const requiresFoundersForNewChat =
-        !activeAto &&
-        firstMessageSlash?.includes("/") &&
-        !FREE_SUBROUTES.includes(firstMessageSlash);
-      
+        !activeAto && requiresFoundersForSlashRoute(firstMessageSlash);
+
       if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
@@ -374,9 +403,16 @@ export async function POST(request: Request) {
       }
       initialRouteKey = activeAto
         ? UNOFFICIAL_ATO_ROUTE_KEY
-        : firstMessageSlash
-          ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
+        : resolvedFirstRoute
+          ? ((await getAgentConfigBySlash(resolvedFirstRoute.slash))?.id ??
+            null)
           : null;
+
+      const fallbackRouteKey =
+        initialRouteKey ?? (await getDefaultAgentConfig()).id ?? "default";
+      const defaultVoice = getDefaultVoice(fallbackRouteKey);
+      const ttsVoiceId = activeAto?.defaultVoiceId ?? defaultVoice.id;
+      const ttsVoiceLabel = activeAto?.defaultVoiceLabel ?? defaultVoice.label;
 
       await saveChat({
         id,
@@ -384,8 +420,9 @@ export async function POST(request: Request) {
         title: "New chat",
         visibility: selectedVisibilityType,
         routeKey: initialRouteKey,
-        ttsVoiceId: activeAto?.defaultVoiceId ?? null,
-        ttsVoiceLabel: activeAto?.defaultVoiceLabel ?? null,
+        sessionType,
+        ttsVoiceId,
+        ttsVoiceLabel,
       });
       titlePromise = generateTitleFromUserMessage({
         message,
@@ -447,24 +484,30 @@ export async function POST(request: Request) {
     let selectedAgent: AgentConfig;
 
     if (activeAto) {
-      selectedAgent = buildUnofficialAtoAgent(activeAto);
+      selectedAgent = await buildUnofficialAtoAgent(activeAto);
     } else if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
       selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+        (await getAgentConfigById(chat.routeKey)) ??
+        (await getDefaultAgentConfig());
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
+      const resolvedRoute = slashTrigger
+        ? await resolveRoute({
+            route: slashTrigger,
+            ownerUserId: session.user.id,
+          })
+        : null;
       selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+        (resolvedRoute
+          ? await getAgentConfigBySlash(resolvedRoute.slash)
+          : undefined) ?? (await getDefaultAgentConfig());
     }
-    
+
     const requiresFoundersAccess =
-      !activeAto &&
-      selectedAgent.slash.includes("/") &&
-      !FREE_SUBROUTES.includes(selectedAgent.slash);
-    
+      !activeAto && requiresFoundersForSlashRoute(selectedAgent.slash);
+
     if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
         "forbidden:auth",
@@ -476,7 +519,7 @@ export async function POST(request: Request) {
     const projectRoute = getProjectRoute(selectedAgent.slash);
     const isMyCarMindProject = projectRoute === MY_CAR_MIND_ROUTE;
     const isBrooksBearsProject = projectRoute === "/BrooksBears/";
-    
+
     // Determine memory scope:
     // 1. For MyCarMindATO subroutes (Driver, Trucker, DeliveryDriver, Traveler): use project-level memories
     // 2. For BrooksBears subroutes (BenjaminBear): use project-level memories
@@ -507,16 +550,17 @@ export async function POST(request: Request) {
         userId: session.user.id,
       });
     }
-    
+
     const baseMemoryContext = formatMemoryContext(approvedMemories);
-    const homeLocation = isMyCarMindAgent || isMyCarMindProject
-      ? await getHomeLocationByUserId({
-          userId: session.user.id,
-          chatId: id,
-          // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
-          route: MY_CAR_MIND_ROUTE,
-        })
-      : null;
+    const homeLocation =
+      isMyCarMindAgent || isMyCarMindProject
+        ? await getHomeLocationByUserId({
+            userId: session.user.id,
+            chatId: id,
+            // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
+            route: MY_CAR_MIND_ROUTE,
+          })
+        : null;
     const homeLocationContext = formatHomeLocationContext(homeLocation);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
@@ -533,6 +577,8 @@ export async function POST(request: Request) {
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
+        const isNamcLorePlaygroundAgent =
+          selectedAgent.id === "namc-lore-playground";
         const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
@@ -583,6 +629,25 @@ export async function POST(request: Request) {
             .reverse()
             .find((currentMessage) => currentMessage.role === "user");
           const responseText = await runNamcMediaCurator({
+            messages: uiMessages,
+            latestUserMessage: lastUserMessage,
+            memoryContext,
+          });
+          const responseId = generateUUID();
+          dataStream.write({ type: "text-start", id: responseId });
+          if (responseText) {
+            dataStream.write({
+              type: "text-delta",
+              id: responseId,
+              delta: responseText,
+            });
+          }
+          dataStream.write({ type: "text-end", id: responseId });
+        } else if (isNamcLorePlaygroundAgent) {
+          const lastUserMessage = [...uiMessages]
+            .reverse()
+            .find((currentMessage) => currentMessage.role === "user");
+          const responseText = await runNamcLorePlayground({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
             memoryContext,
@@ -655,7 +720,9 @@ export async function POST(request: Request) {
             tools,
             experimental_telemetry: {
               isEnabled: isProductionEnvironment,
-              functionId: "stream-text",
+              functionId: quotaLookupDegraded
+                ? "stream-text-quota-degraded"
+                : "stream-text",
             },
           });
 
@@ -731,8 +798,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const vercelId = request.headers.get("x-vercel-id");
-
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }

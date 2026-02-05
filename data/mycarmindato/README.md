@@ -8,10 +8,10 @@ This directory contains data files used by the MyCarMindATO agent (`/MyCarMindAT
 
 A comprehensive JSON file containing information about cities that MyCarMindATO can provide information about. The agent uses this data to match user queries with city information and provide contextual travel assistance.
 
-**Season 1 Status**: Maximum capacity of 200 cities. Currently includes 17 real cities (10 Alabama + 7 Florida) with comprehensive data, plus additional test/placeholder entries.
+**Season 1 Status**: Maximum capacity of 200 **detailed** city profiles. Currently includes 17 detailed cities (10 Alabama + 7 Florida) with comprehensive data, plus 193 baseline entries sourced from the national location dictionary.
 
-**Current count**: 216 total entries in file (17 complete cities + test/placeholder data)
-**Capacity**: 17/200 real cities (183 slots remaining)
+**Current count**: 210 total entries in file (17 detailed cities + 193 baseline entries)
+**Capacity**: 17/200 detailed cities (183 slots remaining)
 
 **Structure**: Each city entry contains:
 
@@ -26,7 +26,7 @@ A comprehensive JSON file containing information about cities that MyCarMindATO 
   - `parking`: Parking information
 - `anchors` (array): Key facts and comparisons that define the city
 - `must_dos` (array): Top attractions and activities (optional)
-- `notable_businesses` (array): Local businesses worth visiting (optional)
+- `notable_businesses` (array): Local businesses worth visiting (optional; target is ~50 businesses per city over time, current coverage varies)
 - `place_taxonomy` (object): Categorized places (optional)
 
 **Season 1 Cities** (complete, comprehensive data):
@@ -117,3 +117,4 @@ npx tsx tests/unit/mycarmindato/rest-stop-data.test.ts
 
 For detailed source material and research notes, see:
 - `florida_cities_overview.md` - Overview information for Florida cities
+- `docs/mycarmindato/location-knowledge.md` - Combined national location dictionary and Season 1 city coverage
