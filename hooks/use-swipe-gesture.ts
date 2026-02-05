@@ -1,29 +1,49 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 interface UseSwipeGestureOptions {
   enabled?: boolean;
   threshold?: number;
   edgeZone?: number;
+  onSwipeLeftFromRightEdge?: () => void;
+  onSwipeRightFromLeftEdge?: () => void;
 }
 
 export function useSwipeGesture({
   enabled = true,
   threshold = 100,
   edgeZone = 50,
+  onSwipeLeftFromRightEdge,
+  onSwipeRightFromLeftEdge,
 }: UseSwipeGestureOptions = {}) {
-  const router = useRouter();
   const startXRef = useRef<number>(0);
   const startYRef = useRef<number>(0);
   const isDraggingRef = useRef(false);
-  const isFromEdgeRef = useRef(false);
+  const activeEdgeRef = useRef<"left" | "right" | null>(null);
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
+
+    const startGesture = (startX: number, startY: number) => {
+      const windowWidth = window.innerWidth;
+      const isFromLeftEdge = startX < edgeZone;
+      if (startX > windowWidth - edgeZone) {
+        activeEdgeRef.current = "right";
+      } else if (isFromLeftEdge) {
+        activeEdgeRef.current = "left";
+      } else {
+        activeEdgeRef.current = null;
+      }
+
+      if (activeEdgeRef.current) {
+        startXRef.current = startX;
+        startYRef.current = startY;
+        isDraggingRef.current = true;
+      }
+    };
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
@@ -31,33 +51,40 @@ export function useSwipeGesture({
         return;
       }
 
-      const windowWidth = window.innerWidth;
-      const startX = touch.clientX;
-
-      // Check if touch started from right edge
-      if (startX > windowWidth - edgeZone) {
-        isFromEdgeRef.current = true;
-        startXRef.current = startX;
-        startYRef.current = touch.clientY;
-        isDraggingRef.current = true;
-      }
+      startGesture(touch.clientX, touch.clientY);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      const windowWidth = window.innerWidth;
-      const startX = e.clientX;
+      startGesture(e.clientX, e.clientY);
+    };
 
-      // Check if click started from right edge
-      if (startX > windowWidth - edgeZone) {
-        isFromEdgeRef.current = true;
-        startXRef.current = startX;
-        startYRef.current = e.clientY;
-        isDraggingRef.current = true;
+    const maybeTriggerSwipe = (currentX: number, currentY: number) => {
+      if (!isDraggingRef.current || !activeEdgeRef.current) {
+        return;
+      }
+
+      const deltaX = currentX - startXRef.current;
+      const deltaY = currentY - startYRef.current;
+
+      if (Math.abs(deltaX) <= Math.abs(deltaY)) {
+        return;
+      }
+
+      if (activeEdgeRef.current === "right" && deltaX < -threshold) {
+        isDraggingRef.current = false;
+        activeEdgeRef.current = null;
+        onSwipeLeftFromRightEdge?.();
+      }
+
+      if (activeEdgeRef.current === "left" && deltaX > threshold) {
+        isDraggingRef.current = false;
+        activeEdgeRef.current = null;
+        onSwipeRightFromLeftEdge?.();
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDraggingRef.current || !isFromEdgeRef.current) {
+      if (!isDraggingRef.current || !activeEdgeRef.current) {
         return;
       }
 
@@ -66,43 +93,25 @@ export function useSwipeGesture({
         return;
       }
 
-      const deltaX = touch.clientX - startXRef.current;
-      const deltaY = touch.clientY - startYRef.current;
-
-      // Check if it's a horizontal swipe (not vertical)
-      if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < -threshold) {
-        // Swipe left from right edge - open store
-        isDraggingRef.current = false;
-        isFromEdgeRef.current = false;
-        router.push("/store");
-      }
+      maybeTriggerSwipe(touch.clientX, touch.clientY);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current || !isFromEdgeRef.current) {
+      if (!isDraggingRef.current || !activeEdgeRef.current) {
         return;
       }
 
-      const deltaX = e.clientX - startXRef.current;
-      const deltaY = e.clientY - startYRef.current;
-
-      // Check if it's a horizontal drag (not vertical)
-      if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < -threshold) {
-        // Drag left from right edge - open store
-        isDraggingRef.current = false;
-        isFromEdgeRef.current = false;
-        router.push("/store");
-      }
+      maybeTriggerSwipe(e.clientX, e.clientY);
     };
 
     const handleTouchEnd = () => {
       isDraggingRef.current = false;
-      isFromEdgeRef.current = false;
+      activeEdgeRef.current = null;
     };
 
     const handleMouseUp = () => {
       isDraggingRef.current = false;
-      isFromEdgeRef.current = false;
+      activeEdgeRef.current = null;
     };
 
     // Add event listeners
@@ -121,5 +130,11 @@ export function useSwipeGesture({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [enabled, threshold, edgeZone, router]);
+  }, [
+    edgeZone,
+    enabled,
+    onSwipeLeftFromRightEdge,
+    onSwipeRightFromLeftEdge,
+    threshold,
+  ]);
 }

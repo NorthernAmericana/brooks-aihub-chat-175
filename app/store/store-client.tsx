@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Download, Search } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
 
 const actionLabelForApp = (app: StoreAppListItem) => {
@@ -22,6 +23,13 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
+  useSwipeGesture({
+    edgeZone: 56,
+    threshold: 90,
+    onSwipeLeftFromRightEdge: () => router.push("/store/namc"),
+    onSwipeRightFromLeftEdge: () => router.push("/brooks-ai-hub"),
+  });
+
   const filteredApps = useMemo(() => {
     if (!searchQuery) {
       return apps;
@@ -35,6 +43,26 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
   return (
     <div className="store-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#140d12] via-[#1a0f16] to-[#120c16]">
+      <button
+        aria-label="Swipe right to go back to Brooks AI HUB"
+        className="absolute left-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-r-full border border-l-0 border-white/20 bg-white/10 px-2 py-3 text-xs font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        onClick={() => router.push("/brooks-ai-hub")}
+        type="button"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        <span className="hidden sm:inline">Back to Brooks AI HUB</span>
+      </button>
+
+      <button
+        aria-label="Swipe left to go to NAMC Store"
+        className="absolute right-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-l-full border border-r-0 border-white/20 bg-white/10 px-2 py-3 text-xs font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        onClick={() => router.push("/store/namc")}
+        type="button"
+      >
+        <span className="hidden sm:inline">Go to NAMC Store</span>
+        <ChevronRight className="h-4 w-4" />
+      </button>
+
       <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#140d12]/95 px-4 py-3 backdrop-blur-sm">
         <button
           aria-label="Go back"
