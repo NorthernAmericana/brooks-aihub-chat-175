@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const formatAtoRoute = (value: string) =>
 
 export default function CreateAtoPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +41,7 @@ export default function CreateAtoPage() {
   const [selectedVoiceId, setSelectedVoiceId] = useState(
     ALL_VOICES[0]?.id ?? ""
   );
+  const [hasAvatar, setHasAvatar] = useState(searchParams.get("avatar") === "1");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -113,6 +115,7 @@ export default function CreateAtoPage() {
           webSearchEnabled,
           fileSearchEnabled,
           fileUsageEnabled: fileSearchEnabled,
+          hasAvatar,
         }),
       });
 
@@ -219,6 +222,23 @@ export default function CreateAtoPage() {
                 placeholder="A mindful daily companion for routines and habits."
                 type="text"
               />
+            </div>
+            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+              <input
+                checked={hasAvatar}
+                className="mt-1"
+                id="ato-has-avatar"
+                onChange={(event) => setHasAvatar(event.target.checked)}
+                type="checkbox"
+              />
+              <div>
+                <Label className="cursor-pointer" htmlFor="ato-has-avatar">
+                  Add Avatar now
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  You can also create now and add avatar later.
+                </p>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-personality-name">

@@ -290,6 +290,7 @@ export const atoRoutes = pgTable("ato_routes", {
   slash: text("slash").notNull(),
   label: text("label").notNull(),
   description: text("description"),
+  agentId: text("agent_id"),
   toolPolicy: json("tool_policy")
     .$type<Record<string, unknown>>()
     .notNull()
@@ -340,6 +341,7 @@ export const customAtos = pgTable("custom_atos", {
   personalityName: text("personality_name"),
   instructions: text("instructions"),
   toolPolicy: json("tool_policy").$type<Record<string, unknown>>(),
+  hasAvatar: boolean("has_avatar").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

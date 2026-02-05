@@ -1,15 +1,12 @@
-import { mkdir } from "node:fs/promises";
-import path from "node:path";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
-  createUnofficialAto,
+  createCustomAtoWithInstall,
   getUnofficialAtoCountByOwner,
   getUnofficialAtoByRoute,
   getUnofficialAtosByOwner,
   getUserById,
   listRouteRegistryEntries,
-  updateUnofficialAtoSettings,
 } from "@/lib/db/queries";
 import { normalizeRouteKey, sanitizeRouteSegment } from "@/lib/routes/utils";
 
@@ -63,6 +60,7 @@ export async function POST(request: Request) {
     fileSearchEnabled?: boolean;
     fileUsageEnabled?: boolean;
     planMetadata?: Record<string, unknown> | null;
+    hasAvatar?: boolean;
   };
 
   try {
@@ -117,6 +115,15 @@ export async function POST(request: Request) {
   }
 
   const hasFoundersAccess = Boolean(user.foundersAccess);
+  const hasAvatar = payload.hasAvatar === true;
+
+  if (hasAvatar && !hasFoundersAccess) {
+    return NextResponse.json(
+      { error: "Avatar pairing currently requires Founders access." },
+      { status: 403 }
+    );
+  }
+
   const instructionsValue =
     typeof payload.instructions === "string" ? payload.instructions.trim() : "";
   const instructionsLimit = hasFoundersAccess ? 999 : 500;
@@ -175,14 +182,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const fileUsageEnabled =
-    typeof payload.fileUsageEnabled === "boolean"
-      ? payload.fileUsageEnabled
-      : typeof payload.fileSearchEnabled === "boolean"
-        ? payload.fileSearchEnabled
-        : undefined;
-
-  const ato = await createUnofficialAto({
+  const created = await createCustomAtoWithInstall({
     ownerUserId: session.user.id,
     name,
     route: formattedRoute,
@@ -196,68 +196,25 @@ export async function POST(request: Request) {
       typeof payload.instructions === "string"
         ? payload.instructions.trim()
         : null,
-    intelligenceMode: payload.intelligenceMode,
-    defaultVoiceId:
-      typeof payload.defaultVoiceId === "string"
-        ? payload.defaultVoiceId
-        : null,
-    defaultVoiceLabel:
-      typeof payload.defaultVoiceLabel === "string"
-        ? payload.defaultVoiceLabel
-        : null,
-    webSearchEnabled:
-      typeof payload.webSearchEnabled === "boolean"
-        ? payload.webSearchEnabled
-        : undefined,
-    fileSearchEnabled:
-      typeof payload.fileSearchEnabled === "boolean"
-        ? payload.fileSearchEnabled
-        : undefined,
-    fileUsageEnabled,
-    planMetadata:
-      payload.planMetadata &&
-      typeof payload.planMetadata === "object" &&
-      !Array.isArray(payload.planMetadata)
-        ? payload.planMetadata
-        : null,
+    hasAvatar,
   });
 
-  if (!ato) {
+  if (!created?.customAto) {
     return NextResponse.json(
       { error: "Failed to create ATO." },
       { status: 500 }
     );
   }
 
-  if (fileUsageEnabled === true && !ato.fileStoragePath) {
-    const storagePath = path.join("storage", "atos", ato.id);
-    const absoluteStoragePath = path.join(process.cwd(), storagePath);
-
-    try {
-      await mkdir(absoluteStoragePath, { recursive: true });
-    } catch (_error) {
-      return NextResponse.json(
-        { error: "Failed to create storage location." },
-        { status: 500 }
-      );
-    }
-
-    const updatedAto = await updateUnofficialAtoSettings({
-      id: ato.id,
-      ownerUserId: session.user.id,
-      fileUsageEnabled: true,
-      fileStoragePath: storagePath,
-    });
-
-    if (!updatedAto) {
-      return NextResponse.json(
-        { error: "Failed to update ATO storage location." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ ato: updatedAto }, { status: 201 });
-  }
-
-  return NextResponse.json({ ato }, { status: 201 });
+  return NextResponse.json(
+    {
+      ato: {
+        id: created.customAto.id,
+        name: created.customAto.name,
+        route: created.customAto.route,
+        hasAvatar: created.customAto.hasAvatar,
+      },
+    },
+    { status: 201 }
+  );
 }
