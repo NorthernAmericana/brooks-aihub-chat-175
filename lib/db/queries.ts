@@ -21,7 +21,10 @@ import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
 import {
+  atoApps,
   atoFile,
+  atoRoutes,
+  customAtos,
   type Chat,
   chat,
   type DBMessage,
@@ -38,6 +41,7 @@ import {
   type UserLocation,
   unofficialAto,
   user,
+  userInstalls,
   userLocation,
   vote,
   routeRegistry,
@@ -323,6 +327,90 @@ export async function deleteApprovedMemoriesByUserIdInRange({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete approved memories by date range"
+    );
+  }
+}
+
+
+
+export async function createCustomAtoWithInstall({
+  ownerUserId,
+  name,
+  route,
+  description,
+  personalityName,
+  instructions,
+  hasAvatar,
+}: {
+  ownerUserId: string;
+  name: string;
+  route: string;
+  description?: string | null;
+  personalityName?: string | null;
+  instructions?: string | null;
+  hasAvatar?: boolean;
+}) {
+  try {
+    return await db.transaction(async (tx) => {
+      const [customAto] = await tx
+        .insert(customAtos)
+        .values({
+          ownerUserId,
+          name,
+          route,
+          description: description ?? null,
+          personalityName: personalityName ?? null,
+          instructions: instructions ?? null,
+          hasAvatar: hasAvatar ?? false,
+        })
+        .returning();
+
+      if (!customAto) {
+        return null;
+      }
+
+      const slugBase = route.toLowerCase().replace(/[^a-z0-9-_/]/g, "").replace(/\//g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      const suffix = customAto.id.replace(/-/g, "").slice(0, 8);
+      const appSlug = `custom-ato-${slugBase || "route"}-${suffix}`.slice(0, 64);
+
+      const [app] = await tx
+        .insert(atoApps)
+        .values({
+          slug: appSlug,
+          name,
+          description: description ?? null,
+          category: "Custom ATO",
+          storePath: `/store/ato/${appSlug}`,
+          appPath: `/custom/${route}/`,
+          isOfficial: false,
+        })
+        .returning();
+
+      if (!app) {
+        return null;
+      }
+
+      await tx.insert(atoRoutes).values({
+        appId: app.id,
+        slash: `/custom/${route}/`,
+        label: name,
+        description: description ?? null,
+        agentId: `custom-ato-${customAto.id}`,
+        toolPolicy: {},
+        isFoundersOnly: false,
+      });
+
+      await tx
+        .insert(userInstalls)
+        .values({ userId: ownerUserId, appId: app.id })
+        .onConflictDoNothing();
+
+      return { customAto, app };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create custom ATO with install"
     );
   }
 }
