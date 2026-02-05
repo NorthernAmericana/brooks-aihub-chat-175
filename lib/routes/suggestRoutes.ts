@@ -8,8 +8,10 @@ import type { RouteSuggestion } from "@/lib/routes/types";
 import { formatRoutePath, normalizeRouteKey } from "@/lib/routes/utils";
 
 export async function suggestRoutes({
+  prefix,
   ownerUserId,
 }: {
+  prefix?: string;
   ownerUserId?: string;
 } = {}): Promise<RouteSuggestion[]> {
   const officialRoutes = await listRouteRegistryEntries();
@@ -45,5 +47,24 @@ export async function suggestRoutes({
     }
   }
 
-  return Array.from(routesByKey.values());
+  const suggestions = Array.from(routesByKey.values());
+
+  if (!prefix) {
+    return suggestions;
+  }
+
+  const normalizedPrefix = normalizeRouteKey(prefix).replace(/\/$/, "");
+  const plainPrefix = prefix
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .toLowerCase();
+
+  return suggestions.filter((suggestion) => {
+    const suggestionKey = normalizeRouteKey(suggestion.slash);
+    const suggestionPlain = suggestion.slash.toLowerCase();
+    return (
+      suggestionKey.startsWith(`${normalizedPrefix}/`) ||
+      suggestionPlain.startsWith(plainPrefix)
+    );
+  });
 }

@@ -16,15 +16,23 @@ type RoutesResponse = {
 export function SlashSuggestions({
   onSelect,
   onClose,
+  routes,
+  title,
 }: {
   onSelect: (slash: string, options?: { atoId?: string }) => void;
   onClose: () => void;
+  routes?: RouteSuggestion[];
+  title?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
   const suggestions = useMemo(() => {
+    if (routes?.length) {
+      return routes;
+    }
+
     const byRoute = new Map<string, RouteSuggestion>();
     for (const route of routeData?.routes ?? []) {
       const key = normalizeRouteKey(route.slash);
@@ -33,7 +41,7 @@ export function SlashSuggestions({
       }
     }
     return Array.from(byRoute.values());
-  }, [routeData]);
+  }, [routeData, routes]);
 
   const filteredSuggestions = useMemo(() => {
     const query = sanitizeRouteSegment(searchQuery).toLowerCase();
@@ -72,6 +80,11 @@ export function SlashSuggestions({
   return (
     <div className="absolute bottom-full left-0 z-10 mb-2 w-full rounded-lg border border-border bg-background p-3 shadow-lg">
       {/* Search input */}
+      {title ? (
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </div>
+      ) : null}
       <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
         <SearchIcon className="size-4 text-muted-foreground" />
         <input

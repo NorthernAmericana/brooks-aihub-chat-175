@@ -41,10 +41,7 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import {
-  parseSlashAction,
-  rememberSlashAction,
-} from "@/lib/suggested-actions";
+import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn, fetcher } from "@/lib/utils";
@@ -78,6 +75,21 @@ const TRAILER_PROMPT_REGEX = /^(?:let's|lets)\s+watch\s+trailers\b/i;
 type RoutesResponse = {
   routes: RouteSuggestion[];
 };
+
+type ResolveRouteResponse =
+  | {
+      status: "resolved";
+      route: RouteSuggestion;
+    }
+  | {
+      status: "redirected";
+      route: RouteSuggestion;
+      redirectUrl: string;
+    }
+  | {
+      status: "unknown";
+      suggestions: RouteSuggestion[];
+    };
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365; // 1 year
@@ -250,6 +262,13 @@ function PureMultimodalInput({
   const [_recordedText, setRecordedText] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const [inlineSlashSuggestions, setInlineSlashSuggestions] = useState<
+    RouteSuggestion[]
+  >([]);
+  const [slashSuggestionTitle, setSlashSuggestionTitle] = useState<string>("");
+  const [redirectBannerUrl, setRedirectBannerUrl] = useState<string | null>(
+    null
+  );
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
@@ -296,10 +315,20 @@ function PureMultimodalInput({
     }
   }, [input]);
 
+  useEffect(() => {
+    if (!input.trim().startsWith("/")) {
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
+      setRedirectBannerUrl(null);
+    }
+  }, [input]);
+
   const handleSlashSelect = useCallback(
     (slash: string, options?: { atoId?: string }) => {
       setInput(`/${slash}/ `);
       setShowSlashSuggestions(false);
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
       onSelectAto?.(options?.atoId ?? null);
       // Focus the textarea
       setTimeout(() => {
@@ -402,88 +431,127 @@ function PureMultimodalInput({
   }, [isRecording]);
 
   const submitForm = useCallback(() => {
-    const params = new URLSearchParams();
-    if (atoId) {
-      params.set("atoId", atoId);
-    }
-    const nextUrl = params.toString()
-      ? `/chat/${chatId}?${params.toString()}`
-      : `/chat/${chatId}`;
-    window.history.pushState({}, "", nextUrl);
+    const submit = async () => {
+      const params = new URLSearchParams();
+      if (atoId) {
+        params.set("atoId", atoId);
+      }
+      const nextUrl = params.toString()
+        ? `/chat/${chatId}?${params.toString()}`
+        : `/chat/${chatId}`;
+      window.history.pushState({}, "", nextUrl);
 
-    const parsedAction = parseSlashAction(input, routeData?.routes);
-    const promptText = parsedAction?.prompt ?? input;
-    if (
-      isNamcChatRoute &&
-      TRAILER_PROMPT_REGEX.test(promptText.trim()) &&
-      attachments.length === 0
-    ) {
-      setIsTrailerMenuOpen(true);
+      let parsedAction = parseSlashAction(input, routeData?.routes);
+
+      if (parsedAction) {
+        try {
+          const response = await fetch(
+            `/api/routes/resolve?route=${encodeURIComponent(parsedAction.slash)}`
+          );
+          if (response.ok) {
+            const resolved = (await response.json()) as ResolveRouteResponse;
+
+            if (resolved.status === "unknown") {
+              setInlineSlashSuggestions(resolved.suggestions.slice(0, 3));
+              setSlashSuggestionTitle(
+                `Unknown route: /${parsedAction.slash}/. Try one of these:`
+              );
+              setShowSlashSuggestions(resolved.suggestions.length > 0);
+              return;
+            }
+
+            parsedAction = {
+              slash: resolved.route.slash,
+              prompt: parsedAction.prompt,
+            };
+
+            onSelectAto?.(resolved.route.atoId ?? null);
+            if (resolved.status === "redirected") {
+              setRedirectBannerUrl(resolved.redirectUrl);
+            }
+          }
+        } catch (error) {
+          console.error("Route resolve failed", error);
+        }
+      }
+
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
+      const promptText = parsedAction?.prompt ?? input;
+      if (
+        isNamcChatRoute &&
+        TRAILER_PROMPT_REGEX.test(promptText.trim()) &&
+        attachments.length === 0
+      ) {
+        setIsTrailerMenuOpen(true);
+        setLocalStorageInput("");
+        resetHeight();
+        setInput("");
+        return;
+      }
+
+      // Check for route change if chat has existing messages and routeKey
+      if (parsedAction && messages.length > 0 && chatRouteKey) {
+        const routeById = new Map(
+          (routeData?.routes ?? []).map((route) => [route.id, route])
+        );
+        const routeByKey = new Map(
+          (routeData?.routes ?? []).map((route) => [
+            normalizeRouteKey(route.slash),
+            route,
+          ])
+        );
+        const currentAgent = routeById.get(chatRouteKey);
+        const newAgent = routeByKey.get(normalizeRouteKey(parsedAction.slash));
+
+        if (
+          currentAgent &&
+          newAgent &&
+          currentAgent.id !== newAgent.id &&
+          newAgent.id !== "default"
+        ) {
+          // User is trying to change routes - show modal
+          setRouteChangeModal({
+            open: true,
+            currentRoute: currentAgent.slash,
+            newRoute: newAgent.slash,
+            draftMessage: input,
+          });
+          return; // Don't send the message
+        }
+      }
+
+      if (parsedAction) {
+        rememberSlashAction(parsedAction);
+      }
+
+      sendMessage({
+        role: "user",
+        parts: [
+          ...attachments.map((attachment) => ({
+            type: "file" as const,
+            url: attachment.url,
+            name: attachment.name,
+            mediaType: attachment.contentType,
+          })),
+          {
+            type: "text",
+            text: input,
+          },
+        ],
+      });
+
+      setAttachments([]);
       setLocalStorageInput("");
       resetHeight();
       setInput("");
-      return;
-    }
 
-    // Check for route change if chat has existing messages and routeKey
-    if (parsedAction && messages.length > 0 && chatRouteKey) {
-      const routeById = new Map(
-        (routeData?.routes ?? []).map((route) => [route.id, route])
-      );
-      const routeByKey = new Map(
-        (routeData?.routes ?? []).map((route) => [
-          normalizeRouteKey(route.slash),
-          route,
-        ])
-      );
-      const currentAgent = routeById.get(chatRouteKey);
-      const newAgent = routeByKey.get(normalizeRouteKey(parsedAction.slash));
-
-      if (
-        currentAgent &&
-        newAgent &&
-        currentAgent.id !== newAgent.id &&
-        newAgent.id !== "default"
-      ) {
-        // User is trying to change routes - show modal
-        setRouteChangeModal({
-          open: true,
-          currentRoute: currentAgent.slash,
-          newRoute: newAgent.slash,
-          draftMessage: input,
-        });
-        return; // Don't send the message
+      if (width && width > 768) {
+        textareaRef.current?.focus();
       }
-    }
+    };
 
-    if (parsedAction) {
-      rememberSlashAction(parsedAction);
-    }
-
-    sendMessage({
-      role: "user",
-      parts: [
-        ...attachments.map((attachment) => ({
-          type: "file" as const,
-          url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
-        })),
-        {
-          type: "text",
-          text: input,
-        },
-      ],
-    });
-
-    setAttachments([]);
-    setLocalStorageInput("");
-    resetHeight();
-    setInput("");
-
-    if (width && width > 768) {
-      textareaRef.current?.focus();
-    }
+    void submit();
   }, [
     input,
     setInput,
@@ -499,6 +567,7 @@ function PureMultimodalInput({
     messages.length,
     chatRouteKey,
     isNamcChatRoute,
+    onSelectAto,
   ]);
 
   const isPdfFile = (file: File) =>
@@ -746,7 +815,8 @@ function PureMultimodalInput({
             aria-pressed={activeMenu === "profile"}
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background shadow-sm transition hover:border-border",
-              activeMenu === "profile" && "border-primary/60 ring-2 ring-primary/20"
+              activeMenu === "profile" &&
+                "border-primary/60 ring-2 ring-primary/20"
             )}
             onClick={() =>
               setActiveMenu((current) =>
@@ -940,6 +1010,20 @@ function PureMultimodalInput({
         </PromptInputToolbar>
       </PromptInput>
 
+      {redirectBannerUrl ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+          This app redirects to:{" "}
+          <a
+            className="font-medium underline"
+            href={redirectBannerUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {redirectBannerUrl}
+          </a>
+        </div>
+      ) : null}
+
       <Dialog onOpenChange={setIsTrailerMenuOpen} open={isTrailerMenuOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -999,6 +1083,12 @@ function PureMultimodalInput({
         <SlashSuggestions
           onClose={() => setShowSlashSuggestions(false)}
           onSelect={handleSlashSelect}
+          routes={
+            inlineSlashSuggestions.length > 0
+              ? inlineSlashSuggestions
+              : undefined
+          }
+          title={slashSuggestionTitle || undefined}
         />
       )}
 
