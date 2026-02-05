@@ -17,6 +17,11 @@ import {
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
+import {
+  buildDbOperationCause,
+  getDbErrorDetails,
+  rethrowChatSdkErrorOrWrapDbError,
+} from "./query-error-handling";
 import { generateUUID } from "../utils";
 import {
   assertChatRateLimitTablesReady,
@@ -58,18 +63,6 @@ async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
   return operation();
 }
 
-function getDbErrorDetails(error: unknown) {
-  const databaseError = error as {
-    code?: string;
-    message?: string;
-  };
-
-  return {
-    code: databaseError?.code,
-    message: databaseError?.message,
-  };
-}
-
 function logDbError({
   fn,
   operation,
@@ -90,17 +83,6 @@ function logDbError({
   return details;
 }
 
-function formatDbCause({
-  operation,
-  code,
-  message,
-}: {
-  operation: string;
-  code?: string;
-  message?: string;
-}) {
-  return `${operation} failed${code ? ` (code: ${code})` : ""}${message ? `: ${message}` : ""}`;
-}
 
 export async function getUser(email: string): Promise<User[]> {
   try {
@@ -207,14 +189,10 @@ export async function saveChat({
       error,
     });
 
-    throw new ChatSDKError(
-      "bad_request:database",
-      formatDbCause({
-        operation: "save chat",
-        code: details.code,
-        message: details.message,
-      })
-    );
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "save chat",
+    });
   }
 }
 
@@ -1130,8 +1108,11 @@ export async function getChatById({ id }: { id: string }) {
     }
 
     return selectedChat;
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
+  } catch (error) {
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "get chat by id",
+    });
   }
 }
 
@@ -1147,11 +1128,11 @@ export async function getChatsByIds({ ids }: { ids: string[] }) {
         .from(chat)
         .where(inArray(chat.id, ids))
     );
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get chats by ids"
-    );
+  } catch (error) {
+    rethrowChatSdkErrorOrWrapDbError({
+      error,
+      operation: "get chats by ids",
+    });
   }
 }
 
@@ -1167,7 +1148,7 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
 
     throw new ChatSDKError(
       "bad_request:database",
-      formatDbCause({
+      buildDbOperationCause({
         operation: "save messages",
         code: details.code,
         message: details.message,
@@ -1206,7 +1187,7 @@ export async function getMessagesByChatId({ id }: { id: string }) {
 
     throw new ChatSDKError(
       "bad_request:database",
-      formatDbCause({
+      buildDbOperationCause({
         operation: "get messages by chat id",
         code: details.code,
         message: details.message,
@@ -1599,7 +1580,7 @@ export async function getMessageCountByUserId({
     if (isSchemaReadinessError(error)) {
       throw new ChatSDKError(
         "offline:database",
-        formatDbCause({
+        buildDbOperationCause({
           operation:
             "get message count by user id due to database schema readiness",
           code: details.code,
@@ -1610,7 +1591,7 @@ export async function getMessageCountByUserId({
 
     throw new ChatSDKError(
       "bad_request:database",
-      formatDbCause({
+      buildDbOperationCause({
         operation: "get message count by user id",
         code: details.code,
         message: details.message,
