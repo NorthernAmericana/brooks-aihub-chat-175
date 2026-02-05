@@ -3,6 +3,7 @@ import "server-only";
 import { asc, count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { atoApps, atoRoutes, userInstalls } from "@/lib/db/schema";
+import { ensureOfficialCatalogBootstrapped } from "@/lib/store/bootstrapOfficialCatalog";
 
 export type StoreAppListItem = {
   id: string;
@@ -29,6 +30,8 @@ function resolveStorePath(slug: string, storePath: string | null) {
 }
 
 export async function listAppsWithInstallState(userId?: string | null) {
+  await ensureOfficialCatalogBootstrapped();
+
   const [apps, routeCounts, installs] = await Promise.all([
     db.select().from(atoApps).orderBy(asc(atoApps.name)),
     db
