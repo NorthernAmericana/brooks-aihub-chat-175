@@ -11,7 +11,6 @@ Review the required environment variables in [`.env.example`](../../.env.example
 ## Hosting platform configuration files
 
 - [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that the hosting platform applies to every deployment.
-- [`vercel-template.json`](../../vercel-template.json) powers the hosted “Deploy” button flow by defining the template metadata, required environment variables, and the onboarding copy shown during project creation.
 
 ## Minimal deployment checklist
 

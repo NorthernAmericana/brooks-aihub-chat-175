@@ -106,19 +106,13 @@ With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to 
 
 ## Deploy Your Own
 
-You can deploy your own version of Brooks AI HUB to a managed hosting platform with one click:
-
-[![Deploy with your hosting platform](https://vercel.com/button)](https://vercel.com/new)
+Deploy your own version of Brooks AI HUB using the production guide in [`docs/ops/vercel.md`](docs/ops/vercel.md).
 
 ## Running locally
 
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. It's recommended you use your hosting platform's environment variables for this, but a `.env` file is all that is necessary.
+You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. A local `.env` file is sufficient for development.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
-
-1. Install your hosting platform CLI: `npm i -g vercel`
-2. Link local instance with your hosting platform and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
 
 ```bash
 pnpm install
