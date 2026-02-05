@@ -37,7 +37,7 @@ export async function generateTitleFromUserMessage({
 
   // Prefix with route for backward compatibility with voice system
   if (routeKey) {
-    const agentConfig = getAgentConfigById(routeKey);
+    const agentConfig = await getAgentConfigById(routeKey);
     if (agentConfig) {
       return `/${agentConfig.slash}/ ${cleanedTitle}`;
     }

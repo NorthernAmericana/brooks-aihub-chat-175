@@ -91,8 +91,10 @@ const formatUnofficialAtoPrompt = (ato: UnofficialAto) => {
   return sections.filter(Boolean).join("\n\n");
 };
 
-const buildUnofficialAtoAgent = (ato: UnofficialAto): AgentConfig => {
-  const defaultAgent = getDefaultAgentConfig();
+const buildUnofficialAtoAgent = async (
+  ato: UnofficialAto
+): Promise<AgentConfig> => {
+  const defaultAgent = await getDefaultAgentConfig();
   return {
     id: `unofficial-ato-${ato.id}`,
     label: ato.name,
@@ -360,7 +362,7 @@ export async function POST(request: Request) {
       if (
         !activeAto &&
         firstMessageSlash &&
-        !getAgentConfigBySlash(firstMessageSlash)
+        !(await getAgentConfigBySlash(firstMessageSlash))
       ) {
         activeAto = await getUnofficialAtoByRoute({
           ownerUserId: session.user.id,
@@ -383,11 +385,11 @@ export async function POST(request: Request) {
       initialRouteKey = activeAto
         ? UNOFFICIAL_ATO_ROUTE_KEY
         : firstMessageSlash
-          ? (getAgentConfigBySlash(firstMessageSlash)?.id ?? null)
+          ? ((await getAgentConfigBySlash(firstMessageSlash))?.id ?? null)
           : null;
 
       const fallbackRouteKey =
-        initialRouteKey ?? getDefaultAgentConfig().id ?? "default";
+        initialRouteKey ?? (await getDefaultAgentConfig()).id ?? "default";
       const defaultVoice = getDefaultVoice(fallbackRouteKey);
       const ttsVoiceId = activeAto?.defaultVoiceId ?? defaultVoice.id;
       const ttsVoiceLabel = activeAto?.defaultVoiceLabel ?? defaultVoice.label;
@@ -462,17 +464,18 @@ export async function POST(request: Request) {
     let selectedAgent: AgentConfig;
 
     if (activeAto) {
-      selectedAgent = buildUnofficialAtoAgent(activeAto);
+      selectedAgent = await buildUnofficialAtoAgent(activeAto);
     } else if (chat?.routeKey) {
       // Use persisted routeKey for existing chats
       selectedAgent =
-        getAgentConfigById(chat.routeKey) ?? getDefaultAgentConfig();
+        (await getAgentConfigById(chat.routeKey)) ??
+        (await getDefaultAgentConfig());
     } else {
       // For new chats or chats without routeKey, use slash trigger from message
       const slashTrigger = getSlashTriggerFromMessages(uiMessages);
       selectedAgent =
-        (slashTrigger ? getAgentConfigBySlash(slashTrigger) : undefined) ??
-        getDefaultAgentConfig();
+        (slashTrigger ? await getAgentConfigBySlash(slashTrigger) : undefined) ??
+        (await getDefaultAgentConfig());
     }
     
     const requiresFoundersAccess =

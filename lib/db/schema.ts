@@ -257,6 +257,15 @@ export const unofficialAto = pgTable("UnofficialAto", {
 
 export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
 
+export const routeRegistry = pgTable("RouteRegistry", {
+  id: varchar("id", { length: 64 }).primaryKey().notNull(),
+  label: text("label").notNull(),
+  slash: text("slash").notNull(),
+  description: text("description"),
+});
+
+export type RouteRegistry = InferSelectModel<typeof routeRegistry>;
+
 export const atoFile = pgTable("AtoFile", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   atoId: uuid("atoId")

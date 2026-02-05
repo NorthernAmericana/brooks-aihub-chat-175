@@ -33,11 +33,9 @@ import {
 } from "@/components/ai-elements/model-selector";
 import { useEntitlements } from "@/hooks/use-entitlements";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
-import {
-  getAgentConfigById,
-  getAgentConfigBySlash,
-} from "@/lib/ai/agents/registry";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { normalizeRouteKey } from "@/lib/routes/utils";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
@@ -76,6 +74,10 @@ import {
 import type { VisibilityType } from "./visibility-selector";
 
 const TRAILER_PROMPT_REGEX = /^(?:let's|lets)\s+watch\s+trailers\b/i;
+
+type RoutesResponse = {
+  routes: RouteSuggestion[];
+};
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365; // 1 year
@@ -125,6 +127,7 @@ function PureMultimodalInput({
   const { width } = useWindowSize();
   const { data: session } = useSession();
   const { profileIcon } = useProfileIcon();
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const { entitlements } = useEntitlements(session?.user?.id);
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
 
@@ -408,7 +411,7 @@ function PureMultimodalInput({
       : `/chat/${chatId}`;
     window.history.pushState({}, "", nextUrl);
 
-    const parsedAction = parseSlashAction(input);
+    const parsedAction = parseSlashAction(input, routeData?.routes);
     const promptText = parsedAction?.prompt ?? input;
     if (
       isNamcChatRoute &&
@@ -424,8 +427,17 @@ function PureMultimodalInput({
 
     // Check for route change if chat has existing messages and routeKey
     if (parsedAction && messages.length > 0 && chatRouteKey) {
-      const currentAgent = getAgentConfigById(chatRouteKey);
-      const newAgent = getAgentConfigBySlash(parsedAction.slash);
+      const routeById = new Map(
+        (routeData?.routes ?? []).map((route) => [route.id, route])
+      );
+      const routeByKey = new Map(
+        (routeData?.routes ?? []).map((route) => [
+          normalizeRouteKey(route.slash),
+          route,
+        ])
+      );
+      const currentAgent = routeById.get(chatRouteKey);
+      const newAgent = routeByKey.get(normalizeRouteKey(parsedAction.slash));
 
       if (
         currentAgent &&
@@ -479,6 +491,7 @@ function PureMultimodalInput({
     sendMessage,
     setAttachments,
     setLocalStorageInput,
+    routeData,
     width,
     chatId,
     atoId,

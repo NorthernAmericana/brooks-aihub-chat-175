@@ -1,3 +1,9 @@
+import "server-only";
+
+import { cache } from "react";
+import { listRouteRegistryEntries } from "@/lib/db/queries";
+import { normalizeRouteKey } from "@/lib/routes/utils";
+
 export type AgentToolId =
   | "getWeather"
   | "getDirections"
@@ -495,35 +501,57 @@ const agentRegistry: AgentConfig[] = [
 
 export const defaultAgentId = "brooks-ai-hub";
 
-export function listAgentConfigs(): AgentConfig[] {
-  return agentRegistry;
-}
+const normalizeSlash = (slash: string) => normalizeRouteKey(slash);
 
-export function getAgentConfigById(id: string): AgentConfig | undefined {
-  return agentRegistry.find((agent) => agent.id === id);
-}
+const agentMetadataById = new Map(
+  agentRegistry.map((agent) => [
+    agent.id,
+    { tools: agent.tools, systemPromptOverride: agent.systemPromptOverride },
+  ])
+);
 
-const normalizeSlash = (slash: string) =>
-  slash
-    .replace(/^\/|\/$/g, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
+export const listAgentConfigs = cache(async (): Promise<AgentConfig[]> => {
+  const registryEntries = await listRouteRegistryEntries();
+  return registryEntries.map((entry) => {
+    const metadata = agentMetadataById.get(entry.id);
+    return {
+      id: entry.id,
+      label: entry.label,
+      slash: entry.slash,
+      tools: metadata?.tools ?? [],
+      systemPromptOverride: metadata?.systemPromptOverride,
+    };
+  });
+});
 
-export function getAgentConfigBySlash(slash: string): AgentConfig | undefined {
-  const normalized = normalizeSlash(slash);
-  return agentRegistry.find(
-    (agent) => normalizeSlash(agent.slash) === normalized
-  );
-}
+export const getAgentConfigById = cache(
+  async (id: string): Promise<AgentConfig | undefined> => {
+    const configs = await listAgentConfigs();
+    return configs.find((agent) => agent.id === id);
+  }
+);
 
-export function getDefaultAgentConfig(): AgentConfig {
-  return (
-    getAgentConfigById(defaultAgentId) ??
-    agentRegistry[0] ?? {
-      id: defaultAgentId,
-      label: "Default",
-      slash: "default",
-      tools: [],
-    }
-  );
-}
+export const getAgentConfigBySlash = cache(
+  async (slash: string): Promise<AgentConfig | undefined> => {
+    const normalized = normalizeSlash(slash);
+    const configs = await listAgentConfigs();
+    return configs.find(
+      (agent) => normalizeSlash(agent.slash) === normalized
+    );
+  }
+);
+
+export const getDefaultAgentConfig = cache(
+  async (): Promise<AgentConfig> => {
+    const configs = await listAgentConfigs();
+    return (
+      configs.find((agent) => agent.id === defaultAgentId) ??
+      configs[0] ?? {
+        id: defaultAgentId,
+        label: "Default",
+        slash: "default",
+        tools: [],
+      }
+    );
+  }
+);

@@ -85,11 +85,19 @@ export default async function MemoriesPage() {
     chatTitleMap.set(chat.id, chat.title);
   }
 
+  const agentIds = Array.from(
+    new Set(memories.map((memory) => memory.agentId).filter(Boolean))
+  ) as string[];
+  const agentConfigs = await Promise.all(
+    agentIds.map(async (id) => [id, await getAgentConfigById(id)] as const)
+  );
+  const agentConfigById = new Map(agentConfigs);
+
   const memoryItems: MemoryItem[] = memories.map((memory) => {
     const agentLabel =
       memory.agentLabel ??
       (memory.agentId
-        ? getAgentConfigById(memory.agentId)?.label
+        ? agentConfigById.get(memory.agentId)?.label
         : undefined) ??
       "Unknown agent";
 
