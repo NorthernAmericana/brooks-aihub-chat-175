@@ -176,6 +176,13 @@
       "when": 1770500004000,
       "tag": "0025_store_products",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1770315651759,
+      "tag": "0026_chat_session_type_not_null",
+      "breakpoints": true
     }
   ]
 }
