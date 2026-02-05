@@ -1,3 +1,5 @@
+import { NAMC_APP_ICON_PATH } from "@/lib/constants/namc";
+
 export type OfficialCatalogAppSeed = {
   slug: string;
   name: string;
@@ -56,7 +58,7 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     name: "NAMC",
     description:
       "Northern Americana Media Collection - Your curated media library and lore explorer",
-    iconUrl: "/icons/namc-appicon.png",
+    iconUrl: NAMC_APP_ICON_PATH,
     category: "Media & Entertainment",
     storePath: "/namc-app",
     appPath: "/NAMC",

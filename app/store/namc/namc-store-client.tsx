@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreProduct } from "@/lib/db/schema";
+import { NAMC_APP_ICON_PATH } from "@/lib/constants/namc";
 
 function formatPrice(priceInCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -55,7 +56,7 @@ export function NamcStoreClient({
               alt="NAMC icon"
               className="h-full w-full object-cover"
               height={36}
-              src="/icons/namc-appicon.png"
+              src={NAMC_APP_ICON_PATH}
               width={36}
             />
           </div>
@@ -75,7 +76,7 @@ export function NamcStoreClient({
                   alt="NAMC icon"
                   className="h-full w-full object-cover"
                   height={64}
-                  src="/icons/namc-appicon.png"
+                  src={NAMC_APP_ICON_PATH}
                   width={64}
                 />
               </div>
