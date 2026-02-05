@@ -6,7 +6,7 @@ import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -45,6 +45,7 @@ import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn, fetcher } from "@/lib/utils";
+import { shouldDisableAds, trackMessageAndCheckAdGate } from "@/lib/ad-gate";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -136,6 +137,7 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { width } = useWindowSize();
   const { data: session } = useSession();
   const { profileIcon } = useProfileIcon();
@@ -276,6 +278,8 @@ function PureMultimodalInput({
     "history"
   );
   const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [canCloseAdModal, setCanCloseAdModal] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
     currentRoute: string;
@@ -287,6 +291,36 @@ function PureMultimodalInput({
     newRoute: "",
     draftMessage: "",
   });
+  const [queuedMessageParts, setQueuedMessageParts] = useState<
+    ChatMessage["parts"] | null
+  >(null);
+
+  const sendMessageParts = useCallback(
+    (parts: ChatMessage["parts"]) => {
+      sendMessage({
+        role: "user",
+        parts,
+      });
+
+      setAttachments([]);
+      setLocalStorageInput("");
+      resetHeight();
+      setInput("");
+
+      if (width && width > 768) {
+        textareaRef.current?.focus();
+      }
+    },
+    [
+      sendMessage,
+      setAttachments,
+      setLocalStorageInput,
+      resetHeight,
+      setInput,
+      width,
+    ]
+  );
+
   const { data: atoData } = useSWR<{ ato: { fileSearchEnabled: boolean } }>(
     atoId ? `/api/ato/${atoId}` : null,
     fetcher
@@ -525,30 +559,36 @@ function PureMultimodalInput({
         rememberSlashAction(parsedAction);
       }
 
-      sendMessage({
-        role: "user",
-        parts: [
-          ...attachments.map((attachment) => ({
-            type: "file" as const,
-            url: attachment.url,
-            name: attachment.name,
-            mediaType: attachment.contentType,
-          })),
-          {
-            type: "text",
-            text: input,
-          },
-        ],
+      const messageParts: ChatMessage["parts"] = [
+        ...attachments.map((attachment) => ({
+          type: "file" as const,
+          url: attachment.url,
+          name: attachment.name,
+          mediaType: attachment.contentType,
+        })),
+        {
+          type: "text",
+          text: input,
+        },
+      ];
+
+      const adsDisabled = shouldDisableAds({
+        foundersAccess: entitlements.foundersAccess,
+        pathname,
+        isOnboarding: pathname.toLowerCase().startsWith("/onboarding"),
       });
 
-      setAttachments([]);
-      setLocalStorageInput("");
-      resetHeight();
-      setInput("");
-
-      if (width && width > 768) {
-        textareaRef.current?.focus();
+      if (!adsDisabled && trackMessageAndCheckAdGate(chatId)) {
+        setQueuedMessageParts(messageParts);
+        setIsAdModalOpen(true);
+        setCanCloseAdModal(false);
+        window.setTimeout(() => {
+          setCanCloseAdModal(true);
+        }, 2000);
+        return;
       }
+
+      sendMessageParts(messageParts);
     };
 
     void submit();
@@ -568,7 +608,22 @@ function PureMultimodalInput({
     chatRouteKey,
     isNamcChatRoute,
     onSelectAto,
+    entitlements.foundersAccess,
+    pathname,
+    sendMessageParts,
   ]);
+
+  const handleCloseAdModal = useCallback(() => {
+    if (!canCloseAdModal) {
+      return;
+    }
+
+    setIsAdModalOpen(false);
+    if (queuedMessageParts) {
+      sendMessageParts(queuedMessageParts);
+      setQueuedMessageParts(null);
+    }
+  }, [canCloseAdModal, queuedMessageParts, sendMessageParts]);
 
   const isPdfFile = (file: File) =>
     file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -1093,6 +1148,33 @@ function PureMultimodalInput({
       )}
 
       {/* Route change modal */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseAdModal();
+          }
+        }}
+        open={isAdModalOpen}
+      >
+        <DialogContent className="h-screen w-screen max-w-none rounded-none border-0 p-0 sm:rounded-none">
+          <div className="flex h-full flex-col items-center justify-center gap-5 bg-background px-6 text-center">
+            <DialogHeader className="max-w-md space-y-3">
+              <DialogTitle className="text-2xl">Sponsored break</DialogTitle>
+              <DialogDescription>
+                Your next response is unlocking. Please wait a moment before
+                continuing.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="h-48 w-full max-w-xl rounded-xl border border-dashed border-border/70 bg-muted/40" />
+            <DialogFooter>
+              <Button disabled={!canCloseAdModal} onClick={handleCloseAdModal}>
+                {canCloseAdModal ? "Continue" : "Continue in 2s..."}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <RouteChangeModal
         currentRoute={routeChangeModal.currentRoute}
         draftMessage={routeChangeModal.draftMessage}
