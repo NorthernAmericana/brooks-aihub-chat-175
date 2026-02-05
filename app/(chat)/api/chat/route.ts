@@ -259,6 +259,7 @@ function isHomeLocationRequest(text: string | null): boolean {
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
+  const vercelId = request.headers.get("x-vercel-id");
 
   try {
     const json = await request.json();
@@ -313,12 +314,30 @@ export async function POST(request: Request) {
       });
     }
 
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
+    let quotaLookupDegraded = false;
+    let messageCount: number | null = null;
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    try {
+      messageCount = await getMessageCountByUserId({
+        id: session.user.id,
+        differenceInHours: 24,
+      });
+    } catch (error) {
+      quotaLookupDegraded = true;
+      console.warn("Quota lookup degraded in chat API", {
+        vercelId,
+        userId: session.user.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Quota lookup is degradable telemetry: if this DB read transiently fails,
+    // we allow the request so users can still chat and avoid a total outage.
+    if (
+      !quotaLookupDegraded &&
+      messageCount !== null &&
+      messageCount > entitlementsByUserType[userType].maxMessagesPerDay
+    ) {
       return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
@@ -711,7 +730,9 @@ export async function POST(request: Request) {
             tools,
             experimental_telemetry: {
               isEnabled: isProductionEnvironment,
-              functionId: "stream-text",
+              functionId: quotaLookupDegraded
+                ? "stream-text-quota-degraded"
+                : "stream-text",
             },
           });
 
@@ -787,8 +808,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const vercelId = request.headers.get("x-vercel-id");
-
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
