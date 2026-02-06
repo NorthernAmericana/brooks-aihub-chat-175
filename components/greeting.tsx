@@ -462,7 +462,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="greeting-time mt-2 w-full max-w-xs rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-left shadow-sm backdrop-blur-sm sm:max-w-sm"
+        className="greeting-time mt-2 w-full max-w-sm rounded-3xl border border-border/60 bg-gradient-to-r from-background/80 via-background/70 to-background/60 px-4 py-3 text-left shadow-sm backdrop-blur-sm sm:max-w-md"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
@@ -470,28 +470,75 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             {clockMode ? (
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 shrink-0 rounded-full border border-border/70 bg-background/90 shadow-sm">
-                  <span className="absolute left-1/2 top-1 h-1 w-1 -translate-x-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute left-1 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute right-1 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-muted-foreground/80" />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-full rounded-full bg-foreground"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.hour}deg)` }}
-                  />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-4.5 w-0.5 -translate-x-1/2 -translate-y-full rounded-full bg-foreground/80"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.minute}deg)` }}
-                  />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-5 w-px -translate-x-1/2 -translate-y-full bg-emerald-500"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.second}deg)` }}
-                  />
-                  <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
+              <div className="flex items-center gap-4">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border/70 bg-background/90 shadow-sm">
+                  <svg
+                    aria-hidden="true"
+                    className="block h-full w-full"
+                    viewBox="0 0 100 100"
+                  >
+                    <g stroke="currentColor" className="text-muted-foreground/70">
+                      {Array.from({ length: 12 }, (_, index) => {
+                        const angle = index * 30;
+                        return (
+                          <line
+                            key={`tick-${angle}`}
+                            x1="50"
+                            y1="8"
+                            x2="50"
+                            y2="16"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            transform={`rotate(${angle} 50 50)`}
+                          />
+                        );
+                      })}
+                    </g>
+                    <g strokeLinecap="round">
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="30"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        transform={`rotate(${analogHands.hour} 50 50)`}
+                      />
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="20"
+                        stroke="currentColor"
+                        strokeOpacity="0.8"
+                        strokeWidth="3"
+                        transform={`rotate(${analogHands.minute} 50 50)`}
+                      />
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="14"
+                        stroke="#10b981"
+                        strokeWidth="2"
+                        transform={`rotate(${analogHands.second} 50 50)`}
+                      />
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="58"
+                        stroke="#10b981"
+                        strokeOpacity="0.5"
+                        strokeWidth="2"
+                        transform={`rotate(${analogHands.second} 50 50)`}
+                      />
+                    </g>
+                    <circle cx="50" cy="50" r="4" fill="currentColor" />
+                  </svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold tracking-[0.12em] text-foreground sm:text-sm">
+                  <div className="text-sm font-semibold tracking-[0.12em] text-foreground sm:text-base">
                     {digitalTime}
                   </div>
                   <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
