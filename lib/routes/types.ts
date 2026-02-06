@@ -7,4 +7,6 @@ export type RouteSuggestion = {
   route: string;
   kind: RouteKind;
   atoId?: string;
+  foundersOnly?: boolean;
+  isFreeRoute?: boolean;
 };

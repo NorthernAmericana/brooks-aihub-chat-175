@@ -4,6 +4,7 @@ import {
   getUnofficialAtosByOwner,
   listRouteRegistryEntries,
 } from "@/lib/db/queries";
+import { getSlashRouteAccessMetadata } from "@/lib/routes/founders-slash-gating";
 import type { RouteSuggestion } from "@/lib/routes/types";
 import { formatRoutePath, normalizeRouteKey } from "@/lib/routes/utils";
 
@@ -25,6 +26,7 @@ export async function suggestRoutes({
       slash: entry.slash,
       route: formatRoutePath(entry.slash),
       kind: "official",
+      ...getSlashRouteAccessMetadata(entry.slash),
     });
   }
 
@@ -43,6 +45,8 @@ export async function suggestRoutes({
         route: formatRoutePath(routeSource),
         kind: "custom",
         atoId: ato.id,
+        foundersOnly: false,
+        isFreeRoute: true,
       });
     }
   }
