@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical } from "lucide-react";
+import { ChevronRight, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -57,52 +57,83 @@ const TreeNodeItem = ({
 }) => {
   const hasChildren = node.children.length > 0;
   const label = node.label ?? node.segment;
+  const [expanded, setExpanded] = useState(depth === 0);
+  const childrenId = `tree-children-${node.path
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .toLowerCase()}`;
+
   return (
     <li className="space-y-2">
-      <button
+      <div
         className={cn(
-          "flex w-full flex-col items-start gap-1 rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-left transition hover:bg-background",
+          "flex w-full items-start gap-2 rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-left transition hover:bg-background",
           depth > 0 ? "ml-4" : null
         )}
-        onClick={() => {
-          if (node.route) {
-            onSelectFolder?.(node.route);
-          }
-        }}
-        type="button"
       >
-        <span className="flex items-center gap-2 text-xs font-semibold">
-          <span className="text-muted-foreground">📁</span>
-          <span>{label}</span>
-          {hasChildren ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[0.5rem] uppercase tracking-[0.2em] text-muted-foreground">
-              {node.children.length} subroute
-              {node.children.length === 1 ? "" : "s"}
+        {hasChildren ? (
+          <button
+            type="button"
+            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-muted"
+            aria-expanded={expanded}
+            aria-controls={childrenId}
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${label} subroutes`}
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpanded((value) => !value);
+            }}
+          >
+            <ChevronRight
+              className={cn(
+                "h-4 w-4 transition-transform",
+                expanded ? "rotate-90" : "rotate-0"
+              )}
+            />
+          </button>
+        ) : (
+          <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+        )}
+        <button
+          className="flex min-w-0 flex-1 flex-col items-start gap-1"
+          onClick={() => {
+            if (node.route) {
+              onSelectFolder?.(node.route);
+            }
+          }}
+          type="button"
+        >
+          <span className="flex items-center gap-2 text-xs font-semibold">
+            <span className="text-muted-foreground">📁</span>
+            <span>{label}</span>
+            {hasChildren ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[0.5rem] uppercase tracking-[0.2em] text-muted-foreground">
+                {node.children.length} subroute
+                {node.children.length === 1 ? "" : "s"}
+              </span>
+            ) : null}
+            {node.badge === "gem" ? (
+              <span className="text-sm" title="Founders access only">
+                💎
+              </span>
+            ) : node.badge === "free" ? (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                Free
+              </span>
+            ) : null}
+          </span>
+          {node.route ? (
+            <span className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground">
+              {node.route}
             </span>
           ) : null}
-          {node.badge === "gem" ? (
-            <span className="text-sm" title="Founders access only">
-              💎
-            </span>
-          ) : node.badge === "free" ? (
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
-              Free
+          {node.foundersOnly ? (
+            <span className="text-[0.55rem] uppercase tracking-[0.2em] text-amber-500">
+              Founders only
             </span>
           ) : null}
-        </span>
-        {node.route ? (
-          <span className="text-[0.55rem] uppercase tracking-[0.2em] text-muted-foreground">
-            {node.route}
-          </span>
-        ) : null}
-        {node.foundersOnly ? (
-          <span className="text-[0.55rem] uppercase tracking-[0.2em] text-amber-500">
-            Founders only
-          </span>
-        ) : null}
-      </button>
-      {hasChildren ? (
-        <ul className="space-y-2">
+        </button>
+      </div>
+      {hasChildren && expanded ? (
+        <ul className="space-y-2" id={childrenId}>
           {node.children.map((child) => (
             <TreeNodeItem
               key={child.path}
