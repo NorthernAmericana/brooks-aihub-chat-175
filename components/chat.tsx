@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -116,6 +117,10 @@ export function Chat({
   isReadonly: boolean;
   autoResume: boolean;
 }) {
+  const chatLayoutStyle = {
+    "--chat-composer-offset": "calc(8.5rem + env(safe-area-inset-bottom, 0px))",
+  } as CSSProperties;
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -614,7 +619,7 @@ export function Chat({
             />
           </>
         )}
-        <div className="relative z-10 flex h-dvh min-w-0 flex-col">
+        <div className="relative z-10 flex h-dvh min-w-0 flex-col" style={chatLayoutStyle}>
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
@@ -645,7 +650,7 @@ export function Chat({
             votes={votes}
           />
 
-          <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-4">
+          <div className="sticky bottom-0 z-20 mx-auto flex w-full max-w-4xl gap-2 border-t border-border/60 bg-background/85 px-2 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] backdrop-blur-md supports-[backdrop-filter]:bg-background/70 md:px-4 md:pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             {!isReadonly && (
               <MultimodalInput
                 atoId={activeAtoId}
