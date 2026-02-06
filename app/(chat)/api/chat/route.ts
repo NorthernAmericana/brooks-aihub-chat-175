@@ -587,13 +587,21 @@ export async function POST(request: Request) {
           })
         : null;
     const homeLocationContext = formatHomeLocationContext(homeLocation);
-    const currentVehicle =
-      isMyCarMindAgent || isMyCarMindProject
-        ? await getCurrentVehicleByUserIdAndRoute({
-            userId: session.user.id,
-            route: MY_CAR_MIND_ROUTE,
-          })
-        : null;
+    let currentVehicle = null;
+    if (isMyCarMindAgent || isMyCarMindProject) {
+      try {
+        currentVehicle = await getCurrentVehicleByUserIdAndRoute({
+          userId: session.user.id,
+          route: MY_CAR_MIND_ROUTE,
+        });
+      } catch (error) {
+        console.warn("Current vehicle lookup degraded in chat API", {
+          vercelId,
+          userId: session.user.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     const vehicleContext = formatVehicleContext(currentVehicle);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
