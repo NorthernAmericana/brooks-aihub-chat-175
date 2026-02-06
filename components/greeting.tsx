@@ -31,6 +31,7 @@ import {
   sanitizeRouteSegment,
 } from "@/lib/routes/utils";
 import { cn, fetcher } from "@/lib/utils";
+import officialEvents from "@/data/events/official-events.json";
 
 type GreetingProps = {
   onSelectFolder?: (folder: string, options?: { atoId?: string }) => void;
@@ -250,6 +251,44 @@ type AtoListResponse = {
   }>;
 };
 
+type TimelineEvent = {
+  title: string;
+  date: string;
+  weekStart: string;
+  weekEnd: string;
+  monthLabel: string;
+  source: "personal" | "official";
+};
+
+type EventWeekGroup = {
+  weekKey: string;
+  title: string;
+  monthLabel: string;
+  events: TimelineEvent[];
+};
+
+const groupEventsByWeek = (events: TimelineEvent[]) => {
+  const sortedEvents = [...events].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+  const weekMap = new Map<string, EventWeekGroup>();
+
+  for (const event of sortedEvents) {
+    const weekKey = `${event.weekStart}-${event.weekEnd}-${event.monthLabel}`;
+    if (!weekMap.has(weekKey)) {
+      weekMap.set(weekKey, {
+        weekKey,
+        title: `${event.weekStart} - ${event.weekEnd} - - ${event.monthLabel}`,
+        monthLabel: event.monthLabel,
+        events: [],
+      });
+    }
+    weekMap.get(weekKey)?.events.push(event);
+  }
+
+  return Array.from(weekMap.values());
+};
+
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const [now, setNow] = useState(() => new Date());
@@ -269,6 +308,75 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const personalEvents = useMemo<TimelineEvent[]>(
+    () => [
+      {
+        title: "It’s almost Jack's Birthday 🎂",
+        date: "2026-02-02",
+        weekStart: "02/01/2026",
+        weekEnd: "02/07/2026",
+        monthLabel: "February, 2026",
+        source: "personal",
+      },
+      {
+        title: "Avery's studio demo night is this week",
+        date: "2026-02-06",
+        weekStart: "02/01/2026",
+        weekEnd: "02/07/2026",
+        monthLabel: "February, 2026",
+        source: "personal",
+      },
+      {
+        title: "Maya's launch sprint begins in 3 days",
+        date: "2026-02-11",
+        weekStart: "02/08/2026",
+        weekEnd: "02/14/2026",
+        monthLabel: "February, 2026",
+        source: "personal",
+      },
+      {
+        title: "Eli has a creator check-in this Friday",
+        date: "2026-02-13",
+        weekStart: "02/08/2026",
+        weekEnd: "02/14/2026",
+        monthLabel: "February, 2026",
+        source: "personal",
+      },
+      {
+        title: "Sofia's residency showcase is in 2 weeks",
+        date: "2026-02-20",
+        weekStart: "02/15/2026",
+        weekEnd: "02/21/2026",
+        monthLabel: "February, 2026",
+        source: "personal",
+      },
+      {
+        title: "Kenji's mentorship wrap-up session",
+        date: "2026-03-06",
+        weekStart: "03/01/2026",
+        weekEnd: "03/07/2026",
+        monthLabel: "March, 2026",
+        source: "personal",
+      },
+    ],
+    []
+  );
+  const officialEventsTimeline = useMemo<TimelineEvent[]>(
+    () =>
+      officialEvents.map((event) => ({
+        ...event,
+        source: "official" as const,
+      })),
+    []
+  );
+  const personalEventWeeks = useMemo(
+    () => groupEventsByWeek(personalEvents),
+    [personalEvents]
+  );
+  const officialEventWeeks = useMemo(
+    () => groupEventsByWeek(officialEventsTimeline),
+    [officialEventsTimeline]
+  );
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -593,6 +701,100 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
+        <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
+            <div>
+              <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                Events Board
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Track personal and official milestones by week.
+              </p>
+            </div>
+            <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+              {personalEvents.length + officialEventsTimeline.length} total
+              events
+            </div>
+          </div>
+          <div className="mt-4 grid w-full gap-4 text-left sm:grid-cols-2">
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Personal events</span>
+                <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-purple-500">
+                  People
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Moments from individual creators across the hub.
+              </p>
+              <div className="mt-3 max-h-64 space-y-4 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
+                {personalEventWeeks.map((week) => (
+                  <div className="space-y-2" key={week.weekKey}>
+                    <div className="text-[0.55rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      {week.title}
+                    </div>
+                    <ul className="space-y-2 text-xs">
+                      {week.events.map((event) => (
+                        <li
+                          className="flex items-start justify-between gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2"
+                          key={`${event.title}-${event.date}`}
+                        >
+                          <span className="text-foreground/90">
+                            {event.title}
+                          </span>
+                          <span className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                <span>Official events</span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                  Studio
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Official announcements sourced from the events folder.
+              </p>
+              <div className="mt-3 max-h-64 space-y-4 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3">
+                {officialEventWeeks.map((week) => (
+                  <div className="space-y-2" key={week.weekKey}>
+                    <div className="text-[0.55rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      {week.title}
+                    </div>
+                    <ul className="space-y-2 text-xs">
+                      {week.events.map((event) => (
+                        <li
+                          className="flex items-start justify-between gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2"
+                          key={`${event.title}-${event.date}`}
+                        >
+                          <span className="text-foreground/90">
+                            {event.title}
+                          </span>
+                          <span className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
             <div>
