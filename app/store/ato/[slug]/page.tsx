@@ -38,6 +38,7 @@ export default async function AtoStoreDetailsPage({
   const isInstalled = installedEntry?.isInstalled ?? false;
   const requiresFoundersAccess = details.requiresFoundersAccess;
   const isLocked = requiresFoundersAccess && !entitlements.foundersAccess;
+  const isInstallUnavailable = details.app.slug === "namc-reader";
 
   const installAction = async () => {
     "use server";
@@ -51,6 +52,10 @@ export default async function AtoStoreDetailsPage({
       if (!entitlements.foundersAccess) {
         redirect("/pricing");
       }
+    }
+
+    if (details.app.slug === "namc-reader") {
+      return;
     }
 
     await installApp(session.user.id, details.app.id);
@@ -132,7 +137,7 @@ export default async function AtoStoreDetailsPage({
                       ? "bg-emerald-600/80 text-white"
                       : "bg-pink-500 text-white hover:bg-pink-600"
                   }`}
-                  disabled={isInstalled || isLocked}
+                  disabled={isInstalled || isLocked || isInstallUnavailable}
                   type="submit"
                 >
                   {isInstalled ? (
@@ -140,6 +145,8 @@ export default async function AtoStoreDetailsPage({
                       <Check className="h-4 w-4" />
                       Installed
                     </>
+                  ) : isInstallUnavailable ? (
+                    <>Install unavailable</>
                   ) : isLocked ? (
                     <>
                       <Lock className="h-4 w-4" />
@@ -164,6 +171,17 @@ export default async function AtoStoreDetailsPage({
               )}
             </div>
           </div>
+
+          {isInstallUnavailable && (
+            <div className="mt-4 rounded-2xl border border-sky-300/30 bg-sky-500/10 p-4 text-sm text-sky-100">
+              <p className="font-semibold">Coming soon</p>
+              <p className="mt-1 text-xs text-sky-100/80">
+                NAMC Reader is listed in the ATO Store for early visibility, but
+                installs are not enabled yet while we finish staging and launch
+                checks.
+              </p>
+            </div>
+          )}
 
           {isLocked && (
             <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
@@ -191,6 +209,12 @@ export default async function AtoStoreDetailsPage({
             {details.app.description ??
               "Explore this ATO and its routes inside Brooks AI HUB."}
           </p>
+          {isInstallUnavailable && (
+            <p className="mt-2 text-xs text-white/60">
+              Install access is staged for this app and will be enabled in a
+              future rollout.
+            </p>
+          )}
         </section>
 
         <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
