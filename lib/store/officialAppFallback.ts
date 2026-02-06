@@ -48,4 +48,13 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
     description:
       "Northern Americana Media Collection - Your curated media library and lore explorer",
   },
+  {
+    slug: "namc-reader",
+    name: "NAMC Reader",
+    iconUrl: "/icons/namc-reader-placeholder.svg",
+    appPath: "/namc-reader-app",
+    storePath: "/store/ato/namc-reader",
+    category: "Media & Reading",
+    description: "Placeholder reader experience for NAMC content previews",
+  },
 ];

@@ -64,6 +64,16 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     appPath: "/NAMC",
     isOfficial: true,
   },
+  {
+    slug: "namc-reader",
+    name: "NAMC Reader",
+    description: "Placeholder reader experience for NAMC content previews",
+    iconUrl: "/icons/namc-reader-placeholder.svg",
+    category: "Media & Reading",
+    storePath: "/store/ato/namc-reader",
+    appPath: "/namc-reader-app",
+    isOfficial: true,
+  },
 ];
 
 export const OFFICIAL_CATALOG_TOOL_POLICIES: Record<
