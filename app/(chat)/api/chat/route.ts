@@ -287,6 +287,14 @@ function isSaveApproval(text: string | null): boolean {
   );
 }
 
+function isMemorySaveRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /\b(save|store|remember)\b[\s\S]*\b(memory)\b/i.test(text);
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
   const vercelId = request.headers.get("x-vercel-id");
@@ -648,6 +656,8 @@ export async function POST(request: Request) {
           isMyCarMindFamily && isVehicleSaveRequest(lastUserText);
         const isExplicitSaveApproval =
           isMyCarMindFamily && isSaveApproval(lastUserText);
+        const isMemorySaveIntent =
+          isMyCarMindFamily && isMemorySaveRequest(lastUserText);
         type ToolDefinition =
           | typeof getDirections
           | typeof getWeather
@@ -744,7 +754,8 @@ export async function POST(request: Request) {
           !isToolApprovalFlow &&
           !isHomeLocationSaveRequest &&
           !isVehicleSaveIntent &&
-          !isExplicitSaveApproval
+          !isExplicitSaveApproval &&
+          !isMemorySaveIntent
         ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
