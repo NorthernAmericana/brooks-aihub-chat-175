@@ -154,6 +154,24 @@ export default function NamcAppPage() {
           <div className="mt-4 space-y-3">
             <Link
               className="flex items-center justify-between rounded-2xl border border-white/15 bg-black/20 px-4 py-3 transition hover:bg-black/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+              href="/NAMC/reader"
+            >
+              <div>
+                <div className="text-sm font-semibold text-white">
+                  /NAMC/Reader/
+                </div>
+                <div className="mt-0.5 text-xs text-white/70">
+                  Focused reading assistant for curated NAMC stories and
+                  excerpts
+                </div>
+                <div className="mt-1 text-[11px] font-medium text-cyan-200/90">
+                  💎 Founders-only route
+                </div>
+              </div>
+              <div className="text-xs text-white/60">Open</div>
+            </Link>
+            <Link
+              className="flex items-center justify-between rounded-2xl border border-white/15 bg-black/20 px-4 py-3 transition hover:bg-black/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
               href="/NAMC/lore-playground"
             >
               <div>
