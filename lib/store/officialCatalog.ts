@@ -145,6 +145,9 @@ export const OFFICIAL_CATALOG_TOOL_POLICIES: Record<
   "NAMC/Lore-Playground": {
     tools: ["saveMemory"],
   },
+  "NAMC/Reader": {
+    tools: ["saveMemory"],
+  },
 };
 
 export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
@@ -207,5 +210,11 @@ export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
     slash: "NAMC/Lore-Playground",
     label: "NAMC Lore Playground",
     description: "Lore exploration & headcanon support",
+  },
+  {
+    appSlug: "namc",
+    slash: "NAMC/Reader",
+    label: "NAMC Reader",
+    description: "Reading mode for curated NAMC stories and excerpts",
   },
 ];
