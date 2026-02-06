@@ -229,6 +229,24 @@ export const userLocation = pgTable("UserLocation", {
 
 export type UserLocation = InferSelectModel<typeof userLocation>;
 
+export const userVehicle = pgTable("UserVehicle", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
+  route: varchar("route", { length: 128 }).notNull(),
+  make: text("make").notNull(),
+  model: text("model").notNull(),
+  year: integer("year"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserVehicle = InferSelectModel<typeof userVehicle>;
+
 export const unofficialAto = pgTable("UnofficialAto", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),
