@@ -282,7 +282,13 @@ function isSaveApproval(text: string | null): boolean {
     return false;
   }
 
-  return /\b(yes|yep|yeah|ok|okay|please|sure)\b[\s\S]*\b(save|store|remember)\b|\b(save|store|remember)\s+(it|that|them)\b/i.test(
+  /*
+   * Manual match samples:
+   * - "save this"
+   * - "save this as a memory"
+   * - "yes please save it"
+   */
+  return /(?:\b(yes|yep|yeah|ok|okay|please|sure)\b[\s\S]*\b(save|store|remember)\b|\b(save|store|remember)\s+(it|that|this|them)\b(?:\s+as\s+(?:a\s+)?memory\b)?)/i.test(
     text
   );
 }
@@ -292,6 +298,11 @@ function isMemorySaveRequest(text: string | null): boolean {
     return false;
   }
 
+  /*
+   * Manual match samples:
+   * - "save this as a memory"
+   * - "remember this memory"
+   */
   return /\b(save|store|remember)\b[\s\S]*\b(memory)\b/i.test(text);
 }
 
