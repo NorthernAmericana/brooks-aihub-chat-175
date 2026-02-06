@@ -11,6 +11,7 @@ import {
   inArray,
   lt,
   lte,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -306,6 +307,11 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
   projectRoute: string;
 }) {
   try {
+    const normalizedProjectRoute = projectRoute.startsWith("/")
+      ? projectRoute.slice(1)
+      : projectRoute;
+    const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+    const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
     return await db
       .select()
       .from(memory)
@@ -315,7 +321,12 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
           eq(memory.isApproved, true),
           eq(memory.sourceType, "chat"),
           // Match routes that start with the project route (e.g., /MyCarMindATO/)
-          sql`${memory.route} LIKE ${`${projectRoute}%`}`
+          or(
+            sql`${memory.route} LIKE ${`${projectRoute}%`}`,
+            sql`${memory.route} LIKE ${`${normalizedProjectRoute}%`}`,
+            eq(memory.route, baseProjectRoute),
+            eq(memory.route, slashedBaseProjectRoute)
+          )
         )
       )
       .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
