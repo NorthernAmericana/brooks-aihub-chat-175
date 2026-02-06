@@ -50,10 +50,12 @@ import {
   suggestion,
   type User,
   type UserLocation,
+  type UserVehicle,
   unofficialAto,
   user,
   userInstalls,
   userLocation,
+  userVehicle,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -985,6 +987,45 @@ export async function createHomeLocationRecord({
   }
 }
 
+export async function createVehicleRecord({
+  ownerId,
+  chatId,
+  route,
+  make,
+  model,
+  year,
+}: {
+  ownerId: string;
+  chatId: string;
+  route: string;
+  make: string;
+  model: string;
+  year?: number | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(userVehicle)
+      .values({
+        ownerId,
+        chatId,
+        route,
+        make,
+        model,
+        year: year ?? null,
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create vehicle record"
+    );
+  }
+}
+
 export async function getHomeLocationByUserId({
   userId,
   chatId,
@@ -1046,6 +1087,36 @@ export async function getHomeLocationByUserIdAndRoute({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get home location"
+    );
+  }
+}
+
+export async function getCurrentVehicleByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}): Promise<UserVehicle | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userVehicle)
+      .where(
+        and(
+          eq(userVehicle.ownerId, userId),
+          eq(userVehicle.route, route),
+          eq(userVehicle.isApproved, true)
+        )
+      )
+      .orderBy(desc(userVehicle.updatedAt), desc(userVehicle.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get current vehicle"
     );
   }
 }

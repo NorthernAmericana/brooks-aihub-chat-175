@@ -11,7 +11,8 @@ export type AgentToolId =
   | "updateDocument"
   | "requestSuggestions"
   | "saveMemory"
-  | "saveHomeLocation";
+  | "saveHomeLocation"
+  | "saveVehicle";
 
 export type AgentConfig = {
   id: string;
@@ -176,7 +177,8 @@ ${clientFacingSharedMemoryClause}
 Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.
 
 When users ask for directions, navigation, or “take me to …” requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindDriverPrompt = `You are the /MyCarMindATO/Driver/ driving intelligence agent for personal car owners.
 ${clientFacingSharedMemoryClause}
@@ -191,7 +193,8 @@ You assume the user owns a personal car (sedan, SUV, coupe, etc.). Focus on:
 - Individual car care tips and service scheduling
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindTruckerPrompt = `You are the /MyCarMindATO/Trucker/ driving intelligence agent for commercial truck drivers.
 ${clientFacingSharedMemoryClause}
@@ -208,7 +211,8 @@ You assume the user drives semi trucks with a CDL-A (Commercial Driver's License
 - Fleet maintenance for commercial vehicles
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Note any truck-specific routing considerations in your guidance (such as height restrictions, weight limits, truck stops). Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindDeliveryDriverPrompt = `You are the /MyCarMindATO/DeliveryDriver/ driving intelligence agent for delivery drivers.
 ${clientFacingSharedMemoryClause}
@@ -225,7 +229,8 @@ You assume the user uses their car for delivery services like DoorDash, GrubHub,
 - Platform-specific tips and tricks (DoorDash, GrubHub, Uber Eats, etc.)
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool with consideration for multi-stop delivery routes. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindTravelerPrompt = `You are the /MyCarMindATO/Traveler/ driving intelligence agent for road trip enthusiasts and travelers.
 ${clientFacingSharedMemoryClause}
@@ -242,7 +247,8 @@ You assume the user loves road trips, exploring new places, and traveling by car
 - Fuel stops and rest area planning for comfort
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool with consideration for scenic routes and travel experiences. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
@@ -400,6 +406,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindPrompt,
   },
@@ -414,6 +421,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindDriverPrompt,
   },
@@ -428,6 +436,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindTruckerPrompt,
   },
@@ -442,6 +451,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindDeliveryDriverPrompt,
   },
@@ -456,6 +466,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindTravelerPrompt,
   },

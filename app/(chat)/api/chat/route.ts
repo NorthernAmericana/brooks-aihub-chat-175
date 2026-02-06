@@ -30,6 +30,7 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
 import { saveMemory } from "@/lib/ai/tools/save-memory";
+import { saveVehicle } from "@/lib/ai/tools/save-vehicle";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -39,6 +40,7 @@ import {
   getApprovedMemoriesByUserIdAndRoute,
   getApprovedMemoriesByUserIdAndProjectRoute,
   getChatById,
+  getCurrentVehicleByUserIdAndRoute,
   getEnabledAtoFilesByAtoId,
   getHomeLocationByUserIdAndRoute,
   getMessageCountByUserId,
@@ -140,6 +142,20 @@ const formatHomeLocationContext = (
   }
 
   return `HOME LOCATION\nUser-approved home location:\n- ${homeLocation.rawText}`;
+};
+
+const formatVehicleContext = (
+  vehicle: Awaited<ReturnType<typeof getCurrentVehicleByUserIdAndRoute>>
+) => {
+  if (!vehicle) {
+    return null;
+  }
+
+  const vehicleLabel = [vehicle.year, vehicle.make, vehicle.model]
+    .filter(Boolean)
+    .join(" ");
+
+  return `CURRENT VEHICLE\nUser-approved current vehicle:\n- ${vehicleLabel}`;
 };
 
 function getStreamContext() {
@@ -247,6 +263,16 @@ function isHomeLocationRequest(text: string | null): boolean {
   }
 
   return /(\b(save|set|store|remember)\b[\s\S]*\b(home|house)\b[\s\S]*\b(location|address)\b)|(\bmy home is\b)|(\bhome location\b)/i.test(
+    text
+  );
+}
+
+function isVehicleSaveRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /(\b(save|set|store|remember)\b[\s\S]*\b(vehicle|car)\b)|(\bmy car is\b)|(\bmy vehicle is\b)|(\bcurrent car\b)|(\bcurrent vehicle\b)/i.test(
     text
   );
 }
@@ -561,6 +587,14 @@ export async function POST(request: Request) {
           })
         : null;
     const homeLocationContext = formatHomeLocationContext(homeLocation);
+    const currentVehicle =
+      isMyCarMindAgent || isMyCarMindProject
+        ? await getCurrentVehicleByUserIdAndRoute({
+            userId: session.user.id,
+            route: MY_CAR_MIND_ROUTE,
+          })
+        : null;
+    const vehicleContext = formatVehicleContext(currentVehicle);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
     });
@@ -568,7 +602,12 @@ export async function POST(request: Request) {
     const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
     const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
     const memoryContext =
-      [baseMemoryContext, homeLocationContext, spoilerAccessContext]
+      [
+        baseMemoryContext,
+        homeLocationContext,
+        vehicleContext,
+        spoilerAccessContext,
+      ]
         .filter(Boolean)
         .join("\n\n") || null;
 
@@ -587,6 +626,9 @@ export async function POST(request: Request) {
         const isHomeLocationSaveRequest =
           selectedAgent.id === "my-car-mind" &&
           isHomeLocationRequest(lastUserText);
+        const isVehicleSaveIntent =
+          selectedAgent.id === "my-car-mind" &&
+          isVehicleSaveRequest(lastUserText);
         type ToolDefinition =
           | typeof getDirections
           | typeof getWeather
@@ -594,7 +636,8 @@ export async function POST(request: Request) {
           | ReturnType<typeof updateDocument>
           | ReturnType<typeof requestSuggestions>
           | ReturnType<typeof saveMemory>
-          | ReturnType<typeof saveHomeLocation>;
+          | ReturnType<typeof saveHomeLocation>
+          | ReturnType<typeof saveVehicle>;
 
         const toolImplementations = {
           getDirections,
@@ -604,6 +647,7 @@ export async function POST(request: Request) {
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
           saveHomeLocation: saveHomeLocation({ session, chatId: id }),
+          saveVehicle: saveVehicle({ session, chatId: id }),
         } satisfies Record<AgentToolId, ToolDefinition>;
 
         const namcDocumentTools: AgentToolId[] = [
@@ -679,7 +723,8 @@ export async function POST(request: Request) {
         } else if (
           selectedAgent.id === "my-car-mind" &&
           !isToolApprovalFlow &&
-          !isHomeLocationSaveRequest
+          !isHomeLocationSaveRequest &&
+          !isVehicleSaveIntent
         ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
