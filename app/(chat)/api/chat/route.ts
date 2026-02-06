@@ -277,6 +277,16 @@ function isVehicleSaveRequest(text: string | null): boolean {
   );
 }
 
+function isSaveApproval(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /\b(yes|yep|yeah|ok|okay|please|sure)\b[\s\S]*\b(save|store|remember)\b|\b(save|store|remember)\s+(it|that|them)\b/i.test(
+    text
+  );
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
   const vercelId = request.headers.get("x-vercel-id");
@@ -631,12 +641,13 @@ export async function POST(request: Request) {
           isNamcAgent && isDocumentRequest(lastUserText);
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
+        const isMyCarMindFamily = isMyCarMindAgent || isMyCarMindProject;
         const isHomeLocationSaveRequest =
-          selectedAgent.id === "my-car-mind" &&
-          isHomeLocationRequest(lastUserText);
+          isMyCarMindFamily && isHomeLocationRequest(lastUserText);
         const isVehicleSaveIntent =
-          selectedAgent.id === "my-car-mind" &&
-          isVehicleSaveRequest(lastUserText);
+          isMyCarMindFamily && isVehicleSaveRequest(lastUserText);
+        const isExplicitSaveApproval =
+          isMyCarMindFamily && isSaveApproval(lastUserText);
         type ToolDefinition =
           | typeof getDirections
           | typeof getWeather
@@ -729,10 +740,11 @@ export async function POST(request: Request) {
           }
           dataStream.write({ type: "text-end", id: responseId });
         } else if (
-          selectedAgent.id === "my-car-mind" &&
+          isMyCarMindFamily &&
           !isToolApprovalFlow &&
           !isHomeLocationSaveRequest &&
-          !isVehicleSaveIntent
+          !isVehicleSaveIntent &&
+          !isExplicitSaveApproval
         ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
