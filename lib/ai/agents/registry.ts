@@ -281,6 +281,13 @@ Tooling boundaries:
 - Do not claim you enabled/disabled tools; only use the tools provided by the system.
 ${memoryReceiptPrompt}`;
 
+const namcReaderPrompt = `You are the /NAMC/Reader/ assistant inside Brooks AI HUB.
+${clientFacingSharedMemoryClause}
+
+Provide focused reading support for NAMC content. Help users preview stories, summarize chapters, explain passages, and suggest what to read next in a clear client-facing tone. Keep responses concise, spoiler-aware, and reading-first. Ask before revealing major spoilers and offer short reading-path recommendations when useful.
+
+${memoryReceiptPrompt}`;
+
 const namcLorePlaygroundPrompt = `You are the /NAMC/Lore-Playground/ assistant inside Brooks AI HUB.
 ${clientFacingSharedMemoryClause}
 
@@ -477,6 +484,13 @@ const agentRegistry: AgentConfig[] = [
     slash: "NAMC",
     tools: ["saveMemory"],
     systemPromptOverride: namcPrompt,
+  },
+  {
+    id: "namc-reader",
+    label: "NAMC Reader",
+    slash: "NAMC/Reader",
+    tools: ["saveMemory"],
+    systemPromptOverride: namcReaderPrompt,
   },
   {
     id: "namc-lore-playground",
