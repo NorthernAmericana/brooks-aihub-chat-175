@@ -35,6 +35,7 @@ import { useEntitlements } from "@/hooks/use-entitlements";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 import type { RouteSuggestion } from "@/lib/routes/types";
+import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
 import { normalizeRouteKey } from "@/lib/routes/utils";
 import {
   chatModels,
@@ -357,8 +358,36 @@ function PureMultimodalInput({
     }
   }, [input]);
 
+  const canActivateRoute = useCallback(
+    (route: RouteSuggestion | undefined, slash: string) => {
+      const requiresFounders =
+        route?.foundersOnly ?? requiresFoundersForSlashRoute(route?.slash ?? slash);
+
+      if (requiresFounders && !entitlements.foundersAccess) {
+        toast.error("This route requires Founders access. Upgrade to unlock it.");
+        setShowSlashSuggestions(false);
+        return false;
+      }
+
+      return true;
+    },
+    [entitlements.foundersAccess]
+  );
+
   const handleSlashSelect = useCallback(
     (slash: string, options?: { atoId?: string }) => {
+      const selectedRoute =
+        (routeData?.routes ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        ) ??
+        (inlineSlashSuggestions ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        );
+
+      if (!canActivateRoute(selectedRoute, slash)) {
+        return;
+      }
+
       setInput(`/${slash}/ `);
       setShowSlashSuggestions(false);
       setInlineSlashSuggestions([]);
@@ -369,7 +398,7 @@ function PureMultimodalInput({
         textareaRef.current?.focus();
       }, 0);
     },
-    [onSelectAto, setInput]
+    [canActivateRoute, inlineSlashSuggestions, onSelectAto, routeData?.routes, setInput]
   );
 
   const handleStartRecording = useCallback(async () => {
@@ -494,6 +523,10 @@ function PureMultimodalInput({
               return;
             }
 
+            if (!canActivateRoute(resolved.route, parsedAction.slash)) {
+              return;
+            }
+
             parsedAction = {
               slash: resolved.route.slash,
               prompt: parsedAction.prompt,
@@ -556,6 +589,16 @@ function PureMultimodalInput({
       }
 
       if (parsedAction) {
+        const selectedRoute = (routeData?.routes ?? []).find(
+          (route) =>
+            normalizeRouteKey(route.slash) ===
+            normalizeRouteKey(parsedAction?.slash ?? "")
+        );
+
+        if (!canActivateRoute(selectedRoute, parsedAction.slash)) {
+          return;
+        }
+
         rememberSlashAction(parsedAction);
       }
 
@@ -609,6 +652,7 @@ function PureMultimodalInput({
     isNamcChatRoute,
     onSelectAto,
     entitlements.foundersAccess,
+    canActivateRoute,
     pathname,
     sendMessageParts,
   ]);

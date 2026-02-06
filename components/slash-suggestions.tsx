@@ -118,6 +118,15 @@ export function SlashSuggestions({
                 /{agent.slash}/
               </span>
               <span className="ml-2 text-muted-foreground">{agent.label}</span>
+              {agent.foundersOnly ? (
+                <span aria-label="Founders only" className="ml-2" title="Founders access only">
+                  💎
+                </span>
+              ) : agent.isFreeRoute ? (
+                <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                  Free
+                </span>
+              ) : null}
             </Button>
           ))
         ) : (
