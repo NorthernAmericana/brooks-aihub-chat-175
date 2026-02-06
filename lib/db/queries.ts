@@ -1019,6 +1019,37 @@ export async function getHomeLocationByUserId({
   }
 }
 
+export async function getHomeLocationByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}): Promise<UserLocation | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userLocation)
+      .where(
+        and(
+          eq(userLocation.ownerId, userId),
+          eq(userLocation.route, route),
+          eq(userLocation.locationType, "home-location"),
+          eq(userLocation.isApproved, true)
+        )
+      )
+      .orderBy(desc(userLocation.updatedAt), desc(userLocation.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get home location"
+    );
+  }
+}
+
 export async function getChatsByUserId({
   id,
   limit,

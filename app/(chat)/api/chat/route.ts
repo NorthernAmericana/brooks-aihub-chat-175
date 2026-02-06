@@ -40,7 +40,7 @@ import {
   getApprovedMemoriesByUserIdAndProjectRoute,
   getChatById,
   getEnabledAtoFilesByAtoId,
-  getHomeLocationByUserId,
+  getHomeLocationByUserIdAndRoute,
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
@@ -133,7 +133,7 @@ const formatMemoryContext = (
 };
 
 const formatHomeLocationContext = (
-  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserId>>
+  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserIdAndRoute>>
 ) => {
   if (!homeLocation) {
     return null;
@@ -554,9 +554,8 @@ export async function POST(request: Request) {
     const baseMemoryContext = formatMemoryContext(approvedMemories);
     const homeLocation =
       isMyCarMindAgent || isMyCarMindProject
-        ? await getHomeLocationByUserId({
+        ? await getHomeLocationByUserIdAndRoute({
             userId: session.user.id,
-            chatId: id,
             // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
             route: MY_CAR_MIND_ROUTE,
           })
