@@ -1019,7 +1019,7 @@ function PureMultimodalInput({
           </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
+          <PromptInputTools className="flex w-full flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
               isUploadEnabled={canUploadFiles}
@@ -1032,7 +1032,7 @@ function PureMultimodalInput({
             />
             <Button
               className={cn(
-                "aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent",
+                "inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent",
                 isRecording && "bg-red-500 text-white hover:bg-red-600"
               )}
               data-testid="mic-button"
@@ -1045,7 +1045,7 @@ function PureMultimodalInput({
                   <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                 </div>
               ) : (
-                <MicIcon />
+                <MicIcon size={14} />
               )}
             </Button>
           </PromptInputTools>
@@ -1233,7 +1233,7 @@ function PureAttachmentsButton({
 
   return (
     <Button
-      className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
+      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
       disabled={status !== "ready" || isReasoningModel || !isUploadEnabled}
       onClick={(event) => {
@@ -1276,9 +1276,9 @@ function PureModelSelectorCompact({
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 w-[200px] justify-between px-2" variant="ghost">
+        <Button className="h-8 min-w-0 max-w-[160px] flex-1 justify-between gap-1 px-2 sm:w-[200px] sm:max-w-[200px] sm:flex-none" variant="ghost">
           {provider && <ModelSelectorLogo provider={provider} />}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName className="truncate">{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>

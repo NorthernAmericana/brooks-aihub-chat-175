@@ -55,7 +55,7 @@ function PureMessages({
         className="absolute inset-0 touch-pan-y overscroll-contain overflow-y-auto"
         ref={messagesContainerRef}
       >
-        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-3 px-2 py-3 md:gap-4 md:px-4">
+        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-3 px-2 py-3 pb-[var(--chat-composer-offset,8.5rem)] md:gap-4 md:px-4">
           {messages.length === 0 && (
             <Greeting onSelectFolder={onSelectSuggestedFolder} />
           )}
