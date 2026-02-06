@@ -52,14 +52,20 @@ type AnalogClockProps = {
 };
 
 const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    setNow(new Date());
     const id = window.setInterval(() => setNow(new Date()), 1_000);
     return () => window.clearInterval(id);
   }, []);
 
   const { hDeg, mDeg, sDeg } = useMemo(() => {
+    if (!now) {
+      return { hDeg: 0, mDeg: 0, sDeg: 0 };
+    }
     const ms = now.getMilliseconds();
     const seconds = now.getSeconds() + ms / 1_000;
     const minutes = now.getMinutes() + seconds / 60;
@@ -71,6 +77,10 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
       hDeg: hours * 30,
     };
   }, [now]);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div
