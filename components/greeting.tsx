@@ -46,6 +46,99 @@ type TreeNode = {
   children: TreeNode[];
 };
 
+type AnalogClockProps = {
+  size?: number;
+};
+
+const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const { hDeg, mDeg, sDeg } = useMemo(() => {
+    const ms = now.getMilliseconds();
+    const seconds = now.getSeconds() + ms / 1_000;
+    const minutes = now.getMinutes() + seconds / 60;
+    const hours = (now.getHours() % 12) + minutes / 60;
+
+    return {
+      sDeg: seconds * 6,
+      mDeg: minutes * 6,
+      hDeg: hours * 30,
+    };
+  }, [now]);
+
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "9999px",
+        position: "relative",
+        overflow: "hidden",
+        background: "rgba(20,20,20,0.08)",
+        border: "1px solid rgba(15, 23, 42, 0.18)",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+      }}
+    >
+      <Hand deg={hDeg} width={6} lengthPct={28} color="rgba(15, 23, 42, 0.9)" />
+      <Hand
+        deg={mDeg}
+        width={4}
+        lengthPct={38}
+        color="rgba(15, 23, 42, 0.7)"
+      />
+      <Hand
+        deg={sDeg}
+        width={2}
+        lengthPct={42}
+        color="rgba(16, 185, 129, 0.95)"
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: 10,
+          height: 10,
+          transform: "translate(-50%, -50%)",
+          borderRadius: "9999px",
+          background: "rgba(15, 23, 42, 0.9)",
+          boxShadow: "0 0 0 3px rgba(0,0,0,0.2)",
+        }}
+      />
+    </div>
+  );
+};
+
+type HandProps = {
+  deg: number;
+  width: number;
+  lengthPct: number;
+  color: string;
+};
+
+const Hand = ({ deg, width, lengthPct, color }: HandProps) => {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        width,
+        height: `${lengthPct}%`,
+        transformOrigin: "50% 100%",
+        transform: `translate(-50%, -100%) rotate(${deg}deg)`,
+        borderRadius: 9999,
+        background: color,
+      }}
+    />
+  );
+};
+
 const TreeNodeItem = ({
   node,
   depth = 0,
@@ -386,18 +479,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     [now]
   );
 
-  const analogHands = useMemo(() => {
-    const seconds = now.getSeconds();
-    const minutes = now.getMinutes() + seconds / 60;
-    const hours = (now.getHours() % 12) + minutes / 60;
-
-    return {
-      second: seconds * 6,
-      minute: minutes * 6,
-      hour: hours * 30,
-    };
-  }, [now]);
-
   const cloudStyles = useMemo(
     () => [
       { transform: "translateY(0px)", minWidth: "10.75rem" },
@@ -462,7 +543,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="greeting-time mt-2 w-full max-w-xs rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-left shadow-sm backdrop-blur-sm sm:max-w-sm"
+        className="greeting-time mt-2 w-full max-w-sm rounded-3xl border border-border/60 bg-gradient-to-r from-background/80 via-background/70 to-background/60 px-4 py-3 text-left shadow-sm backdrop-blur-sm sm:max-w-md"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
@@ -470,28 +551,10 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             {clockMode ? (
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 shrink-0 rounded-full border border-border/70 bg-background/90 shadow-sm">
-                  <span className="absolute left-1/2 top-1 h-1 w-1 -translate-x-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute left-1 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-muted-foreground/80" />
-                  <span className="absolute right-1 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-muted-foreground/80" />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-full rounded-full bg-foreground"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.hour}deg)` }}
-                  />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-4.5 w-0.5 -translate-x-1/2 -translate-y-full rounded-full bg-foreground/80"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.minute}deg)` }}
-                  />
-                  <span
-                    className="absolute left-1/2 top-1/2 h-5 w-px -translate-x-1/2 -translate-y-full bg-emerald-500"
-                    style={{ transform: `translate(-50%, -100%) rotate(${analogHands.second}deg)` }}
-                  />
-                  <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
-                </div>
+              <div className="flex items-center gap-4">
+                <AnalogClock size={72} />
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold tracking-[0.12em] text-foreground sm:text-sm">
+                  <div className="text-sm font-semibold tracking-[0.12em] text-foreground sm:text-base">
                     {digitalTime}
                   </div>
                   <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
