@@ -1854,6 +1854,43 @@ export async function updateUserBirthday({
   }
 }
 
+export async function getUserMessageColor({ userId }: { userId: string }) {
+  try {
+    const [selectedUser] = await db
+      .select({ messageColor: user.messageColor })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.messageColor ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user message color"
+    );
+  }
+}
+
+export async function updateUserMessageColor({
+  userId,
+  messageColor,
+}: {
+  userId: string;
+  messageColor: string | null;
+}) {
+  try {
+    const [updatedUser] = await db
+      .update(user)
+      .set({ messageColor })
+      .where(eq(user.id, userId))
+      .returning({ messageColor: user.messageColor });
+    return updatedUser?.messageColor ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user message color"
+    );
+  }
+}
+
 export async function createEntitlement({
   userId,
   productId,

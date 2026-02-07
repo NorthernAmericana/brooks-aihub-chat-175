@@ -1,19 +1,27 @@
 import equal from "fast-deep-equal";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getChatRouteKey, getOfficialVoiceId } from "@/lib/voice";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
+  MenuIcon,
   PencilEditIcon,
   SpeakerIcon,
   ThumbDownIcon,
   ThumbUpIcon,
 } from "./icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function PureMessageActions({
   chatId,
@@ -37,6 +45,13 @@ export function PureMessageActions({
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const { messageColor, setMessageColor } = useUserMessageColor();
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [pickerColor, setPickerColor] = useState(messageColor);
+
+  useEffect(() => {
+    setPickerColor(messageColor);
+  }, [messageColor]);
 
   if (isLoading) {
     return null;
@@ -182,7 +197,7 @@ export function PureMessageActions({
   if (message.role === "user") {
     return (
       <Actions className="-mr-0.5 justify-end">
-        <div className="relative">
+        <div className="relative flex items-center gap-1">
           {setMode && (
             <Action
               className="absolute top-0 -left-10 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/message:opacity-100"
@@ -196,6 +211,51 @@ export function PureMessageActions({
           <Action onClick={handleCopy} tooltip="Copy">
             <CopyIcon />
           </Action>
+          <DropdownMenu onOpenChange={() => setIsColorPickerOpen(false)}>
+            <DropdownMenuTrigger asChild>
+              <Action tooltip="Message color">
+                <MenuIcon />
+              </Action>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsColorPickerOpen((previous) => !previous);
+                }}
+              >
+                Change color text bar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {isColorPickerOpen && (
+            <div className="absolute right-0 top-full z-10 mt-2 flex items-center gap-2 rounded-md border border-border bg-popover px-3 py-2 shadow-md">
+              <span className="text-xs text-muted-foreground">Pick</span>
+              <input
+                aria-label="Message color picker"
+                className="h-7 w-7 cursor-pointer rounded-full border border-border p-0"
+                onChange={async (event) => {
+                  const nextColor = event.target.value;
+                  setPickerColor(nextColor);
+                  try {
+                    await setMessageColor(nextColor);
+                    toast.success("Message color updated.");
+                  } catch (_error) {
+                    toast.error("Unable to save message color.");
+                  }
+                }}
+                type="color"
+                value={pickerColor}
+              />
+              <button
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setIsColorPickerOpen(false)}
+                type="button"
+              >
+                Done
+              </button>
+            </div>
+          )}
         </div>
       </Actions>
     );
