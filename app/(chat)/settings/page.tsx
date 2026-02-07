@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { AtoSettingsPanel } from "@/components/ato-settings-panel";
+import { BirthdaySettingsPanel } from "@/components/birthday-settings-panel";
 import { VoiceSettingsPanel } from "@/components/voice-settings-panel";
 import {
   getChatsByUserId,
@@ -60,6 +61,17 @@ export default async function SettingsPage() {
         </div>
 
         <AtoSettingsPanel atos={atos} maxFileCount={maxFileCount} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg">Birthday</h2>
+          <p className="text-sm text-muted-foreground">
+            Keep your birthday on file for personalized celebrations.
+          </p>
+        </div>
+
+        <BirthdaySettingsPanel />
       </section>
     </div>
   );
