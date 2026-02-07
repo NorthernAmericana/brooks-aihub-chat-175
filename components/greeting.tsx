@@ -270,6 +270,14 @@ type TimelineEvent = {
   source: "personal" | "official";
 };
 
+type StoredBirthday = {
+  name?: string;
+  birthday?: string;
+  date?: string;
+  month?: number;
+  day?: number;
+};
+
 type EventWeekGroup = {
   weekKey: string;
   title: string;
@@ -299,6 +307,112 @@ const groupEventsByWeek = (events: TimelineEvent[]) => {
   return Array.from(weekMap.values());
 };
 
+const BIRTHDAY_STORAGE_KEY = "brooks-aihub-birthdays";
+
+const formatIsoDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatSlashDate = (date: Date) => {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${month}/${day}/${date.getFullYear()}`;
+};
+
+const parseBirthdayString = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return {
+      month: Number(isoMatch[2]),
+      day: Number(isoMatch[3]),
+    };
+  }
+
+  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+  if (slashMatch) {
+    return {
+      month: Number(slashMatch[1]),
+      day: Number(slashMatch[2]),
+    };
+  }
+
+  return null;
+};
+
+const getMonthDayFromBirthday = (birthday: StoredBirthday) => {
+  if (typeof birthday.month === "number" && typeof birthday.day === "number") {
+    return { month: birthday.month, day: birthday.day };
+  }
+
+  const dateSource = birthday.birthday ?? birthday.date ?? "";
+  if (dateSource) {
+    return parseBirthdayString(dateSource);
+  }
+
+  return null;
+};
+
+const buildBirthdayEvents = (
+  birthdays: StoredBirthday[],
+  now: Date
+): TimelineEvent[] => {
+  const currentYear = now.getFullYear();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  return birthdays
+    .map((birthday) => {
+      const name = birthday.name?.trim();
+      if (!name) {
+        return null;
+      }
+
+      const monthDay = getMonthDayFromBirthday(birthday);
+      if (!monthDay) {
+        return null;
+      }
+
+      const { month, day } = monthDay;
+      if (!month || !day) {
+        return null;
+      }
+
+      let eventDate = new Date(currentYear, month - 1, day);
+      if (eventDate < today) {
+        eventDate = new Date(currentYear + 1, month - 1, day);
+      }
+
+      const weekStart = new Date(eventDate);
+      weekStart.setDate(eventDate.getDate() - eventDate.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      return {
+        title: `${name}'s birthday 🎂`,
+        date: formatIsoDate(eventDate),
+        weekStart: formatSlashDate(weekStart),
+        weekEnd: formatSlashDate(weekEnd),
+        monthLabel: eventDate.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        }),
+        source: "personal",
+      };
+    })
+    .filter((event): event is TimelineEvent => Boolean(event));
+};
+
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const [now, setNow] = useState(() => new Date());
@@ -318,58 +432,10 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [storedBirthdays, setStoredBirthdays] = useState<StoredBirthday[]>([]);
   const personalEvents = useMemo<TimelineEvent[]>(
-    () => [
-      {
-        title: "It’s almost Jack's Birthday 🎂",
-        date: "2026-02-02",
-        weekStart: "02/01/2026",
-        weekEnd: "02/07/2026",
-        monthLabel: "February, 2026",
-        source: "personal",
-      },
-      {
-        title: "Avery's studio demo night is this week",
-        date: "2026-02-06",
-        weekStart: "02/01/2026",
-        weekEnd: "02/07/2026",
-        monthLabel: "February, 2026",
-        source: "personal",
-      },
-      {
-        title: "Maya's launch sprint begins in 3 days",
-        date: "2026-02-11",
-        weekStart: "02/08/2026",
-        weekEnd: "02/14/2026",
-        monthLabel: "February, 2026",
-        source: "personal",
-      },
-      {
-        title: "Eli has a creator check-in this Friday",
-        date: "2026-02-13",
-        weekStart: "02/08/2026",
-        weekEnd: "02/14/2026",
-        monthLabel: "February, 2026",
-        source: "personal",
-      },
-      {
-        title: "Sofia's residency showcase is in 2 weeks",
-        date: "2026-02-20",
-        weekStart: "02/15/2026",
-        weekEnd: "02/21/2026",
-        monthLabel: "February, 2026",
-        source: "personal",
-      },
-      {
-        title: "Kenji's mentorship wrap-up session",
-        date: "2026-03-06",
-        weekStart: "03/01/2026",
-        weekEnd: "03/07/2026",
-        monthLabel: "March, 2026",
-        source: "personal",
-      },
-    ],
-    []
+    () => buildBirthdayEvents(storedBirthdays, now),
+    [storedBirthdays, now]
   );
   const officialEventsTimeline = useMemo<TimelineEvent[]>(
     () =>
@@ -394,6 +460,40 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     }, 1_000);
 
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const loadBirthdays = () => {
+      const raw = window.localStorage.getItem(BIRTHDAY_STORAGE_KEY);
+      if (!raw) {
+        setStoredBirthdays([]);
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setStoredBirthdays(parsed);
+        } else {
+          setStoredBirthdays([]);
+        }
+      } catch {
+        setStoredBirthdays([]);
+      }
+    };
+
+    loadBirthdays();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === BIRTHDAY_STORAGE_KEY) {
+        loadBirthdays();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const customAtoFolders = useMemo(() => {
@@ -730,9 +830,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
             <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
               <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 <span>Personal events</span>
-                <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-purple-500">
-                  People
-                </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 Moments from individual creators across the hub.
@@ -768,9 +865,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
             <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm">
               <div className="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 <span>Official events</span>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
-                  Studio
-                </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 Official announcements sourced from the events folder.
