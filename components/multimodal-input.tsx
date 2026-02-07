@@ -1048,7 +1048,12 @@ function PureMultimodalInput({
               maxHeight={200}
               minHeight={44}
               onChange={handleInput}
-              style={{ caretColor: inputTextColor }}
+              style={{
+                caretColor: inputTextColor,
+                ...(slashPrefixIndent
+                  ? { textIndent: `${slashPrefixIndent}px` }
+                  : {}),
+              }}
               onScroll={(event) => {
                 if (overlayRef.current) {
                   overlayRef.current.scrollTop = event.currentTarget.scrollTop;
@@ -1059,11 +1064,6 @@ function PureMultimodalInput({
               placeholder="Send a message..."
               ref={textareaRef}
               rows={1}
-              style={
-                slashPrefixIndent
-                  ? { textIndent: `${slashPrefixIndent}px` }
-                  : undefined
-              }
               value={input}
             />
           </div>
