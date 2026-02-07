@@ -66,6 +66,55 @@ async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
   return operation();
 }
 
+type UserBirthdayColumnState = "unchecked" | "ready" | "failed";
+let userBirthdayColumnState: UserBirthdayColumnState = "unchecked";
+let userBirthdayColumnPromise: Promise<void> | null = null;
+
+async function ensureUserBirthdayColumnReady() {
+  if (userBirthdayColumnState === "ready") {
+    return;
+  }
+
+  if (userBirthdayColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "birthday". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userBirthdayColumnPromise) {
+    userBirthdayColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasBirthdayColumn = rows.some(
+        (row) => row.column_name === "birthday"
+      );
+
+      if (!hasBirthdayColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."birthday" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "birthday" varchar(10);
+        `);
+      }
+    })()
+      .then(() => {
+        userBirthdayColumnState = "ready";
+      })
+      .catch((error) => {
+        userBirthdayColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userBirthdayColumnPromise;
+}
+
 function logDbError({
   fn,
   operation,
@@ -1819,6 +1868,7 @@ export async function getUserById({ id }: { id: string }) {
 
 export async function getUserBirthday({ userId }: { userId: string }) {
   try {
+    await ensureUserBirthdayColumnReady();
     const [selectedUser] = await db
       .select({ birthday: user.birthday })
       .from(user)
@@ -1840,6 +1890,7 @@ export async function updateUserBirthday({
   birthday: string | null;
 }) {
   try {
+    await ensureUserBirthdayColumnReady();
     const [updatedUser] = await db
       .update(user)
       .set({ birthday })
