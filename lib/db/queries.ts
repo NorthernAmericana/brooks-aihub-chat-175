@@ -1817,6 +1817,43 @@ export async function getUserById({ id }: { id: string }) {
   }
 }
 
+export async function getUserBirthday({ userId }: { userId: string }) {
+  try {
+    const [selectedUser] = await db
+      .select({ birthday: user.birthday })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.birthday ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user birthday"
+    );
+  }
+}
+
+export async function updateUserBirthday({
+  userId,
+  birthday,
+}: {
+  userId: string;
+  birthday: string | null;
+}) {
+  try {
+    const [updatedUser] = await db
+      .update(user)
+      .set({ birthday })
+      .where(eq(user.id, userId))
+      .returning({ birthday: user.birthday });
+    return updatedUser?.birthday ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user birthday"
+    );
+  }
+}
+
 export async function createEntitlement({
   userId,
   productId,
