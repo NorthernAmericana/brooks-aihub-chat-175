@@ -45,8 +45,9 @@ import {
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
-import { cn, fetcher } from "@/lib/utils";
+import { cn, fetcher, getContrastingTextColor } from "@/lib/utils";
 import { shouldDisableAds, trackMessageAndCheckAdGate } from "@/lib/ad-gate";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -145,6 +146,8 @@ function PureMultimodalInput({
   const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const { entitlements } = useEntitlements(session?.user?.id);
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
+  const { messageColor } = useUserMessageColor();
+  const inputTextColor = getContrastingTextColor(messageColor);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -970,6 +973,7 @@ function PureMultimodalInput({
 
       <PromptInput
         className="rounded-xl border border-border bg-background p-3 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
+        style={{ backgroundColor: messageColor, color: inputTextColor }}
         onSubmit={(event) => {
           event.preventDefault();
           if (!input.trim() && attachments.length === 0) {
@@ -1021,6 +1025,7 @@ function PureMultimodalInput({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 overflow-auto p-2 text-base leading-6 tracking-normal text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [white-space:pre-wrap] [word-break:break-word] [&::-webkit-scrollbar]:hidden"
               ref={overlayRef}
+              style={{ color: inputTextColor }}
             >
               {slashPrefix ? (
                 <>
@@ -1043,6 +1048,7 @@ function PureMultimodalInput({
               maxHeight={200}
               minHeight={44}
               onChange={handleInput}
+              style={{ caretColor: inputTextColor }}
               onScroll={(event) => {
                 if (overlayRef.current) {
                   overlayRef.current.scrollTop = event.currentTarget.scrollTop;

@@ -97,6 +97,44 @@ export function sanitizeText(text: string) {
   return text.replace('<has_function_call>', '');
 }
 
+export function getContrastingTextColor(
+  hexColor: string,
+  options: {
+    lightColor?: string;
+    darkColor?: string;
+    threshold?: number;
+  } = {},
+) {
+  const { lightColor = '#ffffff', darkColor = '#0f172a', threshold = 0.5 } =
+    options;
+  const normalized = hexColor.replace('#', '').trim();
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((channel) => `${channel}${channel}`)
+          .join('')
+      : normalized;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) {
+    return lightColor;
+  }
+
+  const red = Number.parseInt(expanded.slice(0, 2), 16) / 255;
+  const green = Number.parseInt(expanded.slice(2, 4), 16) / 255;
+  const blue = Number.parseInt(expanded.slice(4, 6), 16) / 255;
+
+  const toLinear = (channel: number) =>
+    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+
+  const luminance =
+    0.2126 * toLinear(red) +
+    0.7152 * toLinear(green) +
+    0.0722 * toLinear(blue);
+
+  return luminance > threshold ? darkColor : lightColor;
+}
+
 export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {
   return messages.map((message) => ({
     id: message.id,
