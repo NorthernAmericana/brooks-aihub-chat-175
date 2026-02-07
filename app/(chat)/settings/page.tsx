@@ -24,17 +24,21 @@ export default async function SettingsPage() {
     redirect("/api/auth/guest");
   }
 
-  const { chats } = await getChatsByUserId({
-    id: session.user.id,
-    limit: 50,
-    startingAfter: null,
-    endingBefore: null,
-  });
-
-  const [atos, user] = await Promise.all([
+  const [chatsResult, atosResult, userResult] = await Promise.allSettled([
+    getChatsByUserId({
+      id: session.user.id,
+      limit: 50,
+      startingAfter: null,
+      endingBefore: null,
+    }),
     getUnofficialAtosByOwner({ ownerUserId: session.user.id }),
     getUserById({ id: session.user.id }),
   ]);
+
+  const chats =
+    chatsResult.status === "fulfilled" ? chatsResult.value.chats : [];
+  const atos = atosResult.status === "fulfilled" ? atosResult.value : [];
+  const user = userResult.status === "fulfilled" ? userResult.value : null;
   const maxFileCount = user?.foundersAccess ? 10 : 5;
 
   return (

@@ -18,10 +18,6 @@ export const metadata: Metadata = {
   description:
     "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
   manifest: "/manifest.webmanifest",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
   icons: {
     icon: [
       { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },
@@ -32,6 +28,10 @@ export const metadata: Metadata = {
 
 export const viewport = {
   maximumScale: 1, // Disable auto-zoom on mobile Safari
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 const geist = Geist({
