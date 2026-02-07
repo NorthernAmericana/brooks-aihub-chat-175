@@ -4,6 +4,7 @@ import { ChevronRight, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { toast } from "@/components/toast";
 import {
@@ -270,12 +271,8 @@ type TimelineEvent = {
   source: "personal" | "official";
 };
 
-type StoredBirthday = {
-  name?: string;
-  birthday?: string;
-  date?: string;
-  month?: number;
-  day?: number;
+type BirthdayResponse = {
+  birthday: string | null;
 };
 
 type EventWeekGroup = {
@@ -306,8 +303,6 @@ const groupEventsByWeek = (events: TimelineEvent[]) => {
 
   return Array.from(weekMap.values());
 };
-
-const BIRTHDAY_STORAGE_KEY = "brooks-aihub-birthdays";
 
 const formatIsoDate = (date: Date) => {
   const year = date.getFullYear();
@@ -347,74 +342,95 @@ const parseBirthdayString = (value: string) => {
   return null;
 };
 
-const getMonthDayFromBirthday = (birthday: StoredBirthday) => {
-  if (typeof birthday.month === "number" && typeof birthday.day === "number") {
-    return { month: birthday.month, day: birthday.day };
+const formatOrdinal = (value: number) => {
+  const mod100 = value % 100;
+  if (mod100 >= 11 && mod100 <= 13) {
+    return `${value}th`;
   }
-
-  const dateSource = birthday.birthday ?? birthday.date ?? "";
-  if (dateSource) {
-    return parseBirthdayString(dateSource);
+  switch (value % 10) {
+    case 1:
+      return `${value}st`;
+    case 2:
+      return `${value}nd`;
+    case 3:
+      return `${value}rd`;
+    default:
+      return `${value}th`;
   }
-
-  return null;
 };
 
-const buildBirthdayEvents = (
-  birthdays: StoredBirthday[],
-  now: Date
-): TimelineEvent[] => {
+const buildBirthdayEvent = ({
+  birthday,
+  now,
+  displayName,
+}: {
+  birthday: string | null | undefined;
+  now: Date;
+  displayName: string;
+}): TimelineEvent[] => {
+  if (!birthday) {
+    return [];
+  }
+
+  const parsed = parseBirthdayString(birthday);
+  if (!parsed) {
+    return [];
+  }
+
+  const { month, day } = parsed;
+  if (!month || !day) {
+    return [];
+  }
+
   const currentYear = now.getFullYear();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
+  const today = new Date(currentYear, now.getMonth(), now.getDate());
+  let eventDate = new Date(currentYear, month - 1, day);
+  if (eventDate < today) {
+    eventDate = new Date(currentYear + 1, month - 1, day);
+  }
+
+  const daysUntil = Math.round(
+    (eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
   );
+  if (daysUntil < 0 || daysUntil > 30) {
+    return [];
+  }
 
-  return birthdays
-    .map((birthday) => {
-      const name = birthday.name?.trim();
-      if (!name) {
-        return null;
-      }
+  const weekStart = new Date(eventDate);
+  weekStart.setDate(eventDate.getDate() - eventDate.getDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
 
-      const monthDay = getMonthDayFromBirthday(birthday);
-      if (!monthDay) {
-        return null;
-      }
+  const monthDayLabel = `${eventDate.toLocaleDateString("en-US", {
+    month: "short",
+  })} ${formatOrdinal(eventDate.getDate())}`;
+  const randomInserts = [
+    "🎉",
+    "Plan something special!",
+    "Cake time is coming.",
+    "Time to celebrate 🎂",
+    "Mark the calendar.",
+  ];
+  const randomInsert = randomInserts[daysUntil % randomInserts.length];
 
-      const { month, day } = monthDay;
-      if (!month || !day) {
-        return null;
-      }
-
-      let eventDate = new Date(currentYear, month - 1, day);
-      if (eventDate < today) {
-        eventDate = new Date(currentYear + 1, month - 1, day);
-      }
-
-      const weekStart = new Date(eventDate);
-      weekStart.setDate(eventDate.getDate() - eventDate.getDay());
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-
-      return {
-        title: `${name}'s birthday 🎂`,
-        date: formatIsoDate(eventDate),
-        weekStart: formatSlashDate(weekStart),
-        weekEnd: formatSlashDate(weekEnd),
-        monthLabel: eventDate.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        }),
-        source: "personal",
-      };
-    })
-    .filter((event): event is TimelineEvent => Boolean(event));
+  return [
+    {
+      title: `${displayName}'s birthday is ${monthDayLabel} (in ${daysUntil} days) ${randomInsert}`,
+      date: formatIsoDate(eventDate),
+      weekStart: formatSlashDate(weekStart),
+      weekEnd: formatSlashDate(weekEnd),
+      monthLabel: eventDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      }),
+      source: "personal",
+    },
+  ];
 };
 
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
+  const { data: session } = useSession();
   const [now, setNow] = useState(() => new Date());
   const [clockMode, setClockMode] = useState(false);
   const { data: routeData } = useSWR<{ routes: RouteSuggestion[] }>(
@@ -432,10 +448,29 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [storedBirthdays, setStoredBirthdays] = useState<StoredBirthday[]>([]);
+  const { data: birthdayData } = useSWR<BirthdayResponse>(
+    "/api/user-birthday",
+    fetcher
+  );
+  const displayName = useMemo(() => {
+    const name = session?.user?.name?.trim();
+    if (name) {
+      return name;
+    }
+    const email = session?.user?.email;
+    if (email) {
+      return email.split("@")[0];
+    }
+    return "Hub Creator";
+  }, [session?.user?.email, session?.user?.name]);
   const personalEvents = useMemo<TimelineEvent[]>(
-    () => buildBirthdayEvents(storedBirthdays, now),
-    [storedBirthdays, now]
+    () =>
+      buildBirthdayEvent({
+        birthday: birthdayData?.birthday,
+        now,
+        displayName,
+      }),
+    [birthdayData?.birthday, displayName, now]
   );
   const officialEventsTimeline = useMemo<TimelineEvent[]>(
     () =>
@@ -460,40 +495,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     }, 1_000);
 
     return () => window.clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const loadBirthdays = () => {
-      const raw = window.localStorage.getItem(BIRTHDAY_STORAGE_KEY);
-      if (!raw) {
-        setStoredBirthdays([]);
-        return;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setStoredBirthdays(parsed);
-        } else {
-          setStoredBirthdays([]);
-        }
-      } catch {
-        setStoredBirthdays([]);
-      }
-    };
-
-    loadBirthdays();
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === BIRTHDAY_STORAGE_KEY) {
-        loadBirthdays();
-      }
-    };
-
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const customAtoFolders = useMemo(() => {
