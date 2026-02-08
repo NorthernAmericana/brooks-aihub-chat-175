@@ -814,8 +814,8 @@
   }
 
   .store-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(20, 13, 18, 0.95);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
   }
 
   .store-app-card {

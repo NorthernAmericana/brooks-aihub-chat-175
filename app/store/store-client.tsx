@@ -93,16 +93,18 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm">
+      <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
         <button
           aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-white"
           onClick={() => router.back()}
           type="button"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="font-pixel text-lg text-slate-900">The Official ATO Store</h1>
+        <h1 className="font-pixel text-lg font-semibold text-slate-900 dark:text-slate-100">
+          The Official ATO Store
+        </h1>
       </div>
 
       <div className="store-search px-4 py-4">
