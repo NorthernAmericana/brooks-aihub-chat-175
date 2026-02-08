@@ -76,6 +76,9 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
       </div>
 
       <div className="store-search px-4 py-4">
+        <p className="mb-3 text-sm text-slate-500">
+          ATOs stand for Autonomous Technological Operating Systems which power our AI Apps in Brooks AI HUB
+        </p>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
