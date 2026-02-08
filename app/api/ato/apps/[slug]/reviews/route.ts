@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, lt, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps, user } from "@/lib/db/schema";
 import { getSafeDisplayName } from "@/lib/ato/reviews";
@@ -61,21 +61,27 @@ export async function GET(
   );
   const cursor = parseCursor(cursorParam);
 
-  const filters = [eq(atoAppReviews.appId, app.id)];
+  const filters: SQL<unknown>[] = [eq(atoAppReviews.appId, app.id)];
 
   if (cursor) {
-    if (cursor.id) {
+    const createdAtBefore = lt(atoAppReviews.createdAt, cursor.date);
+    const cursorId =
+      typeof cursor.id === "string" && cursor.id.length > 0
+        ? cursor.id
+        : null;
+
+    if (cursorId) {
       filters.push(
         or(
-          lt(atoAppReviews.createdAt, cursor.date),
+          createdAtBefore,
           and(
             eq(atoAppReviews.createdAt, cursor.date),
-            lt(atoAppReviews.id, cursor.id)
+            lt(atoAppReviews.id, cursorId)
           )
         )
       );
     } else {
-      filters.push(lt(atoAppReviews.createdAt, cursor.date));
+      filters.push(createdAtBefore);
     }
   }
 
