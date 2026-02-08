@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Download, ExternalLink, Trash2 } from "lucide-react";
+import { Check, Download, ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { atoApps, userInstalls } from "@/lib/db/schema";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
+import { BackButton } from "./BackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -109,39 +110,19 @@ export default async function BrooksBearsAppPage() {
     : "Downloads unavailable";
 
   return (
-    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#1b1118] via-[#160e14] to-[#120c16] text-white">
-      <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#1b1118]/90 px-4 py-3 backdrop-blur-sm">
-        <Link
-          aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-          href="/brooks-ai-hub"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
-              alt={`${app?.name ?? "BrooksBears"} icon`}
-              className="h-full w-full object-cover"
-              height={36}
-              src={app?.iconUrl ?? "/icons/brooksbears-appicon.png"}
-              width={36}
-            />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-white">
-              {app?.name ?? "BrooksBears"}
-            </h1>
-            <p className="text-xs text-white/60">Companion chats & stories</p>
-          </div>
-        </div>
+    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
+      <div className="app-page-header sticky top-0 z-10 flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <BackButton />
+        <h1 className="text-sm font-medium text-slate-700">
+          {app?.name ?? "BrooksBears"}
+        </h1>
       </div>
 
-      <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 space-y-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+      <div className="app-page-content flex-1 space-y-6 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <Image
                   alt={`${app?.name ?? "BrooksBears"} icon`}
                   className="h-full w-full object-cover"
@@ -151,115 +132,139 @@ export default async function BrooksBearsAppPage() {
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-semibold text-slate-900">
                   {app?.name ?? "BrooksBears"}
                 </h2>
-                <p className="text-sm text-white/60">Entertainment • 13+</p>
-                <div className="mt-1 flex items-center gap-4 text-sm text-white/50">
+                <p className="text-sm text-slate-500">Entertainment • 13+</p>
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                   <span>{ratingLabel}</span>
                   <span>{downloadsLabel}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-3 md:w-auto">
-              <form action={installAction}>
-                <button
-                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
-                    isInstalled
-                      ? "bg-emerald-600/80 text-white"
-                      : "bg-rose-500 hover:bg-rose-600 text-white"
-                  }`}
-                  disabled={isInstallDisabled}
-                  type="submit"
-                >
-                  {isInstalled ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Installed
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Install
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {isInstalled ? (
-                <>
-                  <Link
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                    href="/BrooksBears/"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Open
-                  </Link>
-                  <form action={uninstallAction}>
-                    <button
-                      className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-200/30 bg-rose-500/10 py-3 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/20 md:w-56"
-                      type="submit"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">About</h3>
-          <p className="mt-2 text-sm text-white/70">
-            {app?.description ??
-              "BrooksBears is a cozy companion experience with Benjamin Bear, blending storytelling, jokes, and friendly check-ins inside Brooks AI HUB."}
-          </p>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">
-            Routes in Brooks AI HUB
-          </h3>
-          <div className="mt-3 space-y-3 text-sm text-white/70">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-400" />
-              <span className="font-mono">/BrooksBears/</span>
-              <span className="text-xs text-white/50">
-                Main companion space
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              <span className="font-mono">/BrooksBears/BenjaminBear/</span>
-              <span className="text-xs text-white/50">
-                Benjamin Bear focus
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Preview</h3>
-          <p className="mt-2 text-sm text-white/70">
-            Voice-first conversations, quick stories, and gentle check-ins
-            await inside the BrooksBears app view.
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-[#1f1218]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(248,150,180,0.35),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,8,12,0.2),rgba(13,8,12,0.85))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-sm text-white/70">
-                Storytelling preview
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+              <div className="font-medium text-slate-700">Live stats</div>
+              <div className="mt-1 flex flex-col gap-1">
+                <span>{ratingLabel}</span>
+                <span>{downloadsLabel}</span>
               </div>
             </div>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1016]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(142,255,226,0.25),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,8,12,0.2),rgba(13,8,12,0.85))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-sm text-white/70">
-                Friendly chat preview
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <form action={installAction} className="w-full md:w-auto">
+              <button
+                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 md:w-48 ${
+                  isInstalled
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-slate-200 bg-slate-900 text-white hover:bg-slate-800"
+                }`}
+                disabled={isInstallDisabled}
+                type="submit"
+              >
+                {isInstalled ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Installed
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Install
+                  </>
+                )}
+              </button>
+            </form>
+
+            {isInstalled ? (
+              <>
+                <Link
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:w-40"
+                  href="/BrooksBears/"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open
+                </Link>
+                <form action={uninstallAction} className="w-full md:w-auto">
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 md:w-40"
+                    type="submit"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </button>
+                </form>
+              </>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-700">Screenshots</h3>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                className="flex aspect-[16/9] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-xs text-slate-400"
+                key={`placeholder-${index}`}
+              >
+                Screenshot placeholder
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
+              Overview
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              Reviews
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              About
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-4 text-sm text-slate-600">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Overview</h4>
+              <p className="mt-1">
+                {app?.description ??
+                  "BrooksBears is a cozy companion experience with Benjamin Bear, blending storytelling, jokes, and friendly check-ins inside Brooks AI HUB."}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Reviews</h4>
+              <p className="mt-1">
+                New for Brooks AI HUB. Check back as early adopters leave their
+                feedback.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">About</h4>
+              <div className="mt-2 space-y-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
+                  <span className="font-mono text-xs text-slate-700">
+                    /BrooksBears/
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Main companion space
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="font-mono text-xs text-slate-700">
+                    /BrooksBears/BenjaminBear/
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Benjamin Bear focus
+                  </span>
+                </div>
               </div>
             </div>
           </div>
