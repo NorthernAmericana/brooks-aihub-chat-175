@@ -211,7 +211,13 @@ export function PureMessageActions({
           <Action onClick={handleCopy} tooltip="Copy">
             <CopyIcon />
           </Action>
-          <DropdownMenu onOpenChange={() => setIsColorPickerOpen(false)}>
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsColorPickerOpen(false);
+              }
+            }}
+          >
             <DropdownMenuTrigger asChild>
               <Action tooltip="Message color">
                 <MenuIcon />
@@ -226,36 +232,36 @@ export function PureMessageActions({
               >
                 Change color text bar
               </DropdownMenuItem>
+              {isColorPickerOpen && (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <span className="text-xs text-muted-foreground">Pick</span>
+                  <input
+                    aria-label="Message color picker"
+                    className="h-7 w-7 cursor-pointer rounded-full border border-border p-0"
+                    onChange={async (event) => {
+                      const nextColor = event.target.value;
+                      setPickerColor(nextColor);
+                      try {
+                        await setMessageColor(nextColor);
+                        toast.success("Message color updated.");
+                      } catch (_error) {
+                        toast.error("Unable to save message color.");
+                      }
+                    }}
+                    type="color"
+                    value={pickerColor}
+                  />
+                  <button
+                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setIsColorPickerOpen(false)}
+                    type="button"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
-          {isColorPickerOpen && (
-            <div className="absolute right-0 top-full z-10 mt-2 flex items-center gap-2 rounded-md border border-border bg-popover px-3 py-2 shadow-md">
-              <span className="text-xs text-muted-foreground">Pick</span>
-              <input
-                aria-label="Message color picker"
-                className="h-7 w-7 cursor-pointer rounded-full border border-border p-0"
-                onChange={async (event) => {
-                  const nextColor = event.target.value;
-                  setPickerColor(nextColor);
-                  try {
-                    await setMessageColor(nextColor);
-                    toast.success("Message color updated.");
-                  } catch (_error) {
-                    toast.error("Unable to save message color.");
-                  }
-                }}
-                type="color"
-                value={pickerColor}
-              />
-              <button
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setIsColorPickerOpen(false)}
-                type="button"
-              >
-                Done
-              </button>
-            </div>
-          )}
         </div>
       </Actions>
     );
