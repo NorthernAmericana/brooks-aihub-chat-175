@@ -71,15 +71,17 @@ export async function GET(
         : null;
 
     if (cursorId) {
-      filters.push(
-        or(
-          createdAtBefore,
-          and(
-            eq(atoAppReviews.createdAt, cursor.date),
-            lt(atoAppReviews.id, cursorId)
-          )
+      const cursorFilter = or(
+        createdAtBefore,
+        and(
+          eq(atoAppReviews.createdAt, cursor.date),
+          lt(atoAppReviews.id, cursorId)
         )
       );
+
+      if (cursorFilter) {
+        filters.push(cursorFilter);
+      }
     } else {
       filters.push(createdAtBefore);
     }
