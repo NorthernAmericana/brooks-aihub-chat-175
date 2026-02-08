@@ -1,7 +1,7 @@
-import Image from "next/image";
 import type { Attachment } from "@/lib/types";
 import { Loader } from "./elements/loader";
 import { CrossSmallIcon } from "./icons";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import { Button } from "./ui/button";
 
 export const PreviewAttachment = ({
@@ -21,9 +21,10 @@ export const PreviewAttachment = ({
       data-testid="input-attachment-preview"
     >
       {contentType?.startsWith("image") ? (
-        <Image
+        <ImageWithFallback
           alt={name ?? "An image attachment"}
           className="size-full object-cover"
+          containerClassName="size-full"
           height={64}
           src={url}
           width={64}

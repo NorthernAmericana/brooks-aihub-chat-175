@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 interface StrainOption {
   id: string;
@@ -613,9 +613,10 @@ export default function ImageGenPage() {
                   <div className="space-y-2">
                     <Label>Preview</Label>
                     <div className="relative aspect-video w-full max-w-xs overflow-hidden rounded-lg border">
-                      <Image
+                      <ImageWithFallback
                         alt="Reference image preview"
                         className="object-cover"
+                        containerClassName="size-full"
                         fill
                         sizes="(max-width: 384px) 100vw, 384px"
                         src={referenceImagePreview}
@@ -677,9 +678,10 @@ export default function ImageGenPage() {
           </CardHeader>
           <CardContent>
             <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
-              <Image
+              <ImageWithFallback
                 alt={imageTitle || "Generated art"}
                 className="size-full object-contain"
+                containerClassName="size-full"
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 src={generatedImage}

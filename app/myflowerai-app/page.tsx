@@ -1,9 +1,9 @@
 "use client";
 
 import { ArrowLeft, Check, Download } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const INSTALL_STORAGE_KEY = "ato-app-installed:myflowerai";
 
@@ -53,9 +53,10 @@ export default function MyFlowerAiAppPage() {
         </button>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
+            <ImageWithFallback
               alt="MyFlowerAI icon"
               className="h-full w-full object-cover"
+              containerClassName="size-full"
               height={36}
               src="/icons/myflowerai-appicon.png"
               width={36}
@@ -73,9 +74,10 @@ export default function MyFlowerAiAppPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
-                <Image
+                <ImageWithFallback
                   alt="MyFlowerAI icon"
                   className="h-full w-full object-cover"
+                  containerClassName="size-full"
                   height={64}
                   src="/icons/myflowerai-appicon.png"
                   width={64}

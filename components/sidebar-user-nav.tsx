@@ -2,7 +2,6 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ChevronUp } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
@@ -29,6 +28,7 @@ import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { DEFAULT_AVATAR_SRC, guestRegex } from "@/lib/constants";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import { CodeRedemptionDialog } from "./code-redemption-dialog";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
@@ -86,9 +86,10 @@ export function SidebarUserNav({ user }: { user: User }) {
                   className="h-10 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   data-testid="user-nav-button"
                 >
-                  <Image
+                  <ImageWithFallback
                     alt={user.email ?? "User Avatar"}
-                    className="rounded-full"
+                    className="size-full object-cover"
+                    containerClassName="size-6 overflow-hidden rounded-full"
                     height={24}
                     src={profileIcon ?? user.image ?? DEFAULT_AVATAR_SRC}
                     width={24}
@@ -179,9 +180,10 @@ export function SidebarUserNav({ user }: { user: User }) {
           <DialogPrimitive.Content className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-0 bg-black" />
-              <Image
+              <ImageWithFallback
                 alt=""
                 className="h-full w-full object-cover opacity-15"
+                containerClassName="h-full w-full"
                 height={1080}
                 priority
                 src="/backgrounds/brooksaihub-landingpage-background.png"
@@ -223,9 +225,10 @@ export function SidebarUserNav({ user }: { user: User }) {
                         isSelected ? "border-white" : "border-transparent"
                       }`}
                     >
-                      <Image
+                      <ImageWithFallback
                         alt={option.label}
                         className="h-full w-full object-cover"
+                        containerClassName="size-full"
                         height={96}
                         src={option.src}
                         width={96}

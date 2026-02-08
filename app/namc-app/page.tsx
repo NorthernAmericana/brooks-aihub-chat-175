@@ -1,11 +1,11 @@
 "use client";
 
 import { ArrowLeft, Check, Download } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import namcAppIcon from "@/public/icons/namc-appicon.png";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const INSTALL_STORAGE_KEY = "ato-app-installed:namc";
 
@@ -55,9 +55,10 @@ export default function NamcAppPage() {
         </button>
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-0.5">
-            <Image
+            <ImageWithFallback
               alt="NAMC icon"
               className="h-full w-full object-contain"
+              containerClassName="size-full"
               height={44}
               src={namcAppIcon}
               width={44}
@@ -77,9 +78,10 @@ export default function NamcAppPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-1.5">
-                <Image
+                <ImageWithFallback
                   alt="NAMC icon"
                   className="h-full w-full object-contain"
+                  containerClassName="size-full"
                   height={96}
                   src={namcAppIcon}
                   width={96}

@@ -4,7 +4,6 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -63,6 +62,7 @@ import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import {
   Dialog,
   DialogContent,
@@ -927,9 +927,10 @@ function PureMultimodalInput({
             }
             type="button"
           >
-            <Image
+            <ImageWithFallback
               alt={session?.user?.email ?? "Guest"}
-              className="rounded-full"
+              className="size-full object-cover"
+              containerClassName="size-8 overflow-hidden rounded-full"
               height={32}
               src={avatarSrc}
               width={32}

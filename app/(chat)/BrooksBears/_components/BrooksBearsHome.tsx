@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const MicIcon = () => (
   <svg
@@ -18,11 +18,12 @@ const MicIcon = () => (
 const BenjaminHero = () => (
   <div className="flex flex-col items-center gap-4 text-center">
     <div className="relative h-60 w-60 sm:h-72 sm:w-72 lg:h-80 lg:w-80">
-      <Image
+      <ImageWithFallback
         src="/benjamin-bear-pfp.png"
         alt="Benjamin Bear"
         fill
         className="object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.35)]"
+        containerClassName="size-full"
         sizes="(max-width: 640px) 240px, (max-width: 1024px) 288px, 320px"
         priority
       />
@@ -44,11 +45,12 @@ const BenjaminHero = () => (
 const SavedMemoriesCard = () => (
   <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/25 bg-white/15 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.35)] backdrop-blur-lg sm:flex-row sm:items-center sm:gap-6 sm:p-6">
     <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-white/10 sm:h-36 sm:w-40">
-      <Image
+      <ImageWithFallback
         src="/benjamin-bear-pfp.png"
         alt="Benjamin at the campfire"
         fill
         className="object-cover"
+        containerClassName="size-full"
         sizes="(max-width: 640px) 100vw, 160px"
       />
       <div className="absolute inset-x-0 bottom-0 bg-black/35 px-3 py-2 text-sm font-semibold">
@@ -79,13 +81,14 @@ export default function BrooksBearsHome() {
   return (
     <main className="relative min-h-dvh overflow-hidden text-white">
       <div className="absolute inset-0">
-        <Image
+        <ImageWithFallback
           src="/ato/brooksbears/bg-forest.jpg"
           alt="Forest background"
           fill
           sizes="100vw"
           priority
           className="object-cover blur-[2px]"
+          containerClassName="size-full"
         />
         <div className="absolute inset-0 bg-black/45" />
       </div>

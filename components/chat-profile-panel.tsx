@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import { Button } from "./ui/button";
 import { ProfileIconAiModal } from "./profile-icon-ai-modal";
 import {
@@ -28,9 +28,10 @@ export function ChatProfilePanel() {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/70 p-3">
       <div className="flex items-center gap-3">
-        <Image
+        <ImageWithFallback
           alt={session?.user?.email ?? "Profile"}
-          className="size-10 rounded-full"
+          className="size-full object-cover"
+          containerClassName="size-10 overflow-hidden rounded-full"
           height={40}
           src={avatarSrc}
           width={40}
@@ -110,9 +111,10 @@ export function ChatProfilePanel() {
                       isSelected ? "border-primary" : "border-transparent"
                     )}
                   >
-                    <Image
+                    <ImageWithFallback
                       alt={option.label}
                       className="h-full w-full object-cover"
+                      containerClassName="size-full"
                       height={48}
                       src={option.src}
                       width={48}

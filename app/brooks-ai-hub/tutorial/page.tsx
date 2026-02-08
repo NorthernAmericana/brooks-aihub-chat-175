@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/toast";
 import { LoaderIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { getOfficialVoiceId } from "@/lib/voice";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const BENJAMIN_VOICE_ID = getOfficialVoiceId("brooks-bears");
 
@@ -401,9 +401,10 @@ export default function BrooksAiHubTutorialPage() {
                     isCharacterVisible ? "opacity-100" : "translate-y-4 opacity-0"
                   )}
                 >
-                  <Image
+                  <ImageWithFallback
                     alt={activeScene.alt}
                     className="h-full w-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]"
+                    containerClassName="size-full"
                     height={640}
                     priority
                     src={characterSrc}
