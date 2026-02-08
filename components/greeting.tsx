@@ -762,7 +762,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="greeting-time mt-2 w-full max-w-sm rounded-3xl border border-border/60 bg-gradient-to-r from-background/80 via-background/70 to-background/60 px-4 py-3 text-left shadow-sm backdrop-blur-sm sm:max-w-md"
+        className="greeting-time mt-2 w-full max-w-sm rounded-3xl border border-border/80 bg-gradient-to-r from-background/90 via-background/85 to-background/75 px-4 py-3 text-left shadow-md backdrop-blur-md sm:max-w-md"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
@@ -776,7 +776,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   <div className="text-sm font-semibold tracking-[0.12em] text-foreground sm:text-base">
                     {digitalTime}
                   </div>
-                  <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
+                  <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-foreground/70 sm:text-xs">
                     {fullDate}
                   </div>
                 </div>
@@ -786,14 +786,14 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                 <div className="text-sm font-semibold tracking-[0.12em] text-foreground sm:text-base">
                   {digitalTime}
                 </div>
-                <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
+                <div className="mt-0.5 text-[0.6rem] uppercase tracking-[0.2em] text-foreground/70 sm:text-xs">
                   {fullDate}
                 </div>
               </>
             )}
           </div>
 
-          <label className="inline-flex shrink-0 items-center justify-end gap-1.5 text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <label className="inline-flex shrink-0 items-center justify-end gap-1.5 text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-foreground/70">
             <span>Clock</span>
             <input
               aria-label="Toggle analog clock mode"
