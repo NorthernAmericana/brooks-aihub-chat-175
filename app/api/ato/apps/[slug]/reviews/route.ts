@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { and, desc, eq, lt, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps, user } from "@/lib/db/schema";
@@ -35,16 +35,17 @@ const parseCursor = (cursor: string | null) => {
 };
 
 export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const slug = params.slug?.trim();
+  const { slug } = await params;
+  const trimmedSlug = slug?.trim();
 
-  if (!slug) {
+  if (!trimmedSlug) {
     return NextResponse.json({ error: "Invalid slug." }, { status: 400 });
   }
 
-  const app = await getAppBySlug(slug);
+  const app = await getAppBySlug(trimmedSlug);
 
   if (!app) {
     return NextResponse.json({ error: "App not found." }, { status: 404 });

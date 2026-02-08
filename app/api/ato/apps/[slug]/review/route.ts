@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
@@ -17,22 +17,23 @@ const getAppBySlug = async (slug: string) => {
 };
 
 export async function POST(
-  request: Request,
-  { params }: { params: { slug: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const slug = params.slug?.trim();
+  const trimmedSlug = slug?.trim();
 
-  if (!slug) {
+  if (!trimmedSlug) {
     return NextResponse.json({ error: "Invalid slug." }, { status: 400 });
   }
 
-  const app = await getAppBySlug(slug);
+  const app = await getAppBySlug(trimmedSlug);
 
   if (!app) {
     return NextResponse.json({ error: "App not found." }, { status: 404 });
