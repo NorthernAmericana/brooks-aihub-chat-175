@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { and, desc, eq, lt, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps, user } from "@/lib/db/schema";
+import { isAtoAppReviewsTableReady } from "@/lib/ato/reviews-table";
 import { getSafeDisplayName } from "@/lib/ato/reviews";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,15 @@ export async function GET(
 
   if (!app) {
     return NextResponse.json({ error: "App not found." }, { status: 404 });
+  }
+
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+
+  if (!hasReviewsTable) {
+    return NextResponse.json({
+      reviews: [],
+      next_cursor: null,
+    });
   }
 
   const { searchParams } = new URL(request.url);

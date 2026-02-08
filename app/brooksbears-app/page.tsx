@@ -7,6 +7,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps, user, userInstalls } from "@/lib/db/schema";
+import { isAtoAppReviewsTableReady } from "@/lib/ato/reviews-table";
 import { getSafeDisplayName } from "@/lib/ato/reviews";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
@@ -55,13 +56,16 @@ const getAppStats = async (): Promise<AppStats | null> => {
     .from(userInstalls)
     .where(eq(userInstalls.appId, app.id));
 
-  const [ratingStats] = await db
-    .select({
-      averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
-      reviewsCount: sql<number>`count(*)`,
-    })
-    .from(atoAppReviews)
-    .where(eq(atoAppReviews.appId, app.id));
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+  const [ratingStats] = hasReviewsTable
+    ? await db
+        .select({
+          averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
+          reviewsCount: sql<number>`count(*)`,
+        })
+        .from(atoAppReviews)
+        .where(eq(atoAppReviews.appId, app.id))
+    : [null];
 
   return {
     downloadsCount: Number(installStats?.downloads ?? 0),
@@ -82,6 +86,15 @@ const getAppReviews = async (): Promise<ReviewsPayload | null> => {
 
   if (!app) {
     return null;
+  }
+
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+
+  if (!hasReviewsTable) {
+    return {
+      reviews: [],
+      nextCursor: null,
+    };
   }
 
   const rows = await db
@@ -185,7 +198,7 @@ export default async function BrooksBearsAppPage() {
     : "Downloads unavailable";
 
   const userReview =
-    userId && appId
+    userId && appId && (await isAtoAppReviewsTableReady())
       ? await db
           .select({
             rating: atoAppReviews.rating,
