@@ -30,12 +30,42 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
     onSwipeRightFromLeftEdge: () => router.push("/brooks-ai-hub"),
   });
 
+  const matchesSearchQuery = (app: StoreAppListItem, query: string) => {
+    const searchableValues: Array<string> = [
+      app.name,
+      app.category ?? "",
+      app.description ?? "",
+      app.appPath ?? "",
+      app.storePath ?? "",
+    ];
+
+    const routes = (app as { routes?: Array<string | Record<string, unknown>> }).routes;
+    if (Array.isArray(routes)) {
+      routes.forEach((route) => {
+        if (typeof route === "string") {
+          searchableValues.push(route);
+          return;
+        }
+        if (route && typeof route === "object") {
+          ["slash", "path", "route", "appPath", "storePath"].forEach((key) => {
+            const value = route[key];
+            if (typeof value === "string") {
+              searchableValues.push(value);
+            }
+          });
+        }
+      });
+    }
+
+    return searchableValues.some((value) => value.toLowerCase().includes(query));
+  };
+
   const filteredApps = useMemo(() => {
-    if (!searchQuery) {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
       return apps;
     }
-    const query = searchQuery.toLowerCase();
-    return apps.filter((app) => app.name.toLowerCase().includes(query));
+    return apps.filter((app) => matchesSearchQuery(app, query));
   }, [apps, searchQuery]);
 
   const hasSearchQuery = searchQuery.trim().length > 0;
