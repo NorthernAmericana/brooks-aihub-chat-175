@@ -42,10 +42,10 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
   const isCatalogUnavailable = apps.length === 0;
 
   return (
-    <div className="store-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#140d12] via-[#1a0f16] to-[#120c16]">
+    <div className="store-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
       <button
         aria-label="Swipe right to go back to Brooks AI HUB"
-        className="absolute left-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-r-full border border-l-0 border-white/20 bg-white/10 px-2 py-3 text-xs font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="absolute left-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-r-full border border-l-0 border-slate-200 bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
         onClick={() => router.push("/brooks-ai-hub")}
         type="button"
       >
@@ -55,7 +55,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
       <button
         aria-label="Swipe left to go to NAMC Store"
-        className="absolute right-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-l-full border border-r-0 border-white/20 bg-white/10 px-2 py-3 text-xs font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="absolute right-0 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-l-full border border-r-0 border-slate-200 bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
         onClick={() => router.push("/store/namc")}
         type="button"
       >
@@ -63,23 +63,23 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#140d12]/95 px-4 py-3 backdrop-blur-sm">
+      <div className="store-header sticky top-0 z-10 flex items-center gap-4 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm">
         <button
           aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           onClick={() => router.back()}
           type="button"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="font-pixel text-lg text-white">ATO Store</h1>
+        <h1 className="font-pixel text-lg text-slate-900">The Official ATO Store</h1>
       </div>
 
       <div className="store-search px-4 py-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
-            className="w-full rounded-full border border-white/20 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:bg-white/10 focus:outline-none"
+            className="w-full rounded-full border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-slate-300 focus:outline-none"
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search apps..."
             type="text"
@@ -87,7 +87,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
           />
         </div>
         {!hasSession && (
-          <p className="mt-3 text-xs text-white/50">
+          <p className="mt-3 text-xs text-slate-500">
             Sign in to install and manage your ATO apps.
           </p>
         )}
@@ -101,7 +101,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
             return (
               <button
-                className="store-app-card group cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-4 text-left backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/40"
+                className="store-app-card group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-300"
                 key={app.id}
                 onClick={() => {
                   if (targetPath) {
@@ -111,7 +111,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                 type="button"
               >
                 <div className="flex gap-4">
-                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-white/20 to-white/10 shadow-lg">
+                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
                     {app.iconUrl ? (
                       <Image
                         alt={`${app.name} icon`}
@@ -122,30 +122,30 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                         width={64}
                       />
                     ) : (
-                      <div className="text-xs text-white/50">No icon</div>
+                      <div className="text-xs text-slate-400">No icon</div>
                     )}
                   </div>
 
                   <div className="flex flex-1 flex-col justify-center">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-white">{app.name}</h3>
+                      <h3 className="font-semibold text-slate-900">{app.name}</h3>
                       {app.isInstalled && (
-                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
                           Installed
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-white/60">
+                    <p className="mt-0.5 text-xs text-slate-500">
                       {app.category ?? "ATO"}
                     </p>
-                    <div className="mt-1 flex items-center gap-3 text-xs text-white/50">
+                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
                       <span>{app.routeCount} routes</span>
                       {app.isOfficial && <span>Official</span>}
                     </div>
                   </div>
 
                   <div className="flex flex-shrink-0 items-center">
-                    <span className="flex h-9 items-center gap-2 rounded-full bg-white/10 px-4 text-xs font-medium text-white transition group-hover:bg-white/20">
+                    <span className="flex h-9 items-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-medium text-slate-700 transition group-hover:bg-slate-200">
                       <Download className="h-3.5 w-3.5" />
                       {actionLabel}
                     </span>
@@ -153,7 +153,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                 </div>
 
                 {app.description && (
-                  <p className="mt-3 text-sm text-white/70">
+                  <p className="mt-3 text-sm text-slate-600">
                     {app.description}
                   </p>
                 )}
@@ -164,11 +164,11 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
           {filteredApps.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               {hasSearchQuery ? (
-                <p className="text-white/50">No apps match your search.</p>
+                <p className="text-slate-500">No apps match your search.</p>
               ) : isCatalogUnavailable ? (
-                <p className="text-white/50">The app catalog is temporarily unavailable.</p>
+                <p className="text-slate-500">The app catalog is temporarily unavailable.</p>
               ) : (
-                <p className="text-white/50">No apps found.</p>
+                <p className="text-slate-500">No apps found.</p>
               )}
             </div>
           )}
