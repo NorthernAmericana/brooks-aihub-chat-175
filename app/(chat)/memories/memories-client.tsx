@@ -274,7 +274,7 @@ const MemoriesTable = ({
       <Card>
         <CardContent className="py-6 text-sm text-muted-foreground">
           No approved memories yet. When you approve a saved memory in chat, it
-          will show up here with its route, scope, and source.
+          will show up here with its route and summary.
         </CardContent>
       </Card>
     );
@@ -295,12 +295,18 @@ const MemoriesTable = ({
           <table className="min-w-full text-sm">
             <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
-                <th className="px-4 py-3 text-left font-medium">Summary</th>
-                <th className="px-4 py-3 text-left font-medium">Route</th>
-                <th className="px-4 py-3 text-left font-medium">Scope</th>
-                <th className="px-4 py-3 text-left font-medium">Source</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Date
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Route
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Memory
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-right font-medium">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -310,51 +316,40 @@ const MemoriesTable = ({
                   "MMM d, yyyy"
                 );
                 const routeInfo = deriveMemoryRoute(memory);
-                const scope = getScopeInfo(routeInfo.fullRoute);
+                const trimmedRoute = routeInfo.fullRoute
+                  ? routeInfo.fullRoute.replace(/^\/|\/$/g, "")
+                  : null;
+                const routeParts = trimmedRoute ? trimmedRoute.split("/") : [];
+                const productRoute = routeParts.length
+                  ? `/${routeParts[0]}/`
+                  : "General";
+                const subroute =
+                  routeParts.length > 1
+                    ? `/${routeParts.slice(1).join("/")}/`
+                    : null;
                 return (
                   <tr className="hover:bg-muted/40" key={memory.id}>
-                    <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                    <td className="px-3 py-2 align-top text-xs text-muted-foreground">
                       {dateLabel}
                     </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="line-clamp-3 text-sm text-foreground">
-                        {memory.rawText}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="secondary">{memory.agentLabel}</Badge>
-                        {memory.tags.length > 0 ? (
-                          <span>{memory.tags.length} tags</span>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-col gap-1">
+                        <Badge className="w-fit" variant="outline">
+                          {productRoute}
+                        </Badge>
+                        {subroute ? (
+                          <span className="text-xs text-muted-foreground">
+                            {subroute}
+                          </span>
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3 align-top">
-                      <Badge variant="outline">
-                        {formatDerivedRoute(routeInfo)}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col gap-1">
-                        <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {scope.detail}
-                        </span>
+                    <td className="px-3 py-2 align-top">
+                      <div className="line-clamp-1 text-sm text-foreground">
+                        {memory.rawText}
                       </div>
                     </td>
-                    <td className="px-4 py-3 align-top text-xs">
-                      {memory.source.href ? (
-                        <Link
-                          className="text-primary hover:underline"
-                          href={memory.source.href}
-                        >
-                          {memory.source.label}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {memory.source.label}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-3 py-2 align-top">
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           onClick={() => onSpeak(memory)}
@@ -364,7 +359,10 @@ const MemoriesTable = ({
                         >
                           Speak
                         </Button>
-                        <MemoryDialog memory={memory} scope={scope} />
+                        <MemoryDialog
+                          memory={memory}
+                          scope={getScopeInfo(routeInfo.fullRoute)}
+                        />
                       </div>
                     </td>
                   </tr>
