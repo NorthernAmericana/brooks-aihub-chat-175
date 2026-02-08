@@ -81,11 +81,15 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
         </p>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <label className="sr-only" htmlFor="store-search">
+            Search apps
+          </label>
           <input
-            className="w-full rounded-full border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-slate-300 focus:outline-none"
+            className="w-full rounded-full border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            id="store-search"
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search apps..."
-            type="text"
+            placeholder="Search apps"
+            type="search"
             value={searchQuery}
           />
         </div>
