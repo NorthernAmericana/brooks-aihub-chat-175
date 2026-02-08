@@ -256,20 +256,35 @@ export async function createUser(email: string, password: string) {
 }
 
 export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
   const password = generateHashedPassword(generateUUID());
+  const maxAttempts = 3;
 
-  try {
-    return await db.insert(user).values({ email, password }).returning({
-      id: user.id,
-      email: user.email,
-    });
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to create guest user"
-    );
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const email = `guest-${Date.now()}-${generateUUID()}`;
+
+    try {
+      return await db.insert(user).values({ email, password }).returning({
+        id: user.id,
+        email: user.email,
+      });
+    } catch (error) {
+      const { code } = getDbErrorDetails(error);
+
+      if (code === "23505" && attempt < maxAttempts - 1) {
+        continue;
+      }
+
+      rethrowChatSdkErrorOrWrapDbError({
+        error,
+        operation: "create guest user",
+      });
+    }
   }
+
+  throw new ChatSDKError(
+    "bad_request:database",
+    "Failed to create guest user"
+  );
 }
 
 export async function listRouteRegistryEntries() {
