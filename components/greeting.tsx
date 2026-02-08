@@ -3,10 +3,11 @@
 import { ChevronRight, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { toast } from "@/components/toast";
+import { useEntitlements } from "@/hooks/use-entitlements";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,12 +26,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { RouteSuggestion } from "@/lib/routes/types";
 import {
-  formatRoutePath,
-  normalizeRouteKey,
-  sanitizeRouteSegment,
-} from "@/lib/routes/utils";
+  OFFICIAL_ATO_FLAT_LIST,
+  OFFICIAL_ATO_TREE,
+} from "@/lib/ato/officialCatalog";
+import { formatRoutePath, sanitizeRouteSegment } from "@/lib/routes/utils";
 import { cn, fetcher } from "@/lib/utils";
 import officialEvents from "@/data/events/official-events.json";
 
@@ -43,10 +43,30 @@ type TreeNode = {
   path: string;
   label?: string;
   route?: string;
-  badge?: "gem" | "free" | "custom";
+  badge?: "free" | "custom";
+  premium?: boolean;
+  premiumIcon?: "diamond";
+  requiresEntitlement?: "founders";
   foundersOnly?: boolean;
   children: TreeNode[];
 };
+
+type OfficialFolderItem = (typeof OFFICIAL_ATO_FLAT_LIST)[number] & {
+  kind: "official";
+};
+
+type CustomFolderItem = {
+  label: string;
+  slash: string;
+  folder: string;
+  foundersOnly: boolean;
+  badge: "custom";
+  atoId: string;
+  premiumIcon?: "diamond";
+  kind: "custom";
+};
+
+type CloudFolderItem = OfficialFolderItem | CustomFolderItem;
 
 type AnalogClockProps = {
   size?: number;
@@ -154,11 +174,11 @@ const Hand = ({ deg, width, lengthPct, color }: HandProps) => {
 const TreeNodeItem = ({
   node,
   depth = 0,
-  onSelectFolder,
+  onSelectNode,
 }: {
   node: TreeNode;
   depth?: number;
-  onSelectFolder?: (folder: string) => void;
+  onSelectNode?: (node: TreeNode) => void;
 }) => {
   const hasChildren = node.children.length > 0;
   const label = node.label ?? node.segment;
@@ -201,7 +221,7 @@ const TreeNodeItem = ({
           className="flex min-w-0 flex-1 flex-col items-start gap-1"
           onClick={() => {
             if (node.route) {
-              onSelectFolder?.(node.route);
+              onSelectNode?.(node);
             }
           }}
           type="button"
@@ -215,7 +235,7 @@ const TreeNodeItem = ({
                 {node.children.length === 1 ? "" : "s"}
               </span>
             ) : null}
-            {node.badge === "gem" ? (
+            {node.premiumIcon === "diamond" ? (
               <span className="text-sm" title="Founders access only">
                 💎
               </span>
@@ -230,7 +250,7 @@ const TreeNodeItem = ({
               {node.route}
             </span>
           ) : null}
-          {node.foundersOnly ? (
+          {node.requiresEntitlement === "founders" ? (
             <span className="text-[0.55rem] uppercase tracking-[0.2em] text-amber-500">
               Founders only
             </span>
@@ -244,7 +264,7 @@ const TreeNodeItem = ({
               key={child.path}
               node={child}
               depth={depth + 1}
-              onSelectFolder={onSelectFolder}
+              onSelectNode={onSelectNode}
             />
           ))}
         </ul>
@@ -431,12 +451,15 @@ const buildBirthdayEvent = ({
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const { data: session } = useSession();
+  const { entitlements } = useEntitlements(session?.user?.id);
+  const foundersAccess =
+    entitlements.foundersAccess ||
+    Boolean(
+      (session?.user as { foundersAccess?: boolean } | undefined)
+        ?.foundersAccess
+    );
   const [now, setNow] = useState(() => new Date());
   const [clockMode, setClockMode] = useState(false);
-  const { data: routeData } = useSWR<{ routes: RouteSuggestion[] }>(
-    "/api/routes",
-    fetcher
-  );
   const { data: atoData, mutate: mutateAtos } = useSWR<AtoListResponse>(
     "/api/ato",
     fetcher
@@ -538,145 +561,85 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     }
   }, [customAtoFolders, selectedAtoId]);
 
-  const suggestedFolders = useMemo(() => {
-    const officialRoutes =
-      routeData?.routes?.filter((route) => route.kind === "official") ?? [];
-    const routeByKey = new Map(
-      officialRoutes.map((route) => [normalizeRouteKey(route.slash), route])
-    );
-    const desiredOrder: Array<{
-      slash: string;
-      foundersOnly: boolean;
-      badge?: "gem" | "free";
-    }> = [
-      { slash: "Brooks AI HUB", foundersOnly: false },
-      { slash: "BrooksBears", foundersOnly: false },
-      { slash: "BrooksBears/BenjaminBear", foundersOnly: true, badge: "gem" },
-      { slash: "MyCarMindATO", foundersOnly: false },
-      { slash: "MyCarMindATO/Driver", foundersOnly: false, badge: "free" },
-      { slash: "MyCarMindATO/Trucker", foundersOnly: true, badge: "gem" },
-      {
-        slash: "MyCarMindATO/DeliveryDriver",
-        foundersOnly: false,
-        badge: "free",
-      },
-      {
-        slash: "MyCarMindATO/Traveler",
-        foundersOnly: false,
-        badge: "free",
-      },
-      { slash: "MyFlowerAI", foundersOnly: false },
-      { slash: "Brooks AI HUB/Summaries", foundersOnly: true, badge: "gem" },
-      { slash: "NAT", foundersOnly: false },
-      { slash: "NAMC", foundersOnly: false },
-      { slash: "NAMC/Reader", foundersOnly: true, badge: "gem" },
-      { slash: "NAMC/Lore-Playground", foundersOnly: false, badge: "free" },
-    ];
-    const labelOverrides: Record<string, string> = {
-      NAT: "Northern Americana Tech Agent",
-      "NAMC/Lore-Playground": "Lore Playground",
-    };
+  const officialTree = useMemo<TreeNode[]>(() => OFFICIAL_ATO_TREE, []);
 
-    return desiredOrder
-      .map((entry) => {
-        const route = routeByKey.get(normalizeRouteKey(entry.slash));
-        if (!route) {
-          return null;
-        }
-
-        const folderItem: {
-          label: string;
-          slash: string;
-          folder: string;
-          foundersOnly: boolean;
-          badge?: "gem" | "free";
-        } = {
-          label: labelOverrides[route.slash] ?? route.label,
-          slash: route.slash,
-          folder: route.route,
-          foundersOnly: entry.foundersOnly,
-        };
-
-        if (entry.badge) {
-          folderItem.badge = entry.badge;
-        }
-
-        return folderItem;
-      })
-      .filter(
-        (
-          folder
-        ): folder is {
-          label: string;
-          slash: string;
-          folder: string;
-          foundersOnly: boolean;
-          badge?: "gem" | "free";
-        } => Boolean(folder)
-      );
-  }, [routeData]);
-
-  const officialTree = useMemo<TreeNode[]>(() => {
-    const root: TreeNode = {
-      segment: "",
-      path: "",
-      children: [],
-    };
-
-    suggestedFolders.forEach((folder) => {
-      const segments = folder.slash.split("/").filter(Boolean);
-      let current = root;
-      segments.forEach((segment, index) => {
-        const nextPath = current.path ? `${current.path}/${segment}` : segment;
-        let child = current.children.find((node) => node.segment === segment);
-        if (!child) {
-          child = {
-            segment,
-            path: nextPath,
-            children: [],
-          };
-          current.children.push(child);
-        }
-        if (index === segments.length - 1) {
-          child.label = folder.label;
-          child.route = folder.folder;
-          child.badge = folder.badge;
-          child.foundersOnly = folder.foundersOnly;
-        }
-        current = child;
-      });
-    });
-
-    const sortTree = (nodes: TreeNode[]) => {
-      nodes.sort((a, b) => a.segment.localeCompare(b.segment));
-      nodes.forEach((node) => sortTree(node.children));
-    };
-    sortTree(root.children);
-
-    return root.children;
-  }, [suggestedFolders]);
-
-  const allAtoFolders = useMemo(() => {
-    const combined = [
-      ...suggestedFolders.map((folder) => ({
+  const officialFolders = useMemo(
+    () =>
+      OFFICIAL_ATO_FLAT_LIST.map((folder) => ({
         ...folder,
-        badge: folder.badge,
+        kind: "official" as const,
       })),
-      ...customAtoFolders.map((folder) => ({
-        label: folder.label,
-        slash: folder.slash,
-        folder: folder.folder,
-        foundersOnly: false,
-        badge: "custom" as const,
-        atoId: folder.atoId,
-      })),
+    []
+  );
+
+  const allAtoFolders = useMemo<CloudFolderItem[]>(() => {
+    const combined: CloudFolderItem[] = [
+      ...officialFolders,
+      ...customAtoFolders.map(
+        (folder): CustomFolderItem => ({
+          label: folder.label,
+          slash: folder.slash,
+          folder: folder.folder,
+          foundersOnly: false,
+          badge: "custom",
+          atoId: folder.atoId,
+          kind: "custom",
+        })
+      ),
     ];
 
     const sorted = [...combined].sort((a, b) =>
       a.label.localeCompare(b.label)
     );
     return sortOrder === "asc" ? sorted : sorted.reverse();
-  }, [customAtoFolders, sortOrder, suggestedFolders]);
+  }, [customAtoFolders, officialFolders, sortOrder]);
+
+  const handleFoundersUpsell = useCallback(() => {
+    toast({
+      type: "error",
+      description: "Founders access is required for this route. Upgrade to unlock it.",
+    });
+    router.push("/pricing");
+  }, [router]);
+
+  const canAccessRoute = useCallback(
+    (requiresEntitlement?: "founders") => {
+      if (requiresEntitlement === "founders" && !foundersAccess) {
+        handleFoundersUpsell();
+        return false;
+      }
+      return true;
+    },
+    [foundersAccess, handleFoundersUpsell]
+  );
+
+  const handleOfficialSelect = useCallback(
+    (node: TreeNode) => {
+      if (!node.route) {
+        return;
+      }
+      if (!canAccessRoute(node.requiresEntitlement)) {
+        return;
+      }
+      onSelectFolder?.(node.route);
+    },
+    [canAccessRoute, onSelectFolder]
+  );
+
+  const handleCloudSelect = useCallback(
+    (folder: CloudFolderItem) => {
+      if (
+        folder.kind === "official" &&
+        !canAccessRoute(folder.requiresEntitlement)
+      ) {
+        return;
+      }
+      onSelectFolder?.(folder.folder, {
+        atoId: folder.kind === "custom" ? folder.atoId : undefined,
+      });
+    },
+    [canAccessRoute, onSelectFolder]
+  );
 
   const digitalTime = useMemo(
     () =>
@@ -916,7 +879,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
               </p>
             </div>
             <div className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-              {suggestedFolders.length + customAtoFolders.length} total folders
+              {officialFolders.length + customAtoFolders.length} total folders
             </div>
           </div>
           <div className="mt-4 grid w-full gap-4 text-left sm:grid-cols-2">
@@ -936,7 +899,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                     <TreeNodeItem
                       key={node.path}
                       node={node}
-                      onSelectFolder={onSelectFolder}
+                      onSelectNode={handleOfficialSelect}
                     />
                   ))}
                 </ul>
@@ -1069,18 +1032,14 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
             <button
               className="cloud-button flex h-full px-4 py-2 text-xs transition hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-3 sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
               key={folder.folder}
-              onClick={() =>
-                onSelectFolder?.(folder.folder, {
-                  atoId: "atoId" in folder ? folder.atoId : undefined,
-                })
-              }
+              onClick={() => handleCloudSelect(folder)}
               style={cloudStyles[index % cloudStyles.length]}
               type="button"
             >
               <span className="flex w-full flex-col gap-0.5 text-left leading-tight">
                 <span className="text-xs font-medium leading-snug sm:text-sm">
                   {folder.label}
-                  {folder.badge === "gem" ? (
+                  {folder.premiumIcon === "diamond" ? (
                     <span
                       aria-hidden="true"
                       className="ml-1 inline-flex align-middle text-sm"
@@ -1103,7 +1062,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                       CUSTOM
                     </span>
                   ) : null}
-                  {folder.badge === "gem" ? (
+                  {folder.premiumIcon === "diamond" ? (
                     <span className="sr-only">Founders access only</span>
                   ) : null}
                 </span>
