@@ -498,6 +498,94 @@ export async function getApprovedMemoriesByUserId({
   }
 }
 
+export async function getApprovedMemoriesByUserIdPage({
+  userId,
+  limit,
+  offset = 0,
+  route,
+  projectRoute,
+}: {
+  userId: string;
+  limit: number;
+  offset?: number;
+  route?: string;
+  projectRoute?: string;
+}) {
+  try {
+    const pageSize = Math.min(Math.max(limit, 1), 50);
+    const whereClauses = [
+      eq(memory.ownerId, userId),
+      eq(memory.isApproved, true),
+      eq(memory.sourceType, "chat"),
+    ];
+
+    if (route) {
+      whereClauses.push(eq(memory.route, route));
+    }
+
+    if (projectRoute) {
+      const normalizedProjectRoute = projectRoute.startsWith("/")
+        ? projectRoute.slice(1)
+        : projectRoute;
+      const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+      const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
+      whereClauses.push(
+        or(
+          sql`${memory.route} LIKE ${`${projectRoute}%`}`,
+          sql`${memory.route} LIKE ${`${normalizedProjectRoute}%`}`,
+          eq(memory.route, baseProjectRoute),
+          eq(memory.route, slashedBaseProjectRoute)
+        )
+      );
+    }
+
+    const rows = await db
+      .select()
+      .from(memory)
+      .where(and(...whereClauses))
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+      .limit(pageSize + 1)
+      .offset(offset);
+
+    const hasNext = rows.length > pageSize;
+
+    return {
+      rows: hasNext ? rows.slice(0, pageSize) : rows,
+      nextCursor: hasNext ? offset + pageSize : null,
+    };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories"
+    );
+  }
+}
+
+export async function getDistinctApprovedMemoryRoutesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select({ route: memory.route })
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .groupBy(memory.route);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get memory routes"
+    );
+  }
+}
+
 export async function getApprovedMemoriesByUserIdAndRoute({
   userId,
   route,
