@@ -138,7 +138,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
             return (
               <button
-                className="store-app-card group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-300"
+                className="store-app-card group cursor-pointer rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-300"
                 key={app.id}
                 onClick={() => {
                   if (targetPath) {
@@ -147,8 +147,8 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                 }}
                 type="button"
               >
-                <div className="flex gap-4">
-                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
+                <div className="flex gap-6">
+                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
                     {app.iconUrl ? (
                       <Image
                         alt={`${app.name} icon`}
@@ -182,7 +182,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                   </div>
 
                   <div className="flex flex-shrink-0 items-center">
-                    <span className="flex h-9 items-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-medium text-slate-700 transition group-hover:bg-slate-200">
+                    <span className="flex h-10 items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 text-xs font-semibold text-emerald-700 shadow-sm transition group-hover:border-emerald-200 group-hover:bg-emerald-100">
                       <Download className="h-3.5 w-3.5" />
                       {actionLabel}
                     </span>
