@@ -249,6 +249,7 @@ export async function createUser(email: string, password: string) {
   const hashedPassword = generateHashedPassword(password);
 
   try {
+    await ensureUserAvatarUrlColumnReady();
     return await db.insert(user).values({ email, password: hashedPassword });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
@@ -256,6 +257,7 @@ export async function createUser(email: string, password: string) {
 }
 
 export async function createGuestUser() {
+  await ensureUserAvatarUrlColumnReady();
   const password = generateHashedPassword(generateUUID());
   const maxAttempts = 3;
 
