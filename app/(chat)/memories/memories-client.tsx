@@ -400,6 +400,126 @@ const MemoriesTable = ({
   );
 };
 
+const MemoriesMobileList = ({
+  memories,
+  onSpeak,
+  onLoadMore,
+  onPrevious,
+  hasNext,
+  hasPrevious,
+  isLoading,
+  pageLabel,
+}: {
+  memories: MemoryItem[];
+  onSpeak: (memory: MemoryItem) => void;
+  onLoadMore: () => void;
+  onPrevious: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  isLoading: boolean;
+  pageLabel: string;
+}) => {
+  if (memories.length === 0) {
+    return (
+      <Card className="md:hidden">
+        <CardContent className="py-6 text-sm text-muted-foreground">
+          No approved memories yet. When you approve a saved memory in chat, it
+          will show up here with its route and summary.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 md:hidden">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{memories.length} memories shown on {pageLabel}.</span>
+      </div>
+      {memories.map((memory) => {
+        const dateLabel = format(
+          parseISO(getMemoryDate(memory)),
+          "MMM d, yyyy"
+        );
+        const routeInfo = deriveMemoryRoute(memory);
+        const trimmedRoute = routeInfo.fullRoute
+          ? routeInfo.fullRoute.replace(/^\/|\/$/g, "")
+          : null;
+        const routeParts = trimmedRoute ? trimmedRoute.split("/") : [];
+        const productRoute = routeParts.length ? `/${routeParts[0]}/` : null;
+        const subroute =
+          routeParts.length > 1
+            ? `/${routeParts.slice(1).join("/")}/`
+            : null;
+        const scope = getScopeInfo(routeInfo.fullRoute);
+
+        return (
+          <Card key={memory.id}>
+            <CardHeader className="space-y-2 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-sm font-semibold">
+                  {dateLabel}
+                </CardTitle>
+                <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {productRoute ? (
+                  <Badge className="w-fit" variant="outline">
+                    {productRoute}
+                  </Badge>
+                ) : (
+                  <Badge className="w-fit" variant="outline">
+                    General
+                  </Badge>
+                )}
+                {subroute ? <span>{subroute}</span> : null}
+                <Badge variant="secondary">{memory.agentLabel}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
+              <p className="text-sm text-foreground">{memory.rawText}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={() => onSpeak(memory)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Speak
+                </Button>
+                <MemoryDialog memory={memory} scope={scope} />
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground">
+        <span>
+          Showing {memories.length} memories on {pageLabel}.
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            disabled={isLoading || !hasPrevious}
+            onClick={onPrevious}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Previous
+          </Button>
+          <Button
+            disabled={isLoading || !hasNext}
+            onClick={onLoadMore}
+            size="sm"
+            type="button"
+          >
+            Load more
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const buildCalendarDays = (currentMonth: Date) => {
@@ -1270,23 +1390,47 @@ export const MemoriesClient = ({
       {view === "calendar" ? (
         <CalendarView memories={filteredMemories} onSpeak={handleSpeak} />
       ) : (
-        <MemoriesTable
-          hasNext={Boolean(nextCursor)}
-          hasPrevious={currentOffset > 0}
-          isLoading={isLoadingPage}
-          memories={filteredMemories}
-          onLoadMore={() => {
-            if (nextCursor !== null) {
-              void loadPage(nextCursor);
-            }
-          }}
-          onPrevious={() => {
-            const previousOffset = Math.max(0, currentOffset - PAGE_LIMIT);
-            void loadPage(previousOffset);
-          }}
-          onSpeak={handleSpeak}
-          pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
-        />
+        <>
+          <MemoriesMobileList
+            hasNext={Boolean(nextCursor)}
+            hasPrevious={currentOffset > 0}
+            isLoading={isLoadingPage}
+            memories={filteredMemories}
+            onLoadMore={() => {
+              if (nextCursor !== null) {
+                void loadPage(nextCursor);
+              }
+            }}
+            onPrevious={() => {
+              const previousOffset = Math.max(0, currentOffset - PAGE_LIMIT);
+              void loadPage(previousOffset);
+            }}
+            onSpeak={handleSpeak}
+            pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
+          />
+          <div className="hidden md:block">
+            <MemoriesTable
+              hasNext={Boolean(nextCursor)}
+              hasPrevious={currentOffset > 0}
+              isLoading={isLoadingPage}
+              memories={filteredMemories}
+              onLoadMore={() => {
+                if (nextCursor !== null) {
+                  void loadPage(nextCursor);
+                }
+              }}
+              onPrevious={() => {
+                const previousOffset = Math.max(
+                  0,
+                  currentOffset - PAGE_LIMIT
+                );
+                void loadPage(previousOffset);
+              }}
+              onSpeak={handleSpeak}
+              pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
+            />
+          </div>
+        </>
       )}
     </div>
   );
