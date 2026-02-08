@@ -1,68 +1,137 @@
-"use client";
-
-import { ArrowLeft, Check, Download } from "lucide-react";
+import { ArrowLeft, Check, Download, ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { and, eq } from "drizzle-orm";
+import { auth } from "@/app/(auth)/auth";
+import { db } from "@/lib/db";
+import { atoApps, userInstalls } from "@/lib/db/schema";
+import { installApp } from "@/lib/store/installApp";
+import { uninstallApp } from "@/lib/store/uninstallApp";
 
-const INSTALL_STORAGE_KEY = "ato-app-installed:brooksbears";
+export const dynamic = "force-dynamic";
 
-export default function BrooksBearsAppPage() {
-  const router = useRouter();
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [hasHydratedInstallState, setHasHydratedInstallState] = useState(false);
+const APP_SLUG = "brooksbears";
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
+type AppStats = {
+  rating: number | null;
+  ratingCount: number;
+  downloads: number;
+};
+
+const formatDownloads = (downloads: number) =>
+  new Intl.NumberFormat("en", { notation: "compact" }).format(downloads);
+
+const formatRating = (rating: number) => rating.toFixed(1);
+
+const getAppStats = async (): Promise<AppStats | null> => {
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const protocol = headersList.get("x-forwarded-proto") ?? "http";
+  const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
+  const response = await fetch(
+    `${baseUrl}/api/reviews/stats?appSlug=${APP_SLUG}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as { stats?: AppStats };
+  return data.stats ?? null;
+};
+
+export default async function BrooksBearsAppPage() {
+  const [app, session, stats] = await Promise.all([
+    db
+      .select()
+      .from(atoApps)
+      .where(eq(atoApps.slug, APP_SLUG))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    auth(),
+    getAppStats(),
+  ]);
+
+  const userId = session?.user?.id ?? null;
+  const appId = app?.id ?? null;
+
+  const [installRecord] =
+    userId && appId
+      ? await db
+          .select()
+          .from(userInstalls)
+          .where(and(eq(userInstalls.userId, userId), eq(userInstalls.appId, appId)))
+          .limit(1)
+      : [null];
+
+  const isInstalled = Boolean(installRecord);
+  const isInstallDisabled = isInstalled || !appId;
+  const installAction = async () => {
+    "use server";
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    if (!appId) {
       return;
     }
 
-    const storedValue = window.localStorage.getItem(INSTALL_STORAGE_KEY);
-    setIsInstalled(storedValue === "true");
-    setHasHydratedInstallState(true);
-  }, []);
+    await installApp(session.user.id, appId);
+    revalidatePath("/brooksbears-app");
+  };
 
-  useEffect(() => {
-    if (!hasHydratedInstallState || typeof window === "undefined") {
+  const uninstallAction = async () => {
+    "use server";
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    if (!appId) {
       return;
     }
 
-    window.localStorage.setItem(INSTALL_STORAGE_KEY, String(isInstalled));
-  }, [hasHydratedInstallState, isInstalled]);
-
-  const handleInstallClick = () => {
-    if (!isInstalled) {
-      setIsInstalled(true);
-    }
+    await uninstallApp(session.user.id, appId);
+    revalidatePath("/brooksbears-app");
   };
 
-  const handleGoToApp = () => {
-    router.push("/BrooksBears/");
-  };
+  const ratingLabel =
+    stats?.rating != null ? `Rating ${formatRating(stats.rating)}` : "New";
+  const downloadsLabel = stats
+    ? `${formatDownloads(stats.downloads)} downloads`
+    : "Downloads unavailable";
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#1b1118] via-[#160e14] to-[#120c16] text-white">
       <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#1b1118]/90 px-4 py-3 backdrop-blur-sm">
-        <button
+        <Link
           aria-label="Go back"
           className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-          onClick={() => router.back()}
-          type="button"
+          href="/brooks-ai-hub"
         >
           <ArrowLeft className="h-5 w-5" />
-        </button>
+        </Link>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
             <Image
-              alt="BrooksBears icon"
+              alt={`${app?.name ?? "BrooksBears"} icon`}
               className="h-full w-full object-cover"
               height={36}
-              src="/icons/brooksbears-appicon.png"
+              src={app?.iconUrl ?? "/icons/brooksbears-appicon.png"}
               width={36}
             />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-white">BrooksBears</h1>
+            <h1 className="text-lg font-semibold text-white">
+              {app?.name ?? "BrooksBears"}
+            </h1>
             <p className="text-xs text-white/60">Companion chats & stories</p>
           </div>
         </div>
@@ -74,56 +143,70 @@ export default function BrooksBearsAppPage() {
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
                 <Image
-                  alt="BrooksBears icon"
+                  alt={`${app?.name ?? "BrooksBears"} icon`}
                   className="h-full w-full object-cover"
                   height={64}
-                  src="/icons/brooksbears-appicon.png"
+                  src={app?.iconUrl ?? "/icons/brooksbears-appicon.png"}
                   width={64}
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">BrooksBears</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  {app?.name ?? "BrooksBears"}
+                </h2>
                 <p className="text-sm text-white/60">Entertainment • 13+</p>
                 <div className="mt-1 flex items-center gap-4 text-sm text-white/50">
-                  <span>Rating 4.9</span>
-                  <span>12K+ downloads</span>
+                  <span>{ratingLabel}</span>
+                  <span>{downloadsLabel}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex w-full flex-col gap-3 md:w-auto">
-              <button
-                className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
-                  isInstalled
-                    ? "bg-emerald-600/80 text-white"
-                    : "bg-rose-500 hover:bg-rose-600 text-white"
-                }`}
-                disabled={isInstalled}
-                onClick={handleInstallClick}
-                type="button"
-              >
-                {isInstalled ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Installed
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    Install
-                  </>
-                )}
-              </button>
-
-              {isInstalled && (
+              <form action={installAction}>
                 <button
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                  onClick={handleGoToApp}
-                  type="button"
+                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
+                    isInstalled
+                      ? "bg-emerald-600/80 text-white"
+                      : "bg-rose-500 hover:bg-rose-600 text-white"
+                  }`}
+                  disabled={isInstallDisabled}
+                  type="submit"
                 >
-                  Enter BrooksBears
+                  {isInstalled ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Installed
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Install
+                    </>
+                  )}
                 </button>
-              )}
+              </form>
+
+              {isInstalled ? (
+                <>
+                  <Link
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
+                    href="/BrooksBears/"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open
+                  </Link>
+                  <form action={uninstallAction}>
+                    <button
+                      className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-200/30 bg-rose-500/10 py-3 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/20 md:w-56"
+                      type="submit"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </button>
+                  </form>
+                </>
+              ) : null}
             </div>
           </div>
         </section>
@@ -131,9 +214,8 @@ export default function BrooksBearsAppPage() {
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
           <h3 className="text-lg font-semibold text-white">About</h3>
           <p className="mt-2 text-sm text-white/70">
-            BrooksBears is a cozy companion experience with Benjamin Bear,
-            blending storytelling, jokes, and friendly check-ins inside Brooks
-            AI HUB.
+            {app?.description ??
+              "BrooksBears is a cozy companion experience with Benjamin Bear, blending storytelling, jokes, and friendly check-ins inside Brooks AI HUB."}
           </p>
         </section>
 
