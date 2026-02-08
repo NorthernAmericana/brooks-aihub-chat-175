@@ -614,7 +614,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           badge?: "gem" | "free";
         } => Boolean(folder)
       );
-  }, []);
+  }, [routeData]);
 
   const officialTree = useMemo<TreeNode[]>(() => {
     const root: TreeNode = {
