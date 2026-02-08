@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
+  getUserAvatarUrl,
   getUserById,
   getUserMessageColor,
+  updateUserAvatarUrl,
   updateUserMessageColor,
 } from "@/lib/db/queries";
 
@@ -21,9 +23,12 @@ export async function GET() {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
-  const messageColor = await getUserMessageColor({ userId: session.user.id });
+  const [messageColor, avatarUrl] = await Promise.all([
+    getUserMessageColor({ userId: session.user.id }),
+    getUserAvatarUrl({ userId: session.user.id }),
+  ]);
 
-  return NextResponse.json({ messageColor });
+  return NextResponse.json({ messageColor, avatarUrl });
 }
 
 export async function PATCH(request: Request) {
@@ -33,7 +38,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  let payload: { messageColor?: string | null };
+  let payload: { messageColor?: string | null; avatarUrl?: string | null };
 
   try {
     payload = await request.json();
@@ -44,7 +49,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { messageColor } = payload;
+  const { messageColor, avatarUrl } = payload;
 
   if (messageColor !== null && messageColor !== undefined) {
     if (typeof messageColor !== "string") {
@@ -55,10 +60,32 @@ export async function PATCH(request: Request) {
     }
   }
 
-  const updatedMessageColor = await updateUserMessageColor({
-    userId: session.user.id,
-    messageColor: messageColor ?? null,
-  });
+  if (avatarUrl !== null && avatarUrl !== undefined) {
+    if (typeof avatarUrl !== "string") {
+      return NextResponse.json(
+        { error: "avatarUrl must be a string." },
+        { status: 400 }
+      );
+    }
+  }
 
-  return NextResponse.json({ messageColor: updatedMessageColor });
+  const [updatedMessageColor, updatedAvatarUrl] = await Promise.all([
+    messageColor !== undefined
+      ? updateUserMessageColor({
+          userId: session.user.id,
+          messageColor: messageColor ?? null,
+        })
+      : getUserMessageColor({ userId: session.user.id }),
+    avatarUrl !== undefined
+      ? updateUserAvatarUrl({
+          userId: session.user.id,
+          avatarUrl: avatarUrl ?? null,
+        })
+      : getUserAvatarUrl({ userId: session.user.id }),
+  ]);
+
+  return NextResponse.json({
+    messageColor: updatedMessageColor,
+    avatarUrl: updatedAvatarUrl,
+  });
 }
