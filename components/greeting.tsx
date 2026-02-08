@@ -105,6 +105,7 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
 
   return (
     <div
+      className="analog-clock"
       style={{
         width: size,
         height: size,
@@ -116,18 +117,18 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
         boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
       }}
     >
-      <Hand deg={hDeg} width={6} lengthPct={28} color="rgba(15, 23, 42, 0.9)" />
+      <Hand deg={hDeg} width={6} lengthPct={28} color="var(--clock-hand-hour)" />
       <Hand
         deg={mDeg}
         width={4}
         lengthPct={38}
-        color="rgba(15, 23, 42, 0.7)"
+        color="var(--clock-hand-minute)"
       />
       <Hand
         deg={sDeg}
         width={2}
         lengthPct={42}
-        color="rgba(16, 185, 129, 0.95)"
+        color="var(--clock-hand-second)"
       />
       <div
         style={{
@@ -166,6 +167,7 @@ const Hand = ({ deg, width, lengthPct, color }: HandProps) => {
         transform: `translate(-50%, -100%) rotate(${deg}deg)`,
         borderRadius: 9999,
         background: color,
+        boxShadow: "0 0 6px var(--clock-hand-shadow)",
       }}
     />
   );
