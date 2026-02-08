@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { BirthdaySettingsPanel } from "@/components/birthday-settings-panel";
+import { ChatHistorySettingsPanel } from "@/components/chat-history-settings-panel";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -35,6 +36,17 @@ export default async function SettingsPage() {
         </div>
 
         <BirthdaySettingsPanel />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg">Chat History</h2>
+          <p className="text-sm text-muted-foreground">
+            Delete chat threads only. This will not delete Memories.
+          </p>
+        </div>
+
+        <ChatHistorySettingsPanel />
       </section>
     </div>
   );

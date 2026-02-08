@@ -58,6 +58,7 @@ import {
   userLocation,
   userVehicle,
   vote,
+  voteDeprecated,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -406,6 +407,68 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete all chats by user id"
+    );
+  }
+}
+
+export async function purgeChatsByUserIdAndRange({
+  userId,
+  cutoff,
+}: {
+  userId: string;
+  cutoff: Date | null;
+}) {
+  try {
+    const userChats = await withChatTableSchemaGuard(() => {
+      const whereCondition = cutoff
+        ? and(eq(chat.userId, userId), gte(chat.createdAt, cutoff))
+        : eq(chat.userId, userId);
+
+      return db.select({ id: chat.id }).from(chat).where(whereCondition);
+    });
+
+    if (userChats.length === 0) {
+      return { deletedSessions: 0, deletedMessages: 0 };
+    }
+
+    const chatIds = userChats.map((chatRecord) => chatRecord.id);
+
+    return await db.transaction(async (tx) => {
+      await tx
+        .update(userLocation)
+        .set({ chatId: null })
+        .where(inArray(userLocation.chatId, chatIds));
+
+      await tx
+        .delete(voteDeprecated)
+        .where(inArray(voteDeprecated.chatId, chatIds));
+      const deletedLegacyMessages = await tx
+        .delete(messageDeprecated)
+        .where(inArray(messageDeprecated.chatId, chatIds))
+        .returning({ id: messageDeprecated.id });
+
+      await tx.delete(vote).where(inArray(vote.chatId, chatIds));
+      const deletedMessages = await tx
+        .delete(message)
+        .where(inArray(message.chatId, chatIds))
+        .returning({ id: message.id });
+
+      await tx.delete(stream).where(inArray(stream.chatId, chatIds));
+
+      const deletedChats = await tx
+        .delete(chat)
+        .where(inArray(chat.id, chatIds))
+        .returning({ id: chat.id });
+
+      return {
+        deletedSessions: deletedChats.length,
+        deletedMessages: deletedMessages.length + deletedLegacyMessages.length,
+      };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to purge chat history"
     );
   }
 }
