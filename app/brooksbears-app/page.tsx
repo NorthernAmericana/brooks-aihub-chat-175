@@ -3,11 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
-import { atoAppReviews, atoApps, userInstalls } from "@/lib/db/schema";
+import { atoAppReviews, atoApps, user, userInstalls } from "@/lib/db/schema";
 import { getSafeDisplayName } from "@/lib/ato/reviews";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
@@ -41,70 +40,82 @@ const formatDownloads = (downloads: number) =>
 const formatRating = (rating: number) => rating.toFixed(1);
 
 const getAppStats = async (): Promise<AppStats | null> => {
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
-  const response = await fetch(
-    `${baseUrl}/api/ato/apps/${APP_SLUG}/stats`,
-    {
-      cache: "no-store",
-    }
-  );
+  const [app] = await db
+    .select({ id: atoApps.id })
+    .from(atoApps)
+    .where(eq(atoApps.slug, APP_SLUG))
+    .limit(1);
 
-  if (!response.ok) {
+  if (!app) {
     return null;
   }
 
-  const data = (await response.json()) as {
-    downloads_count?: number;
-    avg_rating?: number | null;
-    reviews_count?: number;
-  };
+  const [installStats] = await db
+    .select({ downloads: sql<number>`count(*)` })
+    .from(userInstalls)
+    .where(eq(userInstalls.appId, app.id));
+
+  const [ratingStats] = await db
+    .select({
+      averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
+      reviewsCount: sql<number>`count(*)`,
+    })
+    .from(atoAppReviews)
+    .where(eq(atoAppReviews.appId, app.id));
 
   return {
-    downloadsCount: Number(data.downloads_count ?? 0),
-    avgRating: data.avg_rating == null ? null : Number(data.avg_rating),
-    reviewsCount: Number(data.reviews_count ?? 0),
+    downloadsCount: Number(installStats?.downloads ?? 0),
+    avgRating:
+      ratingStats?.averageRating == null
+        ? null
+        : Number(ratingStats.averageRating),
+    reviewsCount: Number(ratingStats?.reviewsCount ?? 0),
   };
 };
 
 const getAppReviews = async (): Promise<ReviewsPayload | null> => {
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
-  const response = await fetch(
-    `${baseUrl}/api/ato/apps/${APP_SLUG}/reviews?limit=4`,
-    {
-      cache: "no-store",
-    }
-  );
+  const [app] = await db
+    .select({ id: atoApps.id })
+    .from(atoApps)
+    .where(eq(atoApps.slug, APP_SLUG))
+    .limit(1);
 
-  if (!response.ok) {
+  if (!app) {
     return null;
   }
 
-  const data = (await response.json()) as {
-    reviews?: Array<{
-      id: string;
-      rating: number;
-      body: string | null;
-      created_at: string;
-      display_name: string;
-    }>;
-    next_cursor?: string | null;
-  };
+  const rows = await db
+    .select({
+      id: atoAppReviews.id,
+      rating: atoAppReviews.rating,
+      body: atoAppReviews.body,
+      createdAt: atoAppReviews.createdAt,
+      email: user.email,
+    })
+    .from(atoAppReviews)
+    .innerJoin(user, eq(atoAppReviews.userId, user.id))
+    .where(eq(atoAppReviews.appId, app.id))
+    .orderBy(desc(atoAppReviews.createdAt), desc(atoAppReviews.id))
+    .limit(5);
+
+  const limit = 4;
+  const hasNextPage = rows.length > limit;
+  const trimmedRows = hasNextPage ? rows.slice(0, limit) : rows;
+  const nextCursor = hasNextPage
+    ? `${trimmedRows[trimmedRows.length - 1]?.createdAt.toISOString()}|${
+        trimmedRows[trimmedRows.length - 1]?.id
+      }`
+    : null;
 
   return {
-    reviews: (data.reviews ?? []).map((review) => ({
+    reviews: trimmedRows.map((review) => ({
       id: review.id,
       rating: review.rating,
       body: review.body,
-      createdAt: review.created_at,
-      displayName: review.display_name,
+      createdAt: review.createdAt.toISOString(),
+      displayName: getSafeDisplayName(review.email),
     })),
-    nextCursor: data.next_cursor ?? null,
+    nextCursor,
   };
 };
 
