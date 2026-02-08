@@ -67,6 +67,8 @@ export type MemoryItem = {
   id: string;
   rawText: string;
   route: string | null;
+  source_route?: string | null;
+  metadata?: { route?: string | null } | null;
   agentLabel: string;
   approvedAt: string;
   createdAt: string;
@@ -90,14 +92,46 @@ const SHARED_PROJECTS = new Map([
   ["brooksbears", "BrooksBears"],
 ]);
 
-const formatRoute = (route: string | null) => {
+type MemoryRouteInfo = {
+  routeKey: string | null;
+  productRoute: string | null;
+  fullRoute: string | null;
+};
+
+const normalizeRoute = (route: string | null | undefined) => {
   if (!route) {
-    return "General";
+    return null;
   }
 
-  const trimmed = route.replace(/^\/|\/$/g, "");
+  const trimmed = route.trim().replace(/^\/|\/$/g, "");
+  if (!trimmed) {
+    return null;
+  }
+
   return `/${trimmed}/`;
 };
+
+const deriveMemoryRoute = (memory: MemoryItem): MemoryRouteInfo => {
+  const candidate =
+    memory.route ??
+    memory.source_route ??
+    (typeof memory.metadata?.route === "string"
+      ? memory.metadata.route
+      : null);
+  const fullRoute = normalizeRoute(candidate);
+  const trimmed = fullRoute ? fullRoute.replace(/^\/|\/$/g, "") : null;
+  const rootSegment = trimmed ? trimmed.split("/")[0] : null;
+  const productRoute = rootSegment ? `/${rootSegment}/` : null;
+
+  return {
+    routeKey: fullRoute,
+    productRoute,
+    fullRoute,
+  };
+};
+
+const formatDerivedRoute = (routeInfo: MemoryRouteInfo) =>
+  routeInfo.fullRoute ? routeInfo.fullRoute : "General";
 
 const getMemoryDate = (memory: MemoryItem) =>
   memory.approvedAt || memory.createdAt;
@@ -160,6 +194,7 @@ const MemoryDialog = ({
 }) => {
   const sourceLabel =
     memory.source.type === "chat" ? "Chat source" : "Source";
+  const routeInfo = deriveMemoryRoute(memory);
 
   return (
     <Dialog>
@@ -178,7 +213,9 @@ const MemoryDialog = ({
           </div>
           <div className="grid gap-2 text-xs text-muted-foreground">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+              <Badge variant="outline">
+                {formatDerivedRoute(routeInfo)}
+              </Badge>
               <Badge variant="secondary">{memory.agentLabel}</Badge>
               <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
             </div>
@@ -272,7 +309,8 @@ const MemoriesTable = ({
                   parseISO(getMemoryDate(memory)),
                   "MMM d, yyyy"
                 );
-                const scope = getScopeInfo(memory.route);
+                const routeInfo = deriveMemoryRoute(memory);
+                const scope = getScopeInfo(routeInfo.fullRoute);
                 return (
                   <tr className="hover:bg-muted/40" key={memory.id}>
                     <td className="px-4 py-3 align-top text-xs text-muted-foreground">
@@ -290,7 +328,9 @@ const MemoriesTable = ({
                       </div>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+                      <Badge variant="outline">
+                        {formatDerivedRoute(routeInfo)}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col gap-1">
@@ -511,14 +551,17 @@ const CalendarDayDetails = ({
         </div>
       ) : (
         memories.map((memory) => {
-          const scope = getScopeInfo(memory.route);
+          const routeInfo = deriveMemoryRoute(memory);
+          const scope = getScopeInfo(routeInfo.fullRoute);
           return (
             <div
               className="rounded-lg border border-border/60 bg-background p-3"
               key={memory.id}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+                <Badge variant="outline">
+                  {formatDerivedRoute(routeInfo)}
+                </Badge>
                 <Badge variant="secondary">{memory.agentLabel}</Badge>
                 <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
               </div>
@@ -780,9 +823,8 @@ export const MemoriesClient = ({
     memories
   );
   const [view, setView] = useState<"table" | "calendar">("table");
-  const [scopeFilter, setScopeFilter] = useState<
-    "all" | "shared" | "official" | "general"
-  >("all");
+  const [routeFilter, setRouteFilter] = useState("all");
+  const [subrouteFilter, setSubrouteFilter] = useState("all");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState(
@@ -858,27 +900,58 @@ export const MemoriesClient = ({
     return getVoiceOption(selectedVoiceId);
   }, [selectedVoiceId]);
 
+  const routeData = useMemo(() => {
+    return localMemories.map((memory) => ({
+      memory,
+      routeInfo: deriveMemoryRoute(memory),
+    }));
+  }, [localMemories]);
+
+  const productRoutes = useMemo(() => {
+    const routes = new Set<string>();
+    for (const { routeInfo } of routeData) {
+      if (routeInfo.productRoute) {
+        routes.add(routeInfo.productRoute);
+      }
+    }
+    return Array.from(routes).sort((a, b) => a.localeCompare(b));
+  }, [routeData]);
+
+  const subroutes = useMemo(() => {
+    if (routeFilter === "all") {
+      return [];
+    }
+    const routes = new Set<string>();
+    for (const { routeInfo } of routeData) {
+      if (routeInfo.productRoute === routeFilter && routeInfo.fullRoute) {
+        routes.add(routeInfo.fullRoute);
+      }
+    }
+    return Array.from(routes).sort((a, b) => a.localeCompare(b));
+  }, [routeData, routeFilter]);
+
   const filteredMemories = useMemo(() => {
-    const scopedMemories =
-      scopeFilter === "all"
-        ? localMemories
-        : localMemories.filter((memory) => {
-            const scope = getScopeInfo(memory.route);
-            if (scopeFilter === "shared") {
-              return scope.label === "Shared";
-            }
-            if (scopeFilter === "official") {
-              return scope.label === "Official ATO";
-            }
-            return scope.label === "General";
-          });
+    const scopedMemories = routeData
+      .filter(({ routeInfo }) => {
+        if (routeFilter === "all") {
+          return true;
+        }
+        if (routeInfo.productRoute !== routeFilter) {
+          return false;
+        }
+        if (subrouteFilter !== "all") {
+          return routeInfo.fullRoute === subrouteFilter;
+        }
+        return true;
+      })
+      .map(({ memory }) => memory);
 
     return [...scopedMemories].sort(
       (a, b) =>
         new Date(getMemoryDate(b)).getTime() -
         new Date(getMemoryDate(a)).getTime()
     );
-  }, [localMemories, scopeFilter]);
+  }, [routeData, routeFilter, subrouteFilter]);
 
   const resetAudio = () => {
     if (audioRef.current) {
@@ -1040,24 +1113,48 @@ export const MemoriesClient = ({
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="memories-scope">Scope</Label>
+            <Label htmlFor="memories-route">Route</Label>
             <Select
-              onValueChange={(value) =>
-                setScopeFilter(value as typeof scopeFilter)
-              }
-              value={scopeFilter}
+              onValueChange={(value) => {
+                setRouteFilter(value);
+                setSubrouteFilter("all");
+              }}
+              value={routeFilter}
             >
-              <SelectTrigger className="w-[160px]" id="memories-scope">
-                <SelectValue placeholder="All scopes" />
+              <SelectTrigger className="w-[180px]" id="memories-route">
+                <SelectValue placeholder="All routes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All memories</SelectItem>
-                <SelectItem value="shared">Shared</SelectItem>
-                <SelectItem value="official">Official ATO</SelectItem>
-                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="all">All routes</SelectItem>
+                {productRoutes.map((route) => (
+                  <SelectItem key={route} value={route}>
+                    {route}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+          {routeFilter !== "all" && subroutes.length > 0 ? (
+            <div className="grid gap-1">
+              <Label htmlFor="memories-subroute">Subroute</Label>
+              <Select
+                onValueChange={(value) => setSubrouteFilter(value)}
+                value={subrouteFilter}
+              >
+                <SelectTrigger className="w-[200px]" id="memories-subroute">
+                  <SelectValue placeholder="All subroutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All subroutes</SelectItem>
+                  {subroutes.map((route) => (
+                    <SelectItem key={route} value={route}>
+                      {route}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-1">
