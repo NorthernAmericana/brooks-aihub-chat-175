@@ -185,7 +185,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               variant="outline"
             >
               <Link
-                href="/create-ato"
+                href="/create-ato/onboarding"
                 onClick={() => {
                   setOpenMobile(false);
                 }}
