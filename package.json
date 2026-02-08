@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "tsx lib/db/migrate && next build",
-    "start": "next start",
+    "build": "next build",
+    "build:vercel": "pnpm db:migrate && pnpm build",
+    "start": "pnpm db:migrate && next start",
     "lint": "ultracite check",
     "format": "ultracite fix",
     "db:generate": "drizzle-kit generate",
