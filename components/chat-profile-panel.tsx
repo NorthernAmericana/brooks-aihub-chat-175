@@ -8,6 +8,7 @@ import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { ProfileIconAiModal } from "./profile-icon-ai-modal";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
 export function ChatProfilePanel() {
   const { data: session } = useSession();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
   const { profileIcon, setProfileIcon } = useProfileIcon();
 
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
@@ -40,15 +42,29 @@ export function ChatProfilePanel() {
           </span>
         </div>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Button
-          className="w-full sm:w-auto"
-          onClick={() => setIsPickerOpen(true)}
-          type="button"
-          variant="outline"
-        >
-          Change Profile Icon
-        </Button>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setIsAiOpen(true)}
+              type="button"
+            >
+              Generate Profile Icon (AI)
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Describe your icon vibe (optional).
+            </span>
+          </div>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => setIsPickerOpen(true)}
+            type="button"
+            variant="outline"
+          >
+            Change Profile Icon
+          </Button>
+        </div>
         <Button
           className="w-full sm:w-auto"
           onClick={() => signOut({ redirectTo: "/" })}
@@ -59,6 +75,11 @@ export function ChatProfilePanel() {
         </Button>
       </div>
 
+      <ProfileIconAiModal
+        onOpenChange={setIsAiOpen}
+        onUseIcon={(iconSrc) => setProfileIcon(iconSrc)}
+        open={isAiOpen}
+      />
       <Dialog onOpenChange={setIsPickerOpen} open={isPickerOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
