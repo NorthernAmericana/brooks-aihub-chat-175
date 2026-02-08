@@ -7,6 +7,7 @@ import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getChatRouteKey, getOfficialVoiceId } from "@/lib/voice";
 import { useUserMessageColor } from "@/hooks/use-user-message-color";
+import ColorWheelPalette from "./color-wheel-palette";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
@@ -48,10 +49,21 @@ export function PureMessageActions({
   const { messageColor, setMessageColor } = useUserMessageColor();
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [pickerColor, setPickerColor] = useState(messageColor);
+  const colorCommitTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingColor = useRef(messageColor);
 
   useEffect(() => {
     setPickerColor(messageColor);
+    pendingColor.current = messageColor;
   }, [messageColor]);
+
+  useEffect(() => {
+    return () => {
+      if (colorCommitTimeout.current) {
+        clearTimeout(colorCommitTimeout.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return null;
@@ -233,31 +245,38 @@ export function PureMessageActions({
                 Change color text bar
               </DropdownMenuItem>
               {isColorPickerOpen && (
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <span className="text-xs text-muted-foreground">Pick</span>
-                  <input
-                    aria-label="Message color picker"
-                    className="h-7 w-7 cursor-pointer rounded-full border border-border p-0"
-                    onChange={async (event) => {
-                      const nextColor = event.target.value;
-                      setPickerColor(nextColor);
-                      try {
-                        await setMessageColor(nextColor);
-                        toast.success("Message color updated.");
-                      } catch (_error) {
-                        toast.error("Unable to save message color.");
+                <div className="w-[360px] max-w-[90vw] px-3 py-3">
+                  <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Message color</span>
+                    <button
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setIsColorPickerOpen(false)}
+                      type="button"
+                    >
+                      Done
+                    </button>
+                  </div>
+                  <ColorWheelPalette
+                    initialColor={pickerColor}
+                    initialMode="Complementary"
+                    layout="desktop"
+                    showSwatches
+                    showCopyButtons={false}
+                    onPaletteChange={({ base }) => {
+                      setPickerColor(base);
+                      pendingColor.current = base;
+                      if (colorCommitTimeout.current) {
+                        clearTimeout(colorCommitTimeout.current);
                       }
+                      colorCommitTimeout.current = setTimeout(async () => {
+                        try {
+                          await setMessageColor(pendingColor.current);
+                        } catch (_error) {
+                          toast.error("Unable to save message color.");
+                        }
+                      }, 250);
                     }}
-                    type="color"
-                    value={pickerColor}
                   />
-                  <button
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    onClick={() => setIsColorPickerOpen(false)}
-                    type="button"
-                  >
-                    Done
-                  </button>
                 </div>
               )}
             </DropdownMenuContent>
