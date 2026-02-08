@@ -8,11 +8,11 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 type NamcCardKind = "video" | "game" | "album" | "lore";
 
@@ -431,9 +431,10 @@ export default function NamcHomePage() {
                 type="button"
               >
                 {profileIcon ? (
-                  <Image
+                  <ImageWithFallback
                     alt="Profile icon"
                     className="h-8 w-8 rounded-full object-cover"
+                    containerClassName="size-8"
                     height={32}
                     src={profileIcon}
                     width={32}

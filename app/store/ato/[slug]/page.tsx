@@ -1,5 +1,4 @@
 import { ArrowLeft, Check, Download, Lock } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -8,6 +7,7 @@ import { getEntitlements } from "@/lib/entitlements/getEntitlements";
 import { getAppDetails } from "@/lib/store/getAppDetails";
 import { installApp } from "@/lib/store/installApp";
 import { listAppsWithInstallState } from "@/lib/store/listAppsWithInstallState";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 export const dynamic = "force-dynamic";
 
@@ -76,9 +76,10 @@ export default async function AtoStoreDetailsPage({
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
             {details.app.iconUrl ? (
-              <Image
+              <ImageWithFallback
                 alt={`${details.app.name} icon`}
                 className="h-full w-full object-cover"
+                containerClassName="size-full"
                 height={36}
                 src={details.app.iconUrl}
                 width={36}
@@ -104,9 +105,10 @@ export default async function AtoStoreDetailsPage({
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
                 {details.app.iconUrl ? (
-                  <Image
+                  <ImageWithFallback
                     alt={`${details.app.name} icon`}
                     className="h-full w-full object-cover"
+                    containerClassName="size-full"
                     height={64}
                     src={details.app.iconUrl}
                     width={64}

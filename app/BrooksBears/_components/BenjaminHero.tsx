@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const HERO_SRC = "/ato/brooksbears/benjamin-hero.png";
 
@@ -58,21 +58,23 @@ export default function BenjaminHero() {
           transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
         }}
       >
-        {!imageError ? (
-          <Image
+        <div className="relative w-full">
+          <ImageWithFallback
             src={HERO_SRC}
             alt="Benjamin the bear hero"
             width={720}
             height={980}
             className="h-auto w-full select-none rounded-[24px] object-cover"
+            containerClassName="w-full"
             priority
             onError={() => setImageError(true)}
           />
-        ) : (
-          <div className="flex min-h-[480px] w-full items-center justify-center rounded-[24px] bg-gradient-to-b from-amber-200 via-amber-100 to-emerald-200 text-sm font-semibold text-amber-900">
-            Hero image coming soon
-          </div>
-        )}
+          {imageError && (
+            <div className="absolute inset-0 flex min-h-[480px] w-full items-center justify-center rounded-[24px] text-sm font-semibold text-amber-900">
+              Hero image coming soon
+            </div>
+          )}
+        </div>
       </div>
 
       {isDebug && (

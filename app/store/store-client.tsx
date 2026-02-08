@@ -1,11 +1,11 @@
 "use client";
 
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const actionLabelForApp = (app: StoreAppListItem) => {
   if (app.isInstalled && app.appPath) {
@@ -152,9 +152,10 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                 <div className="flex gap-6">
                   <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
                     {app.iconUrl ? (
-                      <Image
+                      <ImageWithFallback
                         alt={`${app.name} icon`}
                         className="h-full w-full object-cover"
+                        containerClassName="size-full"
                         height={64}
                         priority={false}
                         src={app.iconUrl}

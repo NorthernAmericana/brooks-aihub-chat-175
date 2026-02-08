@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 type MoodEffect = {
   id: string;
@@ -86,9 +86,10 @@ export default function MyFlowerAiHomePage() {
           <header className="flex items-center justify-between gap-3 rounded-3xl border border-black/5 bg-white/70 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-pink-100">
-                <Image
+                <ImageWithFallback
                   alt="MyFlowerAI icon"
                   className="h-full w-full object-cover"
+                  containerClassName="size-full"
                   height={44}
                   src="/icons/myflowerai-appicon.png"
                   width={44}
@@ -284,9 +285,10 @@ export default function MyFlowerAiHomePage() {
               <div className="mt-4 overflow-hidden rounded-2xl border border-black/10 bg-white">
                 {photoPreviewUrl ? (
                   <div className="relative aspect-[16/10]">
-                    <Image
+                    <ImageWithFallback
                       alt="Selected photo preview"
                       className="object-cover"
+                      containerClassName="size-full"
                       fill
                       sizes="(max-width: 768px) 100vw, 512px"
                       src={photoPreviewUrl}

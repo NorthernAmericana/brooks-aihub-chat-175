@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeft, Car, Home, MapPin } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
@@ -9,6 +8,7 @@ import useSWR from "swr";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 type HomeLocation = {
   rawText: string;
@@ -72,9 +72,10 @@ export default function MyCarMindATOMemoriesPage() {
         </button>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
+            <ImageWithFallback
               alt="MyCarMindATO icon"
               className="h-full w-full object-cover"
+              containerClassName="size-full"
               height={36}
               src="/icons/mycarmindato-appicon.png"
               width={36}
@@ -90,9 +91,10 @@ export default function MyCarMindATOMemoriesPage() {
           </div>
         </div>
         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5">
-          <Image
+          <ImageWithFallback
             alt="Profile avatar"
             className="h-full w-full object-cover"
+            containerClassName="size-full"
             height={40}
             src={avatarSrc}
             width={40}
