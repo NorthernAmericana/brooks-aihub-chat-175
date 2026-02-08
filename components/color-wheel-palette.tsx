@@ -374,6 +374,9 @@ export default function ColorWheelPalette(props: {
   };
 
   const isDesktop = layout === "desktop";
+  const inputRowDirection = isDesktop ? "row" : "column";
+  const wheelMaxWidth = isDesktop ? 360 : 320;
+  const contentWidth = isDesktop ? 340 : "100%";
 
   return (
     <div
@@ -381,11 +384,13 @@ export default function ColorWheelPalette(props: {
         width: "100%",
         height: "100%",
         boxSizing: "border-box",
-        padding: isDesktop ? 18 : 14,
-        borderRadius: 18,
-        background: "rgba(255,255,255,0.92)",
+        padding: isDesktop ? 18 : 12,
+        borderRadius: isDesktop ? 18 : 16,
+        background: "rgba(255,255,255,0.96)",
         border: "1px solid rgba(0,0,0,0.06)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+        boxShadow: isDesktop
+          ? "0 10px 30px rgba(0,0,0,0.08)"
+          : "0 8px 22px rgba(0,0,0,0.08)",
         fontFamily:
           "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
         color: "rgba(0,0,0,0.88)",
@@ -420,6 +425,7 @@ export default function ColorWheelPalette(props: {
       >
         <div
           style={{
+            order: isDesktop ? 1 : 2,
             width: isDesktop ? 320 : "100%",
             display: "flex",
             flexDirection: "column",
@@ -431,7 +437,14 @@ export default function ColorWheelPalette(props: {
               Pick a color
             </div>
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: inputRowDirection,
+                gap: 10,
+                alignItems: isDesktop ? "center" : "stretch",
+              }}
+            >
               <input
                 value={hexInput}
                 onChange={(e) => setHexInput(e.target.value.toUpperCase())}
@@ -451,7 +464,7 @@ export default function ColorWheelPalette(props: {
               <button
                 onClick={() => copy(baseHex)}
                 style={{
-                  width: 42,
+                  width: isDesktop ? 42 : "100%",
                   height: 42,
                   borderRadius: 12,
                   border: "1px solid rgba(0,0,0,0.08)",
@@ -498,6 +511,7 @@ export default function ColorWheelPalette(props: {
             flexDirection: "column",
             gap: 14,
             alignItems: "center",
+            order: isDesktop ? 2 : 1,
           }}
         >
           <div
@@ -508,7 +522,7 @@ export default function ColorWheelPalette(props: {
             }}
             style={{
               width: isDesktop ? 340 : "100%",
-              maxWidth: 360,
+              maxWidth: wheelMaxWidth,
               aspectRatio: "1 / 1",
               borderRadius: "999px",
               position: "relative",
@@ -537,7 +551,7 @@ export default function ColorWheelPalette(props: {
             />
           </div>
 
-          <div style={{ width: isDesktop ? 340 : "100%", maxWidth: 360 }}>
+          <div style={{ width: contentWidth, maxWidth: wheelMaxWidth }}>
             <div
               style={{
                 fontSize: 13,
@@ -592,7 +606,12 @@ export default function ColorWheelPalette(props: {
 
           {showSwatches ? (
             <div
-              style={{ width: isDesktop ? 340 : "100%", maxWidth: 360, display: "grid", gap: 10 }}
+              style={{
+                width: contentWidth,
+                maxWidth: wheelMaxWidth,
+                display: "grid",
+                gap: 10,
+              }}
             >
               {colors.map((c) => (
                 <Swatch

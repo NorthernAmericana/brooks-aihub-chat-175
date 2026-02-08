@@ -70,6 +70,10 @@ type UserBirthdayColumnState = "unchecked" | "ready" | "failed";
 let userBirthdayColumnState: UserBirthdayColumnState = "unchecked";
 let userBirthdayColumnPromise: Promise<void> | null = null;
 
+type UserMessageColorColumnState = "unchecked" | "ready" | "failed";
+let userMessageColorColumnState: UserMessageColorColumnState = "unchecked";
+let userMessageColorColumnPromise: Promise<void> | null = null;
+
 async function ensureUserBirthdayColumnReady() {
   if (userBirthdayColumnState === "ready") {
     return;
@@ -113,6 +117,51 @@ async function ensureUserBirthdayColumnReady() {
   }
 
   await userBirthdayColumnPromise;
+}
+
+async function ensureUserMessageColorColumnReady() {
+  if (userMessageColorColumnState === "ready") {
+    return;
+  }
+
+  if (userMessageColorColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "messageColor". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userMessageColorColumnPromise) {
+    userMessageColorColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasMessageColorColumn = rows.some(
+        (row) => row.column_name === "messageColor"
+      );
+
+      if (!hasMessageColorColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."messageColor" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "messageColor" text;
+        `);
+      }
+    })()
+      .then(() => {
+        userMessageColorColumnState = "ready";
+      })
+      .catch((error) => {
+        userMessageColorColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userMessageColorColumnPromise;
 }
 
 function logDbError({
@@ -1907,6 +1956,7 @@ export async function updateUserBirthday({
 
 export async function getUserMessageColor({ userId }: { userId: string }) {
   try {
+    await ensureUserMessageColorColumnReady();
     const [selectedUser] = await db
       .select({ messageColor: user.messageColor })
       .from(user)
@@ -1928,6 +1978,7 @@ export async function updateUserMessageColor({
   messageColor: string | null;
 }) {
   try {
+    await ensureUserMessageColorColumnReady();
     const [updatedUser] = await db
       .update(user)
       .set({ messageColor })

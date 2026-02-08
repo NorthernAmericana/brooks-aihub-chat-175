@@ -49,6 +49,7 @@ export function PureMessageActions({
   const { messageColor, setMessageColor } = useUserMessageColor();
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [pickerColor, setPickerColor] = useState(messageColor);
+  const [isMobilePalette, setIsMobilePalette] = useState(false);
   const colorCommitTimeout = useRef<NodeJS.Timeout | null>(null);
   const pendingColor = useRef(messageColor);
 
@@ -56,6 +57,17 @@ export function PureMessageActions({
     setPickerColor(messageColor);
     pendingColor.current = messageColor;
   }, [messageColor]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const updateMatches = () => setIsMobilePalette(mediaQuery.matches);
+    updateMatches();
+    mediaQuery.addEventListener("change", updateMatches);
+    return () => mediaQuery.removeEventListener("change", updateMatches);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -245,7 +257,7 @@ export function PureMessageActions({
                 Change color text bar
               </DropdownMenuItem>
               {isColorPickerOpen && (
-                <div className="w-[360px] max-w-[90vw] px-3 py-3">
+                <div className="w-[360px] max-w-[92vw] px-3 py-3">
                   <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
                     <span>Message color</span>
                     <button
@@ -259,7 +271,7 @@ export function PureMessageActions({
                   <ColorWheelPalette
                     initialColor={pickerColor}
                     initialMode="Complementary"
-                    layout="desktop"
+                    layout={isMobilePalette ? "mobile" : "desktop"}
                     showSwatches
                     showCopyButtons={false}
                     onPaletteChange={({ base }) => {
