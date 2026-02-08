@@ -75,7 +75,8 @@ export type MemoryItem = {
 };
 
 type MemoriesClientProps = {
-  memories: MemoryItem[];
+  initialMemories: MemoryItem[];
+  initialNextCursor: number | null;
 };
 
 type MemoryScope = {
@@ -140,6 +141,14 @@ const getRangeDate = (value: string, isEnd: boolean) => {
 
 const getVoiceOption = (voiceId: string | null) => {
   return ALL_VOICES.find((voice) => voice.id === voiceId) ?? ALL_VOICES[0];
+};
+
+const PAGE_LIMIT = 50;
+
+type MemoryListResponse = {
+  rows: MemoryItem[];
+  nextCursor: number | null;
+  distinctRoutes: string[];
 };
 
 const MemoryDialog = ({
@@ -207,9 +216,21 @@ const MemoryDialog = ({
 const MemoriesTable = ({
   memories,
   onSpeak,
+  onLoadMore,
+  onPrevious,
+  hasNext,
+  hasPrevious,
+  isLoading,
+  pageLabel,
 }: {
   memories: MemoryItem[];
   onSpeak: (memory: MemoryItem) => void;
+  onLoadMore: () => void;
+  onPrevious: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  isLoading: boolean;
+  pageLabel: string;
 }) => {
   if (memories.length === 0) {
     return (
@@ -229,7 +250,7 @@ const MemoriesTable = ({
           Memory ledger
         </CardTitle>
         <CardDescription>
-          {memories.length} approved memories available.
+          {memories.length} memories shown on {pageLabel}.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -313,6 +334,30 @@ const MemoriesTable = ({
           </table>
         </div>
       </CardContent>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 px-4 py-3 text-xs text-muted-foreground">
+        <span>
+          Showing {memories.length} memories on {pageLabel}.
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            disabled={isLoading || !hasPrevious}
+            onClick={onPrevious}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Previous
+          </Button>
+          <Button
+            disabled={isLoading || !hasNext}
+            onClick={onLoadMore}
+            size="sm"
+            type="button"
+          >
+            Load more
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 };
@@ -726,9 +771,14 @@ const CalendarView = ({
   );
 };
 
-export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
+export const MemoriesClient = ({
+  initialMemories: memories,
+  initialNextCursor,
+}: MemoriesClientProps) => {
   const router = useRouter();
-  const [localMemories, setLocalMemories] = useState<MemoryItem[]>(memories);
+  const [localMemories, setLocalMemories] = useState<MemoryItem[]>(
+    memories
+  );
   const [view, setView] = useState<"table" | "calendar">("table");
   const [scopeFilter, setScopeFilter] = useState<
     "all" | "shared" | "official" | "general"
@@ -739,13 +789,70 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
     getVoiceOption(null).id
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [nextCursor, setNextCursor] = useState<number | null>(
+    initialNextCursor
+  );
+  const pageCacheRef = useRef(
+    new Map<number, { rows: MemoryItem[]; nextCursor: number | null }>()
+  );
   const [playingMemoryId, setPlayingMemoryId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    pageCacheRef.current.set(0, {
+      rows: memories,
+      nextCursor: initialNextCursor,
+    });
     setLocalMemories(memories);
-  }, [memories]);
+    setNextCursor(initialNextCursor);
+  }, [initialNextCursor, memories]);
+
+  const loadPage = async (offset: number, options?: { force?: boolean }) => {
+    const cached = pageCacheRef.current.get(offset);
+    if (cached && !options?.force) {
+      setLocalMemories(cached.rows);
+      setNextCursor(cached.nextCursor);
+      setCurrentOffset(offset);
+      return;
+    }
+
+    setIsLoadingPage(true);
+    try {
+      const searchParams = new URLSearchParams({
+        limit: PAGE_LIMIT.toString(),
+        offset: offset.toString(),
+      });
+      const response = await fetch(
+        `/api/memories/list?${searchParams.toString()}`
+      );
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        toast.error(errorPayload?.error ?? "Unable to load memories.");
+        return;
+      }
+
+      const payload = (await response.json()) as MemoryListResponse;
+      pageCacheRef.current.set(offset, {
+        rows: payload.rows,
+        nextCursor: payload.nextCursor,
+      });
+      setLocalMemories(payload.rows);
+      setNextCursor(payload.nextCursor);
+      setCurrentOffset(offset);
+    } catch (_error) {
+      toast.error("Unable to load memories.");
+    } finally {
+      setIsLoadingPage(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPage(0, { force: true });
+  }, []);
 
   const selectedVoice = useMemo<VoiceOption>(() => {
     return getVoiceOption(selectedVoiceId);
@@ -887,6 +994,10 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
       } else {
         setLocalMemories([]);
       }
+      pageCacheRef.current.clear();
+      setCurrentOffset(0);
+      setNextCursor(null);
+      void loadPage(0, { force: true });
       toast.success(`Deleted ${result.deletedCount} memories.`);
       router.refresh();
     } catch (_error) {
@@ -1064,7 +1175,23 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
       {view === "calendar" ? (
         <CalendarView memories={filteredMemories} onSpeak={handleSpeak} />
       ) : (
-        <MemoriesTable memories={filteredMemories} onSpeak={handleSpeak} />
+        <MemoriesTable
+          hasNext={Boolean(nextCursor)}
+          hasPrevious={currentOffset > 0}
+          isLoading={isLoadingPage}
+          memories={filteredMemories}
+          onLoadMore={() => {
+            if (nextCursor !== null) {
+              void loadPage(nextCursor);
+            }
+          }}
+          onPrevious={() => {
+            const previousOffset = Math.max(0, currentOffset - PAGE_LIMIT);
+            void loadPage(previousOffset);
+          }}
+          onSpeak={handleSpeak}
+          pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
+        />
       )}
     </div>
   );
