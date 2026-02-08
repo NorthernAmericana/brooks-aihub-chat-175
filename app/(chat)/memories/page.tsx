@@ -24,7 +24,7 @@ export default async function MemoriesPage() {
   const memoryItems = await buildMemoryItems(rows);
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-6 py-8">
+    <div className="flex min-h-[100dvh] flex-1 flex-col overflow-y-auto px-6 py-8 pb-[calc(env(safe-area-inset-bottom)+96px)]">
       <MemoriesClient
         initialMemories={memoryItems}
         initialNextCursor={nextCursor}

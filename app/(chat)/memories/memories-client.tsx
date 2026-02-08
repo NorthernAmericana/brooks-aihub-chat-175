@@ -291,8 +291,8 @@ const MemoriesTable = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
@@ -1090,8 +1090,8 @@ export const MemoriesClient = ({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="grid gap-1">
             <Label htmlFor="memories-view">View</Label>
             <Select
