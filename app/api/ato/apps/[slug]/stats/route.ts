@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps, userInstalls } from "@/lib/db/schema";
+import { isAtoAppReviewsTableReady } from "@/lib/ato/reviews-table";
 
 export const dynamic = "force-dynamic";
 
@@ -37,13 +38,16 @@ export async function GET(
     .from(userInstalls)
     .where(eq(userInstalls.appId, app.id));
 
-  const [ratingStats] = await db
-    .select({
-      averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
-      reviewsCount: sql<number>`count(*)`,
-    })
-    .from(atoAppReviews)
-    .where(eq(atoAppReviews.appId, app.id));
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+  const [ratingStats] = hasReviewsTable
+    ? await db
+        .select({
+          averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
+          reviewsCount: sql<number>`count(*)`,
+        })
+        .from(atoAppReviews)
+        .where(eq(atoAppReviews.appId, app.id))
+    : [null];
 
   return NextResponse.json({
     downloads_count: Number(installStats?.downloads ?? 0),

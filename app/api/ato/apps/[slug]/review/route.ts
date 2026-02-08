@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
 import { atoAppReviews, atoApps } from "@/lib/db/schema";
+import { isAtoAppReviewsTableReady } from "@/lib/ato/reviews-table";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,15 @@ export async function POST(
 
   if (!app) {
     return NextResponse.json({ error: "App not found." }, { status: 404 });
+  }
+
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+
+  if (!hasReviewsTable) {
+    return NextResponse.json(
+      { error: "Reviews are temporarily unavailable." },
+      { status: 503 }
+    );
   }
 
   let payload: { rating?: number; body?: string | null };
