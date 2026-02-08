@@ -198,6 +198,36 @@
   text-wrap: balance;
 }
 
+@keyframes hero-float-breathe {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes hero-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.02);
+  }
+}
+
+.animate-hero-float {
+  animation: hero-float-breathe 6s ease-in-out infinite;
+}
+
+.animate-hero-float-talk {
+  animation:
+    hero-float-breathe 6s ease-in-out infinite,
+    hero-talk 0.6s ease-in-out infinite;
+}
+
 @utility -webkit-overflow-scrolling-touch {
   -webkit-overflow-scrolling: touch;
 }
