@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const MicIcon = () => (
   <svg
@@ -26,8 +27,8 @@ const BenjaminHero = () => (
         priority
       />
     </div>
-    <button
-      type="button"
+    <Link
+      href="/BrooksBears/BenjaminBear"
       className="flex flex-col items-center gap-2 text-white/90"
     >
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/70 shadow-[0_10px_20px_rgba(31,87,255,0.4)] ring-2 ring-white/40">
@@ -36,7 +37,7 @@ const BenjaminHero = () => (
       <span className="text-base font-semibold tracking-wide sm:text-lg">
         Tap to Talk
       </span>
-    </button>
+    </Link>
   </div>
 );
 
@@ -63,13 +64,13 @@ const SavedMemoriesCard = () => (
           Look back on special times
         </p>
       </div>
-      <button
-        type="button"
+      <Link
+        href="/BrooksBears/memories"
         className="inline-flex items-center justify-between gap-3 self-start rounded-full bg-blue-500/80 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(31,87,255,0.35)] ring-1 ring-white/40 transition hover:bg-blue-500"
       >
         Start Session
         <span className="text-lg">›</span>
-      </button>
+      </Link>
     </div>
   </div>
 );
