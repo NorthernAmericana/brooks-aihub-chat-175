@@ -7,19 +7,32 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
-import { atoApps, userInstalls } from "@/lib/db/schema";
+import { atoAppReviews, atoApps, userInstalls } from "@/lib/db/schema";
+import { getSafeDisplayName } from "@/lib/ato/reviews";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
 import { BackButton } from "./BackButton";
+import { ReviewsSection } from "./ReviewsSection";
 
 export const dynamic = "force-dynamic";
 
 const APP_SLUG = "brooksbears";
 
 type AppStats = {
-  rating: number | null;
-  ratingCount: number;
-  downloads: number;
+  avgRating: number | null;
+  reviewsCount: number;
+  downloadsCount: number;
+};
+
+type ReviewsPayload = {
+  reviews: Array<{
+    id: string;
+    rating: number;
+    body: string | null;
+    createdAt: string;
+    displayName: string;
+  }>;
+  nextCursor: string | null;
 };
 
 const formatDownloads = (downloads: number) =>
@@ -33,7 +46,7 @@ const getAppStats = async (): Promise<AppStats | null> => {
   const protocol = headersList.get("x-forwarded-proto") ?? "http";
   const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
   const response = await fetch(
-    `${baseUrl}/api/reviews/stats?appSlug=${APP_SLUG}`,
+    `${baseUrl}/api/ato/apps/${APP_SLUG}/stats`,
     {
       cache: "no-store",
     }
@@ -43,12 +56,60 @@ const getAppStats = async (): Promise<AppStats | null> => {
     return null;
   }
 
-  const data = (await response.json()) as { stats?: AppStats };
-  return data.stats ?? null;
+  const data = (await response.json()) as {
+    downloads_count?: number;
+    avg_rating?: number | null;
+    reviews_count?: number;
+  };
+
+  return {
+    downloadsCount: Number(data.downloads_count ?? 0),
+    avgRating: data.avg_rating == null ? null : Number(data.avg_rating),
+    reviewsCount: Number(data.reviews_count ?? 0),
+  };
+};
+
+const getAppReviews = async (): Promise<ReviewsPayload | null> => {
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const protocol = headersList.get("x-forwarded-proto") ?? "http";
+  const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
+  const response = await fetch(
+    `${baseUrl}/api/ato/apps/${APP_SLUG}/reviews?limit=4`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as {
+    reviews?: Array<{
+      id: string;
+      rating: number;
+      body: string | null;
+      created_at: string;
+      display_name: string;
+    }>;
+    next_cursor?: string | null;
+  };
+
+  return {
+    reviews: (data.reviews ?? []).map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      body: review.body,
+      createdAt: review.created_at,
+      displayName: review.display_name,
+    })),
+    nextCursor: data.next_cursor ?? null,
+  };
 };
 
 export default async function BrooksBearsAppPage() {
-  const [app, session, stats] = await Promise.all([
+  const [app, session, stats, reviewsPayload] = await Promise.all([
     db
       .select()
       .from(atoApps)
@@ -57,6 +118,7 @@ export default async function BrooksBearsAppPage() {
       .then((rows) => rows[0] ?? null),
     auth(),
     getAppStats(),
+    getAppReviews(),
   ]);
 
   const userId = session?.user?.id ?? null;
@@ -104,10 +166,32 @@ export default async function BrooksBearsAppPage() {
   };
 
   const ratingLabel =
-    stats?.rating != null ? `Rating ${formatRating(stats.rating)}` : "New";
+    stats?.avgRating != null
+      ? `${formatRating(stats.avgRating)} (${stats.reviewsCount} reviews)`
+      : "New";
   const downloadsLabel = stats
-    ? `${formatDownloads(stats.downloads)} downloads`
+    ? `${formatDownloads(stats.downloadsCount)} downloads`
     : "Downloads unavailable";
+
+  const userReview =
+    userId && appId
+      ? await db
+          .select({
+            rating: atoAppReviews.rating,
+            body: atoAppReviews.body,
+          })
+          .from(atoAppReviews)
+          .where(
+            and(
+              eq(atoAppReviews.userId, userId),
+              eq(atoAppReviews.appId, appId)
+            )
+          )
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : null;
+
+  const currentUserDisplayName = getSafeDisplayName(session?.user?.email);
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
@@ -239,10 +323,21 @@ export default async function BrooksBearsAppPage() {
             </div>
             <div>
               <h4 className="text-sm font-semibold text-slate-800">Reviews</h4>
-              <p className="mt-1">
-                New for Brooks AI HUB. Check back as early adopters leave their
-                feedback.
-              </p>
+              <div className="mt-3">
+                <ReviewsSection
+                  appSlug={APP_SLUG}
+                  currentUserDisplayName={currentUserDisplayName}
+                  initialNextCursor={reviewsPayload?.nextCursor ?? null}
+                  initialReviews={reviewsPayload?.reviews ?? []}
+                  initialStats={{
+                    avgRating: stats?.avgRating ?? null,
+                    downloadsCount: stats?.downloadsCount ?? 0,
+                    reviewsCount: stats?.reviewsCount ?? 0,
+                  }}
+                  initialUserReview={userReview}
+                  isLoggedIn={Boolean(userId)}
+                />
+              </div>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-slate-800">About</h4>

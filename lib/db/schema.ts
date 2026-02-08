@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -333,9 +334,35 @@ export const userInstalls = pgTable("user_installs", {
     .references(() => atoApps.id),
   installedAt: timestamp("installed_at").notNull().defaultNow(),
   lastOpenedAt: timestamp("last_opened_at"),
-});
+}, (table) => ({
+  appUserUnique: uniqueIndex("user_installs_app_id_user_id_unique").on(
+    table.appId,
+    table.userId
+  ),
+}));
 
 export type UserInstall = InferSelectModel<typeof userInstalls>;
+
+export const atoAppReviews = pgTable("ato_app_reviews", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  appId: uuid("app_id")
+    .notNull()
+    .references(() => atoApps.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  rating: integer("rating").notNull(),
+  body: text("body"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  appUserUnique: uniqueIndex("ato_app_reviews_app_id_user_id_unique").on(
+    table.appId,
+    table.userId
+  ),
+}));
+
+export type AtoAppReview = InferSelectModel<typeof atoAppReviews>;
 
 export const entitlements = pgTable("entitlements", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
