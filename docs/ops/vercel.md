@@ -15,7 +15,7 @@ Review the required environment variables in [`.env.example`](../../.env.example
 ## Minimal deployment checklist
 
 - **Environment variables**: Load every variable listed in `.env.example` into your hosting project.
-- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic.
+- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic. The Vercel build command runs `pnpm db:migrate`, so make sure `POSTGRES_URL` or `DATABASE_URL` is configured for the target environment during builds.
 - **Blob storage**: Enable your blob storage provider and provide the required blob credentials.
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.

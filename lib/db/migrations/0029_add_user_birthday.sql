@@ -1,1 +1,1 @@
-ALTER TABLE "User" ADD COLUMN "birthday" varchar(10);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "birthday" varchar(10);

@@ -108,6 +108,8 @@ With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to 
 
 Deploy your own version of Brooks AI HUB using the production guide in [`docs/ops/vercel.md`](docs/ops/vercel.md).
 
+**Production migrations:** Ensure `pnpm db:migrate` runs against your production database before the app starts. The Vercel build pipeline is configured to run migrations automatically, but self-hosted environments should run the command as part of their deploy/start process.
+
 ## Running locally
 
 You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. A local `.env` file is sufficient for development.

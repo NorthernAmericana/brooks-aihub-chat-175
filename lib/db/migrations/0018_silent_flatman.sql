@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "user_inventory" (
 	CONSTRAINT "user_inventory_inventory_id_unique" UNIQUE("inventory_id")
 );
 --> statement-breakpoint
-ALTER TABLE "UserLocation" ADD COLUMN "chatId" uuid;--> statement-breakpoint
+ALTER TABLE "UserLocation" ADD COLUMN IF NOT EXISTS "chatId" uuid;--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "personal_fit" ADD CONSTRAINT "personal_fit_user_id_User_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."User"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
