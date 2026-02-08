@@ -78,6 +78,7 @@ export function ProfileIconAiModal({
     STYLE_OPTIONS[0]
   );
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
 
@@ -91,6 +92,7 @@ export function ProfileIconAiModal({
       setPrompt("");
       setStyle(STYLE_OPTIONS[0]);
       setIsGenerating(false);
+      setIsSaving(false);
       setError(null);
       setPreviewSrc(null);
     }
@@ -120,10 +122,31 @@ export function ProfileIconAiModal({
     }
   };
 
-  const handleUseIcon = () => {
-    if (previewSrc) {
-      onUseIcon?.(previewSrc);
+  const handleUseIcon = async () => {
+    if (!previewSrc || isSaving) {
+      return;
+    }
+
+    setError(null);
+    onUseIcon?.(previewSrc);
+    setIsSaving(true);
+
+    try {
+      const response = await fetch("/api/user-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: previewSrc }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save avatar");
+      }
+
       onOpenChange(false);
+    } catch (_err) {
+      setError("We couldn't save that icon. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,11 +223,11 @@ export function ProfileIconAiModal({
             ) : null}
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button
-                disabled={!previewSrc || isGenerating}
+                disabled={!previewSrc || isGenerating || isSaving}
                 onClick={handleUseIcon}
                 type="button"
               >
-                Use this icon
+                {isSaving ? "Saving..." : "Use this icon"}
               </Button>
               <Button
                 disabled={isGenerating}

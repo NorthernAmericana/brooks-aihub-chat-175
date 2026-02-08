@@ -20,6 +20,7 @@ export const user = pgTable("User", {
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
   birthday: varchar("birthday", { length: 10 }),
   messageColor: text("messageColor"),
+  avatarUrl: text("avatarUrl"),
   foundersAccess: boolean("foundersAccess").default(false),
   foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
 });

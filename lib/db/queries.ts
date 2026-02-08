@@ -74,6 +74,10 @@ type UserMessageColorColumnState = "unchecked" | "ready" | "failed";
 let userMessageColorColumnState: UserMessageColorColumnState = "unchecked";
 let userMessageColorColumnPromise: Promise<void> | null = null;
 
+type UserAvatarUrlColumnState = "unchecked" | "ready" | "failed";
+let userAvatarUrlColumnState: UserAvatarUrlColumnState = "unchecked";
+let userAvatarUrlColumnPromise: Promise<void> | null = null;
+
 async function ensureUserBirthdayColumnReady() {
   if (userBirthdayColumnState === "ready") {
     return;
@@ -162,6 +166,51 @@ async function ensureUserMessageColorColumnReady() {
   }
 
   await userMessageColorColumnPromise;
+}
+
+async function ensureUserAvatarUrlColumnReady() {
+  if (userAvatarUrlColumnState === "ready") {
+    return;
+  }
+
+  if (userAvatarUrlColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "avatarUrl". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userAvatarUrlColumnPromise) {
+    userAvatarUrlColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasAvatarUrlColumn = rows.some(
+        (row) => row.column_name === "avatarUrl"
+      );
+
+      if (!hasAvatarUrlColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."avatarUrl" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "avatarUrl" text;
+        `);
+      }
+    })()
+      .then(() => {
+        userAvatarUrlColumnState = "ready";
+      })
+      .catch((error) => {
+        userAvatarUrlColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userAvatarUrlColumnPromise;
 }
 
 function logDbError({
@@ -1989,6 +2038,45 @@ export async function updateUserMessageColor({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update user message color"
+    );
+  }
+}
+
+export async function getUserAvatarUrl({ userId }: { userId: string }) {
+  try {
+    await ensureUserAvatarUrlColumnReady();
+    const [selectedUser] = await db
+      .select({ avatarUrl: user.avatarUrl })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.avatarUrl ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user avatar url"
+    );
+  }
+}
+
+export async function updateUserAvatarUrl({
+  userId,
+  avatarUrl,
+}: {
+  userId: string;
+  avatarUrl: string | null;
+}) {
+  try {
+    await ensureUserAvatarUrlColumnReady();
+    const [updatedUser] = await db
+      .update(user)
+      .set({ avatarUrl })
+      .where(eq(user.id, userId))
+      .returning({ avatarUrl: user.avatarUrl });
+    return updatedUser?.avatarUrl ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user avatar url"
     );
   }
 }
