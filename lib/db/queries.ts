@@ -529,14 +529,13 @@ export async function getApprovedMemoriesByUserIdPage({
         : projectRoute;
       const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
       const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
-      whereClauses.push(
-        or(
-          sql`${memory.route} LIKE ${`${projectRoute}%`}`,
-          sql`${memory.route} LIKE ${`${normalizedProjectRoute}%`}`,
-          eq(memory.route, baseProjectRoute),
-          eq(memory.route, slashedBaseProjectRoute)
-        )
-      );
+      const projectRouteConditions: SQL[] = [
+        sql`${memory.route} LIKE ${`${projectRoute}%`}`,
+        sql`${memory.route} LIKE ${`${normalizedProjectRoute}%`}`,
+        eq(memory.route, baseProjectRoute),
+        eq(memory.route, slashedBaseProjectRoute),
+      ];
+      whereClauses.push(or(...projectRouteConditions));
     }
 
     const rows = await db
