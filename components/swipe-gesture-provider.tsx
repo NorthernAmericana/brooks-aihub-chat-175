@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 
 export function SwipeGestureProvider({
@@ -7,6 +8,14 @@ export function SwipeGestureProvider({
 }: {
   children: React.ReactNode;
 }) {
-  useSwipeGesture({ enabled: true, threshold: 100, edgeZone: 50 });
+  const router = useRouter();
+
+  useSwipeGesture({
+    edgeZone: 50,
+    enabled: true,
+    onSwipeLeftFromRightEdge: () => router.push("/store"),
+    threshold: 100,
+  });
+
   return <>{children}</>;
 }

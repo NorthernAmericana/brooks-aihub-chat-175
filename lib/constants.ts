@@ -8,6 +8,8 @@ export const isTestEnvironment = Boolean(
     process.env.CI_PLAYWRIGHT
 );
 
-export const guestRegex = /^guest-\d+$/;
+export const guestRegex = /^guest-[0-9a-f-]+$/i;
 
 export const DUMMY_PASSWORD = generateDummyPassword();
+
+export const DEFAULT_AVATAR_SRC = "/images/avatar-placeholder.svg";

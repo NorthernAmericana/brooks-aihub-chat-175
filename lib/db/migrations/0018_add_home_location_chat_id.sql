@@ -1,2 +1,2 @@
 ALTER TABLE "UserLocation"
-ADD COLUMN "chatId" uuid REFERENCES "Chat"("id");
+ADD COLUMN IF NOT EXISTS "chatId" uuid REFERENCES "Chat"("id");

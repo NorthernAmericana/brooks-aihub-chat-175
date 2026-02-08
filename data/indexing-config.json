@@ -12,6 +12,12 @@
       "path": "data/mycarmindato/season-1-cities.json",
       "format": "json",
       "content_type": "cities"
+    },
+    {
+      "app_namespace": "mycarmindato",
+      "path": "data/mycarmindato/season-1-plaza-rest-stops.json",
+      "format": "json",
+      "content_type": "rest_stops"
     }
   ]
 }

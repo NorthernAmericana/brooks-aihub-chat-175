@@ -1,48 +1,55 @@
-# Vercel deployment guide
+# Managed hosting deployment guide
 
 ## Required environment variables
 
 Review the required environment variables in [`.env.example`](../../.env.example). Keep this file as your single source of truth for everything you need to configure before deploying.
 
-**Metadata base URL:** Production metadata uses the deployment URL provided by Vercel (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL`). Ensure the project is deployed on Vercel so these values are injected automatically. For non-Vercel deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
+**Metadata base URL:** Production metadata uses the deployment URL provided by your hosting platform (`VERCEL_URL` or `VERCEL_PROJECT_PRODUCTION_URL` when available). Ensure the project is deployed on your platform so these values are injected automatically. For self-hosted or alternative deployments, set `NEXT_PUBLIC_SITE_URL` to the full `https://` URL so metadata can resolve canonical links.
 
-## Vercel configuration files
+**Production-only env check:** In your hosting platform, confirm `NEXT_PUBLIC_SITE_URL` is defined in the **Production** environment (not just Preview). After changing env vars, trigger a new production deploy so `/manifest.webmanifest` uses the correct origin.
 
-- [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that Vercel applies to every deployment.
-- [`vercel-template.json`](../../vercel-template.json) powers the Vercel “Deploy” button flow by defining the template metadata, required environment variables, and the onboarding copy shown during project creation.
+## Hosting platform configuration files
+
+- [`vercel.json`](../../vercel.json) configures runtime settings for this repository, including build and routing behavior that the hosting platform applies to every deployment.
 
 ## Minimal deployment checklist
 
-- **Environment variables**: Load every variable listed in `.env.example` into your Vercel project.
-- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic.
-- **Blob storage**: Enable Vercel Blob and provide the required blob credentials.
+- **Environment variables**: Load every variable listed in `.env.example` into your hosting project.
+- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic. The Vercel build command runs `pnpm db:migrate`, so make sure `POSTGRES_URL` or `DATABASE_URL` is configured for the target environment during builds.
+- **Blob storage**: Enable your blob storage provider and provide the required blob credentials.
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
-## Post-deploy verification checklist (Vercel)
+- **Chat schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Also confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production.
 
-Run these checks against the production URL **https://chat.vercel.ai/** after each deploy.
+## Post-deploy verification checklist (managed hosting)
+
+Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
 
 1. **Lighthouse PWA audit**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Lighthouse → select **Progressive Web App** → Analyze.
    - **Expected outcome**: PWA audit completes successfully with no critical failures (installable, service worker detected).
 2. **Service worker registration**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers.
    - **Expected outcome**: A service worker is registered for the site, is active, and controls the page.
 3. **Install prompt on Android/Chrome**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Open the site in Chrome on Android, wait for eligibility, and check for the install banner or "Add to Home screen" from the menu.
    - **Expected outcome**: The install prompt appears and the app can be added to the home screen.
 4. **Offline fallback**
-   - **URL**: https://chat.vercel.ai/
+   - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers → check **Offline**, then refresh.
    - **Expected outcome**: The app serves a cached/offline experience instead of a network error.
 5. **PWA manifest/installability script**
    - **How**: Run the repo check with the production base URL to validate manifest settings and confirm `/welcome` does not redirect or fail.
-   - **Command**: `PWA_CHECK_BASE_URL=https://chat.vercel.ai pnpm check:pwa`
+   - **Command**: `PWA_CHECK_BASE_URL=https://www.brooksaihub.app pnpm check:pwa`
    - **Expected outcome**: Script exits successfully with "PWA installability checks passed."
+6. **Manifest + service worker endpoints**
+   - **URL**: https://www.brooksaihub.app/manifest.webmanifest and https://www.brooksaihub.app/sw.js
+   - **How**: Open each URL directly in a browser or use `curl -I`.
+   - **Expected outcome**: Both return `200` in production with the correct `content-type` and no redirects.
 
 ## Mobile installability notes
 
@@ -57,10 +64,10 @@ If native Android install is required (Play Store or full-screen app shell), shi
    - Run the Lighthouse PWA audit and fix any blocking issues (manifest fetch, service worker, HTTPS).
 2. **Generate Android project**
    - Use Bubblewrap (`bubblewrap`) to create a TWA project pointing at the production URL.
-   - Example: `npx @bubblewrap/cli init --manifest=https://brooks-aihub-chat-175.vercel.app/manifest.webmanifest`
+   - Example: `npx @bubblewrap/cli init --manifest=https://www.brooksaihub.app/manifest.webmanifest`
 3. **Configure signing + Digital Asset Links**
    - Generate a signing key (keystore).
-   - Host the `assetlinks.json` file at `https://brooks-aihub-chat-175.vercel.app/.well-known/assetlinks.json`.
+   - Host the `assetlinks.json` file at `https://www.brooksaihub.app/.well-known/assetlinks.json`.
    - The file must include the app package name and the signing certificate fingerprint.
 4. **Build & test on device**
    - Build an APK/AAB, install on an Android device, and confirm it launches the PWA in full-screen mode.

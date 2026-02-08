@@ -14,11 +14,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PhoneIcon, PlusIcon } from "./icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PhoneIcon, PlusIcon, SpeakerIcon, SpeakerMutedIcon } from "./icons";
 import { PwaInstallButton } from "./pwa-install-button";
 import { toast } from "./toast";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+
+type ThemeOption = {
+  id: string;
+  label: string;
+  badge?: "free";
+};
 
 function PureChatHeader({
   chatId,
@@ -26,12 +41,22 @@ function PureChatHeader({
   routeKey,
   selectedVisibilityType,
   isReadonly,
+  isThemeAudioEnabled,
+  onThemeChange,
+  onThemeAudioToggle,
+  selectedThemeId,
+  themeOptions,
 }: {
   chatId: string;
   newMemoriesCount?: number;
   routeKey: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  isThemeAudioEnabled?: boolean;
+  onThemeChange?: (themeId: string) => void;
+  onThemeAudioToggle?: () => void;
+  selectedThemeId?: string;
+  themeOptions?: ThemeOption[];
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -46,11 +71,29 @@ function PureChatHeader({
   const isBrooksBearsRoute =
     normalizedRouteKey.startsWith("brooksbears") ||
     normalizedRouteKey.startsWith("brooks-bears");
+  const shouldShowThemes =
+    Boolean(themeOptions?.length) && Boolean(selectedThemeId);
+  const shouldShowThemeAudioToggle =
+    typeof isThemeAudioEnabled === "boolean" && Boolean(onThemeAudioToggle);
 
   const resetCallDialog = useCallback(() => {
     setCallStep("confirm");
     setSelectedAnimal("Brooks Bears");
   }, []);
+
+  const handleThemeChange = useCallback(
+    (value: string) => {
+      if (!onThemeChange) {
+        return;
+      }
+      const themeExists = themeOptions?.some((theme) => theme.id === value);
+      if (!themeExists) {
+        return;
+      }
+      onThemeChange(value);
+    },
+    [onThemeChange, themeOptions]
+  );
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
@@ -65,17 +108,75 @@ function PureChatHeader({
       </Button>
 
       {(!open || windowWidth < 768) && (
-        <Button
-          className="order-2 ml-auto h-8 px-2 md:order-2 md:ml-0 md:h-fit md:px-2"
-          onClick={() => {
-            router.push("/brooks-ai-hub/");
-            router.refresh();
-          }}
-          variant="outline"
-        >
-          <PlusIcon />
-          <span className="md:sr-only">New Chat</span>
-        </Button>
+        <div className="order-2 ml-auto flex items-center gap-2 md:order-2 md:ml-0">
+          <Button
+            className="h-8 px-2 md:h-fit md:px-2"
+            onClick={() => {
+              router.push("/brooks-ai-hub/");
+              router.refresh();
+            }}
+            type="button"
+            variant="outline"
+          >
+            <PlusIcon />
+            <span className="md:sr-only">New Chat</span>
+          </Button>
+          {shouldShowThemes && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="h-8 px-3 md:h-fit md:px-3"
+                  type="button"
+                  variant="outline"
+                >
+                  Themes
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[14rem]">
+                <DropdownMenuLabel>Chat Themes</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  onValueChange={handleThemeChange}
+                  value={selectedThemeId}
+                >
+                  {themeOptions?.map((theme) => (
+                    <DropdownMenuRadioItem
+                      className="flex flex-col items-start"
+                      key={theme.id}
+                      value={theme.id}
+                    >
+                      <span className="flex items-center gap-1 font-medium leading-tight">
+                        {theme.label}
+                        {theme.badge === "free" ? (
+                          <span className="ml-1 inline-flex align-middle text-[0.5rem] font-bold uppercase tracking-wider text-green-500 animate-pulse">
+                            Free
+                          </span>
+                        ) : null}
+                      </span>
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {shouldShowThemeAudioToggle && (
+            <Button
+              aria-pressed={isThemeAudioEnabled}
+              className="h-8 px-2 md:h-fit md:px-2"
+              onClick={onThemeAudioToggle}
+              title={
+                isThemeAudioEnabled ? "Mute theme audio" : "Play theme audio"
+              }
+              type="button"
+              variant="outline"
+            >
+              {isThemeAudioEnabled ? <SpeakerIcon /> : <SpeakerMutedIcon />}
+              <span className="sr-only">
+                {isThemeAudioEnabled ? "Theme audio on" : "Theme audio off"}
+              </span>
+            </Button>
+          )}
+        </div>
       )}
 
       {!isReadonly && (
@@ -196,6 +297,11 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
     prevProps.newMemoriesCount === nextProps.newMemoriesCount &&
     prevProps.routeKey === nextProps.routeKey &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.isThemeAudioEnabled === nextProps.isThemeAudioEnabled &&
+    prevProps.onThemeChange === nextProps.onThemeChange &&
+    prevProps.onThemeAudioToggle === nextProps.onThemeAudioToggle &&
+    prevProps.selectedThemeId === nextProps.selectedThemeId &&
+    prevProps.themeOptions === nextProps.themeOptions
   );
 });

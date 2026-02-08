@@ -32,4 +32,13 @@ test.describe("Slash Route Parsing", () => {
     const userMessage = page.locator("[data-role='user']").first();
     await expect(userMessage).toBeVisible({ timeout: 5000 });
   });
+
+  test("shows NAMC/Reader as founders-only in greeting", async ({ page }) => {
+    await page.goto("/");
+
+    const namcReader = page.getByRole("button", { name: /NAMC\/Reader/i });
+    await expect(namcReader).toBeVisible({ timeout: 5000 });
+    await expect(namcReader).toContainText("Founders only");
+    await expect(namcReader).toContainText("💎");
+  });
 });

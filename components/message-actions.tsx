@@ -1,22 +1,32 @@
 import equal from "fast-deep-equal";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { getOfficialVoiceId, getRouteKey } from "@/lib/voice";
+import { getChatRouteKey, getOfficialVoiceId } from "@/lib/voice";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
+import ColorWheelPalette from "./color-wheel-palette";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
+  MenuIcon,
   PencilEditIcon,
   SpeakerIcon,
   ThumbDownIcon,
   ThumbUpIcon,
 } from "./icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function PureMessageActions({
   chatId,
+  chatRouteKey,
   chatTitle,
   message,
   vote,
@@ -24,6 +34,7 @@ export function PureMessageActions({
   setMode,
 }: {
   chatId: string;
+  chatRouteKey?: string | null;
   chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
@@ -35,6 +46,36 @@ export function PureMessageActions({
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const { messageColor, setMessageColor } = useUserMessageColor();
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [pickerColor, setPickerColor] = useState(messageColor);
+  const [isMobilePalette, setIsMobilePalette] = useState(false);
+  const colorCommitTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingColor = useRef(messageColor);
+
+  useEffect(() => {
+    setPickerColor(messageColor);
+    pendingColor.current = messageColor;
+  }, [messageColor]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const updateMatches = () => setIsMobilePalette(mediaQuery.matches);
+    updateMatches();
+    mediaQuery.addEventListener("change", updateMatches);
+    return () => mediaQuery.removeEventListener("change", updateMatches);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (colorCommitTimeout.current) {
+        clearTimeout(colorCommitTimeout.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return null;
@@ -45,6 +86,13 @@ export function PureMessageActions({
     .map((part) => part.text)
     .join("\n")
     .trim();
+
+  const requestThemeAudioResume = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.dispatchEvent(new Event("brooks-ai-hub:resume-theme-audio"));
+  };
 
   const handleCopy = async () => {
     if (!textFromParts) {
@@ -97,7 +145,10 @@ export function PureMessageActions({
       }
 
       // Determine voice ID: use persisted setting or route default
-      const routeKey = getRouteKey(chatTitle);
+      const routeKey = getChatRouteKey({
+        routeKey: chatRouteKey,
+        title: chatTitle,
+      });
       const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
 
       const controller = new AbortController();
@@ -123,6 +174,7 @@ export function PureMessageActions({
       audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
+      audio.preload = "auto";
       audioRef.current = audio;
 
       audio.addEventListener("ended", () => {
@@ -145,7 +197,9 @@ export function PureMessageActions({
       });
 
       setIsPlaying(true);
-      await audio.play();
+      const playPromise = audio.play();
+      requestThemeAudioResume();
+      await playPromise;
       toast.success("Playing response.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -167,7 +221,7 @@ export function PureMessageActions({
   if (message.role === "user") {
     return (
       <Actions className="-mr-0.5 justify-end">
-        <div className="relative">
+        <div className="relative flex items-center gap-1">
           {setMode && (
             <Action
               className="absolute top-0 -left-10 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/message:opacity-100"
@@ -181,6 +235,64 @@ export function PureMessageActions({
           <Action onClick={handleCopy} tooltip="Copy">
             <CopyIcon />
           </Action>
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsColorPickerOpen(false);
+              }
+            }}
+          >
+            <DropdownMenuTrigger asChild>
+              <Action tooltip="Message color">
+                <MenuIcon />
+              </Action>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsColorPickerOpen((previous) => !previous);
+                }}
+              >
+                Change color text bar
+              </DropdownMenuItem>
+              {isColorPickerOpen && (
+                <div className="w-[360px] max-w-[92vw] px-3 py-3">
+                  <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Message color</span>
+                    <button
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setIsColorPickerOpen(false)}
+                      type="button"
+                    >
+                      Done
+                    </button>
+                  </div>
+                  <ColorWheelPalette
+                    initialColor={pickerColor}
+                    initialMode="Complementary"
+                    layout={isMobilePalette ? "mobile" : "desktop"}
+                    showSwatches
+                    showCopyButtons={false}
+                    onPaletteChange={({ base }) => {
+                      setPickerColor(base);
+                      pendingColor.current = base;
+                      if (colorCommitTimeout.current) {
+                        clearTimeout(colorCommitTimeout.current);
+                      }
+                      colorCommitTimeout.current = setTimeout(async () => {
+                        try {
+                          await setMessageColor(pendingColor.current);
+                        } catch (_error) {
+                          toast.error("Unable to save message color.");
+                        }
+                      }, 250);
+                    }}
+                  />
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </Actions>
     );

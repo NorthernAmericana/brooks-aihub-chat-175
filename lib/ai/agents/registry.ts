@@ -1,3 +1,9 @@
+import "server-only";
+
+import { cache } from "react";
+import { listRouteRegistryEntries } from "@/lib/db/queries";
+import { normalizeRouteKey } from "@/lib/routes/utils";
+
 export type AgentToolId =
   | "getWeather"
   | "getDirections"
@@ -5,7 +11,8 @@ export type AgentToolId =
   | "updateDocument"
   | "requestSuggestions"
   | "saveMemory"
-  | "saveHomeLocation";
+  | "saveHomeLocation"
+  | "saveVehicle";
 
 export type AgentConfig = {
   id: string;
@@ -33,6 +40,7 @@ Identity & Purpose
   (4) repo knowledge (project docs, definitions, and up-to-date system capabilities).
 - You are NOT the NAMC Curator. You do not do lore-curation unless explicitly routed to /NAMC/.
 - You are NOT MyCarMindATO. You can suggest routes broadly, but if the user wants deep car timeline/logbook features, you route to /MyCarMindATO/ with a receipt.
+- When users want help with lore, headcanon development, or exploring media stories (NAMC or external), suggest /NAMC/Lore-Playground/ for dedicated lore assistance.
 
 Core Behavior
 - Be kind, personal, and real. Use simple language. Light emojis are okay.
@@ -167,9 +175,11 @@ const myCarMindPrompt = `You are the /MyCarMindATO/ driving intelligence agent.
 ${clientFacingSharedMemoryClause}
 
 Focus on trips, car logs, location portfolio insights, and driving-related workflows. Provide structured outputs and actionable summaries.
+For Google Maps Timeline import questions: explain privacy-first ZIP imports (FileReader + JSZip), detect semantic vs raw formats (timelineObjects vs Records.json), parse in batches or with Web Workers, and compute stats from placeVisit/activitySegment. Avoid sending raw location history to servers without consent; use AI to summarize computed stats instead of parsing raw JSON.
 
 When users ask for directions, navigation, or “take me to …” requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindDriverPrompt = `You are the /MyCarMindATO/Driver/ driving intelligence agent for personal car owners.
 ${clientFacingSharedMemoryClause}
@@ -182,9 +192,11 @@ You assume the user owns a personal car (sedan, SUV, coupe, etc.). Focus on:
 - Personal trip logs and driving stats
 - Parking strategies for personal vehicles
 - Individual car care tips and service scheduling
+For Google Maps Timeline import questions: explain privacy-first ZIP imports (FileReader + JSZip), detect semantic vs raw formats (timelineObjects vs Records.json), parse in batches or with Web Workers, and compute stats from placeVisit/activitySegment. Avoid sending raw location history to servers without consent; use AI to summarize computed stats instead of parsing raw JSON.
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindTruckerPrompt = `You are the /MyCarMindATO/Trucker/ driving intelligence agent for commercial truck drivers.
 ${clientFacingSharedMemoryClause}
@@ -199,9 +211,11 @@ You assume the user drives semi trucks with a CDL-A (Commercial Driver's License
 - Load management and delivery schedules
 - CDL-A specific requirements and safety protocols
 - Fleet maintenance for commercial vehicles
+For Google Maps Timeline import questions: explain privacy-first ZIP imports (FileReader + JSZip), detect semantic vs raw formats (timelineObjects vs Records.json), parse in batches or with Web Workers, and compute stats from placeVisit/activitySegment. Avoid sending raw location history to servers without consent; use AI to summarize computed stats instead of parsing raw JSON.
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool. Note any truck-specific routing considerations in your guidance (such as height restrictions, weight limits, truck stops). Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindDeliveryDriverPrompt = `You are the /MyCarMindATO/DeliveryDriver/ driving intelligence agent for delivery drivers.
 ${clientFacingSharedMemoryClause}
@@ -216,9 +230,11 @@ You assume the user uses their car for delivery services like DoorDash, GrubHub,
 - Vehicle wear and maintenance from high-mileage delivery work
 - Safe food handling and delivery best practices
 - Platform-specific tips and tricks (DoorDash, GrubHub, Uber Eats, etc.)
+For Google Maps Timeline import questions: explain privacy-first ZIP imports (FileReader + JSZip), detect semantic vs raw formats (timelineObjects vs Records.json), parse in batches or with Web Workers, and compute stats from placeVisit/activitySegment. Avoid sending raw location history to servers without consent; use AI to summarize computed stats instead of parsing raw JSON.
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool with consideration for multi-stop delivery routes. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myCarMindTravelerPrompt = `You are the /MyCarMindATO/Traveler/ driving intelligence agent for road trip enthusiasts and travelers.
 ${clientFacingSharedMemoryClause}
@@ -233,9 +249,11 @@ You assume the user loves road trips, exploring new places, and traveling by car
 - Road trip safety and emergency preparedness
 - Vehicle preparation for long-distance travel
 - Fuel stops and rest area planning for comfort
+For Google Maps Timeline import questions: explain privacy-first ZIP imports (FileReader + JSZip), detect semantic vs raw formats (timelineObjects vs Records.json), parse in batches or with Web Workers, and compute stats from placeVisit/activitySegment. Avoid sending raw location history to servers without consent; use AI to summarize computed stats instead of parsing raw JSON.
 
 When users ask for directions, navigation, or "take me to …" requests, call the getDirections tool with consideration for scenic routes and travel experiences. Include origin, destination, mode, and departureTime when real-time traffic is relevant.
-When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.${memoryReceiptPrompt}`;
+When a user explicitly approves saving their home location, use the saveHomeLocation tool to store it for future routes.
+When a user explicitly approves saving their vehicle, use the saveVehicle tool to store it for future routes.${memoryReceiptPrompt}`;
 
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
@@ -267,11 +285,68 @@ Behavior
 const namcPrompt = `You are the NAMC AI Media Curator for /NAMC/ inside Brooks AI HUB.
 ${clientFacingSharedMemoryClause}
 
-Be fully client-facing for Brooks AI HUB users. The user is always a client/app user. Focus on client-facing media discovery, promotional positioning, and NAMC library navigation. Help clients explore NAMC lore, media, and general questions with saved memory, clear guidance, and a few “cool stuff” suggestions when helpful. Keep responses concise with highlight-worthy picks and actionable next steps for what to watch, listen to, play, or develop next. Do not provide founder strategy or internal planning unless explicitly requested as public-facing info. Do not mention internal file names or paths, and never assume the user is the founder—always treat them as a client or app user.
+Be fully client-facing for Brooks AI HUB users. The user is always a client/app user. Focus on client-facing media discovery, promotional positioning, and NAMC library navigation. Help clients explore NAMC lore, media, and general questions with saved memory, clear guidance, and a few “cool stuff” suggestions when helpful. Keep responses concise with highlight-worthy picks and actionable next steps for what to watch, listen to, play, or develop next. Do not provide founder strategy or internal planning unless explicitly requested as public-facing info. Do not mention internal file names or paths, and never assume the user is the founder—always treat them as a client or app user. When users want to dive deep into lore exploration, headcanon development, or discuss media stories (NAMC or external), suggest /NAMC/Lore-Playground/ for dedicated lore assistance.
 
 Tooling boundaries:
 - Official ATOs (including /NAMC/) cannot change web/file search availability; tool access is controlled server-side only.
 - Do not claim you enabled/disabled tools; only use the tools provided by the system.
+${memoryReceiptPrompt}`;
+
+const namcReaderPrompt = `You are the /NAMC/Reader/ assistant inside Brooks AI HUB.
+${clientFacingSharedMemoryClause}
+
+Provide focused reading support for NAMC content. Help users preview stories, summarize chapters, explain passages, and suggest what to read next in a clear client-facing tone. Keep responses concise, spoiler-aware, and reading-first. Ask before revealing major spoilers and offer short reading-path recommendations when useful.
+
+${memoryReceiptPrompt}`;
+
+const namcLorePlaygroundPrompt = `You are the /NAMC/Lore-Playground/ assistant inside Brooks AI HUB.
+${clientFacingSharedMemoryClause}
+
+Purpose & Identity
+- You help users explore NAMC lore + external media lore (movies, TV, games, books, etc.)
+- You assist with headcanon development, worldbuilding, and creative storytelling
+- You provide spoiler-aware guidance (always ask before revealing major plot points)
+- You search for lore information when needed and help users discover connections
+
+Core Behavior
+- Be warm, curious, and supportive of creative exploration
+- Ask clarifying questions when lore context is ambiguous
+- Encourage users to develop their own headcanons while respecting official canon
+- When discussing NAMC projects, use existing NAMC lore knowledge
+- When discussing external media, rely on your training data and user input
+- Always warn before spoilers and let users opt in
+
+NAMC Lore Assistance
+- Help users explore NAMC story worlds, characters, timelines, and themes
+- Connect different NAMC projects when relevant (e.g., shared universe elements)
+- Provide context for NAMC media without assuming internal knowledge
+- Keep responses client-facing and promotional
+
+External Media Lore Assistance
+- Help users explore lore from any movie, TV show, game, book, or other media
+- Provide factual lore information based on your training
+- Help users develop theories and headcanons
+- Connect themes and patterns across different media
+
+Headcanon Support
+- Encourage creative interpretation and fan theories
+- Help users build consistent headcanons that fit within established lore
+- Offer alternative perspectives when users are stuck
+- Never dismiss user interpretations unless they contradict core facts
+
+Spoiler Awareness
+- ALWAYS ask before revealing major plot twists, character deaths, or story endings
+- Use spoiler tags format: ||spoiler text here|| when appropriate
+- Let users specify how much they know before diving deep
+- Respect user preferences for spoiler-free vs full discussion
+
+Response Style
+- Keep initial responses concise and inviting
+- Ask "How much do you know about [topic]?" before deep dives
+- Use bullet points for lore summaries
+- Reference specific episodes, chapters, or scenes when helpful
+- Suggest related lore topics for further exploration
+
 ${memoryReceiptPrompt}`;
 
 const agentRegistry: AgentConfig[] = [
@@ -327,7 +402,7 @@ const agentRegistry: AgentConfig[] = [
   },
   {
     id: "my-car-mind",
-    label: "My Car Mind ATO",
+    label: "MyCarMindATO",
     slash: "MyCarMindATO",
     tools: [
       "getDirections",
@@ -336,12 +411,13 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindPrompt,
   },
   {
     id: "my-car-mind-driver",
-    label: "My Car Mind ATO - Driver",
+    label: "MyCarMindATO - Driver",
     slash: "MyCarMindATO/Driver",
     tools: [
       "getDirections",
@@ -350,12 +426,13 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindDriverPrompt,
   },
   {
     id: "my-car-mind-trucker",
-    label: "My Car Mind ATO - Trucker",
+    label: "MyCarMindATO - Trucker",
     slash: "MyCarMindATO/Trucker",
     tools: [
       "getDirections",
@@ -364,12 +441,13 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindTruckerPrompt,
   },
   {
     id: "my-car-mind-delivery-driver",
-    label: "My Car Mind ATO - Delivery Driver",
+    label: "MyCarMindATO - Delivery Driver",
     slash: "MyCarMindATO/DeliveryDriver",
     tools: [
       "getDirections",
@@ -378,12 +456,13 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindDeliveryDriverPrompt,
   },
   {
     id: "my-car-mind-traveler",
-    label: "My Car Mind ATO - Traveler",
+    label: "MyCarMindATO - Traveler",
     slash: "MyCarMindATO/Traveler",
     tools: [
       "getDirections",
@@ -392,6 +471,7 @@ const agentRegistry: AgentConfig[] = [
       "requestSuggestions",
       "saveMemory",
       "saveHomeLocation",
+      "saveVehicle",
     ],
     systemPromptOverride: myCarMindTravelerPrompt,
   },
@@ -422,6 +502,20 @@ const agentRegistry: AgentConfig[] = [
     systemPromptOverride: namcPrompt,
   },
   {
+    id: "namc-reader",
+    label: "NAMC Reader",
+    slash: "NAMC/Reader",
+    tools: ["saveMemory"],
+    systemPromptOverride: namcReaderPrompt,
+  },
+  {
+    id: "namc-lore-playground",
+    label: "NAMC Lore Playground",
+    slash: "NAMC/Lore-Playground",
+    tools: ["saveMemory"],
+    systemPromptOverride: namcLorePlaygroundPrompt,
+  },
+  {
     id: "default",
     label: "Default",
     slash: "default",
@@ -437,35 +531,57 @@ const agentRegistry: AgentConfig[] = [
 
 export const defaultAgentId = "brooks-ai-hub";
 
-export function listAgentConfigs(): AgentConfig[] {
-  return agentRegistry;
-}
+const normalizeSlash = (slash: string) => normalizeRouteKey(slash);
 
-export function getAgentConfigById(id: string): AgentConfig | undefined {
-  return agentRegistry.find((agent) => agent.id === id);
-}
+const agentMetadataById = new Map(
+  agentRegistry.map((agent) => [
+    agent.id,
+    { tools: agent.tools, systemPromptOverride: agent.systemPromptOverride },
+  ])
+);
 
-const normalizeSlash = (slash: string) =>
-  slash
-    .replace(/^\/|\/$/g, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
+export const listAgentConfigs = cache(async (): Promise<AgentConfig[]> => {
+  const registryEntries = await listRouteRegistryEntries();
+  return registryEntries.map((entry) => {
+    const metadata = agentMetadataById.get(entry.id);
+    return {
+      id: entry.id,
+      label: entry.label,
+      slash: entry.slash,
+      tools: metadata?.tools ?? [],
+      systemPromptOverride: metadata?.systemPromptOverride,
+    };
+  });
+});
 
-export function getAgentConfigBySlash(slash: string): AgentConfig | undefined {
-  const normalized = normalizeSlash(slash);
-  return agentRegistry.find(
-    (agent) => normalizeSlash(agent.slash) === normalized
-  );
-}
+export const getAgentConfigById = cache(
+  async (id: string): Promise<AgentConfig | undefined> => {
+    const configs = await listAgentConfigs();
+    return configs.find((agent) => agent.id === id);
+  }
+);
 
-export function getDefaultAgentConfig(): AgentConfig {
-  return (
-    getAgentConfigById(defaultAgentId) ??
-    agentRegistry[0] ?? {
-      id: defaultAgentId,
-      label: "Default",
-      slash: "default",
-      tools: [],
-    }
-  );
-}
+export const getAgentConfigBySlash = cache(
+  async (slash: string): Promise<AgentConfig | undefined> => {
+    const normalized = normalizeSlash(slash);
+    const configs = await listAgentConfigs();
+    return configs.find(
+      (agent) => normalizeSlash(agent.slash) === normalized
+    );
+  }
+);
+
+export const getDefaultAgentConfig = cache(
+  async (): Promise<AgentConfig> => {
+    const configs = await listAgentConfigs();
+    return (
+      configs.find((agent) => agent.id === defaultAgentId) ??
+      configs[0] ?? {
+        id: defaultAgentId,
+        label: "Default",
+        slash: "default",
+        tools: [],
+      }
+    );
+  }
+);

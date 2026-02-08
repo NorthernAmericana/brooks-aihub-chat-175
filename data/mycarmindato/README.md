@@ -8,10 +8,10 @@ This directory contains data files used by the MyCarMindATO agent (`/MyCarMindAT
 
 A comprehensive JSON file containing information about cities that MyCarMindATO can provide information about. The agent uses this data to match user queries with city information and provide contextual travel assistance.
 
-**Season 1 Status**: Maximum capacity of 200 cities. Currently includes 7 real Florida cities with comprehensive data, plus additional test/placeholder entries.
+**Season 1 Status**: Maximum capacity of 200 **detailed** city profiles. Currently includes 17 detailed cities (10 Alabama + 7 Florida) with comprehensive data, plus 193 baseline entries sourced from the national location dictionary.
 
-**Current count**: 206 total entries in file (7 complete Florida cities + test/placeholder data)
-**Capacity**: 7/200 real cities (193 slots remaining)
+**Current count**: 210 total entries in file (17 detailed cities + 193 baseline entries)
+**Capacity**: 17/200 detailed cities (183 slots remaining)
 
 **Structure**: Each city entry contains:
 
@@ -26,17 +26,47 @@ A comprehensive JSON file containing information about cities that MyCarMindATO 
   - `parking`: Parking information
 - `anchors` (array): Key facts and comparisons that define the city
 - `must_dos` (array): Top attractions and activities (optional)
-- `notable_businesses` (array): Local businesses worth visiting (optional)
+- `notable_businesses` (array): Local businesses worth visiting (optional; target is ~50 businesses per city over time, current coverage varies)
 - `place_taxonomy` (object): Categorized places (optional)
 
 **Season 1 Cities** (complete, comprehensive data):
-1. Pensacola, Florida (original)
-2. Jacksonville, Florida (added January 2026)
-3. Miami, Florida (added January 2026)
-4. Tampa, Florida (added January 2026)
-5. Orlando, Florida (added January 2026)
-6. St. Petersburg, Florida (added January 2026)
-7. Pace/Milton/Avalon, Florida (added January 2026)
+1. Huntsville, Alabama (added January 2026)
+2. Birmingham, Alabama (added January 2026)
+3. Montgomery, Alabama (added January 2026)
+4. Mobile, Alabama (added January 2026)
+5. Tuscaloosa, Alabama (added January 2026)
+6. Hoover, Alabama (added January 2026)
+7. Dothan, Alabama (added January 2026)
+8. Auburn, Alabama (added January 2026)
+9. Decatur, Alabama (added January 2026)
+10. Madison, Alabama (added January 2026)
+11. Pensacola, Florida (original)
+12. Jacksonville, Florida (added January 2026)
+13. Miami, Florida (added January 2026)
+14. Tampa, Florida (added January 2026)
+15. Orlando, Florida (added January 2026)
+16. St. Petersburg, Florida (added January 2026)
+17. Pace/Milton/Avalon, Florida (added January 2026)
+
+### season-1-plaza-rest-stops.json
+
+A JSON file containing high-signal rest stops, service plazas, and welcome centers for MyCarMindATO Season 1. This dataset is intended to help the agent recommend reliable pit-stops (restrooms, fuel, food, EV charging, pet breaks) and to support route planning across Florida highways.
+
+**Season 1 Status**: Curated list (currently includes 10 iconic Florida service plazas + welcome centers).
+
+**Structure**: Each entry contains:
+
+- `name` (string): Rest stop / plaza name
+- `kind` (string): `service_plaza` or `welcome_center`
+- `highway` (string): Highway/road system (e.g., "Florida's Turnpike", "I-95")
+- `mile_marker` (string, optional): Turnpike mile marker when applicable
+- `location` (object): City/county/state and notes
+- `access` (object): Directional access, center-median info for turnpike plazas
+- `hours` (string): Operating hours summary
+- `amenities` (object): Fuel, dining, EV charging, Wi‑Fi, pet/picnic areas, and other notes
+- `highlights` (array): Quick reasons the stop is notable
+- `road_tripper_tip` (string): Why/when to use this stop
+- `sources` (array): High-level source domains referenced in research
 
 ## How City Data is Used
 
@@ -48,6 +78,15 @@ The MyCarMindATO workflow (`lib/ai/agents/mycarmindato-workflow.ts`) automatical
 4. Limits results to top 3 matching cities to keep context manageable
 
 No additional configuration is needed - just add cities to the JSON file following the existing schema.
+
+## How Rest Stop Data is Used
+
+The MyCarMindATO workflow (`lib/ai/agents/mycarmindato-workflow.ts`) also:
+
+1. Loads rest stop data from `season-1-plaza-rest-stops.json`
+2. Matches stops based on user messages and home location
+3. Injects relevant rest stop context into agent conversations
+4. Limits results to top 3 matching stops to keep context manageable
 
 ## Adding New Cities
 
@@ -69,7 +108,13 @@ Run tests with:
 npx tsx tests/unit/mycarmindato/city-data.test.ts
 ```
 
+For rest stop data tests, run:
+```bash
+npx tsx tests/unit/mycarmindato/rest-stop-data.test.ts
+```
+
 ## Source Documentation
 
 For detailed source material and research notes, see:
 - `florida_cities_overview.md` - Overview information for Florida cities
+- `docs/mycarmindato/location-knowledge.md` - Combined national location dictionary and Season 1 city coverage

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ALL_VOICES } from "@/lib/voice";
 
+const formatAtoRoute = (value: string) =>
+  value
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\s+/g, "")
+    .replace(/\/{2,}/g, "/")
+    .replace(/[^a-zA-Z0-9/_-]/g, "");
+
 export default function CreateAtoPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +41,7 @@ export default function CreateAtoPage() {
   const [selectedVoiceId, setSelectedVoiceId] = useState(
     ALL_VOICES[0]?.id ?? ""
   );
+  const [hasAvatar, setHasAvatar] = useState(searchParams.get("avatar") === "1");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,11 +70,24 @@ export default function CreateAtoPage() {
     const selectedVoice =
       ALL_VOICES.find((voice) => voice.id === selectedVoiceId) ?? ALL_VOICES[0];
 
+    if (!name) {
+      setErrorMessage("ATO name is required.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formattedRoute = formatAtoRoute(route || name);
+    if (!formattedRoute) {
+      setErrorMessage("Slash route is required.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const instructionsParts = (
       instructionsInput
         ? [instructionsInput]
         : [
-            route ? `Slash route: ${route}` : null,
+            formattedRoute ? `Slash route: ${formattedRoute}` : null,
             tone ? `Tone & voice: ${tone}` : null,
             boundaries ? `Safety boundaries: ${boundaries}` : null,
             intro ? `Welcome message: ${intro}` : null,
@@ -81,6 +106,7 @@ export default function CreateAtoPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          route: formattedRoute,
           description: description || null,
           personalityName: personalityName || null,
           instructions,
@@ -89,6 +115,7 @@ export default function CreateAtoPage() {
           webSearchEnabled,
           fileSearchEnabled,
           fileUsageEnabled: fileSearchEnabled,
+          hasAvatar,
         }),
       });
 
@@ -98,17 +125,27 @@ export default function CreateAtoPage() {
         setErrorMessage(
           typeof data?.error === "string"
             ? data.error
-            : "Something went wrong while submitting your ATO."
+            : "Something went wrong while creating your ATO."
         );
         return;
       }
 
-      setSuccessMessage("ATO request submitted successfully.");
-      event.currentTarget.reset();
-      setInstructionsText("");
-      setSelectedVoiceId(ALL_VOICES[0]?.id ?? "");
+      const createdAtoId =
+        typeof data?.ato?.id === "string" ? data.ato.id : null;
+      const createdRoute =
+        typeof data?.ato?.route === "string"
+          ? data.ato.route
+          : formattedRoute;
+      const routeLabel = createdRoute ? `/${createdRoute}/` : "/CustomATO/";
+      const introMessage = `${routeLabel} You are built and ready. Give a short hello and ask how you can help first.`;
+      const params = new URLSearchParams({ query: introMessage });
+      if (createdAtoId) {
+        params.set("atoId", createdAtoId);
+      }
+      setSuccessMessage("ATO created. Opening your chat...");
+      router.push(`/brooks-ai-hub?${params.toString()}`);
     } catch (_error) {
-      setErrorMessage("Unable to submit your ATO request. Please try again.");
+      setErrorMessage("Unable to create your ATO. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +170,7 @@ export default function CreateAtoPage() {
             file you can open anytime.
           </p>
           <div className="rounded-lg border border-muted bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">Submission limits</p>
+            <p className="font-medium text-foreground">Plan limits</p>
             <ul className="mt-1 list-disc space-y-1 pl-4">
               <li>Free: up to 3 total unofficial ATOs, instructions ≤ 500.</li>
               <li>
@@ -160,6 +197,7 @@ export default function CreateAtoPage() {
                 id="ato-name"
                 name="ato-name"
                 placeholder="Example: My Wellness ATO"
+                required
                 type="text"
               />
             </div>
@@ -169,6 +207,7 @@ export default function CreateAtoPage() {
                 id="ato-route"
                 name="ato-route"
                 placeholder="/MyWellnessATO/"
+                required
                 type="text"
               />
               <p className="text-xs text-muted-foreground">
@@ -183,6 +222,23 @@ export default function CreateAtoPage() {
                 placeholder="A mindful daily companion for routines and habits."
                 type="text"
               />
+            </div>
+            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+              <input
+                checked={hasAvatar}
+                className="mt-1"
+                id="ato-has-avatar"
+                onChange={(event) => setHasAvatar(event.target.checked)}
+                type="checkbox"
+              />
+              <div>
+                <Label className="cursor-pointer" htmlFor="ato-has-avatar">
+                  Add Avatar now
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  You can also create now and add avatar later.
+                </p>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ato-personality-name">
@@ -379,9 +435,9 @@ export default function CreateAtoPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Launch checklist</CardTitle>
+            <CardTitle>Creation checklist</CardTitle>
             <CardDescription>
-              Double-check the details so the team can build your ATO fast.
+              Double-check the details before creating your ATO.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-muted-foreground">
@@ -415,7 +471,7 @@ export default function CreateAtoPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1 text-xs text-muted-foreground">
             <p>
-              Submissions are reviewed by the Brooks AI HUB team before launch.
+              Your ATO is saved to your custom cloud list and ready to chat.
             </p>
             <p>
               Need more capacity? Founders access raises your monthly quota and
@@ -423,7 +479,7 @@ export default function CreateAtoPage() {
             </p>
           </div>
           <Button disabled={isSubmitting} type="submit" variant="outline">
-            {isSubmitting ? "Submitting..." : "Submit ATO request"}
+            {isSubmitting ? "Creating..." : "Create Your ATO"}
           </Button>
         </div>
         {(errorMessage || successMessage) && (

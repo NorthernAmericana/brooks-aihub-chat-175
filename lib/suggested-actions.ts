@@ -1,4 +1,4 @@
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import { formatRoutePath, normalizeRouteKey } from "@/lib/routes/utils";
 
 export type SlashAction = {
   slash: string;
@@ -8,15 +8,11 @@ export type SlashAction = {
 
 const STORAGE_KEY = "recent-slash-actions";
 
-export const normalizeSlash = (slash: string) =>
-  slash
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
+export const normalizeSlash = (slash: string) => normalizeRouteKey(slash);
 
 export function parseSlashAction(
   text: string,
-  agentConfigs = listAgentConfigs()
+  agentConfigs: Array<{ slash: string }> = []
 ): Omit<SlashAction, "lastUsedAt"> | null {
   const trimmed = text.trim();
   if (!trimmed.startsWith("/")) {
@@ -46,7 +42,7 @@ export function formatSlashAction(action: {
   prompt: string;
 }): string {
   const suffix = action.prompt ? ` ${action.prompt}` : "";
-  return `/${action.slash}/${suffix}`;
+  return `${formatRoutePath(action.slash)}${suffix}`;
 }
 
 export function getStoredSlashActions(): SlashAction[] {

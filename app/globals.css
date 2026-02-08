@@ -48,16 +48,16 @@
   /* border radius unit */
   --radius: 0.5rem;
   --sidebar: hsl(0 0% 98%);
-  --cloud-bg-start: hsl(336 95% 85%);
-  --cloud-bg-end: hsl(332 88% 72%);
-  --cloud-border: hsl(332 60% 76%);
+  --cloud-bg-start: rgba(255, 255, 255, 0.74);
+  --cloud-bg-end: rgba(255, 228, 241, 0.58);
+  --cloud-border: rgba(255, 255, 255, 0.52);
   --cloud-shadow:
-    0 14px 32px rgba(246, 162, 190, 0.45), 0 6px 14px rgba(255, 198, 218, 0.35);
+    0 16px 30px rgba(10, 6, 8, 0.12), 0 6px 14px rgba(255, 162, 199, 0.18);
   --cloud-shadow-inner:
-    inset 0 3px 10px rgba(255, 255, 255, 0.9),
-    inset 0 -4px 12px rgba(246, 162, 190, 0.3);
-  --cloud-text: hsl(0 0% 100%);
-  --cloud-text-muted: rgba(255, 255, 255, 0.75);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -10px 22px rgba(255, 142, 186, 0.16);
+  --cloud-text: hsl(336 28% 12%);
+  --cloud-text-muted: rgba(44, 18, 28, 0.62);
 }
 
 /* define design tokens (dark mode) */
@@ -95,16 +95,30 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
   --sidebar: hsl(240 5.9% 10%);
-  --cloud-bg-start: hsl(336 95% 78%);
-  --cloud-bg-end: hsl(332 90% 64%);
-  --cloud-border: hsl(332 65% 70%);
+  --cloud-bg-start: rgba(255, 255, 255, 0.64);
+  --cloud-bg-end: rgba(255, 206, 231, 0.42);
+  --cloud-border: rgba(255, 255, 255, 0.38);
   --cloud-shadow:
-    0 16px 32px rgba(246, 144, 179, 0.55), 0 6px 16px rgba(255, 192, 214, 0.4);
+    0 18px 36px rgba(0, 0, 0, 0.38), 0 8px 16px rgba(255, 120, 175, 0.18);
   --cloud-shadow-inner:
-    inset 0 3px 10px rgba(255, 255, 255, 0.7),
-    inset 0 -5px 14px rgba(246, 144, 179, 0.35);
-  --cloud-text: hsl(0 0% 100%);
-  --cloud-text-muted: rgba(255, 255, 255, 0.75);
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -12px 26px rgba(255, 128, 188, 0.14);
+  --cloud-text: hsl(336 28% 10%);
+  --cloud-text-muted: rgba(20, 10, 14, 0.62);
+}
+
+.analog-clock {
+  --clock-hand-hour: rgba(15, 23, 42, 0.95);
+  --clock-hand-minute: rgba(30, 41, 59, 0.85);
+  --clock-hand-second: rgba(16, 185, 129, 0.95);
+  --clock-hand-shadow: rgba(15, 23, 42, 0.25);
+}
+
+.dark .analog-clock {
+  --clock-hand-hour: rgba(248, 250, 252, 0.98);
+  --clock-hand-minute: rgba(226, 232, 240, 0.92);
+  --clock-hand-second: rgba(56, 189, 248, 0.95);
+  --clock-hand-shadow: rgba(0, 0, 0, 0.45);
 }
 
 /* define theme */
@@ -182,6 +196,36 @@
 
 @utility text-balance {
   text-wrap: balance;
+}
+
+@keyframes hero-float-breathe {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes hero-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.02);
+  }
+}
+
+.animate-hero-float {
+  animation: hero-float-breathe 6s ease-in-out infinite;
+}
+
+.animate-hero-float-talk {
+  animation:
+    hero-float-breathe 6s ease-in-out infinite,
+    hero-talk 0.6s ease-in-out infinite;
 }
 
 @utility -webkit-overflow-scrolling-touch {
@@ -324,79 +368,91 @@
 
   .intro-sky {
     background:
-      radial-gradient(
-        circle at 10% 20%,
-        rgba(255, 158, 108, 0.45),
-        transparent 45%
-      ),
-      radial-gradient(
-        circle at 85% 25%,
-        rgba(120, 198, 255, 0.45),
-        transparent 40%
-      ),
       linear-gradient(
-        140deg,
-        #28130d 0%,
-        #402116 40%,
-        #1a141f 70%,
-        #120c16 100%
-      );
+        180deg,
+        rgba(6, 16, 12, 0.7) 0%,
+        rgba(5, 11, 9, 0.9) 100%
+      ),
+      radial-gradient(
+        circle at 50% 18%,
+        rgba(90, 160, 130, 0.28),
+        transparent 62%
+      ),
+      url("/backgrounds/brooksaihub-landingpage-background.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
 
   .intro-stars {
     background-image: radial-gradient(
-      rgba(255, 255, 255, 0.6) 1px,
+      rgba(178, 255, 210, 0.6) 1px,
       transparent 1px
     );
-    background-size: 120px 120px;
+    background-size: 160px 160px;
     background-position: 0 0;
-    opacity: 0.25;
+    opacity: 0.18;
+    mix-blend-mode: screen;
+  }
+
+  .intro-mist {
+    background:
+      radial-gradient(
+        circle at 50% 35%,
+        rgba(140, 210, 190, 0.16),
+        transparent 60%
+      ),
+      radial-gradient(
+        circle at 70% 65%,
+        rgba(90, 160, 140, 0.12),
+        transparent 55%
+      );
+    mix-blend-mode: screen;
   }
 
   .intro-glass {
     background: linear-gradient(
-      120deg,
-      rgba(255, 255, 255, 0.15),
-      rgba(255, 255, 255, 0.06)
+      135deg,
+      rgba(22, 45, 34, 0.7),
+      rgba(16, 28, 22, 0.4)
     );
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(170, 255, 210, 0.18);
     box-shadow:
-      0 25px 60px rgba(0, 0, 0, 0.45),
-      inset 0 0 25px rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(18px);
+      0 28px 60px rgba(0, 0, 0, 0.55),
+      inset 0 0 28px rgba(120, 210, 170, 0.08);
+    backdrop-filter: blur(18px) saturate(1.1);
   }
 
   .intro-card {
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.16) 0%,
-      rgba(255, 255, 255, 0.04) 60%
+      rgba(26, 52, 40, 0.5) 0%,
+      rgba(12, 28, 20, 0.25) 60%
     );
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(140, 220, 190, 0.18);
     backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 18px rgba(100, 190, 160, 0.06);
   }
 
   .intro-rainbow-glow {
     background: linear-gradient(
       90deg,
-      rgba(255, 102, 140, 0.7),
-      rgba(255, 194, 92, 0.65),
-      rgba(255, 247, 120, 0.6),
-      rgba(128, 239, 171, 0.6),
-      rgba(125, 195, 255, 0.65),
-      rgba(182, 142, 255, 0.7)
+      rgba(210, 170, 110, 0.6),
+      rgba(120, 200, 150, 0.6),
+      rgba(90, 170, 190, 0.65),
+      rgba(70, 130, 170, 0.7)
     );
     border-radius: 999px;
-    filter: blur(26px);
-    opacity: 0.8;
+    filter: blur(28px);
+    opacity: 0.7;
     transform: scaleX(1.15);
   }
 
   .intro-start-button {
-    background: linear-gradient(90deg, #fdbd7c, #f78aa0, #8dd4ff);
+    background: linear-gradient(90deg, #c99a5a, #63a37c, #4a7fb0);
     box-shadow:
-      0 12px 30px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(255, 200, 140, 0.5);
+      0 14px 32px rgba(0, 0, 0, 0.45),
+      0 0 22px rgba(112, 200, 160, 0.35);
   }
 
   @keyframes intro-float {
@@ -434,6 +490,109 @@
   .intro-sparkle {
     animation: intro-sparkle 4s ease-in-out infinite;
   }
+
+  .chat-theme {
+    --chat-theme-text-outline: rgba(6, 8, 12, 0.85);
+    --chat-theme-text-glow: rgba(255, 255, 255, 0.6);
+    --chat-theme-bubble-outline: rgba(255, 255, 255, 0.55);
+    --chat-theme-cloud-outline: rgba(255, 255, 255, 0.7);
+  }
+
+  .dark .chat-theme {
+    --chat-theme-text-outline: rgba(0, 0, 0, 0.9);
+    --chat-theme-text-glow: rgba(120, 200, 255, 0.35);
+    --chat-theme-bubble-outline: rgba(255, 255, 255, 0.4);
+    --chat-theme-cloud-outline: rgba(255, 255, 255, 0.5);
+  }
+
+  .chat-theme-bg,
+  .chat-theme-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+  }
+
+  .chat-theme-bg {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: saturate(1.05);
+    opacity: 0.65;
+  }
+
+  .dark .chat-theme-bg {
+    opacity: 0.72;
+  }
+
+  [data-chat-theme="forest"] .chat-theme-bg {
+    background-image: url("/backgrounds/brooksaihub-landingpage-background.png");
+  }
+
+  [data-chat-theme="space"] .chat-theme-bg {
+    background-image: url("/backgrounds/8bitspace-background.png");
+  }
+
+  [data-chat-theme="bens-garden"] .chat-theme-bg {
+    background-image: url("/backgrounds/bens-garden-backgrounds.png");
+  }
+
+  [data-chat-theme="my-daughter-death-1"] .chat-theme-bg {
+    background-image: url("/backgrounds/mdd-backgrounds-02.png");
+  }
+
+  [data-chat-theme="ghost-girl-1"] .chat-theme-bg {
+    background-image: url("/backgrounds/the-ghost-girl-app-theme.png");
+  }
+
+  .chat-theme-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 10, 12, 0.35) 0%,
+      rgba(6, 8, 10, 0.75) 100%
+    );
+  }
+
+  .dark .chat-theme-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(4, 6, 10, 0.6) 0%,
+      rgba(2, 4, 8, 0.88) 100%
+    );
+  }
+
+  .chat-theme .greeting-title,
+  .chat-theme .greeting-time,
+  .chat-theme .greeting-clouds-label {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 2px 10px var(--chat-theme-text-outline),
+      0 0 16px var(--chat-theme-text-glow);
+  }
+
+  .chat-theme [data-testid="message-content"] {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 0 12px var(--chat-theme-text-glow);
+  }
+
+  .chat-theme [data-role="user"] [data-testid="message-content"] {
+    border: 1px solid var(--chat-theme-bubble-outline);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+  }
+
+  .chat-theme .cloud-button {
+    box-shadow:
+      0 0 0 1px var(--chat-theme-cloud-outline),
+      var(--cloud-shadow),
+      var(--cloud-shadow-inner);
+  }
+
+  .chat-theme .cloud-button,
+  .chat-theme .cloud-button * {
+    text-shadow:
+      0 1px 0 var(--chat-theme-text-outline),
+      0 0 10px var(--chat-theme-text-glow);
+  }
 }
 
 @layer utilities {
@@ -441,30 +600,76 @@
     position: relative;
     border-radius: 9999px;
     border: 1px solid var(--cloud-border);
-    background: linear-gradient(
-      180deg,
-      var(--cloud-bg-start) 0%,
-      var(--cloud-bg-end) 100%
-    );
+    background-color: var(--cloud-bg-end);
+    background-image:
+      radial-gradient(
+        circle at 18% 35%,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.55) 42%,
+        rgba(255, 255, 255, 0) 68%
+      ),
+      radial-gradient(
+        circle at 42% 18%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.5) 44%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      radial-gradient(
+        circle at 68% 32%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.46) 44%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      linear-gradient(
+        180deg,
+        var(--cloud-bg-start) 0%,
+        var(--cloud-bg-end) 100%
+      );
+    background-repeat: no-repeat;
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
     box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
     isolation: isolate;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    color: var(--cloud-text);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      filter 150ms ease;
   }
 
   .cloud-button::before,
   .cloud-button::after {
     content: "";
     position: absolute;
-    top: -25%;
-    width: 55%;
-    height: 75%;
+    top: -42%;
+    width: 60%;
+    height: 92%;
     border-radius: 9999px;
-    background: linear-gradient(
-      180deg,
-      var(--cloud-bg-start) 0%,
-      var(--cloud-bg-end) 100%
-    );
-    box-shadow: var(--cloud-shadow), var(--cloud-shadow-inner);
+    opacity: 0.96;
+    background-color: var(--cloud-bg-end);
+    background-image:
+      radial-gradient(
+        circle at 35% 55%,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.52) 46%,
+        rgba(255, 255, 255, 0) 74%
+      ),
+      radial-gradient(
+        circle at 70% 45%,
+        rgba(255, 236, 246, 0.72) 0%,
+        rgba(255, 236, 246, 0.42) 44%,
+        rgba(255, 236, 246, 0) 74%
+      ),
+      linear-gradient(
+        180deg,
+        var(--cloud-bg-start) 0%,
+        var(--cloud-bg-end) 100%
+      );
+    background-repeat: no-repeat;
+    box-shadow:
+      0 10px 18px rgba(10, 6, 8, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
     z-index: 0;
     pointer-events: none;
   }
@@ -493,9 +698,17 @@
 
   .cloud-button--inline::before,
   .cloud-button--inline::after {
-    top: -15%;
-    width: 48%;
-    height: 60%;
+    top: -30%;
+    width: 54%;
+    height: 74%;
+  }
+
+  .cloud-button:hover {
+    filter: brightness(1.03) saturate(1.08);
+    box-shadow:
+      0 18px 34px rgba(10, 6, 8, 0.14),
+      0 8px 16px rgba(255, 162, 199, 0.22),
+      var(--cloud-shadow-inner);
   }
 }
 
@@ -631,8 +844,8 @@
   }
 
   .store-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(20, 13, 18, 0.95);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
   }
 
   .store-app-card {

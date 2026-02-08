@@ -2,64 +2,89 @@
 
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
-import { listAgentConfigs } from "@/lib/ai/agents/registry";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { normalizeRouteKey, sanitizeRouteSegment } from "@/lib/routes/utils";
 import { getStoredSlashActions, normalizeSlash } from "@/lib/suggested-actions";
+import { fetcher } from "@/lib/utils";
+
+type RoutesResponse = {
+  routes: RouteSuggestion[];
+};
 
 export function SlashSuggestions({
   onSelect,
   onClose,
+  routes,
+  title,
 }: {
-  onSelect: (slash: string) => void;
+  onSelect: (slash: string, options?: { atoId?: string }) => void;
   onClose: () => void;
+  routes?: RouteSuggestion[];
+  title?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const agentConfigs = useMemo(() => listAgentConfigs(), []);
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
+  const suggestions = useMemo(() => {
+    if (routes?.length) {
+      return routes;
+    }
+
+    const byRoute = new Map<string, RouteSuggestion>();
+    for (const route of routeData?.routes ?? []) {
+      const key = normalizeRouteKey(route.slash);
+      if (!byRoute.has(key)) {
+        byRoute.set(key, route);
+      }
+    }
+    return Array.from(byRoute.values());
+  }, [routeData, routes]);
+
   const filteredSuggestions = useMemo(() => {
-    const query = normalizeSlash(searchQuery);
+    const query = sanitizeRouteSegment(searchQuery).toLowerCase();
 
     // Get unique agents from recent actions
-    const recentAgentIds = new Set(
-      recentActions.map((action) => {
-        const normalized = normalizeSlash(action.slash);
-        const agent = agentConfigs.find(
-          (a) => normalizeSlash(a.slash) === normalized
-        );
-        return agent?.id;
-      })
+    const recentSlashKeys = new Set(
+      recentActions.map((action) => normalizeSlash(action.slash))
     );
 
     // Filter agents
-    const filtered = agentConfigs
+    const filtered = suggestions
       .filter((agent) => agent.id !== "default")
       .filter((agent) => {
         if (!query) {
           return true;
         }
-        const normalized = normalizeSlash(agent.slash);
+        const normalized = sanitizeRouteSegment(agent.slash).toLowerCase();
         const labelLower = agent.label.toLowerCase();
         return (
           normalized.includes(query) ||
-          labelLower.includes(query.toLowerCase()) ||
+          labelLower.includes(query) ||
           agent.id.includes(query.toLowerCase())
         );
       });
 
     // Sort by recent usage
     return filtered.sort((a, b) => {
-      const aRecent = recentAgentIds.has(a.id) ? 1 : 0;
-      const bRecent = recentAgentIds.has(b.id) ? 1 : 0;
+      const aRecent = recentSlashKeys.has(normalizeSlash(a.slash)) ? 1 : 0;
+      const bRecent = recentSlashKeys.has(normalizeSlash(b.slash)) ? 1 : 0;
       return bRecent - aRecent;
     });
-  }, [searchQuery, agentConfigs, recentActions]);
+  }, [searchQuery, suggestions, recentActions]);
 
   const topThree = filteredSuggestions.slice(0, 3);
 
   return (
     <div className="absolute bottom-full left-0 z-10 mb-2 w-full rounded-lg border border-border bg-background p-3 shadow-lg">
       {/* Search input */}
+      {title ? (
+        <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </div>
+      ) : null}
       <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
         <SearchIcon className="size-4 text-muted-foreground" />
         <input
@@ -70,7 +95,7 @@ export function SlashSuggestions({
             if (e.key === "Escape") {
               onClose();
             } else if (e.key === "Enter" && topThree.length > 0) {
-              onSelect(topThree[0].slash);
+              onSelect(topThree[0].slash, { atoId: topThree[0].atoId });
             }
           }}
           placeholder="Search routes..."
@@ -84,15 +109,24 @@ export function SlashSuggestions({
         {topThree.length > 0 ? (
           topThree.map((agent) => (
             <Button
-              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm text-foreground transition hover:bg-muted/50 hover:border-foreground/40"
+              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm transition hover:scale-[1.01] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
               key={agent.id}
-              onClick={() => onSelect(agent.slash)}
+              onClick={() => onSelect(agent.slash, { atoId: agent.atoId })}
               variant="ghost"
             >
               <span className="font-mono text-primary/90 tracking-[0.04em]">
                 /{agent.slash}/
               </span>
               <span className="ml-2 text-muted-foreground">{agent.label}</span>
+              {agent.foundersOnly ? (
+                <span aria-label="Founders only" className="ml-2" title="Founders access only">
+                  💎
+                </span>
+              ) : agent.isFreeRoute ? (
+                <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                  Free
+                </span>
+              ) : null}
             </Button>
           ))
         ) : (

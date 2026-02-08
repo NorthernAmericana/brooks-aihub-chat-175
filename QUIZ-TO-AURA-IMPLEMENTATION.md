@@ -46,7 +46,7 @@ CREATE TABLE myflowerai_quiz_results (
   created_at TIMESTAMP
 );
 
--- Generated images (private, Vercel Blob storage)
+-- Generated images (private, blob storage)
 CREATE TABLE myflowerai_images (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES User(id),
@@ -89,7 +89,7 @@ CREATE TABLE myflowerai_images (
 - Validates vibe text with safety scrubber
 - Composes DALL-E prompt with art-only constraints
 - Generates image via OpenAI API
-- Stores image in Vercel Blob (private)
+- Stores image in blob storage (private)
 - Records metadata in database
 - Returns image URL and metadata
 
@@ -158,7 +158,7 @@ CREATE TABLE myflowerai_images (
 - **Quiz answers NOT stored** - only persona_id result
 - **Timestamps month-granular** - created_month field (YYYY-MM)
 - **User-scoped data** - all tables reference user_id with CASCADE delete
-- **Private image storage** - Vercel Blob with user paths
+- **Private image storage** - Blob storage with user paths
 - **No signed URLs in DB** - only storage keys (pathnames)
 - **Public strain JSON sanitized** - no purchase dates, locations, or timestamps
 
@@ -204,7 +204,7 @@ npm run db:migrate
 **Environment Variables Required:**
 ```env
 OPENAI_API_KEY=sk-...           # For DALL-E image generation
-BLOB_READ_WRITE_TOKEN=...       # For Vercel Blob storage
+BLOB_READ_WRITE_TOKEN=...       # For blob storage
 POSTGRES_URL=...                # For database
 ```
 

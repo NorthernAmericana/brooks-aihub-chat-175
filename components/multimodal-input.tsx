@@ -4,7 +4,9 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -30,10 +32,11 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import { useEntitlements } from "@/hooks/use-entitlements";
-import {
-  getAgentConfigById,
-  getAgentConfigBySlash,
-} from "@/lib/ai/agents/registry";
+import { useProfileIcon } from "@/hooks/use-profile-icon";
+import { NAMC_TRAILERS } from "@/lib/namc-trailers";
+import type { RouteSuggestion } from "@/lib/routes/types";
+import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
+import { normalizeRouteKey } from "@/lib/routes/utils";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
@@ -41,7 +44,10 @@ import {
 } from "@/lib/ai/models";
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
-import { cn, fetcher } from "@/lib/utils";
+import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
+import { cn, fetcher, getContrastingTextColor } from "@/lib/utils";
+import { shouldDisableAds, trackMessageAndCheckAdGate } from "@/lib/ad-gate";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -50,12 +56,43 @@ import {
   PromptInputTools,
 } from "./elements/prompt-input";
 import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ChatProfilePanel } from "./chat-profile-panel";
+import { ChatSwipeMenu } from "./chat-swipe-menu";
 import { PreviewAttachment } from "./preview-attachment";
 import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import type { VisibilityType } from "./visibility-selector";
+
+const TRAILER_PROMPT_REGEX = /^(?:let's|lets)\s+watch\s+trailers\b/i;
+
+type RoutesResponse = {
+  routes: RouteSuggestion[];
+};
+
+type ResolveRouteResponse =
+  | {
+      status: "resolved";
+      route: RouteSuggestion;
+    }
+  | {
+      status: "redirected";
+      route: RouteSuggestion;
+      redirectUrl: string;
+    }
+  | {
+      status: "unknown";
+      suggestions: RouteSuggestion[];
+    };
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365; // 1 year
@@ -80,6 +117,7 @@ function PureMultimodalInput({
   selectedModelId,
   onModelChange,
   atoId,
+  onSelectAto,
 }: {
   chatId: string;
   chatRouteKey?: string | null;
@@ -97,11 +135,19 @@ function PureMultimodalInput({
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   atoId?: string | null;
+  onSelectAto?: (atoId: string | null) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
   const { width } = useWindowSize();
   const { data: session } = useSession();
+  const { profileIcon } = useProfileIcon();
+  const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const { entitlements } = useEntitlements(session?.user?.id);
+  const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
+  const { messageColor } = useUserMessageColor();
+  const inputTextColor = getContrastingTextColor(messageColor);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -222,9 +268,22 @@ function PureMultimodalInput({
   const [_recordedText, setRecordedText] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [showSlashSuggestions, setShowSlashSuggestions] = useState(false);
+  const [inlineSlashSuggestions, setInlineSlashSuggestions] = useState<
+    RouteSuggestion[]
+  >([]);
+  const [slashSuggestionTitle, setSlashSuggestionTitle] = useState<string>("");
+  const [redirectBannerUrl, setRedirectBannerUrl] = useState<string | null>(
+    null
+  );
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
+  const [activeMenu, setActiveMenu] = useState<"history" | "profile" | null>(
+    "history"
+  );
+  const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [canCloseAdModal, setCanCloseAdModal] = useState(false);
   const [routeChangeModal, setRouteChangeModal] = useState<{
     open: boolean;
     currentRoute: string;
@@ -236,6 +295,36 @@ function PureMultimodalInput({
     newRoute: "",
     draftMessage: "",
   });
+  const [queuedMessageParts, setQueuedMessageParts] = useState<
+    ChatMessage["parts"] | null
+  >(null);
+
+  const sendMessageParts = useCallback(
+    (parts: ChatMessage["parts"]) => {
+      sendMessage({
+        role: "user",
+        parts,
+      });
+
+      setAttachments([]);
+      setLocalStorageInput("");
+      resetHeight();
+      setInput("");
+
+      if (width && width > 768) {
+        textareaRef.current?.focus();
+      }
+    },
+    [
+      sendMessage,
+      setAttachments,
+      setLocalStorageInput,
+      resetHeight,
+      setInput,
+      width,
+    ]
+  );
+
   const { data: atoData } = useSWR<{ ato: { fileSearchEnabled: boolean } }>(
     atoId ? `/api/ato/${atoId}` : null,
     fetcher
@@ -247,6 +336,7 @@ function PureMultimodalInput({
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
   const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
+  const isNamcChatRoute = (chatRouteKey ?? "").toLowerCase() === "namc";
 
   // Detect when user types "/" at the start to show suggestions
   useEffect(() => {
@@ -263,16 +353,55 @@ function PureMultimodalInput({
     }
   }, [input]);
 
+  useEffect(() => {
+    if (!input.trim().startsWith("/")) {
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
+      setRedirectBannerUrl(null);
+    }
+  }, [input]);
+
+  const canActivateRoute = useCallback(
+    (route: RouteSuggestion | undefined, slash: string) => {
+      const requiresFounders =
+        route?.foundersOnly ?? requiresFoundersForSlashRoute(route?.slash ?? slash);
+
+      if (requiresFounders && !entitlements.foundersAccess) {
+        toast.error("This route requires Founders access. Upgrade to unlock it.");
+        setShowSlashSuggestions(false);
+        return false;
+      }
+
+      return true;
+    },
+    [entitlements.foundersAccess]
+  );
+
   const handleSlashSelect = useCallback(
-    (slash: string) => {
+    (slash: string, options?: { atoId?: string }) => {
+      const selectedRoute =
+        (routeData?.routes ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        ) ??
+        (inlineSlashSuggestions ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        );
+
+      if (!canActivateRoute(selectedRoute, slash)) {
+        return;
+      }
+
       setInput(`/${slash}/ `);
       setShowSlashSuggestions(false);
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
+      onSelectAto?.(options?.atoId ?? null);
       // Focus the textarea
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 0);
     },
-    [setInput]
+    [canActivateRoute, inlineSlashSuggestions, onSelectAto, routeData?.routes, setInput]
   );
 
   const handleStartRecording = useCallback(async () => {
@@ -368,39 +497,115 @@ function PureMultimodalInput({
   }, [isRecording]);
 
   const submitForm = useCallback(() => {
-    window.history.pushState({}, "", `/chat/${chatId}`);
-
-    const parsedAction = parseSlashAction(input);
-
-    // Check for route change if chat has existing messages and routeKey
-    if (parsedAction && messages.length > 0 && chatRouteKey) {
-      const currentAgent = getAgentConfigById(chatRouteKey);
-      const newAgent = getAgentConfigBySlash(parsedAction.slash);
-
-      if (
-        currentAgent &&
-        newAgent &&
-        currentAgent.id !== newAgent.id &&
-        newAgent.id !== "default"
-      ) {
-        // User is trying to change routes - show modal
-        setRouteChangeModal({
-          open: true,
-          currentRoute: currentAgent.slash,
-          newRoute: newAgent.slash,
-          draftMessage: input,
-        });
-        return; // Don't send the message
+    const submit = async () => {
+      const params = new URLSearchParams();
+      if (atoId) {
+        params.set("atoId", atoId);
       }
-    }
+      const nextUrl = params.toString()
+        ? `/chat/${chatId}?${params.toString()}`
+        : `/chat/${chatId}`;
+      window.history.pushState({}, "", nextUrl);
 
-    if (parsedAction) {
-      rememberSlashAction(parsedAction);
-    }
+      let parsedAction = parseSlashAction(input, routeData?.routes);
 
-    sendMessage({
-      role: "user",
-      parts: [
+      if (parsedAction) {
+        try {
+          const response = await fetch(
+            `/api/routes/resolve?route=${encodeURIComponent(parsedAction.slash)}`
+          );
+          if (response.ok) {
+            const resolved = (await response.json()) as ResolveRouteResponse;
+
+            if (resolved.status === "unknown") {
+              setInlineSlashSuggestions(resolved.suggestions.slice(0, 3));
+              setSlashSuggestionTitle(
+                `Unknown route: /${parsedAction.slash}/. Try one of these:`
+              );
+              setShowSlashSuggestions(resolved.suggestions.length > 0);
+              return;
+            }
+
+            if (!canActivateRoute(resolved.route, parsedAction.slash)) {
+              return;
+            }
+
+            parsedAction = {
+              slash: resolved.route.slash,
+              prompt: parsedAction.prompt,
+            };
+
+            onSelectAto?.(resolved.route.atoId ?? null);
+            if (resolved.status === "redirected") {
+              setRedirectBannerUrl(resolved.redirectUrl);
+            }
+          }
+        } catch (error) {
+          console.error("Route resolve failed", error);
+        }
+      }
+
+      setInlineSlashSuggestions([]);
+      setSlashSuggestionTitle("");
+      const promptText = parsedAction?.prompt ?? input;
+      if (
+        isNamcChatRoute &&
+        TRAILER_PROMPT_REGEX.test(promptText.trim()) &&
+        attachments.length === 0
+      ) {
+        setIsTrailerMenuOpen(true);
+        setLocalStorageInput("");
+        resetHeight();
+        setInput("");
+        return;
+      }
+
+      // Check for route change if chat has existing messages and routeKey
+      if (parsedAction && messages.length > 0 && chatRouteKey) {
+        const routeById = new Map(
+          (routeData?.routes ?? []).map((route) => [route.id, route])
+        );
+        const routeByKey = new Map(
+          (routeData?.routes ?? []).map((route) => [
+            normalizeRouteKey(route.slash),
+            route,
+          ])
+        );
+        const currentAgent = routeById.get(chatRouteKey);
+        const newAgent = routeByKey.get(normalizeRouteKey(parsedAction.slash));
+
+        if (
+          currentAgent &&
+          newAgent &&
+          currentAgent.id !== newAgent.id &&
+          newAgent.id !== "default"
+        ) {
+          // User is trying to change routes - show modal
+          setRouteChangeModal({
+            open: true,
+            currentRoute: currentAgent.slash,
+            newRoute: newAgent.slash,
+            draftMessage: input,
+          });
+          return; // Don't send the message
+        }
+      }
+
+      if (parsedAction) {
+        const selectedRoute = (routeData?.routes ?? []).find(
+          (route) =>
+            normalizeRouteKey(route.slash) ===
+            normalizeRouteKey(parsedAction?.slash ?? "")
+        );
+
+        if (!canActivateRoute(selectedRoute, parsedAction.slash)) {
+          return;
+        }
+
+        rememberSlashAction(parsedAction);
+      }
+
+      const messageParts: ChatMessage["parts"] = [
         ...attachments.map((attachment) => ({
           type: "file" as const,
           url: attachment.url,
@@ -411,17 +616,28 @@ function PureMultimodalInput({
           type: "text",
           text: input,
         },
-      ],
-    });
+      ];
 
-    setAttachments([]);
-    setLocalStorageInput("");
-    resetHeight();
-    setInput("");
+      const adsDisabled = shouldDisableAds({
+        foundersAccess: entitlements.foundersAccess,
+        pathname,
+        isOnboarding: pathname.toLowerCase().startsWith("/onboarding"),
+      });
 
-    if (width && width > 768) {
-      textareaRef.current?.focus();
-    }
+      if (!adsDisabled && trackMessageAndCheckAdGate(chatId)) {
+        setQueuedMessageParts(messageParts);
+        setIsAdModalOpen(true);
+        setCanCloseAdModal(false);
+        window.setTimeout(() => {
+          setCanCloseAdModal(true);
+        }, 2000);
+        return;
+      }
+
+      sendMessageParts(messageParts);
+    };
+
+    void submit();
   }, [
     input,
     setInput,
@@ -429,12 +645,32 @@ function PureMultimodalInput({
     sendMessage,
     setAttachments,
     setLocalStorageInput,
+    routeData,
     width,
     chatId,
+    atoId,
     resetHeight,
     messages.length,
     chatRouteKey,
+    isNamcChatRoute,
+    onSelectAto,
+    entitlements.foundersAccess,
+    canActivateRoute,
+    pathname,
+    sendMessageParts,
   ]);
+
+  const handleCloseAdModal = useCallback(() => {
+    if (!canCloseAdModal) {
+      return;
+    }
+
+    setIsAdModalOpen(false);
+    if (queuedMessageParts) {
+      sendMessageParts(queuedMessageParts);
+      setQueuedMessageParts(null);
+    }
+  }, [canCloseAdModal, queuedMessageParts, sendMessageParts]);
 
   const isPdfFile = (file: File) =>
     file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -667,11 +903,51 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const shouldShowMenuPanel =
+    messages.length === 0 &&
+    attachments.length === 0 &&
+    uploadQueue.length === 0;
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            aria-label="Toggle profile panel"
+            aria-pressed={activeMenu === "profile"}
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background shadow-sm transition hover:border-border",
+              activeMenu === "profile" &&
+                "border-primary/60 ring-2 ring-primary/20"
+            )}
+            onClick={() =>
+              setActiveMenu((current) =>
+                current === "profile" ? null : "profile"
+              )
+            }
+            type="button"
+          >
+            <Image
+              alt={session?.user?.email ?? "Guest"}
+              className="rounded-full"
+              height={32}
+              src={avatarSrc}
+              width={32}
+            />
+          </button>
+          <ChatSwipeMenu
+            activeItemId={activeMenu}
+            className="min-w-0 flex-1 justify-start sm:justify-center"
+            items={
+              [
+                { id: "profile", label: "Profile" },
+                { id: "history", label: "History" },
+              ] as const
+            }
+            onChange={setActiveMenu}
+          />
+        </div>
+        {activeMenu === "history" && shouldShowMenuPanel && (
           <SuggestedActions
             chatId={chatId}
             messages={messages}
@@ -679,6 +955,8 @@ function PureMultimodalInput({
             sendMessage={sendMessage}
           />
         )}
+        {activeMenu === "profile" && <ChatProfilePanel />}
+      </div>
 
       <input
         accept={
@@ -695,6 +973,7 @@ function PureMultimodalInput({
 
       <PromptInput
         className="rounded-xl border border-border bg-background p-3 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
+        style={{ backgroundColor: messageColor, color: inputTextColor }}
         onSubmit={(event) => {
           event.preventDefault();
           if (!input.trim() && attachments.length === 0) {
@@ -746,6 +1025,7 @@ function PureMultimodalInput({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 overflow-auto p-2 text-base leading-6 tracking-normal text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [white-space:pre-wrap] [word-break:break-word] [&::-webkit-scrollbar]:hidden"
               ref={overlayRef}
+              style={{ color: inputTextColor }}
             >
               {slashPrefix ? (
                 <>
@@ -768,6 +1048,12 @@ function PureMultimodalInput({
               maxHeight={200}
               minHeight={44}
               onChange={handleInput}
+              style={{
+                caretColor: inputTextColor,
+                ...(slashPrefixIndent
+                  ? { textIndent: `${slashPrefixIndent}px` }
+                  : {}),
+              }}
               onScroll={(event) => {
                 if (overlayRef.current) {
                   overlayRef.current.scrollTop = event.currentTarget.scrollTop;
@@ -778,17 +1064,12 @@ function PureMultimodalInput({
               placeholder="Send a message..."
               ref={textareaRef}
               rows={1}
-              style={
-                slashPrefixIndent
-                  ? { textIndent: `${slashPrefixIndent}px` }
-                  : undefined
-              }
               value={input}
             />
           </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
+          <PromptInputTools className="flex w-full flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
               isUploadEnabled={canUploadFiles}
@@ -801,7 +1082,7 @@ function PureMultimodalInput({
             />
             <Button
               className={cn(
-                "aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent",
+                "inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent",
                 isRecording && "bg-red-500 text-white hover:bg-red-600"
               )}
               data-testid="mic-button"
@@ -814,7 +1095,7 @@ function PureMultimodalInput({
                   <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                 </div>
               ) : (
-                <MicIcon />
+                <MicIcon size={14} />
               )}
             </Button>
           </PromptInputTools>
@@ -834,15 +1115,116 @@ function PureMultimodalInput({
         </PromptInputToolbar>
       </PromptInput>
 
+      {redirectBannerUrl ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+          This app redirects to:{" "}
+          <a
+            className="font-medium underline"
+            href={redirectBannerUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {redirectBannerUrl}
+          </a>
+        </div>
+      ) : null}
+
+      <Dialog onOpenChange={setIsTrailerMenuOpen} open={isTrailerMenuOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Let's watch trailers</DialogTitle>
+            <DialogDescription>
+              Choose a concept trailer and we'll open the NAMC player.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            {NAMC_TRAILERS.map((trailer) => (
+              <button
+                className="flex flex-col gap-1 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-left text-sm transition hover:border-foreground/40 hover:bg-muted/50"
+                key={trailer.id}
+                onClick={() => {
+                  setIsTrailerMenuOpen(false);
+                  router.push(
+                    `/NAMC/library/trailers?trailer=${encodeURIComponent(
+                      trailer.id
+                    )}`
+                  );
+                }}
+                type="button"
+              >
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  {trailer.category}
+                </span>
+                <span className="font-semibold">{trailer.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {trailer.subtitle}
+                </span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setIsTrailerMenuOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setIsTrailerMenuOpen(false);
+                router.push("/NAMC/library/trailers");
+              }}
+              type="button"
+            >
+              Open player
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Slash suggestions dropdown */}
       {showSlashSuggestions && (
         <SlashSuggestions
           onClose={() => setShowSlashSuggestions(false)}
           onSelect={handleSlashSelect}
+          routes={
+            inlineSlashSuggestions.length > 0
+              ? inlineSlashSuggestions
+              : undefined
+          }
+          title={slashSuggestionTitle || undefined}
         />
       )}
 
       {/* Route change modal */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseAdModal();
+          }
+        }}
+        open={isAdModalOpen}
+      >
+        <DialogContent className="h-screen w-screen max-w-none rounded-none border-0 p-0 sm:rounded-none">
+          <div className="flex h-full flex-col items-center justify-center gap-5 bg-background px-6 text-center">
+            <DialogHeader className="max-w-md space-y-3">
+              <DialogTitle className="text-2xl">Sponsored break</DialogTitle>
+              <DialogDescription>
+                Your next response is unlocking. Please wait a moment before
+                continuing.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="h-48 w-full max-w-xl rounded-xl border border-dashed border-border/70 bg-muted/40" />
+            <DialogFooter>
+              <Button disabled={!canCloseAdModal} onClick={handleCloseAdModal}>
+                {canCloseAdModal ? "Continue" : "Continue in 2s..."}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <RouteChangeModal
         currentRoute={routeChangeModal.currentRoute}
         draftMessage={routeChangeModal.draftMessage}
@@ -901,7 +1283,7 @@ function PureAttachmentsButton({
 
   return (
     <Button
-      className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
+      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
       disabled={status !== "ready" || isReasoningModel || !isUploadEnabled}
       onClick={(event) => {
@@ -944,9 +1326,9 @@ function PureModelSelectorCompact({
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 w-[200px] justify-between px-2" variant="ghost">
+        <Button className="h-8 min-w-0 max-w-[160px] flex-1 justify-between gap-1 px-2 sm:w-[200px] sm:max-w-[200px] sm:flex-none" variant="ghost">
           {provider && <ModelSelectorLogo provider={provider} />}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName className="truncate">{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>

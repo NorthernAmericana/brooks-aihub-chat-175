@@ -5,7 +5,8 @@ import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import { parseSlashAction } from "@/lib/suggested-actions";
 import type { ChatMessage } from "@/lib/types";
-import { cn, sanitizeText } from "@/lib/utils";
+import { cn, getContrastingTextColor, sanitizeText } from "@/lib/utils";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -30,6 +31,7 @@ const SLASH_PREFIX_REGEX = /^\/(.+)\/\s*/;
 const PurePreviewMessage = ({
   addToolApprovalResponse,
   chatId,
+  chatRouteKey,
   chatTitle,
   message,
   vote,
@@ -41,6 +43,7 @@ const PurePreviewMessage = ({
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatRouteKey?: string | null;
   chatTitle: string;
   message: ChatMessage;
   vote: Vote | undefined;
@@ -51,6 +54,8 @@ const PurePreviewMessage = ({
   requiresScrollPadding: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const { messageColor } = useUserMessageColor();
+  const userMessageTextColor = getContrastingTextColor(messageColor);
 
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === "file"
@@ -152,7 +157,7 @@ const PurePreviewMessage = ({
                   <div key={key}>
                     <MessageContent
                       className={cn({
-                        "wrap-break-word w-fit rounded-2xl px-2.5 py-1.5 text-right text-white text-sm":
+                        "wrap-break-word w-fit rounded-2xl px-2.5 py-1.5 text-right text-sm":
                           message.role === "user",
                         "bg-transparent px-0 py-0 text-left text-sm":
                           message.role === "assistant",
@@ -160,7 +165,10 @@ const PurePreviewMessage = ({
                       data-testid="message-content"
                       style={
                         message.role === "user"
-                          ? { backgroundColor: "#006cff" }
+                          ? {
+                              backgroundColor: messageColor,
+                              color: userMessageTextColor,
+                            }
                           : undefined
                       }
                     >
@@ -486,6 +494,7 @@ const PurePreviewMessage = ({
           {!isReadonly && (
             <MessageActions
               chatId={chatId}
+              chatRouteKey={chatRouteKey}
               chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}

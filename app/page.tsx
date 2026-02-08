@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/toast";
 
 export default function IntroPage() {
@@ -11,6 +11,7 @@ export default function IntroPage() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleFoundersAccess = async () => {
     if (!session?.user) {
@@ -62,11 +63,57 @@ export default function IntroPage() {
     }
   }, [router, status]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    audio.muted = true;
+    audio.volume = 0.35;
+
+    const startMuted = async () => {
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: autoplay policies may block background audio.
+      }
+    };
+
+    const handleInteraction = async () => {
+      audio.muted = false;
+      try {
+        await audio.play();
+      } catch {
+        // Ignore: user settings or browser policies may block playback.
+      }
+    };
+
+    void startMuted();
+
+    window.addEventListener("pointerdown", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
+
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#140d12] text-white">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#0a1511] text-white">
+      <audio
+        ref={audioRef}
+        src="/audio/forest-background-sounds.mp3"
+        loop
+        preload="auto"
+        playsInline
+      />
       <div className="intro-sky absolute inset-0" />
       <div className="intro-stars absolute inset-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_55%)]" />
+      <div className="intro-mist absolute inset-0" />
 
       <div className="absolute right-6 top-6 z-20">
         {session?.user && !isSigningOut ? (
@@ -94,8 +141,8 @@ export default function IntroPage() {
       <div className="intro-card intro-float-slow absolute right-[10%] top-[14%] hidden h-32 w-56 rounded-2xl border border-white/20 sm:block" />
       <div className="intro-card intro-float absolute bottom-[18%] right-[18%] hidden h-24 w-44 rounded-2xl border border-white/20 md:block" />
 
-      <div className="intro-sparkle absolute right-[22%] top-[22%] h-3 w-3 rotate-45 rounded-sm bg-white/80 shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
-      <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-white/70 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
+      <div className="intro-sparkle absolute right-[22%] top-[22%] h-3 w-3 rotate-45 rounded-sm bg-emerald-200/80 shadow-[0_0_12px_rgba(150,255,210,0.8)]" />
+      <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-emerald-100/70 shadow-[0_0_10px_rgba(140,240,200,0.7)]" />
 
       <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 px-6 text-center">
         <div className="intro-glass w-full rounded-[32px] px-6 py-10 sm:px-10 sm:py-12">
@@ -104,18 +151,18 @@ export default function IntroPage() {
           </div>
           <div className="relative mt-6 flex items-center justify-center">
             <div aria-hidden className="intro-rainbow-glow absolute inset-0" />
-            <h1 className="relative font-pixel text-2xl text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] sm:text-3xl md:text-4xl">
+            <h1 className="relative whitespace-nowrap font-pixel text-[clamp(1.25rem,5vw,2.25rem)] text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
               /Brooks AI HUB/
             </h1>
           </div>
           <p className="mt-4 text-xs text-white/70 sm:text-sm">
-            presented by Northern Americana Tech
+            your digital campfire 🔥 A mobile OS HUB for your ATO apps
           </p>
         </div>
 
         <Link
           className="intro-start-button rounded-full px-8 py-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#1b0f0f] transition hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-          href="/brooks-ai-hub/"
+          href="/brooks-ai-hub/tutorial"
         >
           Tap to Start
         </Link>

@@ -9,10 +9,8 @@ import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { PlusIcon } from "@/components/icons";
-import {
-  getChatHistoryPaginationKey,
-  SidebarHistory,
-} from "@/components/sidebar-history";
+import { getChatHistoryPaginationKey } from "@/components/chat-history-data";
+import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -149,6 +147,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 variant="ghost"
               >
                 <Link
+                  href="/settings"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  Settings
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="justify-start px-2 text-sm"
+                size="sm"
+                variant="ghost"
+              >
+                <Link
                   href="/memories"
                   onClick={() => {
                     setOpenMobile(false);
@@ -172,7 +185,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               variant="outline"
             >
               <Link
-                href="/create-ato"
+                href="/create-ato/onboarding"
                 onClick={() => {
                   setOpenMobile(false);
                 }}

@@ -56,25 +56,6 @@ export const AttachmentIcon = () => {
   );
 };
 
-export const VercelIcon = ({ size = 17 }) => {
-  return (
-    <svg
-      height={size}
-      strokeLinejoin="round"
-      style={{ color: "currentcolor" }}
-      viewBox="0 0 16 16"
-      width={size}
-    >
-      <path
-        clipRule="evenodd"
-        d="M8 1L16 15H0L8 1Z"
-        fill="currentColor"
-        fillRule="evenodd"
-      />
-    </svg>
-  );
-};
-
 export const GitIcon = () => {
   return (
     <svg
@@ -255,6 +236,30 @@ export const SpeakerIcon = ({ size = 16 }: { size?: number }) => {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth="1.2"
+      />
+    </svg>
+  );
+};
+
+export const SpeakerMutedIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        d="M2.5 6.25H5.25L8.25 3.75V12.25L5.25 9.75H2.5V6.25Z"
+        fill="currentColor"
+      />
+      <path
+        d="M3 13L13 3"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.4"
       />
     </svg>
   );

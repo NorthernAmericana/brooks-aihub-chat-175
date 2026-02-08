@@ -10,6 +10,7 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
+  chatRouteKey?: string | null;
   chatTitle: string;
   status: UseChatHelpers<ChatMessage>["status"];
   votes: Vote[] | undefined;
@@ -19,12 +20,13 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
-  onSelectSuggestedFolder?: (folder: string) => void;
+  onSelectSuggestedFolder?: (folder: string, options?: { atoId?: string }) => void;
 };
 
 function PureMessages({
   addToolApprovalResponse,
   chatId,
+  chatRouteKey,
   chatTitle,
   status,
   votes,
@@ -53,7 +55,7 @@ function PureMessages({
         className="absolute inset-0 touch-pan-y overscroll-contain overflow-y-auto"
         ref={messagesContainerRef}
       >
-        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-3 px-2 py-3 md:gap-4 md:px-4">
+        <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-3 px-2 py-3 pb-[var(--chat-composer-offset,8.5rem)] md:gap-4 md:px-4">
           {messages.length === 0 && (
             <Greeting onSelectFolder={onSelectSuggestedFolder} />
           )}
@@ -62,6 +64,7 @@ function PureMessages({
             <PreviewMessage
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}
+              chatRouteKey={chatRouteKey}
               chatTitle={chatTitle}
               isLoading={
                 status === "streaming" && messages.length - 1 === index
