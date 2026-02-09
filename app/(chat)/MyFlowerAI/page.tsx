@@ -51,10 +51,12 @@ const fetchDaySummary = async (date: string) => {
 export default async function MyFlowerAiHomePage() {
   const date = new Date().toISOString().slice(0, 10);
   const { authRequired, errorMessage, data } = await fetchDaySummary(date);
+  const chatHref = `/brooks-ai-hub?query=${encodeURIComponent("/MyFlowerAI/")}`;
 
   return (
     <MyFlowerAiDashboard
       authRequired={authRequired}
+      chatHref={chatHref}
       date={date}
       errorMessage={errorMessage}
       initialDay={data}
