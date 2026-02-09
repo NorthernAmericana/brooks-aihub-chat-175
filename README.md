@@ -42,6 +42,7 @@ The **[Console Edition](https://github.com/NorthernAmericana/brooks-ai-hub-conso
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
 Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
+Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
 
 ## Routing model: agentic chat subroutes vs UI pages (ATO apps)
 
