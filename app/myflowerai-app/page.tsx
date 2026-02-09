@@ -11,7 +11,7 @@ import { getSafeDisplayName } from "@/lib/ato/reviews";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
-import { BackButton } from "./BackButton";
+import { BackButton } from "../brooksbears-app/BackButton";
 import { ReviewsSection } from "../brooksbears-app/ReviewsSection";
 
 export const dynamic = "force-dynamic";
@@ -220,34 +220,19 @@ export default async function MyFlowerAiAppPage() {
   const currentUserDisplayName = getSafeDisplayName(session?.user?.email);
 
   return (
-    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#201018] via-[#1a0f16] to-[#120c16]">
-      <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#201018]/90 px-4 py-3 backdrop-blur-sm">
+    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
+      <div className="app-page-header sticky top-0 z-10 flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm">
         <BackButton />
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <ImageWithFallback
-              alt={`${app?.name ?? "MyFlowerAI"} icon`}
-              className="h-full w-full object-cover"
-              containerClassName="size-full"
-              height={36}
-              src={app?.iconUrl ?? "/icons/myflowerai-appicon.png"}
-              width={36}
-            />
-          </div>
-          <div>
-            <h1 className="font-pixel text-lg text-white">
-              {app?.name ?? "MyFlowerAI"}
-            </h1>
-            <p className="text-xs text-white/60">Cannabis harm reduction</p>
-          </div>
-        </div>
+        <h1 className="text-sm font-medium text-slate-700">
+          {app?.name ?? "MyFlowerAI"}
+        </h1>
       </div>
 
       <div className="app-page-content flex-1 space-y-6 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 <ImageWithFallback
                   alt={`${app?.name ?? "MyFlowerAI"} icon`}
                   className="h-full w-full object-cover"
@@ -258,168 +243,141 @@ export default async function MyFlowerAiAppPage() {
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-semibold text-slate-900">
                   {app?.name ?? "MyFlowerAI"}
                 </h2>
-                <p className="text-sm text-white/60">Health & Wellness • 21+</p>
-                <div className="mt-1 flex items-center gap-4 text-sm text-white/50">
+                <p className="text-sm text-slate-500">
+                  Health & Wellness • 21+
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                   <span>{ratingLabel}</span>
                   <span>{downloadsLabel}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-3 md:w-auto">
-              <form action={installAction}>
-                <button
-                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 md:w-56 ${
-                    isInstalled
-                      ? "bg-emerald-600/80 text-white"
-                      : "bg-pink-500 text-white hover:bg-pink-600"
-                  }`}
-                  disabled={isInstallDisabled}
-                  type="submit"
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+              <div className="font-medium text-slate-700">Live stats</div>
+              <div className="mt-1 flex flex-col gap-1">
+                <span>{ratingLabel}</span>
+                <span>{downloadsLabel}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <form action={installAction} className="w-full md:w-auto">
+              <button
+                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 md:w-48 ${
+                  isInstalled
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-slate-200 bg-slate-900 text-white hover:bg-slate-800"
+                }`}
+                disabled={isInstallDisabled}
+                type="submit"
+              >
+                {isInstalled ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Installed
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Install
+                  </>
+                )}
+              </button>
+            </form>
+
+            {isInstalled ? (
+              <>
+                <Link
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:w-40"
+                  href="/MyFlowerAI"
                 >
-                  {isInstalled ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Installed
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Install
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {isInstalled ? (
-                <>
-                  <Link
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                    href="/MyFlowerAI"
+                  <ExternalLink className="h-4 w-4" />
+                  Open
+                </Link>
+                <form action={uninstallAction} className="w-full md:w-auto">
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 md:w-40"
+                    type="submit"
                   >
-                    <ExternalLink className="h-4 w-4" />
-                    Go to ATO app
-                  </Link>
-                  <form action={uninstallAction}>
-                    <button
-                      className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                      type="submit"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
-            </div>
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </button>
+                </form>
+              </>
+            ) : null}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">About</h3>
-          <p className="mt-2 text-sm text-white/70">
-            {app?.description ??
-              "MyFlowerAI is a cannabis tracking companion built for harm reduction. Log your sessions (dose, method, strain, mood/effects), attach photos, and get gentle pattern insights over time."}
-          </p>
-          <p className="mt-3 text-xs text-white/55">
-            Informational only. Not medical advice. If you are under 21, do not
-            use this app.
-          </p>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white p-5 text-slate-900 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Reviews</h3>
-          <div className="mt-3">
-            <ReviewsSection
-              appSlug={APP_SLUG}
-              currentUserDisplayName={currentUserDisplayName}
-              initialNextCursor={reviewsPayload?.nextCursor ?? null}
-              initialReviews={reviewsPayload?.reviews ?? []}
-              initialStats={{
-                avgRating: stats?.avgRating ?? null,
-                downloadsCount: stats?.downloadsCount ?? 0,
-                reviewsCount: stats?.reviewsCount ?? 0,
-              }}
-              initialUserReview={userReview}
-              isLoggedIn={Boolean(userId)}
-            />
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-700">Screenshots</h3>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                className="flex aspect-[16/9] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-xs text-slate-400"
+                key={`placeholder-${index}`}
+              >
+                Screenshot placeholder
+              </div>
+            ))}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">
-            Agent routes in Brooks AI HUB
-          </h3>
-          <p className="mt-2 text-sm text-white/70">
-            None yet. MyFlowerAI doesn’t expose agentic chat subroutes in Brooks
-            AI HUB right now.
-          </p>
-        </section>
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
+              Overview
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              Reviews
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              About
+            </span>
+          </div>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Preview</h3>
-          <p className="mt-2 text-sm text-white/70">
-            Placeholder dashboard mock for session tracking, quick logging, and
-            AI insights—connecting soon to the{" "}
-            <span className="font-mono">/MyFlowerAI/</span> agent.
-          </p>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-white">
-                  Used today
-                </div>
-                <div className="text-xs text-white/60">3.5g / 5.0g</div>
-              </div>
-              <div className="mt-4 flex items-center gap-4">
-                <div className="relative h-16 w-16 rounded-full bg-white/5 ring-1 ring-white/10">
-                  <div className="absolute inset-1 rounded-full bg-[conic-gradient(from_180deg,rgba(236,72,153,0.85)_0_70%,rgba(255,255,255,0.08)_70_100%)]" />
-                  <div className="absolute inset-3 rounded-full bg-[#201018] ring-1 ring-white/10" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-white/60">Strains used</div>
-                  <div className="text-sm text-white/80">4 entries</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm font-semibold text-white">AI insights</div>
-              <p className="mt-2 text-sm text-white/70">
-                “Your daytime sativa use correlates with more creative output.
-                Consider balancing with calmer sessions to support sleep.”
+          <div className="mt-5 space-y-4 text-sm text-slate-600">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Overview</h4>
+              <p className="mt-1">
+                {app?.description ??
+                  "MyFlowerAI is a cannabis tracking companion built for harm reduction. Log your sessions (dose, method, strain, mood/effects), attach photos, and get gentle pattern insights over time."}
               </p>
-              <p className="mt-3 text-xs text-white/50">
-                Placeholder text — will be generated from your logs.
+              <p className="mt-3 text-xs text-slate-500">
+                Informational only. Not medical advice. If you are under 21, do
+                not use this app.
               </p>
             </div>
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(236,72,153,0.25),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.65))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-xs text-white/70">
-                Mood & effects chips
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Reviews</h4>
+              <div className="mt-3">
+                <ReviewsSection
+                  appSlug={APP_SLUG}
+                  currentUserDisplayName={currentUserDisplayName}
+                  initialNextCursor={reviewsPayload?.nextCursor ?? null}
+                  initialReviews={reviewsPayload?.reviews ?? []}
+                  initialStats={{
+                    avgRating: stats?.avgRating ?? null,
+                    downloadsCount: stats?.downloadsCount ?? 0,
+                    reviewsCount: stats?.reviewsCount ?? 0,
+                  }}
+                  initialUserReview={userReview}
+                  isLoggedIn={Boolean(userId)}
+                />
               </div>
             </div>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(253,164,175,0.25),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.65))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-xs text-white/70">
-                Recently logged sessions
-              </div>
-            </div>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_55%,rgba(147,197,253,0.2),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.65))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-xs text-white/70">
-                Photo check-ins
-              </div>
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">About</h4>
+              <p className="mt-2 text-sm text-slate-600">
+                None yet. MyFlowerAI doesn’t expose agentic chat subroutes in
+                Brooks AI HUB right now.
+              </p>
             </div>
           </div>
         </section>
