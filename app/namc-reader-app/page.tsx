@@ -160,8 +160,7 @@ export default async function NamcReaderAppPage() {
       : [null];
 
   const isInstalled = Boolean(installRecord);
-  const isInstallUnavailable = true;
-  const isInstallDisabled = isInstalled || !appId || isInstallUnavailable;
+  const isInstallDisabled = isInstalled || !appId;
   const installAction = async () => {
     "use server";
     const session = await auth();
@@ -169,7 +168,7 @@ export default async function NamcReaderAppPage() {
       redirect("/login");
     }
 
-    if (!appId || isInstallUnavailable) {
+    if (!appId) {
       return;
     }
 
@@ -219,7 +218,6 @@ export default async function NamcReaderAppPage() {
       : null;
 
   const currentUserDisplayName = getSafeDisplayName(session?.user?.email);
-  const installLabel = isInstallUnavailable ? "Coming soon" : "Install";
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
@@ -248,7 +246,9 @@ export default async function NamcReaderAppPage() {
                 <h2 className="text-2xl font-semibold text-slate-900">
                   {app?.name ?? "NAMC Reader"}
                 </h2>
-                <p className="text-sm text-slate-500">Reading • Founders-only</p>
+                <p className="text-sm text-slate-500">
+                  Media & Reading • Founders-only
+                </p>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                   <span>{ratingLabel}</span>
                   <span>{downloadsLabel}</span>
@@ -286,7 +286,7 @@ export default async function NamcReaderAppPage() {
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    {installLabel}
+                    Install
                   </>
                 )}
               </button>
@@ -323,7 +323,11 @@ export default async function NamcReaderAppPage() {
                 className="flex aspect-[16/9] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-xs text-slate-400"
                 key={`placeholder-${index}`}
               >
-                Screenshot placeholder
+                {[
+                  "Library shelf preview",
+                  "Reading focus view",
+                  "Highlights & notes",
+                ][index] ?? "Screenshot placeholder"}
               </div>
             ))}
           </div>
@@ -346,9 +350,11 @@ export default async function NamcReaderAppPage() {
             <div>
               <h4 className="text-sm font-semibold text-slate-800">Overview</h4>
               <p className="mt-1">
-                NAMC Reader is currently staged for release. You can view it in
-                the ATO Store today, and installation will be enabled in an
-                upcoming rollout.
+                NAMC Reader is the private reading lounge for Northern Americana
+                Media Collection releases, bringing episodic stories, lore
+                capsules, and curated excerpts into one focused view. Save where
+                you left off, collect highlights, and revisit the newest drops
+                as they unlock for Founders.
               </p>
             </div>
             <div>
@@ -378,12 +384,21 @@ export default async function NamcReaderAppPage() {
                     /NAMC/Reader/
                   </span>
                   <span className="text-xs text-slate-500">
-                    Focused reading assistant for curated NAMC stories and
-                    excerpts
+                    Dedicated reading route for NAMC chapters, excerpts, and
+                    serialized drops
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-indigo-400" />
+                  <span className="font-mono text-xs text-slate-700">
+                    /NAMC/Lore-Playground/
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Experimental lore sandbox and interactive story prompts
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  💎 Founders-only route (unlock via Brooks AI HUB Founders
+                  💎 Founders-only routes (unlock via Brooks AI HUB Founders
                   access).
                 </p>
               </div>
