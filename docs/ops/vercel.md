@@ -28,6 +28,10 @@ For a full production release checklist, see [docs/ops/release-checklist.md](./r
 
 Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
 
+1. **Health endpoint (monitoring)**
+   - **URL**: https://www.brooksaihub.app/api/health
+   - **How**: Configure Vercel/StatusCake/other monitors to hit the endpoint at a regular interval.
+   - **Expected outcome**: `200` response with JSON payload containing `status: "ok"`, plus `uptime`, `version`, and `timestamp` fields.
 1. **Lighthouse PWA audit**
    - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Lighthouse → select **Progressive Web App** → Analyze.
