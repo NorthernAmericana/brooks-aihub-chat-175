@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
       typeof body === "object" && body !== null && "occurred_at" in body
         ? (body as { occurred_at?: unknown }).occurred_at
         : undefined;
+    if (
+      typeof occurredAtRaw !== "string" &&
+      typeof occurredAtRaw !== "number" &&
+      !(occurredAtRaw instanceof Date)
+    ) {
+      return NextResponse.json(
+        { error: "occurred_at must be a valid ISO date string" },
+        { status: 400 }
+      );
+    }
     const occurredAt = new Date(occurredAtRaw);
 
     if (!occurredAtRaw || Number.isNaN(occurredAt.getTime())) {
