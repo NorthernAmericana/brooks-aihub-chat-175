@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import { Toaster } from "sonner";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { EdgeSwipeNav } from "@/src/components/EdgeSwipeNav";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
@@ -113,6 +114,7 @@ export default function RootLayout({
         >
           <PwaRegister />
           <Toaster position="top-center" />
+          <EdgeSwipeNav />
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
       </body>
