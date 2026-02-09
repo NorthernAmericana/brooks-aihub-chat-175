@@ -13,11 +13,11 @@ export default function PricingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
 
-  const handleFoundersAccess = async () => {
+  const handlePaidAccess = async () => {
     if (!session?.user) {
       toast({
         type: "error",
-        description: "Please sign in to purchase Founders Access",
+        description: "Please sign in to purchase Paid Access",
       });
       router.push("/login");
       return;
@@ -58,20 +58,20 @@ export default function PricingPage() {
           </div>
           <h1 className="font-pixel text-3xl text-white">Pricing</h1>
           <p className="max-w-2xl text-sm text-white/70">
-            Unlock Founders Access to get premium ATO routes, higher usage
-            limits, and early access to new experiences.
+            Unlock Paid Access to get premium ATO routes, higher usage limits,
+            and early access to new experiences.
           </p>
         </header>
 
         <section className="grid gap-6 md:grid-cols-[2fr_1fr]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-semibold text-white">Founders</h2>
+            <h2 className="text-xl font-semibold text-white">Paid</h2>
             <p className="mt-2 text-sm text-white/70">
               For early adopters who want the full Brooks AI HUB experience.
             </p>
             <div className="mt-6 grid gap-3 text-sm text-white/70">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                Unlock Founders-only ATO routes and premium agent experiences.
+                Unlock paid-only ATO routes and premium agent experiences.
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 Higher monthly quotas for unofficial ATO creation and file
@@ -85,7 +85,7 @@ export default function PricingPage() {
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
             <div className="text-sm uppercase tracking-[0.3em] text-white/60">
-              Founders Access
+              Paid Access
             </div>
             <div className="mt-4 text-4xl font-semibold text-white">
               $4.99
@@ -94,10 +94,10 @@ export default function PricingPage() {
             <button
               className="mt-6 w-full rounded-full bg-pink-500 py-3 text-sm font-semibold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={loading}
-              onClick={handleFoundersAccess}
+              onClick={handlePaidAccess}
               type="button"
             >
-              {loading ? "Loading..." : "Join Founders"}
+              {loading ? "Loading..." : "Upgrade to Paid"}
             </button>
             <Link
               className="mt-4 block text-xs text-white/50 transition hover:text-white"

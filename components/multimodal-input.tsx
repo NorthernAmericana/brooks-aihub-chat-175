@@ -335,7 +335,7 @@ function PureMultimodalInput({
   const isAtoUpload = Boolean(atoId);
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
-  const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
+  const chatUploadPlanLabel = entitlements.foundersAccess ? "Paid" : "Free";
   const isNamcChatRoute = (chatRouteKey ?? "").toLowerCase() === "namc";
 
   // Detect when user types "/" at the start to show suggestions
@@ -367,7 +367,7 @@ function PureMultimodalInput({
         route?.foundersOnly ?? requiresFoundersForSlashRoute(route?.slash ?? slash);
 
       if (requiresFounders && !entitlements.foundersAccess) {
-        toast.error("This route requires Founders access. Upgrade to unlock it.");
+        toast.error("This route requires paid access. Upgrade to unlock it.");
         setShowSlashSuggestions(false);
         return false;
       }
