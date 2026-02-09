@@ -118,6 +118,15 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
 
+### Required environment variables
+
+- `DATABASE_URL`: Neon Postgres connection string for production or local development (used by `/api/myflower/upload` and the app database layer).
+  - `POSTGRES_URL` is also supported when using Vercel Postgres; set either `DATABASE_URL` or `POSTGRES_URL`.
+- `BLOB_READ_WRITE_TOKEN`: Vercel Blob token for uploads (used by `/api/myflower/upload`).
+  - If you use a different storage provider, set the provider-specific envs instead.
+
+> Note: `/api/myflower/upload` stores only the uploaded asset URL and metadata (content type, byte size, dimensions) in Postgres, not the binary file.
+
 ```bash
 pnpm install
 pnpm db:migrate # Setup database or apply latest database changes
