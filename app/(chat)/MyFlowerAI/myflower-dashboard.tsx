@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -24,6 +25,7 @@ type MyFlowerAiDashboardProps = {
   initialDay: MyFlowerDaySummary | null;
   authRequired: boolean;
   errorMessage: string | null;
+  chatHref: string;
 };
 
 const moodEffects: MoodEffect[] = [
@@ -91,6 +93,7 @@ export function MyFlowerAiDashboard({
   initialDay,
   authRequired,
   errorMessage,
+  chatHref,
 }: MyFlowerAiDashboardProps) {
   const [ageVerified, setAgeVerified] = useState(false);
   const [selectedMoodEffects, setSelectedMoodEffects] = useState<Set<string>>(
@@ -330,8 +333,17 @@ export function MyFlowerAiDashboard({
                 </p>
               </div>
             </div>
-            <div className="rounded-full bg-black/5 px-3 py-1 text-xs text-black/70">
-              {strainsUsed.length} strain{strainsUsed.length === 1 ? "" : "s"}
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-black/5 px-3 py-1 text-xs text-black/70">
+                {strainsUsed.length} strain{strainsUsed.length === 1 ? "" : "s"}
+              </div>
+              <Link
+                className="inline-flex items-center gap-2 rounded-full bg-pink-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-pink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black/40"
+                href={chatHref}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Chat
+              </Link>
             </div>
           </header>
 
