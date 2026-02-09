@@ -58,7 +58,10 @@ export function buildGoalResponse(goal: MyflowerDailyGoal | null) {
   };
 }
 
-export function buildLogResponse(log: MyflowerLog) {
+export function buildLogResponse(
+  log: MyflowerLog,
+  photoUrl: string | null = null
+) {
   const amountG = log.amountG === null ? null : Number(log.amountG);
   const amountMgThc =
     log.amountMgThc === null ? null : Number(log.amountMgThc);
@@ -86,12 +89,14 @@ export function buildLogResponse(log: MyflowerLog) {
       : null,
     notes: log.notes,
     photo_asset_id: log.photoAssetId,
+    photo_url: photoUrl,
     created_at: log.createdAt.toISOString(),
     display: {
       date: datePart,
       time: timePart?.replace("Z", "") ?? null,
       strain_name: displayStrainName,
-      amount: displayAmountParts.length > 0 ? displayAmountParts.join(" / ") : null,
+      amount:
+        displayAmountParts.length > 0 ? displayAmountParts.join(" / ") : null,
     },
   };
 }

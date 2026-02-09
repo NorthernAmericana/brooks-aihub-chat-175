@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
-import { myflowerDailyGoals, myflowerLogs } from "@/lib/db/schema";
+import { mediaAssets, myflowerDailyGoals, myflowerLogs } from "@/lib/db/schema";
 import { buildGoalResponse, buildLogResponse, parseDayRange } from "../utils";
 
 export async function GET(request: NextRequest) {
@@ -34,8 +34,9 @@ export async function GET(request: NextRequest) {
       .where(eq(myflowerDailyGoals.userId, session.user.id));
 
     const logs = await db
-      .select()
+      .select({ log: myflowerLogs, photoUrl: mediaAssets.url })
       .from(myflowerLogs)
+      .leftJoin(mediaAssets, eq(myflowerLogs.photoAssetId, mediaAssets.id))
       .where(
         and(
           eq(myflowerLogs.userId, session.user.id),
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       }
     >();
 
-    logs.forEach((log) => {
+    logs.forEach(({ log }) => {
       const amountG = log.amountG === null ? 0 : Number(log.amountG);
       const amountMgThc =
         log.amountMgThc === null ? 0 : Number(log.amountMgThc);
@@ -107,7 +108,9 @@ export async function GET(request: NextRequest) {
       strains_used: Array.from(strainsUsedMap.values()).sort((a, b) =>
         a.display_name.localeCompare(b.display_name)
       ),
-      logs: logs.map(buildLogResponse),
+      logs: logs.map(({ log, photoUrl }) =>
+        buildLogResponse(log, photoUrl ?? null)
+      ),
     });
   } catch (error) {
     console.error("Failed to fetch myflower day logs", error);
