@@ -548,7 +548,7 @@ export const listAgentConfigs = cache(async (): Promise<AgentConfig[]> => {
       id: entry.id,
       label: entry.label,
       slash: entry.slash,
-      tools: metadata?.tools ?? [],
+      tools: metadata?.tools ?? ["saveMemory"],
       systemPromptOverride: metadata?.systemPromptOverride,
     };
   });
