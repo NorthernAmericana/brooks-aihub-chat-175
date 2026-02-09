@@ -20,52 +20,16 @@ import {
 import { Textarea } from "./ui/textarea";
 
 const STYLE_OPTIONS = [
-  "Netflix avatar",
   "Pixel",
   "Illustration",
   "3D sticker",
   "Minimal logo",
 ] as const;
 
-const STYLE_COLORS: Record<(typeof STYLE_OPTIONS)[number], string> = {
-  "Netflix avatar": "#0f172a",
-  Pixel: "#1d4ed8",
-  Illustration: "#4c1d95",
-  "3D sticker": "#0f766e",
-  "Minimal logo": "#111827",
-};
-
 type ProfileIconAiModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUseIcon?: (iconSrc: string) => void;
-};
-
-const buildIconSvg = (prompt: string, style: (typeof STYLE_OPTIONS)[number]) => {
-  const description = prompt.trim() || "Your icon";
-  const background = STYLE_COLORS[style];
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
-      <defs>
-        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="${background}" />
-          <stop offset="100%" stop-color="#9333ea" />
-        </linearGradient>
-      </defs>
-      <rect width="320" height="320" rx="64" fill="url(#bg)" />
-      <circle cx="105" cy="130" r="44" fill="rgba(255,255,255,0.25)" />
-      <circle cx="215" cy="120" r="58" fill="rgba(255,255,255,0.18)" />
-      <rect x="76" y="196" width="168" height="64" rx="32" fill="rgba(255,255,255,0.2)" />
-      <text x="50%" y="52%" text-anchor="middle" fill="#f8fafc" font-size="22" font-family="Inter, system-ui, sans-serif">
-        ${style}
-      </text>
-      <text x="50%" y="64%" text-anchor="middle" fill="#e2e8f0" font-size="14" font-family="Inter, system-ui, sans-serif">
-        ${description}
-      </text>
-    </svg>
-  `;
-
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 };
 
 export function ProfileIconAiModal({
@@ -104,18 +68,37 @@ export function ProfileIconAiModal({
     setPreviewSrc(null);
 
     try {
-      await new Promise((resolve) => {
-        window.setTimeout(resolve, 900);
-      });
+      if (!prompt.trim()) {
+        setError("Add a description so we can generate the icon.");
+        return;
+      }
 
       if (isErrorPrompt) {
         throw new Error("Generation failed");
       }
 
-      setPreviewSrc(buildIconSvg(prompt, style));
+      const response = await fetch("/api/profile/generate-icon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, style }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Image generation failed");
+      }
+
+      if (!data.image_url) {
+        throw new Error("Image generation returned no image");
+      }
+
+      setPreviewSrc(data.image_url);
     } catch (err) {
       setError(
-        "We couldn't generate an icon this time. Try another description or style."
+        err instanceof Error
+          ? err.message
+          : "We couldn't generate an icon this time. Try another description or style."
       );
     } finally {
       setIsGenerating(false);
