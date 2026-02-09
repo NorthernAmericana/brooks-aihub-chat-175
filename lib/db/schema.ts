@@ -4,6 +4,8 @@ import {
   foreignKey,
   integer,
   json,
+  jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -616,3 +618,86 @@ export const myfloweraiImages = pgTable("myflowerai_images", {
 });
 
 export type MyfloweraiImage = InferSelectModel<typeof myfloweraiImages>;
+
+export const myflowerDailyGoals = pgTable("myflower_daily_goals", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  targetG: numeric("target_g").notNull().default("0"),
+  targetMgThc: numeric("target_mg_thc"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerDailyGoal = InferSelectModel<typeof myflowerDailyGoals>;
+
+export const mediaAssets = pgTable("media_assets", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  url: text("url").notNull(),
+  contentType: text("content_type").notNull(),
+  bytes: integer("bytes").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MediaAsset = InferSelectModel<typeof mediaAssets>;
+
+export const myflowerLogs = pgTable("myflower_logs", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  productType: varchar("product_type", {
+    enum: [
+      "flower",
+      "vape",
+      "edible",
+      "tincture",
+      "concentrate",
+      "topical",
+      "other",
+    ],
+  }).notNull(),
+  strainSlug: varchar("strain_slug", { length: 255 }),
+  strainName: text("strain_name"),
+  amountG: numeric("amount_g"),
+  amountMgThc: numeric("amount_mg_thc"),
+  notes: text("notes"),
+  photoAssetId: uuid("photo_asset_id").references(() => mediaAssets.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerLog = InferSelectModel<typeof myflowerLogs>;
+
+export const myflowerPosts = pgTable("myflower_posts", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  kind: varchar("kind", {
+    enum: ["log", "photo", "check_in", "note"],
+  }).notNull(),
+  caption: text("caption"),
+  mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id),
+  metadata: jsonb("metadata"),
+  visibility: varchar("visibility", {
+    enum: ["public", "private", "unlisted"],
+  }).notNull(),
+  sourceApp: text("source_app").notNull().default("myflowerai"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerPost = InferSelectModel<typeof myflowerPosts>;
