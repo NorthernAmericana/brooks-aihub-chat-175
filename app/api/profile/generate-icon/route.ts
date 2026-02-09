@@ -11,9 +11,6 @@ const IMAGE_CONFIG = {
   response_format: "url" as const,
 } as const;
 
-const PLACEHOLDER_IMAGE_URL =
-  "https://placehold.co/1024x1024.png?text=Profile+Icon";
-
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -45,13 +42,10 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    // TODO: replace mock fallback once OPENAI_API_KEY is configured.
-    return NextResponse.json({
-      success: true,
-      image_url: PLACEHOLDER_IMAGE_URL,
-      storage_key: null,
-      placeholder: true,
-    });
+    return NextResponse.json(
+      { error: "Image generation is not configured" },
+      { status: 503 }
+    );
   }
 
   const openaiResponse = await fetch(
