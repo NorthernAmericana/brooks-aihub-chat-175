@@ -333,12 +333,15 @@ export async function POST(request: Request) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
 
-    const userType: UserType = session.user.type;
     const user = await getUserById({ id: session.user.id });
 
     if (!user) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
+    const userType: UserType =
+      session.user.type !== "guest" && user.foundersAccess
+        ? "paid"
+        : session.user.type;
 
     const enabledFileUrls = new Set<string>();
     let activeAto: UnofficialAto | null = null;
@@ -453,7 +456,7 @@ export async function POST(request: Request) {
       if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
-          "Founders access required for this subroute."
+          "Paid access required for this subroute."
         ).toResponse();
       }
       initialRouteKey = activeAto
@@ -566,7 +569,7 @@ export async function POST(request: Request) {
     if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
         "forbidden:auth",
-        "Founders access required for this subroute."
+        "Paid access required for this subroute."
       ).toResponse();
     }
 

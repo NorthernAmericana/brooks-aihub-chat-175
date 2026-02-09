@@ -83,7 +83,7 @@ export async function POST(request: Request) {
           : 0;
 
       if (currentCount >= maxFiles) {
-        const planLabel = user.foundersAccess ? "Founders" : "Free";
+        const planLabel = user.foundersAccess ? "Paid" : "Free";
         return NextResponse.json(
           {
             error: `File upload limit reached. ${planLabel} plans allow up to ${maxFiles} files per ATO.`,
