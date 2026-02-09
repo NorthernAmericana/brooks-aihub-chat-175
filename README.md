@@ -43,6 +43,7 @@ Start with the [Master Docs landing page](docs/README.md) to navigate project sc
 Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
 Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
+Report vulnerabilities responsibly by following the [Security Policy](SECURITY.md).
 
 ## Routing model: agentic chat subroutes vs UI pages (ATO apps)
 
