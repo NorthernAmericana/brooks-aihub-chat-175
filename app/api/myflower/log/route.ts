@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
-import { myflowerLogs, type MyflowerLog } from "@/lib/db/schema";
+import { myflowerLogs, myflowerPosts, type MyflowerLog } from "@/lib/db/schema";
 import { buildLogResponse, parseOptionalNumber } from "../utils";
 
 const PRODUCT_TYPES = new Set([
@@ -105,6 +105,10 @@ export async function POST(request: NextRequest) {
           ? (body as { photo_asset_id?: string }).photo_asset_id?.trim() ?? null
           : null
         : null;
+    const shareToCommons =
+      typeof body === "object" && body !== null && "share_to_commons" in body
+        ? Boolean((body as { share_to_commons?: unknown }).share_to_commons)
+        : false;
 
     const amountG =
       typeof body === "object" && body !== null && "amount_g" in body
@@ -160,6 +164,29 @@ export async function POST(request: NextRequest) {
         { error: "Failed to create log" },
         { status: 500 }
       );
+    }
+
+    if (shareToCommons) {
+      await db.insert(myflowerPosts).values({
+        userId: session.user.id,
+        kind: photoAssetId ? "photo" : "log",
+        caption:
+          notes ??
+          log.strainName ??
+          log.strainSlug ??
+          "Shared MyFlowerAI check-in",
+        mediaAssetId: photoAssetId,
+        visibility: "public",
+        metadata: {
+          log_id: log.id,
+          product_type: log.productType,
+          strain_name: log.strainName,
+          strain_slug: log.strainSlug,
+          amount_g: log.amountG,
+          amount_mg_thc: log.amountMgThc,
+          occurred_at: log.occurredAt.toISOString(),
+        },
+      });
     }
 
     return NextResponse.json({ log: buildLogResponse(log) }, { status: 201 });
