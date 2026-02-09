@@ -16,6 +16,9 @@ build
 # misc
 .DS_Store
 *.pem
+*.log
+*.sqlite
+*.sqlite3
 
 # debug
 npm-debug.log*
@@ -36,6 +39,10 @@ yarn-error.log*
 .env
 .vercel
 .env*.local
+
+# editors
+.idea/
+.vscode/
 
 # Playwright
 /test-results/
