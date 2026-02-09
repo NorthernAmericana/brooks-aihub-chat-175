@@ -1,16 +1,19 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEventHandler } from "react";
 
-const SWIPE_THRESHOLD_PX = 60;
+const SWIPE_THRESHOLD_PX = 90;
 const NAVIGATION_COOLDOWN_MS = 600;
+const PREVIEW_WIDTH_PX = 240;
 
 type HandleConfig = {
   side: "left" | "right";
   href: string;
   ariaLabel: string;
+  previewTitle: string;
+  previewSubtitle: string;
 };
 
 type TrackingState = {
@@ -27,15 +30,29 @@ export function EdgeSwipeNav() {
     startX: 0,
     startY: 0,
   });
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const navigatedRef = useRef(false);
   const cooldownTimeoutRef = useRef<number | null>(null);
 
   const handleConfig = useMemo<HandleConfig | null>(() => {
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/welcome") {
       return {
         side: "left",
         href: "/commons",
         ariaLabel: "Open NAT: Commons",
+        previewTitle: "NAT: Commons",
+        previewSubtitle: "Swipe right to enter",
+      };
+    }
+
+    if (pathname?.startsWith("/brooks-ai-hub")) {
+      return {
+        side: "left",
+        href: "/commons",
+        ariaLabel: "Open NAT: Commons",
+        previewTitle: "NAT: Commons",
+        previewSubtitle: "Swipe right to enter",
       };
     }
 
@@ -44,6 +61,8 @@ export function EdgeSwipeNav() {
         side: "right",
         href: "/",
         ariaLabel: "Return to Brooks AI HUB",
+        previewTitle: "Brooks AI HUB",
+        previewSubtitle: "Swipe left to return",
       };
     }
 
@@ -66,12 +85,16 @@ export function EdgeSwipeNav() {
     }
     startCooldown();
     router.push(handleConfig.href);
+    setDragOffset(0);
+    setIsDragging(false);
   }, [handleConfig, router, startCooldown]);
 
   const resetTracking = useCallback(() => {
     trackingRef.current.isTracking = false;
     trackingRef.current.startX = 0;
     trackingRef.current.startY = 0;
+    setDragOffset(0);
+    setIsDragging(false);
   }, []);
 
   const handlePointerDown = useCallback<
@@ -83,6 +106,7 @@ export function EdgeSwipeNav() {
     trackingRef.current.isTracking = true;
     trackingRef.current.startX = event.clientX;
     trackingRef.current.startY = event.clientY;
+    setIsDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   }, []);
 
@@ -103,11 +127,22 @@ export function EdgeSwipeNav() {
       if (handleConfig.side === "left" && dx >= SWIPE_THRESHOLD_PX) {
         resetTracking();
         navigate();
+        return;
       }
 
       if (handleConfig.side === "right" && dx <= -SWIPE_THRESHOLD_PX) {
         resetTracking();
         navigate();
+        return;
+      }
+
+      if (handleConfig.side === "left") {
+        setDragOffset(Math.min(Math.max(dx, 0), PREVIEW_WIDTH_PX));
+        return;
+      }
+
+      if (handleConfig.side === "right") {
+        setDragOffset(-Math.min(Math.max(-dx, 0), PREVIEW_WIDTH_PX));
       }
     },
     [handleConfig, navigate, resetTracking],
@@ -145,34 +180,47 @@ export function EdgeSwipeNav() {
       ? { left: "max(0px, env(safe-area-inset-left))" }
       : { right: "max(0px, env(safe-area-inset-right))" };
 
+  const previewStyle =
+    handleConfig.side === "left"
+      ? {
+          transform: `translateX(${dragOffset - PREVIEW_WIDTH_PX}px)`,
+          left: "max(0px, env(safe-area-inset-left))",
+        }
+      : {
+          transform: `translateX(${PREVIEW_WIDTH_PX + dragOffset}px)`,
+          right: "max(0px, env(safe-area-inset-right))",
+        };
+
   return (
-    <button
-      aria-label={handleConfig.ariaLabel}
-      className="fixed top-1/2 z-50 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/60 text-slate-900/70 shadow-[0_6px_18px_rgba(0,0,0,0.2)] backdrop-blur-sm transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-400/60 dark:border-white/20 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20"
-      onClick={navigate}
-      onPointerCancel={handlePointerCancel}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      style={positioningStyle}
-      type="button"
-    >
-      <svg
-        aria-hidden
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.6"
-        viewBox="0 0 24 24"
+    <>
+      <div
+        className={`pointer-events-none fixed inset-y-0 z-40 flex w-[240px] flex-col justify-center gap-2 border border-black/10 bg-white/80 px-6 text-slate-900 shadow-[0_8px_30px_rgba(0,0,0,0.2)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-white ${
+          isDragging ? "" : "transition-transform duration-200 ease-out"
+        }`}
+        style={previewStyle}
       >
-        {handleConfig.side === "left" ? (
-          <path d="M15 6l-6 6 6 6" />
-        ) : (
-          <path d="M9 6l6 6-6 6" />
-        )}
-      </svg>
-    </button>
+        <div className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
+          Preview
+        </div>
+        <div className="font-semibold text-lg">{handleConfig.previewTitle}</div>
+        <div className="text-sm text-slate-600 dark:text-slate-300">
+          {handleConfig.previewSubtitle}
+        </div>
+      </div>
+
+      <button
+        aria-label={handleConfig.ariaLabel}
+        className="fixed top-1/2 z-50 flex h-20 w-5 -translate-y-1/2 touch-pan-y items-center justify-center rounded-full border border-black/10 bg-white/60 shadow-[0_6px_18px_rgba(0,0,0,0.2)] backdrop-blur-sm transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-400/60 dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20"
+        onPointerCancel={handlePointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        style={positioningStyle}
+        type="button"
+      >
+        <span className="sr-only">{handleConfig.ariaLabel}</span>
+        <span className="h-8 w-1 rounded-full bg-slate-400/70 dark:bg-white/70" />
+      </button>
+    </>
   );
 }
