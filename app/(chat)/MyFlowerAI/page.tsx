@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import { MyFlowerAiDashboard } from "./myflower-dashboard";
 import type { MyFlowerDaySummary } from "./types";
 
-const buildBaseUrl = () => {
-  const headerList = headers();
+const buildBaseUrl = async () => {
+  const headerList = await headers();
   const host = headerList.get("host");
   const protocol = headerList.get("x-forwarded-proto") ?? "http";
   if (!host) {
@@ -13,9 +13,9 @@ const buildBaseUrl = () => {
 };
 
 const fetchDaySummary = async (date: string) => {
-  const headerList = headers();
+  const headerList = await headers();
   const cookie = headerList.get("cookie") ?? "";
-  const baseUrl = buildBaseUrl();
+  const baseUrl = await buildBaseUrl();
   const response = await fetch(
     `${baseUrl}/api/myflower/day?date=${date}`,
     {
