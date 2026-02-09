@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
-import { myflowerLogs } from "@/lib/db/schema";
+import { myflowerLogs, type MyflowerLog } from "@/lib/db/schema";
 import { buildLogResponse, parseOptionalNumber } from "../utils";
 
 const PRODUCT_TYPES = new Set([
@@ -60,19 +60,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const productType =
+    const productTypeRaw =
       typeof body === "object" && body !== null && "product_type" in body
         ? typeof (body as { product_type?: unknown }).product_type === "string"
           ? (body as { product_type?: string }).product_type
           : null
         : null;
 
-    if (!productType || !PRODUCT_TYPES.has(productType)) {
+    if (!productTypeRaw || !PRODUCT_TYPES.has(productTypeRaw)) {
       return NextResponse.json(
         { error: "product_type must be a valid product type" },
         { status: 400 }
       );
     }
+
+    const productType = productTypeRaw as MyflowerLog["productType"];
 
     const strainSlug =
       typeof body === "object" && body !== null && "strain_slug" in body
