@@ -226,7 +226,7 @@ meta               → Brooks AI HUB feedback and feature requests
 ```
 
 **Rules:**
-- Campfire slugs must be lowercase, alphanumeric + hyphens
+- Campfire slugs must be lowercase, alphanumeric + hyphens (no leading/trailing hyphens, no consecutive hyphens)
 - Max depth: 2 levels (e.g., `category/subcategory`)
 - Slugs map directly to URL paths
 - Root campfires created by admins only
@@ -252,7 +252,7 @@ Post Detail (/commons/[campfire]/[postId])
 ├── Vote Controls
 ├── Comment Section
 │   ├── Top-level Comments (sorted by votes)
-│   └── Nested Replies (max depth: 3)
+│   └── Nested Replies (max depth: 5 levels)
 └── Share/Report Buttons
 
 Submit Post (/commons/[campfire]/submit)
@@ -325,7 +325,7 @@ CREATE TABLE campfires (
   icon_url TEXT,                           -- Campfire icon/emoji
   banner_url TEXT,                         -- Header image
   
-  CONSTRAINT valid_slug CHECK (slug ~ '^[a-z0-9-]+$'),
+  CONSTRAINT valid_slug CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   CONSTRAINT max_slug_length CHECK (length(slug) <= 50)
 );
 
@@ -590,10 +590,11 @@ POST /api/commons/[campfire]/posts
 Body: { title, body, images?: File[], nsfw: boolean, spoiler: boolean }
 Response: { post: Post }
 
-// Update post (author only, within 15min)
+// Update post (author only, within 15min of creation)
 PATCH /api/commons/[campfire]/posts/[postId]
 Body: { title?, body? }
 Response: { post: Post }
+Note: API validates createdAt is within 15 minutes before allowing edit
 
 // Delete post (author or admin)
 DELETE /api/commons/[campfire]/posts/[postId]
@@ -723,7 +724,7 @@ export async function createPost(formData: FormData) {
 **Hot Posts Algorithm:**
 ```typescript
 // Simplified "hot" ranking
-score = (upvotes - downvotes) / ((age_hours + 2) ^ 1.5)
+score = (upvotes - downvotes) / ((age_hours + 2) ** 1.5)
 
 // SQL implementation
 SELECT *,
@@ -852,7 +853,7 @@ export function PostCard({ post, userVote, compact = false }: PostCardProps) {
               c/{post.campfire.name}
             </Link>
             <span>•</span>
-            <span>Posted by {post.author.email.split('@')[0]}</span>
+            <span>Posted by {post.author.displayName || `User ${post.author.id.slice(0, 8)}`}</span>
             <span>•</span>
             <time>{formatRelative(post.createdAt)}</time>
           </div>
@@ -1031,7 +1032,7 @@ function CommentNode({
           />
           <div className="flex-1">
             <div className="text-xs text-white/50">
-              {comment.author.email.split('@')[0]} · {formatRelative(comment.createdAt)}
+              {comment.author.displayName || `User ${comment.author.id.slice(0, 8)}`} · {formatRelative(comment.createdAt)}
             </div>
             <p className="mt-1 text-sm text-white/80">{comment.body}</p>
             <div className="mt-1 flex gap-3 text-xs text-white/50">
@@ -1662,6 +1663,7 @@ test('user can vote on a post', async ({ page }) => {
 ### 11.1 Phase 2 Features (Post-MVP)
 
 **User Profiles:**
+- Add `displayName` field to User table (for privacy)
 - `/commons/u/[userId]` — user profile page
 - Post/comment history
 - User badges (Founder, Moderator, etc.)
@@ -1715,6 +1717,8 @@ test('user can vote on a post', async ({ page }) => {
 ## Appendices
 
 ### A. Database Schema Summary
+
+**Note on User Display Names:** The existing User table does not include a `displayName` field. For MVP, the UI components use a fallback pattern of `User ${id.slice(0, 8)}` when no display name is available. A future migration should add `displayName` to the User table for better privacy (Phase 2).
 
 ```
 campfires (12 columns)
