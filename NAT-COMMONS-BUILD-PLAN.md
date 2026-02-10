@@ -596,6 +596,39 @@ User reports content
 
 ### 5.2 API Routes
 
+### 5.2.0 MVP Admin Authorization Contract (Required)
+
+For **MVP only**, every privileged Commons API route must enforce the same server-side gate:
+
+```typescript
+const hasMvpAdminAccess = session?.user?.foundersAccess === true;
+if (!hasMvpAdminAccess) {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+}
+```
+
+- **Exact gate:** `session.user.foundersAccess === true` (boolean strict check).
+- UI checks (`/commons/moderation`, admin buttons) are **advisory only**; route handlers are source of truth.
+- Never rely on truthy coercion (`if (session.user.foundersAccess)`) for privileged access.
+
+#### Migration path to `isAdmin` (post-MVP)
+
+Phase the authorization migration to avoid breaking existing founders during rollout:
+
+1. **Dual-read (compatibility phase):** `isAdmin === true || foundersAccess === true`
+2. **Backfill:** set `isAdmin=true` for all users currently holding `foundersAccess=true`
+3. **Write-new/read-both:** new admin grants only update `isAdmin`; checks still read both flags
+4. **Cutover:** once all admin users are verified on `isAdmin`, remove `foundersAccess` from guards
+
+Recommended helper during migration:
+
+```typescript
+const hasAdminAccess =
+  session?.user?.isAdmin === true || session?.user?.foundersAccess === true;
+```
+
+> Backward compatibility requirement: no existing founder should lose moderation/campfire privileges until cutover is complete and audited.
+
 **Route contract for campfire identity:**
 - `campfires.slug` is a single segment in storage (no `/`).
 - Nested URL forms use catch-all params (`[...campfire]`), e.g. `['myflowerai', 'strains']`.
@@ -619,6 +652,13 @@ POST /api/commons/campfires
 Body: { slug, name, description, parentId?, settings }
 Response: { campfire: Campfire }
 ```
+
+**Authorization Matrix — Campfire creation**
+
+| Surface | Endpoint / Route | Allowed in MVP | Server guard (MVP) | Future guard (migration phase) |
+|---|---|---|---|---|
+| API | `POST /api/commons/campfires` | Admin only | `foundersAccess === true` | `isAdmin === true || foundersAccess === true` |
+| UI | Campfire creation controls | Admin only (hide/disable otherwise) | Must mirror API gate, but API is authoritative | Must mirror migrated helper |
 
 #### 5.2.2 Posts
 
@@ -717,6 +757,28 @@ PATCH /api/commons/reports/[reportId]
 Body: { status: 'reviewed' | 'actioned' | 'dismissed', notes?: string }
 Response: { report: Report }
 ```
+
+**Authorization Matrix — Moderation queue access**
+
+| Surface | Endpoint / Route | Allowed in MVP | Server guard (MVP) | Future guard (migration phase) |
+|---|---|---|---|---|
+| API | `GET /api/commons/reports` | Admin only | `foundersAccess === true` | `isAdmin === true || foundersAccess === true` |
+| UI | `/commons/moderation` page load + data fetch | Admin only | Must mirror API gate, but API is authoritative | Must mirror migrated helper |
+
+**Authorization Matrix — Report actioning**
+
+| Surface | Endpoint / Route | Allowed in MVP | Server guard (MVP) | Future guard (migration phase) |
+|---|---|---|---|---|
+| API | `PATCH /api/commons/reports/[reportId]` | Admin only | `foundersAccess === true` | `isAdmin === true || foundersAccess === true` |
+| UI | Report action buttons (`Dismiss`, `Remove`, etc.) | Admin only | Must mirror API gate, but API is authoritative | Must mirror migrated helper |
+
+**Authorization Matrix — Content removal / locking / pinning**
+
+| Surface | Endpoint / Route | Allowed in MVP | Server guard (MVP) | Future guard (migration phase) |
+|---|---|---|---|---|
+| API | `DELETE /api/commons/[...campfire]/posts/[postId]` (remove) | Author or admin | `authorId === session.user.id OR foundersAccess === true` | `authorId === session.user.id OR isAdmin === true OR foundersAccess === true` |
+| API | `PATCH /api/commons/[...campfire]/posts/[postId]` (lock/pin fields in moderation mode) | Admin only | `foundersAccess === true` | `isAdmin === true || foundersAccess === true` |
+| UI | Post moderation controls (`Remove`, `Lock`, `Pin`) | Admin only (except author self-delete) | Must mirror API gate, but API is authoritative | Must mirror migrated helper |
 
 #### 5.2.6 Media
 
@@ -1186,13 +1248,28 @@ const REPORT_REASONS = {
 
 ### 7.3 Moderator Permissions
 
-**Admin users** (identified by `user.foundersAccess` or new `user.isAdmin` flag):
+**MVP admin gate (exact):** `session.user.foundersAccess === true`
+
+**Admin users** (MVP + migration-aware):
 - View moderation queue
 - Remove posts/comments
 - Lock threads
 - Pin posts
 - Create/archive campfires
 - Ban users (future)
+
+**Migration path to `isAdmin` with backward compatibility:**
+- Step 1 (MVP): privileged moderation routes require `foundersAccess === true`
+- Step 2 (compat phase): moderation routes accept `isAdmin === true || foundersAccess === true`
+- Step 3 (data migration): backfill `isAdmin=true` for all founders
+- Step 4 (cutover): remove `foundersAccess` checks after audit confirms full parity
+
+Canonical migration helper:
+
+```typescript
+const canModerate =
+  session?.user?.isAdmin === true || session?.user?.foundersAccess === true;
+```
 
 **Actions:**
 - **Remove:** Soft delete (sets `is_removed = true`, keeps in DB)
