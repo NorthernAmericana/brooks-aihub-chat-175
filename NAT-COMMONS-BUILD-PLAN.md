@@ -207,6 +207,27 @@ NAT: Commons uses a **filesystem-based campfire path model** that aligns with Ne
 /commons/moderation                → Moderation queue (admin only)
 ```
 
+**Concrete App Router mapping (MVP):**
+
+```text
+app/commons/page.tsx
+app/commons/[...campfire]/page.tsx
+app/commons/[...campfire]/[postId]/page.tsx
+app/commons/[...campfire]/submit/page.tsx
+```
+
+If a route conflict appears during implementation, use an equivalent non-conflicting detail layout such as:
+
+```text
+app/commons/[...campfire]/posts/[postId]/page.tsx
+```
+
+and keep submit at:
+
+```text
+app/commons/[...campfire]/submit/page.tsx
+```
+
 > **Canonical model decision:** `campfires.slug` remains a **single segment** identifier and hierarchy is represented via `campfires.parent_id`. Nested URL forms are resolved by Next.js catch-all params (`[...campfire]`) and mapped to a sequence of single-segment slugs.
 
 ### 3.2 Campfire Path Model
@@ -234,6 +255,17 @@ meta               → Brooks AI HUB feedback and feature requests
 - URL paths are assembled from ancestry segments and parsed via Next.js catch-all (`[...campfire]`)
 - Root campfires created by admins only
 - Sub-campfires can be proposed by users (admin approval)
+
+**Canonical conversion (campfire path arrays ⇄ stored slug/path):**
+
+- Incoming route param is `params.campfire: string[]` from `[...campfire]`.
+- Validation layer enforces:
+  - `1 <= params.campfire.length <= 2` (hard max depth = 2 for MVP)
+  - every segment matches slug regex (`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+  - reserved segments (e.g., `submit`) are rejected as campfire slugs
+- Resolver walks `parent_id` from root to leaf using the array order.
+- Canonical path string is derived as `campfirePath = params.campfire.join('/')` for URLs/logging.
+- Canonical storage identity remains the **leaf campfire id** + parent chain (not a slash-delimited slug in DB).
 
 ### 3.3 Page Hierarchy
 
@@ -567,7 +599,9 @@ User reports content
 **Route contract for campfire identity:**
 - `campfires.slug` is a single segment in storage (no `/`).
 - Nested URL forms use catch-all params (`[...campfire]`), e.g. `['myflowerai', 'strains']`.
+- Validation layer rejects campfire arrays deeper than 2 segments for MVP.
 - Server resolves catch-all arrays by walking parent/child records (`parent_id`) from root to leaf and uses the leaf `campfire_id` for queries.
+- Canonical URL path is generated from validated array segments (`campfire.join('/')`), while DB identity remains normalized as leaf record + ancestry.
 
 #### 5.2.1 Campfires
 
