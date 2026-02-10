@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight, MoreVertical } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -32,6 +33,10 @@ import {
 } from "@/lib/ato/officialCatalog";
 import { formatRoutePath, sanitizeRouteSegment } from "@/lib/routes/utils";
 import { cn, fetcher } from "@/lib/utils";
+import {
+  deriveEntitlementRules,
+  getFoundersAccessPerks,
+} from "@/lib/entitlements/products";
 import officialEvents from "@/data/events/official-events.json";
 
 type GreetingProps = {
@@ -460,6 +465,19 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       (session?.user as { foundersAccess?: boolean } | undefined)
         ?.foundersAccess
     );
+  const entitlementRules = useMemo(() => {
+    const derived = deriveEntitlementRules(
+      entitlements.products.map((productId) => ({ productId }))
+    );
+    return {
+      ...derived,
+      hasFoundersAccess: derived.hasFoundersAccess || foundersAccess,
+    };
+  }, [entitlements.products, foundersAccess]);
+  const foundersPerks = useMemo(
+    () => getFoundersAccessPerks(entitlementRules),
+    [entitlementRules]
+  );
   const [now, setNow] = useState(() => new Date());
   const [clockMode, setClockMode] = useState(false);
   const { data: atoData, mutate: mutateAtos } = useSWR<AtoListResponse>(
@@ -782,6 +800,65 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
+        <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-amber-500/10 via-background/80 to-background p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
+            <div>
+              <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                Founders perks
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {foundersAccess
+                  ? "Your Founders perks are active across premium ATO routes and higher limits."
+                  : "Upgrade to unlock premium ATO routes, higher quotas, and avatar pairing."}
+              </p>
+            </div>
+            <div
+              className={cn(
+                "rounded-full border px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em]",
+                foundersAccess
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                  : "border-amber-400/40 bg-amber-400/10 text-amber-500"
+              )}
+            >
+              {foundersAccess ? "Active" : "Upgrade"}
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 text-left sm:grid-cols-2">
+            {foundersPerks.map((perk) => (
+              <div
+                className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3"
+                key={perk.id}
+              >
+                <div className="flex items-center justify-between gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  <span>{perk.title}</span>
+                  <span
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em]",
+                      perk.isUnlocked
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                        : "border-border/60 bg-background/80 text-muted-foreground"
+                    )}
+                  >
+                    {perk.isUnlocked ? "Unlocked" : "Locked"}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {perk.description}
+                </p>
+              </div>
+            ))}
+          </div>
+          {!foundersAccess ? (
+            <div className="mt-4 text-left">
+              <Link
+                className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-500 transition hover:bg-amber-400/20"
+                href="/pricing"
+              >
+                View pricing
+              </Link>
+            </div>
+          ) : null}
+        </div>
         <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
             <div>

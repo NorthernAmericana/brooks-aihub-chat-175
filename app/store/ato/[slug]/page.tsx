@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { getEntitlements } from "@/lib/entitlements/getEntitlements";
+import { FOUNDERS_ACCESS_PERKS } from "@/lib/entitlements/products";
 import { getAppDetails } from "@/lib/store/getAppDetails";
 import { installApp } from "@/lib/store/installApp";
 import { listAppsWithInstallState } from "@/lib/store/listAppsWithInstallState";
@@ -39,6 +40,7 @@ export default async function AtoStoreDetailsPage({
   const requiresFoundersAccess = details.requiresFoundersAccess;
   const isLocked = requiresFoundersAccess && !entitlements.foundersAccess;
   const isInstallUnavailable = details.app.slug === "namc-reader";
+  const foundersPerksPreview = FOUNDERS_ACCESS_PERKS;
 
   const installAction = async () => {
     "use server";
@@ -195,12 +197,40 @@ export default async function AtoStoreDetailsPage({
                 This app includes Founders-only routes. Upgrade to unlock the
                 full experience.
               </p>
+              <div className="mt-3 space-y-2 text-xs text-amber-100/80">
+                <div className="font-semibold uppercase tracking-wide text-amber-100/90">
+                  Founders perks include
+                </div>
+                <ul className="space-y-1">
+                  {foundersPerksPreview.map((perk) => (
+                    <li key={perk.id}>• {perk.title}</li>
+                  ))}
+                </ul>
+              </div>
               <Link
                 className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/40 bg-amber-200/20 px-4 py-2 text-xs font-semibold text-amber-50 transition hover:bg-amber-200/30"
                 href="/pricing"
               >
                 View pricing
               </Link>
+            </div>
+          )}
+
+          {requiresFoundersAccess && entitlements.foundersAccess && (
+            <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+              <div className="flex items-center gap-2 font-semibold">
+                <Check className="h-4 w-4" />
+                Founders perks unlocked
+              </div>
+              <p className="mt-1 text-xs text-emerald-100/80">
+                This ATO includes Founders-only routes, and your membership is
+                active.
+              </p>
+              <ul className="mt-3 space-y-1 text-xs text-emerald-100/80">
+                {foundersPerksPreview.map((perk) => (
+                  <li key={perk.id}>• {perk.title}</li>
+                ))}
+              </ul>
             </div>
           )}
         </section>
