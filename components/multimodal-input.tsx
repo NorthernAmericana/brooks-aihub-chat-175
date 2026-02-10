@@ -539,7 +539,7 @@ function PureMultimodalInput({
                 return;
               }
 
-              setInlineSlashSuggestions(feedback.suggestions);
+              setInlineSlashSuggestions(resolved.suggestions);
               setSlashSuggestionTitle(feedback.title);
               setShowSlashSuggestions(true);
               setUnknownRouteHelper("");
