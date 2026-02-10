@@ -59,6 +59,7 @@ import {
   PromptInputTools,
 } from "./elements/prompt-input";
 import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ChatHistoryPanel } from "./chat-history-panel";
 import { ChatProfilePanel } from "./chat-profile-panel";
 import { ChatSwipeMenu } from "./chat-swipe-menu";
 import { PreviewAttachment } from "./preview-attachment";
@@ -283,9 +284,9 @@ function PureMultimodalInput({
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
-  const [activeMenu, setActiveMenu] = useState<"history" | "profile" | null>(
-    "history"
-  );
+  const [activeMenu, setActiveMenu] = useState<
+    "history" | "profile" | "suggestions" | null
+  >("history");
   const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [canCloseAdModal, setCanCloseAdModal] = useState(false);
@@ -924,11 +925,6 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  const shouldShowMenuPanel =
-    messages.length === 0 &&
-    attachments.length === 0 &&
-    uploadQueue.length === 0;
-
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       <div className="flex flex-col gap-3">
@@ -964,12 +960,17 @@ function PureMultimodalInput({
               [
                 { id: "profile", label: "Profile" },
                 { id: "history", label: "History" },
+                { id: "suggestions", label: "Suggestions" },
               ] as const
             }
             onChange={setActiveMenu}
           />
         </div>
-        {shouldShowMenuPanel && (
+        {activeMenu === "profile" && <ChatProfilePanel />}
+        {activeMenu === "history" && (
+          <ChatHistoryPanel currentChatId={chatId} user={session?.user} />
+        )}
+        {activeMenu === "suggestions" && (
           <SuggestedActions
             chatId={chatId}
             messages={messages}
@@ -977,7 +978,6 @@ function PureMultimodalInput({
             sendMessage={sendMessage}
           />
         )}
-        {activeMenu === "profile" && <ChatProfilePanel />}
       </div>
 
       <input
