@@ -24,6 +24,23 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+
+const SPEECH_EVENT = "brooksbears:tts-playback";
+const VISEME_EVENT = "brooksbears:tts-viseme";
+
+const dispatchSpeechPlaybackEvent = (state: "start" | "end" | "pause") => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SPEECH_EVENT, { detail: { state } }));
+};
+
+const dispatchVisemeFrameEvent = (timeSeconds: number) => {
+  if (typeof window === "undefined") return;
+  const visemes = ["M", "AA", "E", "O", "FV", "I"];
+  const index = Math.floor(timeSeconds * 12) % visemes.length;
+  window.dispatchEvent(
+    new CustomEvent(VISEME_EVENT, { detail: { viseme: visemes[index] } })
+  );
+};
 export function PureMessageActions({
   chatId,
   chatRouteKey,
@@ -105,6 +122,13 @@ export function PureMessageActions({
   };
 
   const handleSpeak = async () => {
+    const routeKeyForAvatarEvents = getChatRouteKey({
+      routeKey: chatRouteKey,
+      title: chatTitle,
+    });
+    const shouldDispatchAvatarEvents =
+      routeKeyForAvatarEvents.toLowerCase() === "brooksbears" ||
+      routeKeyForAvatarEvents.toLowerCase().startsWith("brooksbears/");
     // If already playing, stop current playback and start fresh
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
@@ -113,6 +137,8 @@ export function PureMessageActions({
         URL.revokeObjectURL(audioUrlRef.current);
         audioUrlRef.current = null;
       }
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("pause");
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
       setIsPlaying(false);
       audioRef.current = null;
       return;
@@ -145,11 +171,8 @@ export function PureMessageActions({
       }
 
       // Determine voice ID: use persisted setting or route default
-      const routeKey = getChatRouteKey({
-        routeKey: chatRouteKey,
-        title: chatTitle,
-      });
-      const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
+      const voiceId =
+        chatData.ttsVoiceId || getOfficialVoiceId(routeKeyForAvatarEvents);
 
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 15_000);
@@ -178,6 +201,7 @@ export function PureMessageActions({
       audioRef.current = audio;
 
       audio.addEventListener("ended", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
@@ -187,6 +211,7 @@ export function PureMessageActions({
       });
 
       audio.addEventListener("error", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
@@ -196,7 +221,16 @@ export function PureMessageActions({
         toast.error("Audio playback failed.");
       });
 
+      audio.addEventListener("pause", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("pause");
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        if (shouldDispatchAvatarEvents) dispatchVisemeFrameEvent(audio.currentTime);
+      });
+
       setIsPlaying(true);
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("start");
       const playPromise = audio.play();
       requestThemeAudioResume();
       await playPromise;
@@ -207,6 +241,7 @@ export function PureMessageActions({
       } else {
         toast.error("Unable to generate speech right now.");
       }
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
       setIsPlaying(false);
       audioRef.current = null;
     } finally {
