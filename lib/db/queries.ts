@@ -24,6 +24,7 @@ import {
   rethrowChatSdkErrorOrWrapDbError,
 } from "./query-error-handling";
 import { generateUUID } from "../utils";
+import { RECENT_WINDOW_DAYS } from "../memory/policy";
 import {
   assertChatRateLimitTablesReady,
   assertChatTableColumnsReady,
@@ -649,6 +650,102 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get approved memories by project route"
+    );
+  }
+}
+
+type ApprovedMemoryScopeInput = {
+  userId: string;
+  route?: string;
+  projectRoute?: string;
+};
+
+function buildApprovedMemoryScopeFilters({
+  userId,
+  route,
+  projectRoute,
+}: ApprovedMemoryScopeInput): SQL[] {
+  const whereClauses: SQL[] = [
+    eq(memory.ownerId, userId),
+    eq(memory.isApproved, true),
+    eq(memory.sourceType, "chat"),
+  ];
+
+  if (route) {
+    whereClauses.push(eq(memory.route, route));
+  }
+
+  if (projectRoute) {
+    const normalizedProjectRoute = projectRoute.startsWith("/")
+      ? projectRoute.slice(1)
+      : projectRoute;
+    const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+    const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
+    whereClauses.push(sql`
+      (
+        ${memory.route} LIKE ${`${projectRoute}%`}
+        OR ${memory.route} LIKE ${`${normalizedProjectRoute}%`}
+        OR ${memory.route} = ${baseProjectRoute}
+        OR ${memory.route} = ${slashedBaseProjectRoute}
+      )
+    `);
+  }
+
+  return whereClauses;
+}
+
+export type ApprovedMemoryForContext = Awaited<
+  ReturnType<typeof getApprovedMemoriesForContext>
+>[number];
+
+export async function getApprovedMemoriesForContext({
+  userId,
+  route,
+  projectRoute,
+  recentOnly = true,
+  limit = 8,
+}: ApprovedMemoryScopeInput & {
+  recentOnly?: boolean;
+  limit?: number;
+}) {
+  try {
+    const whereClauses = buildApprovedMemoryScopeFilters({
+      userId,
+      route,
+      projectRoute,
+    });
+
+    if (recentOnly) {
+      const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000);
+      whereClauses.push(gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate));
+    }
+
+    const pageSize = Math.min(Math.max(limit, 1), 25);
+    const rows = await db
+      .select()
+      .from(memory)
+      .where(and(...whereClauses))
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+      .limit(pageSize);
+
+    const now = Date.now();
+
+    return rows.map((row) => {
+      const referenceTimestamp = row.approvedAt ?? row.createdAt;
+      const ageInDays = Math.floor(
+        (now - referenceTimestamp.getTime()) / 86400000
+      );
+
+      return {
+        ...row,
+        referenceTimestamp,
+        ageInDays: Math.max(ageInDays, 0),
+      };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories for context"
     );
   }
 }

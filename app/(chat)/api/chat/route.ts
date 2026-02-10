@@ -36,9 +36,7 @@ import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
-  getApprovedMemoriesByUserId,
-  getApprovedMemoriesByUserIdAndRoute,
-  getApprovedMemoriesByUserIdAndProjectRoute,
+  getApprovedMemoriesForContext,
   getChatById,
   getCurrentVehicleByUserIdAndRoute,
   getEnabledAtoFilesByAtoId,
@@ -55,6 +53,10 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage, UnofficialAto } from "@/lib/db/schema";
+import {
+  RECENT_WINDOW_DAYS,
+  getMemoryRecencyStatus,
+} from "@/lib/memory/policy";
 import {
   deriveEntitlementRules,
   formatSpoilerAccessContext,
@@ -116,22 +118,43 @@ const getProjectRoute = (agentSlash: string): string | null => {
   return null;
 };
 
-const formatMemoryContext = (
-  memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
-) => {
-  if (!memories.length) {
-    return null;
+const formatMemoryAge = (ageInDays: number): string => {
+  if (ageInDays <= 0) {
+    return "today";
   }
 
-  const formatted = memories
-    .slice(0, 8)
-    .map((memory) => {
-      const routeLabel = memory.route ? ` (${memory.route})` : "";
-      return `- ${memory.rawText}${routeLabel}`;
-    })
-    .join("\n");
+  if (ageInDays === 1) {
+    return "1 day ago";
+  }
 
-  return `MEMORY CONTEXT\nUse these approved user memories when relevant:\n${formatted}`;
+  return `${ageInDays} days ago`;
+};
+
+const formatMemoryContext = (
+  memories: Awaited<ReturnType<typeof getApprovedMemoriesForContext>>
+) => {
+  if (!memories.length) {
+    return [
+      "MEMORY CONTEXT",
+      `No recent memory found in the last ${RECENT_WINDOW_DAYS} days.`,
+      "Ask a brief follow-up if personal context is needed.",
+    ].join("\n");
+  }
+
+  const formatted = memories.map((memory) => {
+    const routeLabel = memory.route ? ` (${memory.route})` : "";
+    const timestamp = memory.referenceTimestamp.toISOString();
+    const relativeAge = formatMemoryAge(memory.ageInDays);
+    const status = getMemoryRecencyStatus(memory.ageInDays);
+
+    return `- [${timestamp} | ${relativeAge} | ${status}] ${memory.rawText}${routeLabel}`;
+  });
+
+  return [
+    "MEMORY CONTEXT",
+    `Use approved memories from the last ${RECENT_WINDOW_DAYS} days when relevant:`,
+    ...formatted,
+  ].join("\n");
 };
 
 const formatHomeLocationContext = (
@@ -586,25 +609,25 @@ export async function POST(request: Request) {
     let approvedMemories;
     if (isMyCarMindProject && projectRoute) {
       // Project-level memory sharing for MyCarMindATO subroutes
-      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         projectRoute,
       });
     } else if (isBrooksBearsProject && projectRoute) {
       // Project-level memory sharing for BrooksBears subroutes
-      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         projectRoute,
       });
     } else if (isMyCarMindAgent) {
       // Exact route for standalone MyCarMindATO
-      approvedMemories = await getApprovedMemoriesByUserIdAndRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         route: selectedAgent.slash,
       });
     } else {
       // All memories for other agents
-      approvedMemories = await getApprovedMemoriesByUserId({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
       });
     }
