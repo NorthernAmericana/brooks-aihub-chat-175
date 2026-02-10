@@ -557,21 +557,32 @@ CREATE INDEX idx_media_uploader ON commons_media(uploader_id);
 
 ### 4.3 Data Flow
 
+### 4.3.0 Counter Authority Decision (MVP)
+
+For MVP and initial scale, **application-level transactional updates are authoritative** for all denormalized counters (`post_count`, `comment_count`, `reply_count`, `vote_score`).
+
+- We **will not** use database triggers as the source of truth in MVP.
+- Every write path that mutates posts/comments/votes must execute in a single SQL transaction and update both canonical rows and denormalized counters before commit.
+- A scheduled reconciliation job (see section 4.4) is required to detect and repair drift.
+
 ```
 User creates post
   → POST /api/commons/[...campfire]/posts
   → Validate auth, content, campfire exists
-  → Insert into commons_posts
-  → Upload images → Insert into commons_media
+  → Insert into commons_posts (transaction begins)
+  → Insert commons_media rows for already-uploaded blobs
   → Increment campfire.post_count
   → Update campfire.last_activity_at
+  → Commit
   → Return post ID
 
 User votes on post
   → POST /api/commons/votes
   → Check existing vote by user
-  → Upsert vote record
-  → Update post.vote_score (trigger or app logic)
+  → Upsert vote record (transaction)
+  → Compute vote delta from previous vote value
+  → Update post.vote_score in same transaction
+  → Commit
   → Return new vote state
 
 User reports content
@@ -581,6 +592,77 @@ User reports content
   → Notify moderators (future: email/webhook)
   → Return confirmation
 ```
+
+### 4.4 Reconciliation and Drift Detection
+
+Run a nightly reconciliation job (cron) plus an ad-hoc backfill command after major migrations or incidents.
+
+**Nightly schedule (recommended):** `0 3 * * *` UTC.
+
+**Scope:**
+- `campfires.post_count`
+- `commons_posts.comment_count`
+- `commons_comments.reply_count`
+- `commons_posts.vote_score`
+- `commons_comments.vote_score`
+
+**Pattern:**
+1. Compute canonical aggregates from base tables (`commons_posts`, `commons_comments`, `commons_votes`).
+2. Compare against denormalized counters.
+3. Write mismatches to a reconciliation log table.
+4. Apply corrective `UPDATE` statements in batches.
+5. Emit alert if mismatch rate exceeds threshold (for example `>0.5%` of scanned rows).
+
+**Example drift detection SQL (posts):**
+
+```sql
+WITH actual AS (
+  SELECT p.id,
+         COALESCE(SUM(v.value), 0) AS vote_score_actual,
+         COALESCE(COUNT(c.id), 0) AS comment_count_actual
+  FROM commons_posts p
+  LEFT JOIN commons_votes v ON v.post_id = p.id
+  LEFT JOIN commons_comments c ON c.post_id = p.id
+  GROUP BY p.id
+)
+SELECT p.id,
+       p.vote_score AS vote_score_stored,
+       a.vote_score_actual,
+       p.comment_count AS comment_count_stored,
+       a.comment_count_actual
+FROM commons_posts p
+JOIN actual a ON a.id = p.id
+WHERE p.vote_score <> a.vote_score_actual
+   OR p.comment_count <> a.comment_count_actual;
+```
+
+**Example corrective SQL (backfill):**
+
+```sql
+UPDATE commons_posts p
+SET vote_score = a.vote_score_actual,
+    comment_count = a.comment_count_actual
+FROM (
+  SELECT p2.id,
+         COALESCE((SELECT SUM(v.value) FROM commons_votes v WHERE v.post_id = p2.id), 0) AS vote_score_actual,
+         COALESCE((SELECT COUNT(*) FROM commons_comments c WHERE c.post_id = p2.id), 0) AS comment_count_actual
+  FROM commons_posts p2
+) a
+WHERE p.id = a.id
+  AND (p.vote_score <> a.vote_score_actual OR p.comment_count <> a.comment_count_actual);
+```
+
+### 4.5 Failure Handling for Partial Writes
+
+**Rule:** A post is only persisted when all required DB writes complete successfully in one transaction.
+
+- Media blobs may upload before DB transaction starts.
+- If post creation transaction fails after blob upload succeeds:
+  - Roll back DB transaction.
+  - Mark uploaded blob path(s) as orphan candidates in `commons_media_orphans` (or job queue payload).
+  - Return non-2xx to client with retry-safe error code.
+- Cleanup worker deletes orphaned blobs after grace period (e.g., 24 hours) unless later attached to a valid post.
+- Client retry must be idempotent via request idempotency key; duplicate submission must not double-increment counters.
 
 ---
 
@@ -593,6 +675,27 @@ User reports content
 - **Server Actions** for mutations (forms, voting)
 - **Edge-compatible** queries (no pg_trgm initially)
 - **Type-safe** with Zod validation
+- **Transactional integrity for all counter mutations** (app layer is authoritative)
+
+### 5.1.1 Required Transaction Boundaries (Mutations)
+
+All mutation handlers below must use a single database transaction per request:
+
+1. **Post create/delete**
+   - `commons_posts` write/delete
+   - related `commons_media` writes/deletes
+   - `campfires.post_count` update
+   - `campfires.last_activity_at` update
+2. **Comment create/delete**
+   - `commons_comments` write/delete
+   - `commons_posts.comment_count` update
+   - `commons_comments.reply_count` update for parent comment (if nested)
+   - `campfires.last_activity_at` update
+3. **Vote create/update/delete**
+   - `commons_votes` upsert/delete
+   - target `vote_score` update using computed delta in same transaction
+
+If any step fails, rollback the entire transaction and return an error without partial counter changes.
 
 ### 5.2 API Routes
 
@@ -688,6 +791,13 @@ DELETE /api/commons/[...campfire]/posts/[postId]
 Response: { success: true }
 ```
 
+#### 5.2.2.1 Partial Write Failure Contract (Post + Media)
+
+- Treat blob upload and DB mutation as a two-phase flow: upload first, then transactional DB write.
+- If DB transaction fails, API returns failure and records uploaded blob paths for async cleanup.
+- Cleanup job must be retry-safe and idempotent (delete-if-exists).
+- API accepts an idempotency key for post creation to prevent duplicate rows/counter increments when clients retry after uncertain failures.
+
 #### 5.2.3 Comments
 
 ```typescript
@@ -710,6 +820,18 @@ Response: { comment: Comment }
 DELETE /api/commons/comments/[commentId]
 Response: { success: true }
 ```
+
+#### 5.2.3.1 Counter Correctness Test Matrix (Concurrency)
+
+Required automated coverage for counter correctness under concurrent load:
+
+1. 50 concurrent upvotes on same post from distinct users ⇒ final `vote_score = +50`.
+2. Mixed concurrent upvote/downvote operations on same post ⇒ final `vote_score` equals sum of final row values in `commons_votes`.
+3. Same user toggles vote concurrently (`+1 -> -1 -> remove`) ⇒ at most one vote row and correct final score delta.
+4. 100 concurrent top-level comments on one post ⇒ `commons_posts.comment_count = 100`.
+5. 40 concurrent replies to same parent comment ⇒ parent `reply_count = 40` and post `comment_count` matches product counting rules.
+6. Concurrent comment create + delete races on same post ⇒ counters never negative; final counts match canonical `COUNT(*)`.
+7. Transaction abort injection (fail after vote row write, before score update) ⇒ entire transaction rolls back; no drift introduced.
 
 #### 5.2.4 Votes
 
