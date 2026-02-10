@@ -27,8 +27,8 @@ export function getUnknownRouteFeedback(
 
   return {
     kind: "suggestions",
-    suggestions: suggestions.slice(0, 3),
-    title: `Unknown route: /${slash}/. Try one of these:`,
+    suggestions,
+    title: `Unknown route: /${slash}/. Try one of these matches:`,
   };
 }
 
