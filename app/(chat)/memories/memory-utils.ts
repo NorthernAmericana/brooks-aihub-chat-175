@@ -8,6 +8,22 @@ import type { MemoryItem } from "./memories-client";
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const RECENT_MEMORY_THRESHOLD_HOURS = 24 * 7;
+
+const getFreshnessLabel = (memoryAgeHours: number) => {
+  if (memoryAgeHours < 1) {
+    return "Updated this hour";
+  }
+
+  if (memoryAgeHours < 24) {
+    const hours = Math.floor(memoryAgeHours);
+    return `${hours} hour${hours === 1 ? "" : "s"} old`;
+  }
+
+  const days = Math.floor(memoryAgeHours / 24);
+  return `${days} day${days === 1 ? "" : "s"} old`;
+};
+
 const parseChatSource = (sourceUri: string) => {
   let candidate: string | null = null;
   let isChatSource = false;
@@ -56,6 +72,7 @@ const buildSource = (
 export const buildMemoryItems = async (
   memories: Memory[]
 ): Promise<MemoryItem[]> => {
+  const now = Date.now();
   const chatIds = new Set<string>();
   for (const memory of memories) {
     const { chatId } = parseChatSource(memory.sourceUri);
@@ -87,13 +104,24 @@ export const buildMemoryItems = async (
         : undefined) ??
       "Unknown agent";
 
+    const baseDate = memory.approvedAt ?? memory.createdAt;
+    const memoryAgeHours = Math.max(
+      0,
+      (now - baseDate.getTime()) / (1000 * 60 * 60)
+    );
+    const freshnessStatus =
+      memoryAgeHours <= RECENT_MEMORY_THRESHOLD_HOURS ? "recent" : "outdated";
+
     return {
       id: memory.id,
       rawText: memory.rawText,
       route: memory.route,
       agentLabel,
-      approvedAt: (memory.approvedAt ?? memory.createdAt).toISOString(),
+      approvedAt: baseDate.toISOString(),
       createdAt: memory.createdAt.toISOString(),
+      memoryAgeHours,
+      freshnessStatus,
+      freshnessLabel: getFreshnessLabel(memoryAgeHours),
       tags: memory.tags,
       source: buildSource(memory.sourceUri, chatTitleMap),
     };
