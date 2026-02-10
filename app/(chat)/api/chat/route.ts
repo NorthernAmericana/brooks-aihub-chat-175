@@ -737,6 +737,13 @@ export async function POST(request: Request) {
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
             memoryContext,
+            memorySaveConfig: {
+              userId: session.user.id,
+              chatId: id,
+              route: projectRoute ?? selectedAgent.slash,
+              agentId: selectedAgent.id,
+              agentLabel: selectedAgent.label,
+            },
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });

@@ -8,6 +8,7 @@ import {
 } from "@openai/agents";
 import { runGuardrails } from "@openai/guardrails";
 import { buildNamcLoreContext } from "@/lib/ai/namc-lore";
+import { createMemoryRecord } from "@/lib/db/queries";
 import { OpenAI } from "@/lib/openai/client";
 import type { ChatMessage } from "@/lib/types";
 
@@ -67,6 +68,30 @@ const guardrailsConfig: GuardrailsConfig = {
 };
 
 const context = { guardrailLlm: client };
+
+const LORE_MEMORY_SAVE_REGEX =
+  /\b(save|store|remember)\b[\s\S]*\b(shared\s+memory|memory)\b/i;
+
+const stripMemorySavePrefix = (text: string): string => {
+  const prefixed = text.replace(
+    /^(?:please\s+)?(?:can\s+you\s+)?(?:save|store|remember)\b[\s\S]*?\b(?:shared\s+memory|memory)\b(?:\s+as)?\s*[:\-]?\s*/i,
+    ""
+  );
+
+  const viaMemoryLabel = prefixed.replace(/^memory\s*[:\-]\s*/i, "");
+  return viaMemoryLabel.trim();
+};
+
+const buildLoreMemoryRawText = ({
+  summary,
+  agentLabel,
+}: {
+  summary: string;
+  agentLabel: string;
+}) => {
+  const date = new Date().toISOString().slice(0, 10);
+  return `Date: ${date}\nSummary: ${summary}\nSaved by: ${agentLabel}`;
+};
 
 function guardrailsHasTripwire(results: any[]): boolean {
   return (results ?? []).some((r) => r?.tripwireTriggered === true);
@@ -350,11 +375,19 @@ export const runNamcLorePlayground = async ({
   latestUserMessage,
   loreContext,
   memoryContext,
+  memorySaveConfig,
 }: {
   messages: ChatMessage[];
   latestUserMessage?: ChatMessage | null;
   loreContext?: string | null;
   memoryContext?: string | null;
+  memorySaveConfig?: {
+    userId: string;
+    chatId: string;
+    route: string;
+    agentId: string;
+    agentLabel: string;
+  };
 }): Promise<string> => {
   return await withTrace("NAMC Lore Playground", async () => {
     const lastUserMessage =
@@ -367,6 +400,37 @@ export const runNamcLorePlayground = async ({
         ?.filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("") ?? "";
+
+    if (
+      memorySaveConfig &&
+      inputText.trim() &&
+      LORE_MEMORY_SAVE_REGEX.test(inputText)
+    ) {
+      const summary = stripMemorySavePrefix(inputText) || inputText.trim();
+      const rawText = buildLoreMemoryRawText({
+        summary,
+        agentLabel: memorySaveConfig.agentLabel,
+      });
+
+      await createMemoryRecord({
+        ownerId: memorySaveConfig.userId,
+        sourceUri: `chat:${memorySaveConfig.chatId}`,
+        rawText,
+        route: memorySaveConfig.route,
+        agentId: memorySaveConfig.agentId,
+        agentLabel: memorySaveConfig.agentLabel,
+        tags: ["shared-memory", "lore-playground"],
+      });
+
+      return [
+        "Saved to shared memory.",
+        "",
+        `- Date: ${new Date().toISOString().slice(0, 10)}`,
+        `- Summary: ${summary}`,
+        `- Saved by: ${memorySaveConfig.agentLabel}`,
+      ].join("\n");
+    }
+
     const resolvedLoreContext =
       loreContext ??
       (inputText.trim() ? await buildNamcLoreContext(inputText) : null);
