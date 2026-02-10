@@ -969,7 +969,7 @@ function PureMultimodalInput({
             onChange={setActiveMenu}
           />
         </div>
-        {activeMenu === "history" && shouldShowMenuPanel && (
+        {shouldShowMenuPanel && (
           <SuggestedActions
             chatId={chatId}
             messages={messages}
