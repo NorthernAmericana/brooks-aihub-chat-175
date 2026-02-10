@@ -62,6 +62,13 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
+const memoryConflictHandlingPrompt = `
+Memory conflict-handling examples:
+- If memory says "User drives a 2020 Tesla" (status=stale) but the user now says "I sold that car last month", acknowledge the older memory and ask: "Got it—thanks for the update. Should I treat your Tesla memory as outdated and use your new vehicle going forward?"
+- If memory says "User prefers evening workouts" but the user asks for a morning plan today, treat the current request as authoritative and briefly confirm whether this is a one-off or a preference change.
+- If an older memory conflicts with a new statement, never assert the older memory as current fact; qualify it with age/status and ask a clarification question before acting on it.
+`;
+
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
@@ -80,6 +87,9 @@ export const systemPrompt = ({
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const slashRoutePrompt = slashRoute?.prompt ? `\n\n${slashRoute.prompt}` : "";
   const memoryPrompt = memoryContext ? `\n\n${memoryContext}` : "";
+  const memoryGuidancePrompt = memoryContext
+    ? `\n\n${memoryConflictHandlingPrompt}`
+    : "";
   const prompt = basePrompt ?? regularPrompt;
 
   // reasoning models don't need artifacts prompt (they can't use tools)
@@ -87,14 +97,14 @@ export const systemPrompt = ({
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking")
   ) {
-    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}${memoryGuidancePrompt}`;
   }
 
   if (!includeArtifactsPrompt) {
-    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}`;
+    return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}${memoryGuidancePrompt}`;
   }
 
-  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}\n\n${artifactsPrompt}`;
+  return `${prompt}\n\n${requestPrompt}${slashRoutePrompt}${memoryPrompt}${memoryGuidancePrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `
