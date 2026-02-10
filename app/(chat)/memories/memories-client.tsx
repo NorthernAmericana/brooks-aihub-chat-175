@@ -72,6 +72,9 @@ export type MemoryItem = {
   agentLabel: string;
   approvedAt: string;
   createdAt: string;
+  memoryAgeHours: number;
+  freshnessStatus: "recent" | "outdated";
+  freshnessLabel: string;
   tags: string[];
   source: MemorySource;
 };
@@ -185,6 +188,27 @@ type MemoryListResponse = {
   distinctRoutes: string[];
 };
 
+const getFreshnessBadgeVariant = (status: MemoryItem["freshnessStatus"]) =>
+  status === "recent" ? "default" : "destructive";
+
+const FreshnessBadge = ({ memory }: { memory: MemoryItem }) => (
+  <Badge variant={getFreshnessBadgeVariant(memory.freshnessStatus)}>
+    {memory.freshnessStatus === "recent" ? "Recent" : "Outdated"}
+  </Badge>
+);
+
+const FreshnessHint = ({ memory }: { memory: MemoryItem }) => {
+  if (memory.freshnessStatus !== "outdated") {
+    return null;
+  }
+
+  return (
+    <p className="text-xs text-amber-600">
+      Verify with user: this memory may no longer be current.
+    </p>
+  );
+};
+
 const MemoryDialog = ({
   memory,
   scope,
@@ -218,8 +242,11 @@ const MemoryDialog = ({
               </Badge>
               <Badge variant="secondary">{memory.agentLabel}</Badge>
               <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+              <FreshnessBadge memory={memory} />
             </div>
             <div>{scope.detail}</div>
+            <div>{memory.freshnessLabel}</div>
+            <FreshnessHint memory={memory} />
             <div>
               {sourceLabel}:{" "}
               {memory.source.href ? (
@@ -330,7 +357,11 @@ const MemoriesTable = ({
                 return (
                   <tr className="hover:bg-muted/40" key={memory.id}>
                     <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                      {dateLabel}
+                      <div className="flex flex-col gap-1">
+                        <span>{dateLabel}</span>
+                        <span>{memory.freshnessLabel}</span>
+                        <FreshnessBadge memory={memory} />
+                      </div>
                     </td>
                     <td className="px-3 py-2 align-top">
                       <div className="flex flex-col gap-1">
@@ -348,6 +379,7 @@ const MemoriesTable = ({
                       <div className="line-clamp-1 text-sm text-foreground">
                         {memory.rawText}
                       </div>
+                      <FreshnessHint memory={memory} />
                     </td>
                     <td className="px-3 py-2 align-top">
                       <div className="flex flex-wrap justify-end gap-2">
@@ -473,10 +505,13 @@ const MemoriesMobileList = ({
                 )}
                 {subroute ? <span>{subroute}</span> : null}
                 <Badge variant="secondary">{memory.agentLabel}</Badge>
+                <FreshnessBadge memory={memory} />
+                <span>{memory.freshnessLabel}</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
               <p className="text-sm text-foreground">{memory.rawText}</p>
+              <FreshnessHint memory={memory} />
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   onClick={() => onSpeak(memory)}
@@ -682,8 +717,11 @@ const CalendarDayDetails = ({
                 </Badge>
                 <Badge variant="secondary">{memory.agentLabel}</Badge>
                 <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+                <FreshnessBadge memory={memory} />
+                <Badge variant="outline">{memory.freshnessLabel}</Badge>
               </div>
               <p className="mt-2 text-sm text-foreground">{memory.rawText}</p>
+              <FreshnessHint memory={memory} />
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 {memory.source.href ? (
                   <Link
@@ -943,6 +981,12 @@ export const MemoriesClient = ({
   const [view, setView] = useState<"table" | "calendar">("table");
   const [routeFilter, setRouteFilter] = useState("all");
   const [subrouteFilter, setSubrouteFilter] = useState("all");
+  const [freshnessFilter, setFreshnessFilter] = useState<
+    "all" | "recent" | "outdated"
+  >("all");
+  const [freshnessSort, setFreshnessSort] = useState<
+    "newest" | "oldest" | "recent-first" | "outdated-first"
+  >("newest");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState(
@@ -1050,26 +1094,50 @@ export const MemoriesClient = ({
 
   const filteredMemories = useMemo(() => {
     const scopedMemories = routeData
-      .filter(({ routeInfo }) => {
+      .filter(({ routeInfo, memory }) => {
         if (routeFilter === "all") {
-          return true;
+          if (freshnessFilter === "all") {
+            return true;
+          }
+          return memory.freshnessStatus === freshnessFilter;
         }
         if (routeInfo.productRoute !== routeFilter) {
           return false;
         }
         if (subrouteFilter !== "all") {
-          return routeInfo.fullRoute === subrouteFilter;
+          if (routeInfo.fullRoute !== subrouteFilter) {
+            return false;
+          }
+        }
+        if (freshnessFilter !== "all") {
+          return memory.freshnessStatus === freshnessFilter;
         }
         return true;
       })
       .map(({ memory }) => memory);
 
-    return [...scopedMemories].sort(
-      (a, b) =>
+    return [...scopedMemories].sort((a, b) => {
+      if (freshnessSort === "recent-first") {
+        return a.memoryAgeHours - b.memoryAgeHours;
+      }
+
+      if (freshnessSort === "outdated-first") {
+        return b.memoryAgeHours - a.memoryAgeHours;
+      }
+
+      const timeDiff =
         new Date(getMemoryDate(b)).getTime() -
-        new Date(getMemoryDate(a)).getTime()
-    );
-  }, [routeData, routeFilter, subrouteFilter]);
+        new Date(getMemoryDate(a)).getTime();
+
+      return freshnessSort === "oldest" ? -timeDiff : timeDiff;
+    });
+  }, [
+    routeData,
+    routeFilter,
+    subrouteFilter,
+    freshnessFilter,
+    freshnessSort,
+  ]);
 
   const resetAudio = () => {
     if (audioRef.current) {
@@ -1273,6 +1341,55 @@ export const MemoriesClient = ({
               </Select>
             </div>
           ) : null}
+
+          <div className="grid gap-1">
+            <Label htmlFor="memories-freshness">Freshness</Label>
+            <Select
+              onValueChange={(value) =>
+                setFreshnessFilter(
+                  value === "recent" || value === "outdated"
+                    ? value
+                    : "all"
+                )
+              }
+              value={freshnessFilter}
+            >
+              <SelectTrigger className="w-[180px]" id="memories-freshness">
+                <SelectValue placeholder="All freshness" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All freshness</SelectItem>
+                <SelectItem value="recent">Recent (≤7 days)</SelectItem>
+                <SelectItem value="outdated">Outdated (&gt;7 days)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="memories-sort">Sort</Label>
+            <Select
+              onValueChange={(value) =>
+                setFreshnessSort(
+                  value === "oldest" ||
+                    value === "recent-first" ||
+                    value === "outdated-first"
+                    ? value
+                    : "newest"
+                )
+              }
+              value={freshnessSort}
+            >
+              <SelectTrigger className="w-[220px]" id="memories-sort">
+                <SelectValue placeholder="Sort memories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="recent-first">Recent first</SelectItem>
+                <SelectItem value="outdated-first">Outdated first</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid gap-1">
