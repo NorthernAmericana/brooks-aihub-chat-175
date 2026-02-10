@@ -281,14 +281,22 @@ export function formatSpoilerAccessContext(
 }
 
 /**
- * Check if user has access to a specific feature based on their entitlements
- * TODO: Implement actual rules based on game owned, novel owned, spoiler pass, progress, and unlock sources
+ * Check if user has access to a specific feature based on their entitlements.
  */
 export function checkFeatureAccess(
   rules: EntitlementRules,
   feature: string
 ): boolean {
   const spoilerSummary = getSpoilerAccessSummary(rules);
+  const foundersPerks = getFoundersAccessPerks(rules);
+  const foundersPerkMap = new Map<string, boolean>(
+    foundersPerks.map((perk) => [perk.featureKey, perk.isUnlocked])
+  );
+
+  if (foundersPerkMap.has(feature)) {
+    return foundersPerkMap.get(feature) ?? false;
+  }
+
   switch (feature) {
     case "game_base":
       return rules.hasGameAccess;
@@ -303,7 +311,7 @@ export function checkFeatureAccess(
         spoilerSummary.level === "light" || spoilerSummary.level === "full"
       );
     case "founders_perks":
-      return rules.hasFoundersAccess;
+      return foundersPerks.some((perk) => perk.isUnlocked);
     default:
       return false;
   }
@@ -311,20 +319,72 @@ export function checkFeatureAccess(
 
 /**
  * Founders Access perks
- * TODO: Define actual perks and implement logic
  */
-export const FOUNDERS_ACCESS_PERKS = {
-  // Placeholder perks - to be defined
-  earlyAccess: true,
-  exclusiveContent: true,
-  prioritySupport: true,
-  // Add more perks as they are defined
-} as const;
+export type FoundersAccessPerkId =
+  | "premium_routes"
+  | "ato_quota"
+  | "file_uploads"
+  | "instruction_limit"
+  | "avatar_pairing";
+
+export type FoundersAccessPerkDefinition = {
+  id: FoundersAccessPerkId;
+  featureKey:
+    | "founders_routes"
+    | "founders_ato_quota"
+    | "founders_file_uploads"
+    | "founders_instruction_limit"
+    | "founders_avatar_pairing";
+  title: string;
+  description: string;
+};
+
+export type FoundersAccessPerk = FoundersAccessPerkDefinition & {
+  isUnlocked: boolean;
+};
+
+export const FOUNDERS_ACCESS_PERKS: FoundersAccessPerkDefinition[] = [
+  {
+    id: "premium_routes",
+    featureKey: "founders_routes",
+    title: "Premium ATO routes",
+    description:
+      "Unlock Founders-only ATO routes and premium apps in the store.",
+  },
+  {
+    id: "ato_quota",
+    featureKey: "founders_ato_quota",
+    title: "Higher ATO creation quota",
+    description: "Create up to 10 unofficial ATOs each month.",
+  },
+  {
+    id: "file_uploads",
+    featureKey: "founders_file_uploads",
+    title: "More file and image uploads",
+    description: "Upload up to 10 files per ATO and 10 images per chat.",
+  },
+  {
+    id: "instruction_limit",
+    featureKey: "founders_instruction_limit",
+    title: "Longer instruction limits",
+    description: "Draft up to 999 instruction characters per ATO.",
+  },
+  {
+    id: "avatar_pairing",
+    featureKey: "founders_avatar_pairing",
+    title: "Avatar pairing at setup",
+    description: "Pair custom ATOs with avatars when you create them.",
+  },
+];
 
 /**
  * Get Founders Access perks for a user
- * TODO: Implement actual perk granting logic
  */
-export function getFoundersAccessPerks(): typeof FOUNDERS_ACCESS_PERKS {
-  return FOUNDERS_ACCESS_PERKS;
+export function getFoundersAccessPerks(
+  rules: EntitlementRules
+): FoundersAccessPerk[] {
+  return FOUNDERS_ACCESS_PERKS.map((perk) => ({
+    ...perk,
+    isUnlocked: rules.hasFoundersAccess,
+  }));
 }
