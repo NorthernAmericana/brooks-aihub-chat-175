@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "@/components/toast";
+import { FOUNDERS_ACCESS_PERKS } from "@/lib/entitlements/products";
 
 const FOUNDERS_PRICE_ID = "price_1SpBht050iAre6ZtPyv42z6s";
 
@@ -105,6 +106,41 @@ export default function PricingPage() {
             >
               Back to store
             </Link>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.3em] text-white/60">
+                Founders perks
+              </div>
+              <h2 className="mt-2 text-xl font-semibold text-white">
+                Everything unlocked with Founders Access
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-white/70">
+                Founders members get the premium ATO routes plus higher limits
+                across creation, uploads, and customization.
+              </p>
+            </div>
+            <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-white/70">
+              Included
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {FOUNDERS_ACCESS_PERKS.map((perk) => (
+              <div
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                key={perk.id}
+              >
+                <div className="text-sm font-semibold text-white">
+                  {perk.title}
+                </div>
+                <p className="mt-2 text-xs text-white/70">
+                  {perk.description}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       </div>

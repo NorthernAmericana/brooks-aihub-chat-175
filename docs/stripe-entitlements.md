@@ -14,7 +14,8 @@ This document describes the implementation plan and architecture for Stripe paym
   - [Checking Entitlements](#checking-entitlements)
 - [Founders Access](#founders-access)
   - [Pricing](#pricing)
-  - [Perks](#perks-placeholder)
+  - [Perks](#perks)
+  - [UI Indicators](#ui-indicators)
 - [Code Redemption](#code-redemption)
 - [Developer Notes](#developer-notes)
   - [Known Issues](#known-issues)
@@ -119,23 +120,25 @@ const { entitlements, loading, error, refetch } = useEntitlements(user.id);
 - **Billing**: Monthly recurring subscription
 - **Payment Methods**: Credit/debit cards via Stripe
 
-### Perks (Placeholder)
+### Perks
 
-Current placeholder perks defined in code:
+Founders Access unlocks the following concrete benefits:
 
-```typescript
-FOUNDERS_ACCESS_PERKS = {
-  earlyAccess: true,        // Early access to new features
-  exclusiveContent: true,   // Access to exclusive content
-  prioritySupport: true,    // Priority customer support
-}
-```
+- **Premium ATO routes**: Founders-only ATO routes and premium apps in the store.
+- **Higher ATO creation quota**: Create up to 10 unofficial ATOs each month.
+- **More file and image uploads**: Upload up to 10 files per ATO and 10 images per chat.
+- **Longer instruction limits**: Draft up to 999 instruction characters per ATO.
+- **Avatar pairing at setup**: Pair custom ATOs with avatars during creation.
 
-**TODO**: Define actual perks and implement logic for:
-- What features/content Founders Access grants
-- How perks are applied to user experience
-- UI indicators for Founders Access status
-- Additional benefits to incentivize subscriptions
+These perks are enforced by entitlement checks in the app and are surfaced in the UI.
+
+### UI Indicators
+
+Founders benefits show up in the product experience in a few places:
+
+- **Pricing page**: A Founders perks section lists every perk included in the subscription.
+- **Greeting dashboard**: Founders perks card shows active/locked status and a CTA to upgrade.
+- **ATO store details**: Founders-required apps include a banner that lists perks for locked users and confirms perks for active members.
 
 ## Code Redemption
 
@@ -276,7 +279,6 @@ This creates:
 - [ ] Admin UI for creating and managing redemption codes
 - [ ] User dashboard to view active subscriptions and entitlements
 - [ ] Email notifications for successful purchases
-- [ ] Define and implement actual Founders Access perks
 - [ ] Implement entitlement rules based on game progress and unlock sources
 
 ### Medium-term
