@@ -89,8 +89,8 @@ Think of it as:
 
 **Deliverables:**
 - `/commons` landing page with campfire directory
-- `/commons/[campfire]` page showing posts
-- `/commons/[campfire]/[postId]` page showing post + comments
+- `/commons/[...campfire]` page showing posts
+- `/commons/[...campfire]/[postId]` page showing post + comments
 - UI components for post cards, comment threads
 - Pagination and sorting
 
@@ -200,25 +200,27 @@ NAT: Commons uses a **filesystem-based campfire path model** that aligns with Ne
 
 ```
 /commons                           → Commons landing page
-/commons/[campfire]                → Campfire home (list of posts)
-/commons/[campfire]/[postId]       → Individual post + comments
-/commons/[campfire]/submit         → Create new post
+/commons/[...campfire]             → Campfire home (list of posts)
+/commons/[...campfire]/[postId]    → Individual post + comments
+/commons/[...campfire]/submit      → Create new post
 /commons/guidelines                → Community guidelines
 /commons/moderation                → Moderation queue (admin only)
 ```
 
+> **Canonical model decision:** `campfires.slug` remains a **single segment** identifier and hierarchy is represented via `campfires.parent_id`. Nested URL forms are resolved by Next.js catch-all params (`[...campfire]`) and mapped to a sequence of single-segment slugs.
+
 ### 3.2 Campfire Path Model
 
-Each campfire is identified by a **filesystem-style slug**:
+Each campfire is identified by a **single-segment slug**, while nesting is represented by `parent_id`:
 
 ```
-myflowerai          → General MyFlowerAI discussion
-myflowerai/strains  → Strain experiences and reviews
-myflowerai/tips     → Usage tips and advice
+myflowerai          → Root campfire (`slug='myflowerai'`, `parent_id=NULL`)
+strains             → Child campfire under `myflowerai` (`slug='strains'`, `parent_id=<myflowerai.id>`)
+tips                → Child campfire under `myflowerai` (`slug='tips'`, `parent_id=<myflowerai.id>`)
 
-namc               → NAMC general
-namc/lore          → Story discussion (spoiler-free)
-namc/spoilers      → Story discussion (spoilers allowed)
+namc               → Root campfire
+lore               → Child campfire under `namc`
+spoilers           → Child campfire under `namc`
 
 brooksbears        → BrooksBears experiences
 mycarmindato       → Road trip stories and tips
@@ -226,9 +228,10 @@ meta               → Brooks AI HUB feedback and feature requests
 ```
 
 **Rules:**
-- Campfire slugs must be lowercase, alphanumeric + hyphens (no leading/trailing hyphens, no consecutive hyphens)
-- Max depth: 2 levels (e.g., `category/subcategory`)
-- Slugs map directly to URL paths
+- `campfires.slug` must be lowercase, alphanumeric + hyphens (no leading/trailing hyphens, no consecutive hyphens)
+- `campfires.slug` is always one segment (no `/`)
+- Nesting uses `parent_id` (MVP depth: 2 levels max)
+- URL paths are assembled from ancestry segments and parsed via Next.js catch-all (`[...campfire]`)
 - Root campfires created by admins only
 - Sub-campfires can be proposed by users (admin approval)
 
@@ -240,13 +243,13 @@ Commons Landing (/commons)
 ├── All Campfires (alphabetical, with descriptions)
 └── Community Guidelines Link
 
-Campfire Home (/commons/[campfire])
+Campfire Home (/commons/[...campfire])
 ├── Campfire Header (name, description, member count)
 ├── Sort/Filter Controls (new, hot, top)
 ├── Post List (paginated, 20 per page)
 └── "New Post" Button (authenticated users)
 
-Post Detail (/commons/[campfire]/[postId])
+Post Detail (/commons/[...campfire]/[postId])
 ├── Post Header (author, timestamp, campfire)
 ├── Post Content (title, body, media)
 ├── Vote Controls
@@ -255,7 +258,7 @@ Post Detail (/commons/[campfire]/[postId])
 │   └── Nested Replies (max depth: 5 levels)
 └── Share/Report Buttons
 
-Submit Post (/commons/[campfire]/submit)
+Submit Post (/commons/[...campfire]/submit)
 ├── Campfire Context (breadcrumb)
 ├── Post Form (title, body, images)
 ├── Preview Pane
@@ -304,7 +307,7 @@ campfires ──< posts
 ```sql
 CREATE TABLE campfires (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug TEXT NOT NULL UNIQUE,              -- URL-safe identifier (e.g., 'myflowerai')
+  slug TEXT NOT NULL,                     -- Single URL segment (e.g., 'myflowerai', 'strains')
   parent_id UUID REFERENCES campfires(id), -- For sub-campfires
   name TEXT NOT NULL,                      -- Display name (e.g., 'MyFlowerAI')
   description TEXT,                        -- Short description
@@ -325,10 +328,15 @@ CREATE TABLE campfires (
   icon_url TEXT,                           -- Campfire icon/emoji
   banner_url TEXT,                         -- Header image
   
-  CONSTRAINT valid_slug CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  CONSTRAINT valid_slug CHECK (
+    slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND
+    position('/' in slug) = 0
+  ),
   CONSTRAINT max_slug_length CHECK (length(slug) <= 50)
 );
 
+CREATE UNIQUE INDEX ux_campfires_root_slug ON campfires(slug) WHERE parent_id IS NULL;
+CREATE UNIQUE INDEX ux_campfires_child_slug ON campfires(parent_id, slug) WHERE parent_id IS NOT NULL;
 CREATE INDEX idx_campfires_slug ON campfires(slug);
 CREATE INDEX idx_campfires_parent ON campfires(parent_id);
 CREATE INDEX idx_campfires_activity ON campfires(last_activity_at DESC);
@@ -519,7 +527,7 @@ CREATE INDEX idx_media_uploader ON commons_media(uploader_id);
 
 ```
 User creates post
-  → POST /api/commons/[campfire]/posts
+  → POST /api/commons/[...campfire]/posts
   → Validate auth, content, campfire exists
   → Insert into commons_posts
   → Upload images → Insert into commons_media
@@ -556,6 +564,11 @@ User reports content
 
 ### 5.2 API Routes
 
+**Route contract for campfire identity:**
+- `campfires.slug` is a single segment in storage (no `/`).
+- Nested URL forms use catch-all params (`[...campfire]`), e.g. `['myflowerai', 'strains']`.
+- Server resolves catch-all arrays by walking parent/child records (`parent_id`) from root to leaf and uses the leaf `campfire_id` for queries.
+
 #### 5.2.1 Campfires
 
 ```typescript
@@ -577,27 +590,27 @@ Response: { campfire: Campfire }
 
 ```typescript
 // List posts in campfire
-GET /api/commons/[campfire]/posts
+GET /api/commons/[...campfire]/posts
 Query: { sort: 'new' | 'hot' | 'top', page: number, limit: number }
 Response: { posts: Post[], hasMore: boolean, total: number }
 
 // Get single post
-GET /api/commons/[campfire]/posts/[postId]
+GET /api/commons/[...campfire]/posts/[postId]
 Response: { post: Post, author: User, media: Media[] }
 
 // Create post
-POST /api/commons/[campfire]/posts
+POST /api/commons/[...campfire]/posts
 Body: { title, body, images?: File[], nsfw: boolean, spoiler: boolean }
 Response: { post: Post }
 
 // Update post (author only, within 15min of creation)
-PATCH /api/commons/[campfire]/posts/[postId]
+PATCH /api/commons/[...campfire]/posts/[postId]
 Body: { title?, body? }
 Response: { post: Post }
 Note: API validates createdAt is within 15 minutes before allowing edit
 
 // Delete post (author or admin)
-DELETE /api/commons/[campfire]/posts/[postId]
+DELETE /api/commons/[...campfire]/posts/[postId]
 Response: { success: true }
 ```
 
@@ -693,7 +706,7 @@ Response: { success: true }
 For better UX, use Server Actions for form submissions:
 
 ```typescript
-// app/commons/[campfire]/submit/actions.ts
+// app/commons/[...campfire]/submit/actions.ts
 'use server'
 
 export async function createPost(formData: FormData) {
@@ -1375,9 +1388,9 @@ await db.delete(commons_media).where(eq(commons_media.postId, postId));
 ### PR #3: API Routes — Posts
 
 **Files:**
-- `app/api/commons/[campfire]/posts/route.ts` (GET, POST)
-- `app/api/commons/[campfire]/posts/[postId]/route.ts` (GET, PATCH, DELETE)
-- `app/commons/[campfire]/submit/actions.ts` (Server Actions)
+- `app/api/commons/[...campfire]/posts/route.ts` (GET, POST)
+- `app/api/commons/[...campfire]/posts/[postId]/route.ts` (GET, PATCH, DELETE)
+- `app/commons/[...campfire]/submit/actions.ts` (Server Actions)
 
 **Tests:**
 - Can list posts
@@ -1413,7 +1426,7 @@ await db.delete(commons_media).where(eq(commons_media.postId, postId));
 ### PR #5: UI — Post List & Post Cards
 
 **Files:**
-- `app/commons/[campfire]/page.tsx`
+- `app/commons/[...campfire]/page.tsx`
 - `components/commons/PostCard.tsx`
 - `components/commons/PostList.tsx`
 - `components/commons/SortControls.tsx`
@@ -1433,7 +1446,7 @@ await db.delete(commons_media).where(eq(commons_media.postId, postId));
 ### PR #6: UI — Post Detail & Comments
 
 **Files:**
-- `app/commons/[campfire]/[postId]/page.tsx`
+- `app/commons/[...campfire]/[postId]/page.tsx`
 - `components/commons/PostDetail.tsx`
 - `components/commons/CommentThread.tsx`
 - `components/commons/Comment.tsx`
@@ -1453,7 +1466,7 @@ await db.delete(commons_media).where(eq(commons_media.postId, postId));
 ### PR #7: Forms — Create Post & Comment
 
 **Files:**
-- `app/commons/[campfire]/submit/page.tsx`
+- `app/commons/[...campfire]/submit/page.tsx`
 - `components/commons/PostForm.tsx`
 - `components/commons/CommentForm.tsx`
 - `components/commons/MarkdownEditor.tsx`
@@ -1615,8 +1628,8 @@ describe('createPostAction', () => {
 
 **API Routes:**
 ```typescript
-// app/api/commons/[campfire]/posts/route.test.ts
-describe('POST /api/commons/[campfire]/posts', () => {
+// app/api/commons/[...campfire]/posts/route.test.ts
+describe('POST /api/commons/[...campfire]/posts', () => {
   it('creates post for authenticated user', async () => {
     const res = await fetch('/api/commons/test/posts', {
       method: 'POST',
@@ -1780,7 +1793,7 @@ app/
 │   │   └── page.tsx
 │   ├── moderation/
 │   │   └── page.tsx (admin only)
-│   └── [campfire]/
+│   └── [...campfire]/
 │       ├── page.tsx (post list)
 │       ├── submit/
 │       │   ├── page.tsx
@@ -1793,7 +1806,7 @@ app/
 │       ├── campfires/
 │       │   ├── route.ts
 │       │   └── [slug]/route.ts
-│       ├── [campfire]/
+│       ├── [...campfire]/
 │       │   └── posts/
 │       │       ├── route.ts
 │       │       └── [postId]/route.ts
