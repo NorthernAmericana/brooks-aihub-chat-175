@@ -1,5 +1,6 @@
 import { Check, Download, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -17,6 +18,33 @@ import { ReviewsSection } from "./ReviewsSection";
 export const dynamic = "force-dynamic";
 
 const APP_SLUG = "brooksbears";
+
+type ScreenshotData = {
+  src: string;
+  alt: string;
+  caption?: string;
+};
+
+const SCREENSHOT_BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNicgaGVpZ2h0PSc5Jz48cmVjdCB3aWR0aD0nMTYnIGhlaWdodD0nOScgZmlsbD0nI2UyZThmMCcvPjwvc3ZnPg==";
+
+const screenshots: ScreenshotData[] = [
+  {
+    src: "/store-screenshots/brooksbears/cover.svg",
+    alt: "BrooksBears landing screen showing Benjamin Bear and quick actions.",
+    caption: "Welcome screen",
+  },
+  {
+    src: "/store-screenshots/brooksbears/chat.svg",
+    alt: "BrooksBears chat interface with a friendly storytelling conversation.",
+    caption: "Story mode chat",
+  },
+  {
+    src: "/store-screenshots/brooksbears/tools.svg",
+    alt: "BrooksBears tools panel with jokes, check-ins, and companion prompts.",
+    caption: "Companion tools",
+  },
+];
 
 type AppStats = {
   avgRating: number | null;
@@ -313,14 +341,30 @@ export default async function BrooksBearsAppPage() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-700">Screenshots</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                className="flex aspect-[16/9] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-xs text-slate-400"
-                key={`placeholder-${index}`}
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {screenshots.map((screenshot) => (
+              <figure
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                key={screenshot.src}
               >
-                Screenshot placeholder
-              </div>
+                <div className="relative aspect-[16/9] bg-slate-100 animate-pulse">
+                  <Image
+                    alt={screenshot.alt}
+                    blurDataURL={SCREENSHOT_BLUR_DATA_URL}
+                    className="object-cover"
+                    fill
+                    loading="lazy"
+                    placeholder="blur"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    src={screenshot.src}
+                  />
+                </div>
+                {screenshot.caption ? (
+                  <figcaption className="border-t border-slate-100 px-3 py-2 text-xs text-slate-600">
+                    {screenshot.caption}
+                  </figcaption>
+                ) : null}
+              </figure>
             ))}
           </div>
         </section>
