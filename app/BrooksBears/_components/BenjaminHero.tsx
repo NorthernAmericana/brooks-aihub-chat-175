@@ -5,10 +5,34 @@ import { useEffect, useMemo, useState } from "react";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const HERO_SRC = "/ato/brooksbears/benjamin-hero.png";
+const SPEECH_EVENT = "brooksbears:tts-playback";
+const VISEME_EVENT = "brooksbears:tts-viseme";
+
+type MouthState = "rest" | "open" | "wide";
+
+type SpeechPlaybackDetail = {
+  state?: "start" | "end" | "pause";
+};
+
+type SpeechVisemeDetail = {
+  viseme?: string;
+};
+
+const visemeToMouthState = (viseme?: string): MouthState => {
+  if (!viseme) return "open";
+  if (["A", "E", "I", "AA", "AE", "EH", "IH"].includes(viseme)) {
+    return "wide";
+  }
+  if (["M", "B", "P", "FV"].includes(viseme)) {
+    return "rest";
+  }
+  return "open";
+};
 
 export default function BenjaminHero() {
   const searchParams = useSearchParams();
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [mouthState, setMouthState] = useState<MouthState>("rest");
   const [imageError, setImageError] = useState(false);
   const [isPointerFine, setIsPointerFine] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -24,6 +48,48 @@ export default function BenjaminHero() {
 
   useEffect(() => {
     setImageError(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onSpeechPlayback = (event: Event) => {
+      const detail = (event as CustomEvent<SpeechPlaybackDetail>).detail;
+      if (detail?.state === "start") {
+        setIsSpeaking(true);
+        return;
+      }
+      if (detail?.state === "pause" || detail?.state === "end") {
+        setIsSpeaking(false);
+        setMouthState("rest");
+      }
+    };
+
+    const onSpeechViseme = (event: Event) => {
+      const detail = (event as CustomEvent<SpeechVisemeDetail>).detail;
+      setIsSpeaking(true);
+      setMouthState(visemeToMouthState(detail?.viseme));
+    };
+
+    window.addEventListener(SPEECH_EVENT, onSpeechPlayback as EventListener);
+    window.addEventListener(VISEME_EVENT, onSpeechViseme as EventListener);
+    return () => {
+      window.removeEventListener(
+        SPEECH_EVENT,
+        onSpeechPlayback as EventListener
+      );
+      window.removeEventListener(VISEME_EVENT, onSpeechViseme as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isSpeaking) return;
+    const interval = window.setInterval(() => {
+      setMouthState((previous) =>
+        previous === "rest" ? "open" : previous === "open" ? "wide" : "open"
+      );
+    }, 140);
+    return () => window.clearInterval(interval);
   }, []);
 
   const isDebug = useMemo(() => {
@@ -74,6 +140,20 @@ export default function BenjaminHero() {
               Hero image coming soon
             </div>
           )}
+          {!imageError && (
+            <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-[22%]">
+              <div
+                className={
+                  "rounded-full bg-[#2f1506]/70 shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-100 " +
+                  (mouthState === "rest"
+                    ? "h-1.5 w-8"
+                    : mouthState === "open"
+                      ? "h-3 w-8"
+                      : "h-4 w-10")
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -86,8 +166,6 @@ export default function BenjaminHero() {
           Toggle speaking
         </button>
       )}
-
-      {/* TODO: Hook audio/viseme events here to drive mouth animation state. */}
     </div>
   );
 }
