@@ -133,8 +133,16 @@ const formatMemoryAge = (ageInDays: number): string => {
 const formatMemoryContext = (
   memories: Awaited<ReturnType<typeof getApprovedMemoriesForContext>>
 ) => {
+  const instructionBlock = [
+    "MEMORY RULES",
+    `- Treat memories with status=recent (<=${RECENT_WINDOW_DAYS} days old) as recent context.`,
+    "- If a memory is older/outdated or conflicts with the user's current message, acknowledge the memory's age/status and ask a brief clarification question before relying on it.",
+    "- Never present stale/outdated memory as a present fact without a qualifier.",
+  ].join("\n");
+
   if (!memories.length) {
     return [
+      instructionBlock,
       "MEMORY CONTEXT",
       `No recent memory found in the last ${RECENT_WINDOW_DAYS} days.`,
       "Ask a brief follow-up if personal context is needed.",
@@ -147,12 +155,14 @@ const formatMemoryContext = (
     const relativeAge = formatMemoryAge(memory.ageInDays);
     const status = getMemoryRecencyStatus(memory.ageInDays);
 
-    return `- [${timestamp} | ${relativeAge} | ${status}] ${memory.rawText}${routeLabel}`;
+    return `- [memory.v1 status=${status} saved_at=${timestamp} age=${relativeAge}] ${memory.rawText}${routeLabel}`;
   });
 
   return [
+    instructionBlock,
     "MEMORY CONTEXT",
     `Use approved memories from the last ${RECENT_WINDOW_DAYS} days when relevant:`,
+    "Memory line schema: [memory.v1 status=<recent|stale> saved_at=<ISO-8601> age=<relative age>] <memory text>",
     ...formatted,
   ].join("\n");
 };
@@ -664,7 +674,7 @@ export async function POST(request: Request) {
     const entitlementRules = deriveEntitlementRules(userEntitlements);
     const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
     const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
-    const memoryContext =
+    const enrichedMemoryContext =
       [
         baseMemoryContext,
         homeLocationContext,
@@ -740,7 +750,7 @@ export async function POST(request: Request) {
           const responseText = await runNamcMediaCurator({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
@@ -759,7 +769,7 @@ export async function POST(request: Request) {
           const responseText = await runNamcLorePlayground({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
             memorySaveConfig: {
               userId: session.user.id,
               chatId: id,
@@ -781,7 +791,7 @@ export async function POST(request: Request) {
         } else if (isMyFlowerAiAgent) {
           const responseText = await runMyFlowerAIWorkflow({
             messages: uiMessages,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
@@ -803,7 +813,7 @@ export async function POST(request: Request) {
         ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
             homeLocationText: homeLocation?.rawText ?? null,
           });
           const responseId = generateUUID();
@@ -823,7 +833,7 @@ export async function POST(request: Request) {
               selectedChatModel,
               requestHints,
               basePrompt: selectedAgent.systemPromptOverride,
-              memoryContext: memoryContext ?? undefined,
+              memoryContext: enrichedMemoryContext ?? undefined,
               includeArtifactsPrompt: !isNamcAgent || isNamcDocumentRequest,
             }),
             messages: modelMessages,
