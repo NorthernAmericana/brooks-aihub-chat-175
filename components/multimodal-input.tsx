@@ -37,6 +37,10 @@ import type { RouteSuggestion } from "@/lib/routes/types";
 import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
 import { normalizeRouteKey } from "@/lib/routes/utils";
 import {
+  getUnknownRouteFeedback,
+  UNKNOWN_ROUTE_FALLBACK_MESSAGE,
+} from "@/lib/routes/resolve-route-feedback";
+import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
@@ -272,6 +276,7 @@ function PureMultimodalInput({
     RouteSuggestion[]
   >([]);
   const [slashSuggestionTitle, setSlashSuggestionTitle] = useState<string>("");
+  const [unknownRouteHelper, setUnknownRouteHelper] = useState<string>("");
   const [redirectBannerUrl, setRedirectBannerUrl] = useState<string | null>(
     null
   );
@@ -358,6 +363,7 @@ function PureMultimodalInput({
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
       setRedirectBannerUrl(null);
+      setUnknownRouteHelper("");
     }
   }, [input]);
 
@@ -395,6 +401,7 @@ function PureMultimodalInput({
       setShowSlashSuggestions(false);
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
+      setUnknownRouteHelper("");
       onSelectAto?.(options?.atoId ?? null);
       // Focus the textarea
       setTimeout(() => {
@@ -518,11 +525,24 @@ function PureMultimodalInput({
             const resolved = (await response.json()) as ResolveRouteResponse;
 
             if (resolved.status === "unknown") {
-              setInlineSlashSuggestions(resolved.suggestions.slice(0, 3));
-              setSlashSuggestionTitle(
-                `Unknown route: /${parsedAction.slash}/. Try one of these:`
+              const feedback = getUnknownRouteFeedback(
+                parsedAction.slash,
+                resolved.suggestions
               );
-              setShowSlashSuggestions(resolved.suggestions.length > 0);
+
+              if (feedback.kind === "fallback") {
+                setInlineSlashSuggestions([]);
+                setSlashSuggestionTitle("");
+                setShowSlashSuggestions(false);
+                setUnknownRouteHelper(feedback.message);
+                toast.error(feedback.message);
+                return;
+              }
+
+              setInlineSlashSuggestions(feedback.suggestions);
+              setSlashSuggestionTitle(feedback.title);
+              setShowSlashSuggestions(true);
+              setUnknownRouteHelper("");
               return;
             }
 
@@ -547,6 +567,7 @@ function PureMultimodalInput({
 
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
+      setUnknownRouteHelper("");
       const promptText = parsedAction?.prompt ?? input;
       if (
         isNamcChatRoute &&
@@ -1070,6 +1091,14 @@ function PureMultimodalInput({
           </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
+          {unknownRouteHelper ? (
+            <p
+              className="mb-2 text-xs text-destructive"
+              data-testid="unknown-route-helper"
+            >
+              {unknownRouteHelper}
+            </p>
+          ) : null}
           <PromptInputTools className="flex w-full flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}

@@ -33,6 +33,66 @@ test.describe("Slash Route Parsing", () => {
     await expect(userMessage).toBeVisible({ timeout: 5000 });
   });
 
+  test("shows route suggestions when unknown route resolves with alternatives", async ({ page }) => {
+    await page.route("**/api/routes/resolve**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "unknown",
+          suggestions: [
+            {
+              id: "brooks-ai-hub",
+              label: "Brooks AI HUB",
+              slash: "Brooks AI HUB",
+              route: "/brooks-ai-hub",
+              kind: "official",
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.goto("/");
+
+    const input = page.getByTestId("multimodal-input");
+    await input.fill("/unknown route/ help me");
+    await page.getByTestId("send-button").click();
+
+    await expect(
+      page.getByText("Unknown route: /unknown route/. Try one of these:")
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Brooks AI HUB/i })).toBeVisible();
+  });
+
+  test("shows fallback feedback when unknown route has no suggestions", async ({ page }) => {
+    await page.route("**/api/routes/resolve**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "unknown",
+          suggestions: [],
+        }),
+      });
+    });
+
+    await page.goto("/");
+
+    const input = page.getByTestId("multimodal-input");
+    const draft = "/totallyunknown/ keep this";
+    await input.fill(draft);
+    await page.getByTestId("send-button").click();
+
+    await expect(
+      page.getByText("Route not found. Try typing `/` to browse available routes.")
+    ).toBeVisible();
+    await expect(page.getByTestId("unknown-route-helper")).toContainText(
+      "Route not found. Try typing `/` to browse available routes."
+    );
+    await expect(input).toHaveValue(draft);
+  });
+
   test("shows NAMC/Reader as founders-only in greeting", async ({ page }) => {
     await page.goto("/");
 
