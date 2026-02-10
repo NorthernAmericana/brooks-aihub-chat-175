@@ -1579,242 +1579,258 @@ await db.delete(commons_media).where(eq(commons_media.postId, postId));
 
 ## 9. Implementation Sequence (PR Plan)
 
+### 9.0 Stage Gates (applies to every PR)
+
+Each PR in this sequence must explicitly include the following before merge:
+
+1. **Dependencies:** list the prior PRs that must merge first.
+2. **API/query contracts:** API response/request shapes and DB query contracts are finalized before dependent UI work starts.
+3. **Definition of Ready (DoR):** required docs, shared types, fixtures/mocks, and acceptance notes are present.
+4. **Definition of Done (DoD):** milestone tests pass and include accessibility checks plus expected error-state handling.
+
+---
+
+### 9.1 Critical Path
+
+The fastest safe delivery path is:
+
+1. **Schema + validation:** finalize tables, constraints, and Zod schemas.
+2. **Read APIs:** ship stable read endpoints and query shapes for campfires/posts/comments.
+3. **Read UI:** build list/detail pages against finalized read contracts.
+4. **Mutations:** add create/edit/delete and voting flows with optimistic/error states.
+5. **Moderation/media:** add reporting/mod tools and media upload contracts.
+6. **Launch polish:** harden performance, accessibility, loading/error states, and SEO.
+
+---
+
 ### PR #1: Database Schema & Migrations
 
-**Files:**
-- `lib/db/schema.ts` (add Commons tables)
-- `lib/db/migrations/NNNN_create_commons_tables.ts`
-- `lib/db/queries/commons.ts` (query helpers)
+**Dependencies:** None (root dependency).
 
-**Tests:**
-- Migration runs successfully
-- Foreign key constraints work
-- Indexes created
+**API/query contracts finalized before UI:**
+- DB contract for `commons_*` tables, foreign keys, indexes, denormalized counters.
+- Query helper return types for campfires, posts, comments, votes.
 
-**Acceptance:**
-- [ ] All tables created
-- [ ] Sample data can be inserted
-- [ ] Migration is reversible
+**Definition of Ready (DoR):**
+- ERD/table notes documented.
+- Shared TypeScript types for core records added.
+- Seed fixture plan for smoke checks defined.
 
----
-
-### PR #2: API Routes — Campfires
-
-**Files:**
-- `app/api/commons/campfires/route.ts` (GET, POST)
-- `app/api/commons/campfires/[slug]/route.ts` (GET)
-- `lib/validation/commons.ts` (Zod schemas)
-
-**Tests:**
-- Can list campfires
-- Can get campfire details
-- Admin can create campfires
-- Non-admin cannot create
-
-**Acceptance:**
-- [ ] Endpoints return correct data
-- [ ] Proper error handling
-- [ ] Auth middleware works
+**Definition of Done (DoD):**
+- Migration + rollback tests pass.
+- Constraint/index checks pass.
+- Error states validated (invalid FK, duplicate slug, bad enum values).
 
 ---
 
-### PR #3: API Routes — Posts
+### PR #2: API Routes — Campfires (Read + Create)
 
-**Files:**
-- `app/api/commons/[...campfire]/posts/route.ts` (GET, POST)
-- `app/api/commons/[...campfire]/posts/[postId]/route.ts` (GET, PATCH, DELETE)
-- `app/commons/[...campfire]/submit/actions.ts` (Server Actions)
+**Dependencies:** PR #1.
 
-**Tests:**
-- Can list posts
-- Can create posts
-- Author can edit own posts (within time limit)
-- Author can delete own posts
+**API/query contracts finalized before UI:**
+- `GET /api/commons/campfires`, `GET /api/commons/campfires/[slug]`, `POST /api/commons/campfires` schemas finalized.
+- Validation contract (`lib/validation/commons.ts`) locked for request/response payloads.
 
-**Acceptance:**
-- [ ] CRUD operations work
-- [ ] Denormalized counts update
-- [ ] Proper validation
+**Definition of Ready (DoR):**
+- OpenAPI-style route notes or equivalent endpoint docs.
+- Typed API response interfaces exported for UI consumers.
+- Mock responses/fixtures for list + detail available.
+
+**Definition of Done (DoD):**
+- Route tests cover success, auth failures, and validation failures.
+- Accessibility impact reviewed for API-driven empty/error UI states.
+- Error contracts returned consistently (status + machine-readable code).
+
+---
+
+### PR #3: API Routes — Posts (Read + Mutations)
+
+**Dependencies:** PR #1, PR #2.
+
+**API/query contracts finalized before UI:**
+- List/detail/create/edit/delete post contracts finalized.
+- Server Action input/output shapes finalized and typed.
+
+**Definition of Ready (DoR):**
+- Pagination/sort/query-parameter spec documented.
+- Shared `Post`/`PostSummary`/mutation result types exported.
+- Mock post payloads for each sort mode provided.
+
+**Definition of Done (DoD):**
+- CRUD + authz tests pass, including edit-window constraints.
+- Error cases covered (not found, unauthorized, rate/validation failures).
+- Accessibility and error-message requirements defined for downstream UI states.
 
 ---
 
 ### PR #4: UI — Commons Landing & Campfire List
 
-**Files:**
-- `app/commons/page.tsx` (replace placeholder)
-- `components/commons/CampfireCard.tsx`
-- `components/commons/CampfireList.tsx`
+**Dependencies:** PR #2.
 
-**Tests:**
-- Page renders with campfires
-- Links navigate correctly
+**API/query contracts finalized before UI:**
+- Reads only from finalized campfire list/detail response types.
 
-**Acceptance:**
-- [ ] Campfires display correctly
-- [ ] Matches design system
-- [ ] Mobile responsive
+**Definition of Ready (DoR):**
+- Loading/empty/error mocks available.
+- Design-system mapping for cards/list confirmed.
+- Route-level metadata/content requirements documented.
+
+**Definition of Done (DoD):**
+- Render/navigation tests pass.
+- Accessibility checks pass (semantic headings, focus order, link labels).
+- Empty, loading, and API-error states implemented and tested.
 
 ---
 
 ### PR #5: UI — Post List & Post Cards
 
-**Files:**
-- `app/commons/[...campfire]/page.tsx`
-- `components/commons/PostCard.tsx`
-- `components/commons/PostList.tsx`
-- `components/commons/SortControls.tsx`
+**Dependencies:** PR #3, PR #4.
 
-**Tests:**
-- Posts display correctly
-- Sorting works (new, hot, top)
-- Pagination works
+**API/query contracts finalized before UI:**
+- Uses finalized post list contract for sort + pagination.
 
-**Acceptance:**
-- [ ] Post list loads
-- [ ] Sort/filter controls work
-- [ ] Pagination works
+**Definition of Ready (DoR):**
+- Sort option definitions and labels documented.
+- Pagination mocks (first/middle/last/empty pages) available.
+- Shared formatter utilities/types imported.
+
+**Definition of Done (DoD):**
+- Sorting/pagination tests pass.
+- Accessibility checks pass for controls and keyboard interaction.
+- Error + empty + retry states present for list fetching.
 
 ---
 
 ### PR #6: UI — Post Detail & Comments
 
-**Files:**
-- `app/commons/[...campfire]/[postId]/page.tsx`
-- `components/commons/PostDetail.tsx`
-- `components/commons/CommentThread.tsx`
-- `components/commons/Comment.tsx`
+**Dependencies:** PR #3, PR #5.
 
-**Tests:**
-- Post detail renders
-- Comments display nested
-- Deep nesting handles correctly
+**API/query contracts finalized before UI:**
+- Finalized detail/comment-thread payload contract (depth, parent, metadata).
 
-**Acceptance:**
-- [ ] Post displays with all metadata
-- [ ] Comments nest correctly
-- [ ] Max depth enforced
+**Definition of Ready (DoR):**
+- Nested thread mocks (0, shallow, deep) available.
+- Max-depth behavior and copy documented.
+- Shared comment node type exported.
+
+**Definition of Done (DoD):**
+- Detail + nested-thread tests pass.
+- Accessibility checks pass (heading hierarchy, landmarks, readable timestamps).
+- Error states (deleted post/comment, partial thread load failures) handled.
 
 ---
 
 ### PR #7: Forms — Create Post & Comment
 
-**Files:**
-- `app/commons/[...campfire]/submit/page.tsx`
-- `components/commons/PostForm.tsx`
-- `components/commons/CommentForm.tsx`
-- `components/commons/MarkdownEditor.tsx`
+**Dependencies:** PR #3, PR #6.
 
-**Tests:**
-- Forms validate correctly
-- Markdown preview works
-- Server Actions handle errors
+**API/query contracts finalized before UI:**
+- Mutation payload and validation error contracts finalized for post/comment creation.
 
-**Acceptance:**
-- [ ] Can create posts
-- [ ] Can add comments
-- [ ] Validation works
-- [ ] Error messages clear
+**Definition of Ready (DoR):**
+- Zod schemas and form field docs complete.
+- Client/server validation message mapping documented.
+- Happy-path + validation-failure mocks available.
+
+**Definition of Done (DoD):**
+- Form validation + submission tests pass.
+- Accessibility checks pass (labels, errors announced, keyboard flow).
+- Network/server validation errors surfaced with actionable messaging.
 
 ---
 
 ### PR #8: Voting System
 
-**Files:**
-- `app/api/commons/votes/route.ts`
-- `components/commons/VoteButtons.tsx`
-- `lib/actions/commons-votes.ts` (Server Action)
+**Dependencies:** PR #3, PR #5, PR #6.
 
-**Tests:**
-- Can upvote/downvote
-- Can change vote
-- Score updates correctly
-- Optimistic UI works
+**API/query contracts finalized before UI:**
+- Vote mutation/result contract finalized (new score, user vote state, conflict behavior).
 
-**Acceptance:**
-- [ ] Voting works on posts
-- [ ] Voting works on comments
-- [ ] Scores update correctly
-- [ ] Optimistic UI feels instant
+**Definition of Ready (DoR):**
+- Optimistic update spec documented.
+- Rollback behavior for failed requests documented.
+- Vote state mocks (none/up/down/toggled) available.
+
+**Definition of Done (DoD):**
+- Vote/toggle/conflict tests pass.
+- Accessibility checks pass (button labels, pressed states, SR text for score changes).
+- Error and rollback states implemented and verified.
 
 ---
 
 ### PR #9: Reporting & Moderation UI
 
-**Files:**
-- `app/api/commons/reports/route.ts`
-- `app/commons/moderation/page.tsx`
-- `components/commons/ReportForm.tsx`
-- `components/commons/ModerationQueue.tsx`
+**Dependencies:** PR #3, PR #6.
 
-**Tests:**
-- Users can report content
-- Admins see moderation queue
-- Admins can action reports
+**API/query contracts finalized before UI:**
+- Report creation and moderation-action contracts finalized.
 
-**Acceptance:**
-- [ ] Report form works
-- [ ] Queue displays reports
-- [ ] Admins can remove content
-- [ ] Non-admins cannot access
+**Definition of Ready (DoR):**
+- Moderator role/permission matrix documented.
+- Moderation queue mock payloads available.
+- Report reason taxonomy finalized.
+
+**Definition of Done (DoD):**
+- Report + queue action tests pass.
+- Accessibility checks pass for queue tables/forms/dialogs.
+- Error/forbidden states implemented for non-admin and failed actions.
 
 ---
 
 ### PR #10: Media Upload
 
-**Files:**
-- `app/api/commons/media/upload/route.ts`
-- `components/commons/ImageUpload.tsx`
-- `components/commons/MediaGallery.tsx`
+**Dependencies:** PR #3, PR #7.
 
-**Tests:**
-- Images upload successfully
-- Validation enforces limits
-- Images display in posts
+**API/query contracts finalized before UI:**
+- Upload request/response contract finalized (limits, mime types, metadata, alt text).
 
-**Acceptance:**
-- [ ] Can upload up to 5 images
-- [ ] Size/type validation works
-- [ ] Images display correctly
-- [ ] Alt text supported
+**Definition of Ready (DoR):**
+- Storage constraints and moderation hooks documented.
+- Client-side validation rules/types shared.
+- Upload success/failure mocks available.
+
+**Definition of Done (DoD):**
+- Upload validation + rendering tests pass.
+- Accessibility checks pass (alt text required flow, error announcement).
+- Error states for oversize/type/network failures implemented.
 
 ---
 
 ### PR #11: Seed Data & Guidelines
 
-**Files:**
-- `scripts/seed-commons.ts`
-- `app/commons/guidelines/page.tsx`
-- `data/commons/seed-campfires.json`
+**Dependencies:** PR #1 through PR #10 (content + feature parity dependency).
 
-**Tests:**
-- Seed script creates campfires
-- Guidelines page renders
+**API/query contracts finalized before UI:**
+- Seed payloads align with finalized schema and read contracts.
 
-**Acceptance:**
-- [ ] 5+ seed campfires created
-- [ ] Guidelines page complete
-- [ ] Campfires have descriptions
+**Definition of Ready (DoR):**
+- Seed content review checklist prepared.
+- Guidelines information architecture and copy draft complete.
+- Sample moderation-safe content fixtures available.
+
+**Definition of Done (DoD):**
+- Seed script and guidelines rendering tests pass.
+- Accessibility checks pass for guidelines content structure.
+- Error handling documented for partial seed failures.
 
 ---
 
-### PR #12: Polish & Performance
+### PR #12: Launch Polish & Performance
 
-**Files:**
-- Various (optimizations)
-- Loading states
-- Error boundaries
-- SEO metadata
+**Dependencies:** PR #1 through PR #11.
 
-**Tests:**
-- Lighthouse score > 90
-- Mobile usability passes
-- Accessibility audit passes
+**API/query contracts finalized before UI:**
+- No breaking contract changes; only additive/perf-safe adjustments.
 
-**Acceptance:**
-- [ ] Loading states on all pages
-- [ ] Error boundaries catch errors
-- [ ] SEO metadata present
-- [ ] Mobile responsive verified
+**Definition of Ready (DoR):**
+- Baseline Lighthouse/accessibility/perf metrics captured.
+- Error-boundary/loading-state inventory complete.
+- SEO metadata checklist complete.
+
+**Definition of Done (DoD):**
+- Performance + accessibility targets met.
+- End-to-end smoke tests pass across key journeys.
+- Every milestone has loading, empty, and error states verified.
 
 ---
 
