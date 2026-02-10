@@ -80,6 +80,10 @@ type UserAvatarUrlColumnState = "unchecked" | "ready" | "failed";
 let userAvatarUrlColumnState: UserAvatarUrlColumnState = "unchecked";
 let userAvatarUrlColumnPromise: Promise<void> | null = null;
 
+type MemoryVersioningColumnsState = "unchecked" | "ready" | "failed";
+let memoryVersioningColumnsState: MemoryVersioningColumnsState = "unchecked";
+let memoryVersioningColumnsPromise: Promise<void> | null = null;
+
 async function ensureUserBirthdayColumnReady() {
   if (userBirthdayColumnState === "ready") {
     return;
@@ -213,6 +217,119 @@ async function ensureUserAvatarUrlColumnReady() {
   }
 
   await userAvatarUrlColumnPromise;
+}
+
+async function ensureMemoryVersioningColumnsReady() {
+  if (memoryVersioningColumnsState === "ready") {
+    return;
+  }
+
+  if (memoryVersioningColumnsState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'Memory table schema is missing versioning columns. Run migrations and restart the service.'
+    );
+  }
+
+  if (!memoryVersioningColumnsPromise) {
+    memoryVersioningColumnsPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'Memory';
+      `);
+
+      const existingColumns = new Set(rows.map((row) => row.column_name));
+
+      if (!existingColumns.has("memoryKey")) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."Memory" versioning columns. Run migrations to keep schema in sync.'
+        );
+
+        await db.execute(sql`
+          ALTER TABLE "Memory"
+          ADD COLUMN IF NOT EXISTS "memoryKey" text;
+        `);
+
+        await db.execute(sql`
+          UPDATE "Memory"
+          SET "memoryKey" = COALESCE("memoryKey", "id"::text)
+          WHERE "memoryKey" IS NULL;
+        `);
+
+        await db.execute(sql`
+          ALTER TABLE "Memory"
+          ALTER COLUMN "memoryKey" SET NOT NULL;
+        `);
+      }
+
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "memoryVersion" integer;
+      `);
+      await db.execute(sql`
+        UPDATE "Memory"
+        SET "memoryVersion" = COALESCE("memoryVersion", 1)
+        WHERE "memoryVersion" IS NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "memoryVersion" SET DEFAULT 1;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "memoryVersion" SET NOT NULL;
+      `);
+
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "supersedesMemoryId" uuid;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "validFrom" timestamp;
+      `);
+      await db.execute(sql`
+        UPDATE "Memory"
+        SET "validFrom" = COALESCE("validFrom", COALESCE("approvedAt", "createdAt", now()))
+        WHERE "validFrom" IS NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "validFrom" SET DEFAULT now();
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "validFrom" SET NOT NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "validTo" timestamp;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "stalenessReason" text;
+      `);
+
+      await db.execute(sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS "Memory_owner_memory_version_idx"
+        ON "Memory" ("ownerId", "memoryKey", "memoryVersion");
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS "Memory_owner_memory_current_idx"
+        ON "Memory" ("ownerId", "memoryKey", "validTo");
+      `);
+    })()
+      .then(() => {
+        memoryVersioningColumnsState = "ready";
+      })
+      .catch((error) => {
+        memoryVersioningColumnsState = "failed";
+        throw error;
+      });
+  }
+
+  await memoryVersioningColumnsPromise;
 }
 
 function logDbError({
@@ -480,6 +597,7 @@ export async function getApprovedMemoriesByUserId({
   userId: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     return await db
       .select()
       .from(memory)
@@ -513,6 +631,7 @@ export async function getApprovedMemoriesByUserIdPage({
   projectRoute?: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const pageSize = Math.min(Math.max(limit, 1), 50);
     const whereClauses = [
       eq(memory.ownerId, userId),
@@ -568,6 +687,7 @@ export async function getDistinctApprovedMemoryRoutesByUserId({
   userId: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     return await db
       .select({ route: memory.route })
       .from(memory)
@@ -595,6 +715,7 @@ export async function getApprovedMemoriesByUserIdAndRoute({
   route: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     return await db
       .select()
       .from(memory)
@@ -623,6 +744,7 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
   projectRoute: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const normalizedProjectRoute = projectRoute.startsWith("/")
       ? projectRoute.slice(1)
       : projectRoute;
@@ -709,24 +831,13 @@ export async function getApprovedMemoriesForContext({
   limit?: number;
 }) {
   try {
-    const whereClauses = buildApprovedMemoryScopeFilters({
+    const rows = await getLatestApprovedMemoryVersionsForContext({
       userId,
       route,
       projectRoute,
+      recentOnly,
+      limit,
     });
-
-    if (recentOnly) {
-      const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000);
-      whereClauses.push(gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate));
-    }
-
-    const pageSize = Math.min(Math.max(limit, 1), 25);
-    const rows = await db
-      .select()
-      .from(memory)
-      .where(and(...whereClauses))
-      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
-      .limit(pageSize);
 
     const now = Date.now();
 
@@ -756,6 +867,7 @@ export async function deleteApprovedMemoriesByUserId({
   userId: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const deletedMemories = await db
       .delete(memory)
       .where(
@@ -786,6 +898,7 @@ export async function deleteApprovedMemoriesByUserIdInRange({
   endDate: Date;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const deletedMemories = await db
       .delete(memory)
       .where(
@@ -1338,6 +1451,9 @@ export async function createMemoryRecord({
   agentId,
   agentLabel,
   tags,
+  memoryKeyHint,
+  intent,
+  stalenessReason,
 }: {
   ownerId: string;
   sourceUri: string;
@@ -1346,25 +1462,76 @@ export async function createMemoryRecord({
   agentId?: string | null;
   agentLabel?: string | null;
   tags?: string[];
+  memoryKeyHint?: string | null;
+  intent?: "new_fact" | "update_fact";
+  stalenessReason?: string | null;
 }) {
   try {
-    const [record] = await db
-      .insert(memory)
-      .values({
-        ownerId,
-        sourceType: "chat",
-        sourceUri,
-        route: route ?? null,
-        agentId: agentId ?? null,
-        agentLabel: agentLabel ?? null,
-        rawText,
-        tags: tags ?? [],
-        isApproved: true,
-        approvedAt: new Date(),
-      })
-      .returning();
+    await ensureMemoryVersioningColumnsReady();
 
-    return record;
+    return await db.transaction(async (tx) => {
+      const now = new Date();
+      const resolvedMemoryKey = memoryKeyHint?.trim()
+        ? memoryKeyHint.trim()
+        : generateUUID();
+
+      const [latestVersion] = await tx
+        .select()
+        .from(memory)
+        .where(
+          and(
+            eq(memory.ownerId, ownerId),
+            eq(memory.memoryKey, resolvedMemoryKey),
+            eq(memory.sourceType, "chat")
+          )
+        )
+        .orderBy(desc(memory.memoryVersion), desc(memory.createdAt))
+        .limit(1);
+
+      const shouldCreateNextVersion =
+        intent === "update_fact" || Boolean(latestVersion);
+      const nextVersion = latestVersion
+        ? latestVersion.memoryVersion + 1
+        : 1;
+
+      if (shouldCreateNextVersion && latestVersion && latestVersion.validTo === null) {
+        await tx
+          .update(memory)
+          .set({
+            validTo: now,
+            stalenessReason: stalenessReason ?? "superseded",
+            updatedAt: now,
+          })
+          .where(eq(memory.id, latestVersion.id));
+      }
+
+      const [record] = await tx
+        .insert(memory)
+        .values({
+          ownerId,
+          sourceType: "chat",
+          sourceUri,
+          route: route ?? null,
+          agentId: agentId ?? null,
+          agentLabel: agentLabel ?? null,
+          rawText,
+          tags: tags ?? [],
+          isApproved: true,
+          approvedAt: now,
+          updatedAt: now,
+          memoryKey: resolvedMemoryKey,
+          memoryVersion: nextVersion,
+          supersedesMemoryId:
+            shouldCreateNextVersion && latestVersion
+              ? latestVersion.id
+              : null,
+          validFrom: now,
+          validTo: null,
+        })
+        .returning();
+
+      return record;
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -1372,6 +1539,64 @@ export async function createMemoryRecord({
     );
   }
 }
+
+export async function getLatestApprovedMemoryVersionsForContext({
+  userId,
+  route,
+  projectRoute,
+  recentOnly = true,
+  limit = 8,
+}: ApprovedMemoryScopeInput & {
+  recentOnly?: boolean;
+  limit?: number;
+}) {
+  try {
+    await ensureMemoryVersioningColumnsReady();
+
+    const whereClauses = buildApprovedMemoryScopeFilters({
+      userId,
+      route,
+      projectRoute,
+    });
+    const now = new Date();
+
+    whereClauses.push(lte(memory.validFrom, now));
+    whereClauses.push(sql`${memory.validTo} IS NULL OR ${memory.validTo} > ${now}`);
+    whereClauses.push(sql`
+      NOT EXISTS (
+        SELECT 1
+        FROM "Memory" newer
+        WHERE newer."ownerId" = ${memory.ownerId}
+          AND newer."memoryKey" = ${memory.memoryKey}
+          AND newer."memoryVersion" > ${memory.memoryVersion}
+          AND newer."validFrom" <= ${now}
+          AND (newer."validTo" IS NULL OR newer."validTo" > ${now})
+      )
+    `);
+
+    if (recentOnly) {
+      const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000);
+      whereClauses.push(
+        gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate)
+      );
+    }
+
+    const pageSize = Math.min(Math.max(limit, 1), 25);
+
+    return await db
+      .select()
+      .from(memory)
+      .where(and(...whereClauses))
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+      .limit(pageSize);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get latest approved memory versions for context"
+    );
+  }
+}
+
 
 export async function createHomeLocationRecord({
   ownerId,

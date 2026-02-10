@@ -189,6 +189,12 @@ export type Stream = InferSelectModel<typeof stream>;
 
 export const memory = pgTable("Memory", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
+  memoryKey: text("memoryKey").notNull(),
+  memoryVersion: integer("memoryVersion").notNull().default(1),
+  supersedesMemoryId: uuid("supersedesMemoryId"),
+  validFrom: timestamp("validFrom").notNull().defaultNow(),
+  validTo: timestamp("validTo"),
+  stalenessReason: text("stalenessReason"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   sourceType: varchar("sourceType", {
@@ -211,7 +217,20 @@ export const memory = pgTable("Memory", {
   rawText: text("rawText").notNull(),
   normalizedText: text("normalizedText"),
   embeddingsRef: text("embeddingsRef"),
-});
+},
+  (table) => ({
+    ownerMemoryVersionIdx: uniqueIndex("Memory_owner_memory_version_idx").on(
+      table.ownerId,
+      table.memoryKey,
+      table.memoryVersion
+    ),
+    supersedesMemoryRef: foreignKey({
+      columns: [table.supersedesMemoryId],
+      foreignColumns: [table.id],
+      name: "Memory_supersedesMemoryId_Memory_id_fk",
+    }),
+  })
+);
 
 export type Memory = InferSelectModel<typeof memory>;
 

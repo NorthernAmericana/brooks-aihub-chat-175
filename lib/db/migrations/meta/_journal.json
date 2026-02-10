@@ -232,6 +232,13 @@
       "tag": "0030_add_user_avatar_url",
       "breakpoints": true,
       "idx": 32
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1770735622309,
+      "tag": "0033_memory_versioning",
+      "breakpoints": true
     }
   ]
 }
