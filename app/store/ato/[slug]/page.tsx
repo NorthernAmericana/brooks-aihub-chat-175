@@ -13,15 +13,17 @@ import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 export const dynamic = "force-dynamic";
 
 type AtoStoreDetailsPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function AtoStoreDetailsPage({
   params,
 }: AtoStoreDetailsPageProps) {
-  const details = await getAppDetails(params.slug);
+  const { slug } = await params;
+
+  const details = await getAppDetails(slug);
   if (!details) {
     notFound();
   }
