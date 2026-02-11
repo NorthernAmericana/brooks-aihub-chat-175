@@ -12,6 +12,21 @@ export const NEVER_REDIRECT_PATH_PREFIXES = [
   "/diag/redirect-sources",
 ] as const;
 
+// Exact paths that should be publicly accessible (no auth required)
+export const PUBLIC_EXACT_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/welcome",
+] as const;
+
+// Path prefixes that should be publicly accessible (no auth required)
+export const PUBLIC_PATH_PREFIXES = [
+  "/pricing",
+  "/brooks-ai-hub/tutorial",
+  "/api/auth",
+] as const;
+
 export const REDIRECT_LOOP_COOKIE = "redirect_loop_count";
 export const REDIRECT_LOOP_LIMIT = 3;
 
@@ -48,6 +63,18 @@ export function isNeverRedirectPath(pathname: string) {
       return pathname.startsWith(prefix);
     }
     return pathname === prefix;
+  });
+}
+
+export function isPublicPath(pathname: string) {
+  // Check exact path matches first
+  if (PUBLIC_EXACT_PATHS.includes(pathname as typeof PUBLIC_EXACT_PATHS[number])) {
+    return true;
+  }
+  
+  // Then check prefix matches
+  return PUBLIC_PATH_PREFIXES.some((prefix) => {
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
   });
 }
 

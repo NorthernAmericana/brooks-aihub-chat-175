@@ -7,6 +7,7 @@ import {
   getLoopCount,
   hasRedirectBypass,
   isNeverRedirectPath,
+  isPublicPath,
   REDIRECT_LOOP_COOKIE,
   REDIRECT_LOOP_LIMIT,
 } from "./lib/redirect-debug";
@@ -85,6 +86,12 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
+  // Allow unauthenticated access to public paths (e.g., landing page, pricing, tutorial)
+  // This prevents redirect loops for crawlers and allows indexing
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
