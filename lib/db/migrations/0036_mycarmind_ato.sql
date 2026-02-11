@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS mycarmind_place_visits (
   place_id uuid NOT NULL REFERENCES mycarmind_places(id) ON DELETE CASCADE,
   visited_at timestamptz NOT NULL DEFAULT now(),
   note text,
-  media_asset_id uuid REFERENCES media_assets(id) ON DELETE SET NULL,
+  media_asset_id uuid,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -108,9 +108,9 @@ CREATE TABLE IF NOT EXISTS mycarmind_media_assets (
   user_id uuid NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
   place_id uuid REFERENCES mycarmind_places(id) ON DELETE SET NULL,
   visit_id uuid REFERENCES mycarmind_place_visits(id) ON DELETE SET NULL,
-  media_asset_id uuid REFERENCES media_assets(id) ON DELETE CASCADE,
+  media_asset_id uuid,
   publish_to_commons boolean NOT NULL DEFAULT false,
-  commons_post_id uuid REFERENCES commons_posts(id) ON DELETE SET NULL,
+  commons_post_id uuid,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
