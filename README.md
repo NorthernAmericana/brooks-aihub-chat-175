@@ -213,3 +213,71 @@ When updating the service worker:
 1. Increment `CACHE_VERSION` in `public/sw.js` (e.g., "v1" → "v2")
 2. Old caches are automatically cleaned up on activation
 3. Users will receive the updated service worker on next page load
+
+## Redirect Loop Debugging
+
+Use the built-in redirect diagnostics when investigating `ERR_TOO_MANY_REDIRECTS`.
+
+### 1) Trace redirect decisions
+
+Use the diagnostic endpoint (never redirected by proxy middleware):
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace' | jq
+```
+
+You can emulate Vercel host/proto behavior with forwarded headers:
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace' \
+  -H 'host: brooksaihub.app' \
+  -H 'x-forwarded-host: brooksaihub.app' \
+  -H 'x-forwarded-proto: https' \
+  -H 'x-forwarded-for: 203.0.113.10' | jq
+```
+
+To force proxy middleware to skip redirects during debugging:
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace?noredirect=1' \
+  -H 'x-redirect-debug: 1' | jq
+```
+
+### 2) Reproduce loop conditions locally
+
+1. Start dev server:
+
+```bash
+pnpm dev
+```
+
+2. Follow redirects from the homepage:
+
+```bash
+curl -I -L --max-redirs 20 'http://localhost:3000/'
+```
+
+3. Compare with no-redirect debug mode:
+
+```bash
+curl -I 'http://localhost:3000/?noredirect=1'
+```
+
+4. Check diagnostics and metadata routes:
+
+```bash
+curl -I 'http://localhost:3000/api/diag/redirect-trace'
+curl -I 'http://localhost:3000/robots.txt'
+curl -I 'http://localhost:3000/sitemap.xml'
+```
+
+### 3) Resolution checklist
+
+- Choose **one canonical host** (`www.brooksaihub.app` or `brooksaihub.app`) and keep it consistent.
+- Ensure Vercel domain redirect settings and app-level host redirects do **not** fight each other.
+- Avoid duplicate redirect logic across:
+  - Vercel dashboard domain settings
+  - `next.config.*` (`redirects`, `rewrites`, `trailingSlash`, `basePath`, i18n redirects)
+  - proxy/middleware auth guards
+- Ensure auth guard logic does not create login loops (`/login -> auth redirect -> /login`).
+- Keep `/api/diag/redirect-trace`, `/robots.txt`, `/sitemap.xml`, `/favicon.ico`, and `/_next/*` out of middleware redirect flows.
