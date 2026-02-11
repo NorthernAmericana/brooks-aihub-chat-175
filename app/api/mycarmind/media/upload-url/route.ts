@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
+import { issueUploadToken } from "@/lib/mycarmind/upload-token";
 
 const schema = z.object({
   filename: z.string().min(1),
@@ -13,16 +14,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = schema.safeParse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = schema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const uploadUrl = new URL("/api/myflower/upload", request.url).toString();
+  const uploadAuth = issueUploadToken(session.user.id, parsed.data.filename, parsed.data.contentType);
+
+  const uploadUrl = new URL("/api/mycarmind/media/upload", request.url).toString();
 
   return NextResponse.json({
     uploadUrl,
-    filename: parsed.data.filename,
-    contentType: parsed.data.contentType,
+    method: "POST",
+    authorization: {
+      type: "bearer-upload-token",
+      token: uploadAuth.token,
+      expiresInSeconds: uploadAuth.expiresInSeconds,
+    },
+    expected: {
+      filename: parsed.data.filename,
+      contentType: parsed.data.contentType,
+      multipartFieldName: "file",
+      bodyFields: ["filename", "contentType"],
+      header: "Authorization: Bearer <token>",
+    },
   });
 }

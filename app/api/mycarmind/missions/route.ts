@@ -21,8 +21,7 @@ export async function GET() {
   }
 
   const missions = await withUserDbContext(userId, async (tx) => {
-    const qtx = tx as { execute: typeof db.execute };
-    return qtx.execute(sql`
+    return tx.execute(sql`
       SELECT m.id, m.slug, m.name, m.description, m.city, m.state, m.target_count, m.points_reward,
         COALESCE(p.progress_count, 0) AS progress_count,
         p.completed_at

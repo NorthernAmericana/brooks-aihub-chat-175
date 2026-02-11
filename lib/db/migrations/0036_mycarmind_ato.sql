@@ -109,17 +109,40 @@ CREATE TABLE IF NOT EXISTS mycarmind_media_assets (
   user_id uuid NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
   place_id uuid REFERENCES mycarmind_places(id) ON DELETE SET NULL,
   visit_id uuid REFERENCES mycarmind_place_visits(id) ON DELETE SET NULL,
-  media_asset_id uuid,
+  media_asset_id uuid NOT NULL,
   publish_to_commons boolean NOT NULL DEFAULT false,
   commons_post_id uuid,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS mycarmind_place_sources_place_url_not_null_uidx ON mycarmind_place_sources(place_id, citation_url) WHERE citation_url IS NOT NULL;
 CREATE INDEX IF NOT EXISTS mycarmind_places_city_state_category_idx ON mycarmind_places(city, state, category);
 CREATE INDEX IF NOT EXISTS mycarmind_places_state_city_idx ON mycarmind_places(state, city);
 CREATE INDEX IF NOT EXISTS mycarmind_missions_location_idx ON mycarmind_missions(state, city, category);
 CREATE INDEX IF NOT EXISTS mycarmind_visits_user_created_idx ON mycarmind_place_visits(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS mycarmind_place_embeddings_vector_idx ON mycarmind_place_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);
+
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'media_assets') THEN
+    ALTER TABLE mycarmind_place_visits
+      ADD CONSTRAINT mycarmind_place_visits_media_asset_fk
+      FOREIGN KEY (media_asset_id) REFERENCES media_assets(id) ON DELETE RESTRICT;
+
+    ALTER TABLE mycarmind_media_assets
+      ADD CONSTRAINT mycarmind_media_assets_media_asset_fk
+      FOREIGN KEY (media_asset_id) REFERENCES media_assets(id) ON DELETE RESTRICT;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'commons_posts') THEN
+    ALTER TABLE mycarmind_media_assets
+      ADD CONSTRAINT mycarmind_media_assets_commons_post_fk
+      FOREIGN KEY (commons_post_id) REFERENCES commons_posts(id) ON DELETE SET NULL;
+  END IF;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END$$;
 
 ALTER TABLE mycarmind_user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mycarmind_user_stats ENABLE ROW LEVEL SECURITY;

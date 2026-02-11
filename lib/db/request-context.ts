@@ -1,9 +1,11 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export async function withUserDbContext<T>(
   userId: string,
-  callback: (tx: unknown) => Promise<T>
+  callback: (tx: DbTransaction) => Promise<T>
 ): Promise<T> {
   return db.transaction(async (tx) => {
     await tx.execute(
