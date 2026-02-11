@@ -1,4 +1,4 @@
-import type { InferSelectModel } from "drizzle-orm";
+import { sql, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -720,3 +720,143 @@ export const myflowerPosts = pgTable("myflower_posts", {
 });
 
 export type MyflowerPost = InferSelectModel<typeof myflowerPosts>;
+
+export const commonsCampfire = pgTable(
+  "campfires",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    slug: varchar("slug", { length: 64 }).notNull(),
+    path: varchar("path", { length: 128 }).notNull(),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: text("description").notNull().default(""),
+    createdById: uuid("created_by_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    isActive: boolean("is_active").notNull().default(true),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+    isPrivate: boolean("is_private").notNull().default(false),
+  },
+  (table) => ({
+    slugUniqueIdx: uniqueIndex("campfires_slug_unique_idx").on(table.slug),
+    pathUniqueIdx: uniqueIndex("campfires_path_unique_idx").on(table.path),
+  })
+);
+
+export type CommonsCampfire = InferSelectModel<typeof commonsCampfire>;
+
+export const commonsPost = pgTable("commons_posts", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  campfireId: uuid("campfire_id")
+    .notNull()
+    .references(() => commonsCampfire.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: text("body").notNull(),
+  bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
+    .notNull()
+    .default("markdown"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  editedAt: timestamp("edited_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  isVisible: boolean("is_visible").notNull().default(true),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+});
+
+export type CommonsPost = InferSelectModel<typeof commonsPost>;
+
+export const commonsComment = pgTable(
+  "commons_comments",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => commonsPost.id, { onDelete: "cascade" }),
+    parentCommentId: uuid("parent_comment_id"),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
+      .notNull()
+      .default("markdown"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    isVisible: boolean("is_visible").notNull().default(true),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+  },
+  (table) => ({
+    parentCommentRef: foreignKey({
+      columns: [table.parentCommentId],
+      foreignColumns: [table.id],
+      name: "commons_comments_parent_comment_id_commons_comments_id_fk",
+    }),
+  })
+);
+
+export type CommonsComment = InferSelectModel<typeof commonsComment>;
+
+export const commonsVote = pgTable(
+  "commons_votes",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    postId: uuid("post_id").references(() => commonsPost.id, {
+      onDelete: "cascade",
+    }),
+    commentId: uuid("comment_id").references(() => commonsComment.id, {
+      onDelete: "cascade",
+    }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    value: integer("value").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+  },
+  (table) => ({
+    postVotePerUserUniqueIdx: uniqueIndex("commons_votes_post_user_unique_idx")
+      .on(table.postId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
+    commentVotePerUserUniqueIdx: uniqueIndex(
+      "commons_votes_comment_user_unique_idx"
+    )
+      .on(table.commentId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
+  })
+);
+
+export type CommonsVote = InferSelectModel<typeof commonsVote>;
+
+export const commonsReport = pgTable("commons_reports", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  postId: uuid("post_id").references(() => commonsPost.id, {
+    onDelete: "cascade",
+  }),
+  commentId: uuid("comment_id").references(() => commonsComment.id, {
+    onDelete: "cascade",
+  }),
+  reporterId: uuid("reporter_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  reason: varchar("reason", { length: 64 }).notNull(),
+  details: text("details"),
+  status: varchar("status", {
+    enum: ["open", "reviewing", "dismissed", "resolved"],
+  })
+    .notNull()
+    .default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+});
+
+export type CommonsReport = InferSelectModel<typeof commonsReport>;
