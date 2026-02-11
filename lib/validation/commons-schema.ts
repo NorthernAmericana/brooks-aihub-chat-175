@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CAMPFIRE_SEGMENT_REGEX } from "@/lib/commons/routing";
 
-const MARKDOWN_DISALLOWED_PATTERN = /<\s*script\b/i;
+const MARKDOWN_DISALLOWED_PATTERN = /<\s*\w/i;
 
 const markdownBodySchema = z
   .string()

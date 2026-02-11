@@ -7,6 +7,11 @@ const migrationSql = readFileSync(
   "utf-8"
 );
 
+const hardeningMigrationSql = readFileSync(
+  "lib/db/migrations/0035_nat_commons_phase0_hardening.sql",
+  "utf-8"
+);
+
 test("commons votes enforces one-target-per-vote invariant", () => {
   assert.match(migrationSql, /commons_votes_single_target_chk/);
   assert.match(
@@ -15,12 +20,32 @@ test("commons votes enforces one-target-per-vote invariant", () => {
   );
 });
 
-test("commons vote uniqueness constraints exist for post and comment targets", () => {
-  assert.match(migrationSql, /commons_votes_post_user_unique_idx/);
-  assert.match(migrationSql, /commons_votes_comment_user_unique_idx/);
+test("commons vote uniqueness constraints are partial for soft-delete compatibility", () => {
+  assert.match(
+    migrationSql,
+    /commons_votes_post_user_unique_idx[\s\S]*WHERE "is_deleted" = false/
+  );
+  assert.match(
+    migrationSql,
+    /commons_votes_comment_user_unique_idx[\s\S]*WHERE "is_deleted" = false/
+  );
+  assert.match(hardeningMigrationSql, /DROP INDEX IF EXISTS "commons_votes_post_user_unique_idx"/);
+  assert.match(
+    hardeningMigrationSql,
+    /CREATE UNIQUE INDEX IF NOT EXISTS "commons_votes_post_user_unique_idx"[\s\S]*WHERE "is_deleted" = false/
+  );
+});
+
+test("commons timestamps use timestamptz", () => {
+  assert.equal((migrationSql.match(/timestamptz/g) ?? []).length >= 10, true);
+  assert.match(hardeningMigrationSql, /ALTER COLUMN "created_at" TYPE timestamptz/);
 });
 
 test("commons seed data includes at least 3 initial campfires", () => {
-  const seedRows = [...migrationSql.matchAll(/\('.*?', '.*?', '.*?', '.*?', (true|false), (true|false)\)/g)];
+  const seedRows = [
+    ...migrationSql.matchAll(
+      /\('.*?', '.*?', '.*?', '.*?', (true|false), (true|false)\)/g
+    ),
+  ];
   assert.ok(seedRows.length >= 3);
 });

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   campfirePathSchema,
@@ -18,11 +19,11 @@ test("createPostSchema accepts valid payload and trims title", () => {
   assert.equal(parsed.campfirePath, "community/builders-circle");
 });
 
-test("createPostSchema rejects unsafe markdown script tags", () => {
+test("createPostSchema rejects html markup to reduce XSS risk", () => {
   const parsed = createPostSchema.safeParse({
     campfirePath: "community/builders-circle",
     title: "A valid title",
-    body: "<script>alert('xss')</script>",
+    body: "<img src=x onerror=alert('xss') />",
   });
 
   assert.equal(parsed.success, false);
@@ -44,4 +45,17 @@ test("listPostsQuerySchema provides pagination defaults", () => {
 test("createCommentSchema enforces body length contract", () => {
   const parsed = createCommentSchema.safeParse({ body: "" });
   assert.equal(parsed.success, false);
+});
+
+test("commons query layer does not project author email", () => {
+  const querySource = readFileSync("lib/db/commons-queries.ts", "utf-8");
+
+  assert.equal(querySource.includes("authorEmail"), false);
+});
+
+test("campfire post lookup enforces active public campfire filters", () => {
+  const querySource = readFileSync("lib/db/commons-queries.ts", "utf-8");
+
+  assert.match(querySource, /eq\(commonsCampfire\.isPrivate, false\)/);
+  assert.match(querySource, /eq\(commonsCampfire\.isActive, true\)/);
 });

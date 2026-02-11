@@ -1,11 +1,12 @@
 import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import {
-  commonsCampfire,
-  commonsComment,
-  commonsPost,
-  user,
-} from "@/lib/db/schema";
+import { commonsCampfire, commonsComment, commonsPost } from "@/lib/db/schema";
+
+const PUBLIC_ACTIVE_CAMPFIRE_FILTER = and(
+  eq(commonsCampfire.isDeleted, false),
+  eq(commonsCampfire.isPrivate, false),
+  eq(commonsCampfire.isActive, true)
+);
 
 export async function listCampfires() {
   return db
@@ -21,7 +22,7 @@ export async function listCampfires() {
       isPrivate: commonsCampfire.isPrivate,
     })
     .from(commonsCampfire)
-    .where(and(eq(commonsCampfire.isDeleted, false), eq(commonsCampfire.isPrivate, false)))
+    .where(PUBLIC_ACTIVE_CAMPFIRE_FILTER)
     .orderBy(desc(commonsCampfire.lastActivityAt));
 }
 
@@ -32,9 +33,17 @@ export async function listPostsByCampfirePath(options: {
   sort: "newest" | "oldest";
 }) {
   const [campfire] = await db
-    .select()
+    .select({
+      id: commonsCampfire.id,
+      slug: commonsCampfire.slug,
+      path: commonsCampfire.path,
+      name: commonsCampfire.name,
+      description: commonsCampfire.description,
+      createdAt: commonsCampfire.createdAt,
+      lastActivityAt: commonsCampfire.lastActivityAt,
+    })
     .from(commonsCampfire)
-    .where(and(eq(commonsCampfire.path, options.campfirePath), eq(commonsCampfire.isDeleted, false)))
+    .where(and(eq(commonsCampfire.path, options.campfirePath), PUBLIC_ACTIVE_CAMPFIRE_FILTER))
     .limit(1);
 
   if (!campfire) {
@@ -44,7 +53,13 @@ export async function listPostsByCampfirePath(options: {
   const [{ value: total }] = await db
     .select({ value: count() })
     .from(commonsPost)
-    .where(and(eq(commonsPost.campfireId, campfire.id), eq(commonsPost.isDeleted, false), eq(commonsPost.isVisible, true)));
+    .where(
+      and(
+        eq(commonsPost.campfireId, campfire.id),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true)
+      )
+    );
 
   const posts = await db
     .select({
@@ -54,12 +69,20 @@ export async function listPostsByCampfirePath(options: {
       createdAt: commonsPost.createdAt,
       updatedAt: commonsPost.updatedAt,
       authorId: commonsPost.authorId,
-      authorEmail: user.email,
     })
     .from(commonsPost)
-    .innerJoin(user, eq(user.id, commonsPost.authorId))
-    .where(and(eq(commonsPost.campfireId, campfire.id), eq(commonsPost.isDeleted, false), eq(commonsPost.isVisible, true)))
-    .orderBy(options.sort === "newest" ? desc(commonsPost.createdAt) : asc(commonsPost.createdAt))
+    .where(
+      and(
+        eq(commonsPost.campfireId, campfire.id),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true)
+      )
+    )
+    .orderBy(
+      options.sort === "newest"
+        ? desc(commonsPost.createdAt)
+        : asc(commonsPost.createdAt)
+    )
     .limit(options.pageSize)
     .offset((options.page - 1) * options.pageSize);
 
@@ -76,11 +99,17 @@ export async function getPostWithComments(postId: string) {
       updatedAt: commonsPost.updatedAt,
       campfireId: commonsPost.campfireId,
       authorId: commonsPost.authorId,
-      authorEmail: user.email,
     })
     .from(commonsPost)
-    .innerJoin(user, eq(user.id, commonsPost.authorId))
-    .where(and(eq(commonsPost.id, postId), eq(commonsPost.isDeleted, false), eq(commonsPost.isVisible, true)))
+    .innerJoin(commonsCampfire, eq(commonsCampfire.id, commonsPost.campfireId))
+    .where(
+      and(
+        eq(commonsPost.id, postId),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true),
+        PUBLIC_ACTIVE_CAMPFIRE_FILTER
+      )
+    )
     .limit(1);
 
   if (!post) {
@@ -95,10 +124,8 @@ export async function getPostWithComments(postId: string) {
       updatedAt: commonsComment.updatedAt,
       parentCommentId: commonsComment.parentCommentId,
       authorId: commonsComment.authorId,
-      authorEmail: user.email,
     })
     .from(commonsComment)
-    .innerJoin(user, eq(user.id, commonsComment.authorId))
     .where(
       and(
         eq(commonsComment.postId, post.id),
@@ -120,13 +147,7 @@ export async function createPost(options: {
   const [campfire] = await db
     .select({ id: commonsCampfire.id })
     .from(commonsCampfire)
-    .where(
-      and(
-        eq(commonsCampfire.path, options.campfirePath),
-        eq(commonsCampfire.isDeleted, false),
-        eq(commonsCampfire.isActive, true)
-      )
-    )
+    .where(and(eq(commonsCampfire.path, options.campfirePath), PUBLIC_ACTIVE_CAMPFIRE_FILTER))
     .limit(1);
 
   if (!campfire) {
@@ -155,7 +176,15 @@ export async function createComment(options: {
   const [post] = await db
     .select({ id: commonsPost.id })
     .from(commonsPost)
-    .where(and(eq(commonsPost.id, options.postId), eq(commonsPost.isDeleted, false), eq(commonsPost.isVisible, true)))
+    .innerJoin(commonsCampfire, eq(commonsCampfire.id, commonsPost.campfireId))
+    .where(
+      and(
+        eq(commonsPost.id, options.postId),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true),
+        PUBLIC_ACTIVE_CAMPFIRE_FILTER
+      )
+    )
     .limit(1);
 
   if (!post) {

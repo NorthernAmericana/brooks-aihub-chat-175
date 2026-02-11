@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS "campfires" (
   "name" varchar(120) NOT NULL,
   "description" text DEFAULT '' NOT NULL,
   "created_by_id" uuid,
-  "created_at" timestamp DEFAULT now() NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL,
-  "last_activity_at" timestamp DEFAULT now() NOT NULL,
+  "created_at" timestamptz DEFAULT now() NOT NULL,
+  "updated_at" timestamptz DEFAULT now() NOT NULL,
+  "last_activity_at" timestamptz DEFAULT now() NOT NULL,
   "is_active" boolean DEFAULT true NOT NULL,
   "is_deleted" boolean DEFAULT false NOT NULL,
   "is_private" boolean DEFAULT false NOT NULL
@@ -31,10 +31,10 @@ CREATE TABLE IF NOT EXISTS "commons_posts" (
   "title" varchar(160) NOT NULL,
   "body" text NOT NULL,
   "body_format" varchar DEFAULT 'markdown' NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL,
-  "edited_at" timestamp,
-  "deleted_at" timestamp,
+  "created_at" timestamptz DEFAULT now() NOT NULL,
+  "updated_at" timestamptz DEFAULT now() NOT NULL,
+  "edited_at" timestamptz,
+  "deleted_at" timestamptz,
   "is_visible" boolean DEFAULT true NOT NULL,
   "is_deleted" boolean DEFAULT false NOT NULL
 );
@@ -61,10 +61,10 @@ CREATE TABLE IF NOT EXISTS "commons_comments" (
   "author_id" uuid NOT NULL,
   "body" text NOT NULL,
   "body_format" varchar DEFAULT 'markdown' NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL,
-  "edited_at" timestamp,
-  "deleted_at" timestamp,
+  "created_at" timestamptz DEFAULT now() NOT NULL,
+  "updated_at" timestamptz DEFAULT now() NOT NULL,
+  "edited_at" timestamptz,
+  "deleted_at" timestamptz,
   "is_visible" boolean DEFAULT true NOT NULL,
   "is_deleted" boolean DEFAULT false NOT NULL
 );
@@ -96,8 +96,8 @@ CREATE TABLE IF NOT EXISTS "commons_votes" (
   "comment_id" uuid,
   "user_id" uuid NOT NULL,
   "value" integer DEFAULT 1 NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL,
+  "created_at" timestamptz DEFAULT now() NOT NULL,
+  "updated_at" timestamptz DEFAULT now() NOT NULL,
   "is_deleted" boolean DEFAULT false NOT NULL,
   CONSTRAINT "commons_votes_single_target_chk" CHECK (("post_id" IS NOT NULL AND "comment_id" IS NULL) OR ("post_id" IS NULL AND "comment_id" IS NOT NULL)),
   CONSTRAINT "commons_votes_value_chk" CHECK ("value" IN (-1, 1))
@@ -121,9 +121,9 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "commons_votes_post_user_unique_idx" ON "commons_votes" USING btree ("post_id", "user_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "commons_votes_post_user_unique_idx" ON "commons_votes" USING btree ("post_id", "user_id") WHERE "is_deleted" = false;
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "commons_votes_comment_user_unique_idx" ON "commons_votes" USING btree ("comment_id", "user_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "commons_votes_comment_user_unique_idx" ON "commons_votes" USING btree ("comment_id", "user_id") WHERE "is_deleted" = false;
 --> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS "commons_reports" (
@@ -134,9 +134,9 @@ CREATE TABLE IF NOT EXISTS "commons_reports" (
   "reason" varchar(64) NOT NULL,
   "details" text,
   "status" varchar DEFAULT 'open' NOT NULL,
-  "created_at" timestamp DEFAULT now() NOT NULL,
-  "updated_at" timestamp DEFAULT now() NOT NULL,
-  "resolved_at" timestamp,
+  "created_at" timestamptz DEFAULT now() NOT NULL,
+  "updated_at" timestamptz DEFAULT now() NOT NULL,
+  "resolved_at" timestamptz,
   "is_deleted" boolean DEFAULT false NOT NULL,
   CONSTRAINT "commons_reports_target_chk" CHECK (("post_id" IS NOT NULL) OR ("comment_id" IS NOT NULL))
 );

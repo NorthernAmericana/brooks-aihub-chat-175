@@ -1,4 +1,4 @@
-import type { InferSelectModel } from "drizzle-orm";
+import { sql, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -732,9 +732,9 @@ export const commonsCampfire = pgTable(
     createdById: uuid("created_by_id").references(() => user.id, {
       onDelete: "set null",
     }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    lastActivityAt: timestamp("last_activity_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
     isActive: boolean("is_active").notNull().default(true),
     isDeleted: boolean("is_deleted").notNull().default(false),
     isPrivate: boolean("is_private").notNull().default(false),
@@ -760,10 +760,10 @@ export const commonsPost = pgTable("commons_posts", {
   bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
     .notNull()
     .default("markdown"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  editedAt: timestamp("edited_at"),
-  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  editedAt: timestamp("edited_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   isVisible: boolean("is_visible").notNull().default(true),
   isDeleted: boolean("is_deleted").notNull().default(false),
 });
@@ -785,10 +785,10 @@ export const commonsComment = pgTable(
     bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
       .notNull()
       .default("markdown"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    editedAt: timestamp("edited_at"),
-    deletedAt: timestamp("deleted_at"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     isVisible: boolean("is_visible").notNull().default(true),
     isDeleted: boolean("is_deleted").notNull().default(false),
   },
@@ -817,18 +817,19 @@ export const commonsVote = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     value: integer("value").notNull().default(1),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     isDeleted: boolean("is_deleted").notNull().default(false),
   },
   (table) => ({
-    postVotePerUserUniqueIdx: uniqueIndex("commons_votes_post_user_unique_idx").on(
-      table.postId,
-      table.userId
-    ),
+    postVotePerUserUniqueIdx: uniqueIndex("commons_votes_post_user_unique_idx")
+      .on(table.postId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
     commentVotePerUserUniqueIdx: uniqueIndex(
       "commons_votes_comment_user_unique_idx"
-    ).on(table.commentId, table.userId),
+    )
+      .on(table.commentId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
   })
 );
 
@@ -852,9 +853,9 @@ export const commonsReport = pgTable("commons_reports", {
   })
     .notNull()
     .default("open"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   isDeleted: boolean("is_deleted").notNull().default(false),
 });
 
