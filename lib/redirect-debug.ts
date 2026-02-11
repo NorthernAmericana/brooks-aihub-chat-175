@@ -74,9 +74,6 @@ export function isPublicPath(pathname: string) {
   
   // Then check prefix matches
   return PUBLIC_PATH_PREFIXES.some((prefix) => {
-    if (prefix.endsWith("/")) {
-      return pathname.startsWith(prefix);
-    }
     return pathname === prefix || pathname.startsWith(`${prefix}/`);
   });
 }
