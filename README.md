@@ -281,3 +281,32 @@ curl -I 'http://localhost:3000/sitemap.xml'
   - proxy/middleware auth guards
 - Ensure auth guard logic does not create login loops (`/login -> auth redirect -> /login`).
 - Keep `/api/diag/redirect-trace`, `/robots.txt`, `/sitemap.xml`, `/favicon.ico`, and `/_next/*` out of middleware redirect flows.
+
+## MyCarMindATO architecture + how to add a new city
+
+### Architecture (MVP)
+
+- **UI routes**: `/mycarmind` with subpages for Explore, Place Detail, Missions, Profile, and Leaderboard.
+- **API routes**: `/api/mycarmind/*` for search, place reads, saves, visits, missions, leaderboard, and media attach flows.
+- **Data source model**:
+  1. Curated JSON registry in `data/mycarmind/season-1/us/{state}/{city}`
+  2. Synced relational records in Neon Postgres (`mycarmind_*` tables)
+  3. Place citations persisted in `mycarmind_place_sources`
+- **Gamification**: points are awarded on visit events and mission progress updates (`visit=10`, `mission=100`, `city badge=250` config target).
+- **Store integration**: app catalog references MyCarMindATO at `/mycarmind/install` and app entry `/mycarmind`.
+
+### Add a new city
+
+1. Create a city folder: `data/mycarmind/season-1/us/{state-slug}/{city-slug}/`
+2. Add three files:
+   - `city.json` (city metadata)
+   - `places.json` (curated places + `sources` URLs)
+   - `missions.json` (city/season mission templates)
+3. Ensure each place includes stable `slug`, `name`, `city`, `state`, `category`, and source citations.
+4. Run sync:
+   ```bash
+   pnpm mycarmind:sync
+   ```
+5. Validate via API:
+   - `GET /api/mycarmind/places?city=...&state=...`
+   - `GET /api/mycarmind/search?q=...`
