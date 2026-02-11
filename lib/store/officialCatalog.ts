@@ -39,8 +39,8 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     description: "Intelligent automotive AI assistant for your vehicle",
     iconUrl: "/icons/mycarmindato-appicon.png",
     category: "Utilities",
-    storePath: "/mycarmindato-app",
-    appPath: "/MyCarMindATO",
+    storePath: "/mycarmind/install",
+    appPath: "/mycarmind",
     isOfficial: true,
   },
   {

@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "pensacola-downtown-waterfront",
+    "name": "Downtown Pensacola Waterfront",
+    "description": "Walkable waterfront district for sunsets, local food, and public events.",
+    "city": "Pensacola",
+    "state": "Florida",
+    "category": "waterfront",
+    "lat": 30.4091,
+    "lng": -87.2118,
+    "sources": [
+      {
+        "url": "https://www.visitpensacola.com/",
+        "title": "Visit Pensacola"
+      }
+    ]
+  },
+  {
+    "slug": "pensacola-blue-angel-parkway-view",
+    "name": "Blue Angel Parkway Scenic Pull-off",
+    "description": "Drive-friendly scenic stop for short breaks and city-edge views.",
+    "city": "Pensacola",
+    "state": "Florida",
+    "category": "scenic-stop",
+    "lat": 30.4041,
+    "lng": -87.2949,
+    "sources": [
+      {
+        "url": "https://www.floridastateparks.org/",
+        "title": "Florida State Parks"
+      }
+    ]
+  }
+]
