@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS mycarmind_places (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug text UNIQUE,
+  slug text UNIQUE NOT NULL,
   name text NOT NULL,
   description text,
   state text NOT NULL,
@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS mycarmind_place_sources (
   citation_publisher text,
   citation_note text,
   captured_at timestamptz NOT NULL DEFAULT now(),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (place_id, citation_url)
 );
 
 CREATE TABLE IF NOT EXISTS mycarmind_place_embeddings (
@@ -118,7 +119,7 @@ CREATE INDEX IF NOT EXISTS mycarmind_places_city_state_category_idx ON mycarmind
 CREATE INDEX IF NOT EXISTS mycarmind_places_state_city_idx ON mycarmind_places(state, city);
 CREATE INDEX IF NOT EXISTS mycarmind_missions_location_idx ON mycarmind_missions(state, city, category);
 CREATE INDEX IF NOT EXISTS mycarmind_visits_user_created_idx ON mycarmind_place_visits(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS mycarmind_place_embeddings_vector_idx ON mycarmind_place_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS mycarmind_place_embeddings_vector_idx ON mycarmind_place_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);
 
 ALTER TABLE mycarmind_user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mycarmind_user_stats ENABLE ROW LEVEL SECURITY;
@@ -150,6 +151,14 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'mycarmind_user_stats' AND policyname = 'mycarmind_stats_owner_read') THEN
     CREATE POLICY mycarmind_stats_owner_read ON mycarmind_user_stats
       FOR SELECT USING (true);
+  END IF;
+
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'mycarmind_user_stats' AND policyname = 'mycarmind_stats_owner_write') THEN
+    CREATE POLICY mycarmind_stats_owner_write ON mycarmind_user_stats
+      FOR ALL
+      USING (user_id = nullif(current_setting('request.jwt.claim.sub', true), '')::uuid)
+      WITH CHECK (user_id = nullif(current_setting('request.jwt.claim.sub', true), '')::uuid);
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'mycarmind_mission_progress' AND policyname = 'mycarmind_progress_owner') THEN

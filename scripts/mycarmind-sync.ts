@@ -2,7 +2,6 @@ import { config } from "dotenv";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { sql } from "drizzle-orm";
-import { db } from "../lib/db";
 
 config({ path: ".env.local" });
 
@@ -33,6 +32,8 @@ type MissionRecord = {
 const BASE_DIR = path.join(process.cwd(), "data/mycarmind/season-1/us");
 
 async function run() {
+  const { db } = await import("../lib/db");
+
   const placesPath = path.join(BASE_DIR, "florida/pensacola/places.json");
   const missionsPath = path.join(BASE_DIR, "florida/pensacola/missions.json");
 
@@ -63,7 +64,7 @@ async function run() {
       await db.execute(sql`
         INSERT INTO mycarmind_place_sources (place_id, source_kind, citation_url, citation_title)
         VALUES (${placeId}, 'registry', ${source.url}, ${source.title ?? null})
-        ON CONFLICT DO NOTHING;
+        ON CONFLICT (place_id, citation_url) DO NOTHING;
       `);
     }
   }
