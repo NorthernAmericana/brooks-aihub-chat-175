@@ -12,6 +12,16 @@ export const NEVER_REDIRECT_PATH_PREFIXES = [
   "/diag/redirect-sources",
 ] as const;
 
+export const PUBLIC_PATH_PREFIXES = [
+  "/",
+  "/pricing",
+  "/brooks-ai-hub/tutorial",
+  "/login",
+  "/register",
+  "/welcome",
+  "/api/auth",
+] as const;
+
 export const REDIRECT_LOOP_COOKIE = "redirect_loop_count";
 export const REDIRECT_LOOP_LIMIT = 3;
 
@@ -48,6 +58,18 @@ export function isNeverRedirectPath(pathname: string) {
       return pathname.startsWith(prefix);
     }
     return pathname === prefix;
+  });
+}
+
+export function isPublicPath(pathname: string) {
+  return PUBLIC_PATH_PREFIXES.some((prefix) => {
+    if (prefix === "/") {
+      return pathname === "/";
+    }
+    if (prefix.endsWith("/")) {
+      return pathname.startsWith(prefix);
+    }
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
   });
 }
 
