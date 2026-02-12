@@ -1,3 +1,5 @@
+[Start here: What is Brooks AI HUB?](docs/product/what-is-brooks-ai-hub.md)
+
 <a href="https://www.brooksaihub.app/">
   <img alt="Brooks AI HUB conversational app." src="app/(chat)/opengraph-image.png">
   <h1 align="center">Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media</h1>

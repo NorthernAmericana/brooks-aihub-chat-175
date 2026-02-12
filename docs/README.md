@@ -1,3 +1,5 @@
+[Start here: What is Brooks AI HUB?](./product/what-is-brooks-ai-hub.md)
+
 # Master Docs
 
 ## What this repo is
