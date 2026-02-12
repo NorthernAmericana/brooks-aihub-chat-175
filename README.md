@@ -42,6 +42,7 @@ The **[Console Edition](https://github.com/NorthernAmericana/brooks-ai-hub-conso
 ## Master Docs
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
+Review the [Brand Architecture](docs/brand-architecture.md) doc for company, media, and platform role definitions.
 Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
 Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
@@ -60,6 +61,7 @@ They’re used to **select an agent/persona/mode inside the chat system**.
 - UI “app” pages can forward into chat by constructing a query string that starts with one of these routes.
 
 Example:
+
 - The `/BrooksBears/` UI route can push the user into chat by routing a transcript to `/brooks-ai-hub/?query=/BrooksBears/BenjaminBear/ ...`
 
 ### 2) Normal page routes (UI pages)
@@ -73,7 +75,7 @@ In practice, an **ATO app** should behave like a **single-page UI playground**:
 
 - **App detail/description page** (store-like page): explains what the app is and lists the available slash routes.
   - Example: `/brooksbears-app`, `/mycarmindato-app`, `/namc-app`
-- **App UI page**: a focused UI that can *optionally* launch chat interactions by generating a query that targets an agentic subroute.
+- **App UI page**: a focused UI that can _optionally_ launch chat interactions by generating a query that targets an agentic subroute.
   - Example: `/BrooksBears/` can route to `/BrooksBears/BenjaminBear/ ...`
 
 This keeps Brooks AI HUB as the “big app,” while ATO pages act as lightweight, themed surfaces that **drive** agentic chat subroutes when needed.
