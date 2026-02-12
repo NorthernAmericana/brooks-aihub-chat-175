@@ -45,6 +45,7 @@ Start with the [Master Docs landing page](docs/README.md) to navigate project sc
 Review the [Brand Architecture](docs/brand-architecture.md) doc for company, media, and platform role definitions.
 Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
+Use the [Launch readiness matrix](docs/launch/readiness-matrix.md) for a transparent view of Live/Beta/Planned user-facing value.
 Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
 Report vulnerabilities responsibly by following the [Security Policy](SECURITY.md).
 

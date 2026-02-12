@@ -62,6 +62,18 @@ export default function PricingPage() {
             Unlock Paid Access to get premium ATO routes, higher usage limits,
             and early access to new experiences.
           </p>
+          <p className="max-w-2xl text-xs text-white/60">
+            Want a transparent breakdown of what is live today vs in progress?{" "}
+            <Link
+              className="underline underline-offset-4 transition hover:text-white"
+              href="https://github.com/NorthernAmericana/brooks-aihub-chat-175/blob/main/docs/launch/readiness-matrix.md"
+              rel="noreferrer"
+              target="_blank"
+            >
+              View the launch readiness matrix
+            </Link>
+            .
+          </p>
         </header>
 
         <section className="grid gap-6 md:grid-cols-[2fr_1fr]">
