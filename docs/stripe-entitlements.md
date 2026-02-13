@@ -126,11 +126,60 @@ Founders Access unlocks the following concrete benefits:
 
 - **Premium ATO routes**: Founders-only ATO routes and premium apps in the store.
 - **Higher ATO creation quota**: Create up to 10 unofficial ATOs each month.
-- **More file and image uploads**: Upload up to 10 files per ATO and 10 images per chat.
+- **More file and image uploads**: Upload up to 10 files per ATO and up to 10 images per chat message.
 - **Longer instruction limits**: Draft up to 999 instruction characters per ATO.
 - **Avatar pairing at setup**: Pair custom ATOs with avatars during creation.
 
 These perks are enforced by entitlement checks in the app and are surfaced in the UI.
+
+### What users get immediately this month
+
+When Stripe marks the subscription active and entitlement sync completes, users can immediately:
+
+- Access Founders-only routes in NAMC/HUB experiences that are marked with Founders gating.
+- Create unofficial ATOs up to the Founders monthly limit (10/month) instead of the Free cap (3 total).
+- Use higher composition and upload limits (999 instructions, 10 files per ATO, 10 images per chat message).
+- Enable avatar pairing during ATO setup.
+
+There is no separate seasonal unlock process for these current perks.
+
+### Plan limits (Free vs Founders)
+
+| Capability | Free | Founders |
+| --- | --- | --- |
+| Unofficial ATO creation | Up to 3 total | Up to 10 per month |
+| Instruction length | Up to 500 chars | Up to 999 chars |
+| Avatar pairing at setup | Not available | Available |
+| Files per ATO | Up to 5 | Up to 10 |
+| Images per chat message | Up to 5 | Up to 10 |
+| Founders-gated NAMC/HUB routes | Locked | Unlocked |
+
+### Practical meaning of NAMC/HUB ecosystem access
+
+"NAMC/HUB ecosystem access" means practical, in-product route access:
+
+- Some app routes are explicitly marked as Founders-only in NAMC and HUB-related experiences.
+- Founders members can enter and use those routes.
+- Free users can still use non-Founders routes and will see lock/upgrade messaging on gated routes.
+
+### Not included yet
+
+Founders Access currently does **not** include:
+
+- Community-only spaces/features (planned, not shipped).
+- Admin UI for code generation (code creation remains script/admin-driven).
+- Any roadmap feature that is not already listed as Live in product/readiness docs.
+
+Pricing and upgrade copy should avoid promising unshipped features.
+
+### Pricing page FAQ policy (source of truth)
+
+The in-app pricing FAQ should stay aligned to this document and answer, at minimum:
+
+1. What unlocks immediately this month.
+2. What differs by plan limits/perks.
+3. What NAMC/HUB ecosystem access means in practical terms.
+4. What is not included yet.
 
 ### UI Indicators
 
