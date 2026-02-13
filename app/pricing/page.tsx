@@ -154,41 +154,83 @@ export default function PricingPage() {
             <table className="w-full min-w-[38rem] border-separate border-spacing-y-2 text-left text-sm">
               <thead>
                 <tr className="text-white/60">
-                  <th className="px-3 py-2 font-medium">Feature</th>
-                  <th className="px-3 py-2 font-medium">Free</th>
-                  <th className="px-3 py-2 font-medium">Paid (Founders)</th>
+                  <th className="px-3 py-2 font-medium" scope="col">
+                    Feature
+                  </th>
+                  <th className="px-3 py-2 font-medium" scope="col">
+                    Free
+                  </th>
+                  <th className="px-3 py-2 font-medium" scope="col">
+                    Paid (Founders)
+                  </th>
                 </tr>
               </thead>
               <tbody className="text-white/80">
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">Unofficial ATO creation</td>
-                  <td className="px-3 py-2">Up to 3 total</td>
-                  <td className="px-3 py-2">Up to 10 per month</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Unofficial ATO creation
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Up to 3 total
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Up to 10 per month
+                  </td>
                 </tr>
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">Instructions length</td>
-                  <td className="px-3 py-2">Up to 500 characters</td>
-                  <td className="px-3 py-2">Up to 999 characters</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Instructions length
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Up to 500 characters
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Up to 999 characters
+                  </td>
                 </tr>
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">Avatar pairing during setup</td>
-                  <td className="px-3 py-2">Not included</td>
-                  <td className="px-3 py-2">Included</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Avatar pairing during setup
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Not included
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Included
+                  </td>
                 </tr>
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">Files per ATO</td>
-                  <td className="px-3 py-2">Up to 5</td>
-                  <td className="px-3 py-2">Up to 10</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Files per ATO
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Up to 5
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Up to 10
+                  </td>
                 </tr>
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">Images per chat message</td>
-                  <td className="px-3 py-2">Up to 5</td>
-                  <td className="px-3 py-2">Up to 10</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Images per chat message
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Up to 5
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Up to 10
+                  </td>
                 </tr>
-                <tr className="rounded-2xl border border-white/10 bg-white/5">
-                  <td className="px-3 py-2">NAMC/HUB premium routes</td>
-                  <td className="px-3 py-2">Selected free routes only</td>
-                  <td className="px-3 py-2">Includes Founders-only routes</td>
+                <tr>
+                  <td className="rounded-l-2xl border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    NAMC/HUB premium routes
+                  </td>
+                  <td className="border border-r-0 border-white/10 bg-white/5 px-3 py-2">
+                    Selected free routes only
+                  </td>
+                  <td className="rounded-r-2xl border border-white/10 bg-white/5 px-3 py-2">
+                    Includes Founders-only routes
+                  </td>
                 </tr>
               </tbody>
             </table>
