@@ -20,3 +20,7 @@ Thanks for using Brooks AI HUB! This page lists support channels and the best pl
 - Screenshots or recordings (if applicable)
 - Environment details (browser, device, OS)
 - Relevant logs or error messages
+
+For governance structure and collaboration pathways, see:
+
+docs/team-and-ownership.md

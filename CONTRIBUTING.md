@@ -50,4 +50,12 @@ For larger changes, consider running the relevant checks from `package.json` (te
 - **Verify Vercel builds**: Ensure the Vercel preview deployment succeeds, and use `pnpm build:vercel` locally when you need to validate build-time behavior.
 - **Data migrations**: Call out when database migrations are required and include steps to apply them.
 
+## Governance
+
+Before submitting major architectural changes, review:
+
+docs/team-and-ownership.md
+
+This document outlines ownership domains and decision authority.
+
 If you are unsure where to ask for help, see [`SUPPORT.md`](SUPPORT.md).
