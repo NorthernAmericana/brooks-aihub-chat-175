@@ -1,4 +1,4 @@
-import { renderCommonsPostDetail } from "@/app/commons/_components/post-detail-placeholder";
+import { renderCommonsPostDetail } from "@/app/commons/_components/post-detail";
 
 export default async function CommonsPostDetailDepthTwoPage({
   params,

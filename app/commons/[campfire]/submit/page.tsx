@@ -1,4 +1,4 @@
-import { renderCommonsSubmit } from "@/app/commons/_components/submit-placeholder";
+import { renderCommonsSubmit } from "@/app/commons/_components/submit";
 
 export default async function CommonsSubmitDepthOnePage({
   params,
