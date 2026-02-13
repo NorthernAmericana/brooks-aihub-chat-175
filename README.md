@@ -49,6 +49,10 @@ Use the [Launch readiness matrix](docs/launch/readiness-matrix.md) for a transpa
 Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
 Report vulnerabilities responsibly by following the [Security Policy](SECURITY.md).
 
+## Governance & Team
+
+See docs/team-and-ownership.md for leadership structure, decision ownership, and collaboration pathways.
+
 ## Routing model: agentic chat subroutes vs UI pages (ATO apps)
 
 Brooks AI HUB uses **two different kinds of routes**, and it’s important to keep them conceptually separate:
