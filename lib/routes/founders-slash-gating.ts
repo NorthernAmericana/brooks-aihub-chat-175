@@ -3,6 +3,7 @@ const FREE_SLASH_ROUTES = new Set([
   "MyCarMindATO/DeliveryDriver",
   "MyCarMindATO/Traveler",
   "NAMC/Lore-Playground",
+  "NAMC/Lore-Playground/App",
 ]);
 
 export function getSlashRouteAccessMetadata(slashRoute: string | undefined): {

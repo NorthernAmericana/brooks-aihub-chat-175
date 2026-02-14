@@ -689,7 +689,8 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
         const isNamcLorePlaygroundAgent =
-          selectedAgent.id === "namc-lore-playground";
+          selectedAgent.id === "namc-lore-playground" ||
+          selectedAgent.id === "namc-lore-playground-standalone";
         const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
