@@ -52,7 +52,7 @@ export default async function CommonsPage({
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <header className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Phase 1 · Read Only
+            Commons Directory
           </p>
           <h1 className="text-3xl font-semibold sm:text-4xl">NAT: Commons</h1>
           <p className="max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
