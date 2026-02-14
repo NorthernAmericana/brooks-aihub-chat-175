@@ -42,13 +42,24 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const { rows } = await getApprovedMemoriesByUserIdPage({
-    userId: session.user.id,
-    limit: 50,
-    offset: 0,
-  });
+  const pageSize = 50;
+  let nextCursor: number | null = 0;
+  const allRows: Awaited<
+    ReturnType<typeof getApprovedMemoriesByUserIdPage>
+  >["rows"] = [];
 
-  const personalEvents: PersonalEvent[] = rows
+  while (nextCursor !== null) {
+    const page = await getApprovedMemoriesByUserIdPage({
+      userId: session.user.id,
+      limit: pageSize,
+      offset: nextCursor,
+    });
+
+    allRows.push(...page.rows);
+    nextCursor = page.nextCursor;
+  }
+
+  const personalEvents: PersonalEvent[] = allRows
     .filter((memory) => memory.tags.includes("personal-event"))
     .map((memory) => {
       const date = parseEventDate(memory.tags);
