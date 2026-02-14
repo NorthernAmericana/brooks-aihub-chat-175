@@ -8,7 +8,6 @@ interface SwipeEdgeHintProps {
   open: boolean;
   title?: string;
   message: string;
-  durationMs?: number;
 }
 
 export function SwipeEdgeHint({
@@ -20,7 +19,7 @@ export function SwipeEdgeHint({
   const isLeft = side === "left";
 
   return (
-    <div className="pointer-events-none fixed inset-y-0 z-[90] overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-[90] overflow-hidden">
       <div
         className={cn(
           "absolute inset-y-0 w-1/2 max-w-md border-white/10 bg-black/50 px-5 py-8 text-white backdrop-blur-md",

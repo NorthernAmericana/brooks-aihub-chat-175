@@ -61,6 +61,7 @@ export function EdgeSwipeNav() {
   useSwipeGesture({
     edgeZone: 50,
     enabled: isHubHomePath,
+    onSwipeLeftFromRightEdge: () => router.push("/store"),
     onSwipeRightFromLeftEdge: () => router.push("/commons"),
     threshold: 100,
   });
@@ -147,7 +148,7 @@ export function EdgeSwipeNav() {
       });
 
       if (!rightShown) {
-        window.sessionStorage.setItem("swipeHintRightSeen", "true");
+        initialSequenceRanRef.current = false;
       }
       return;
     }
@@ -158,7 +159,7 @@ export function EdgeSwipeNav() {
       });
 
       if (!leftShown) {
-        window.sessionStorage.setItem("swipeHintLeftSeen", "true");
+        initialSequenceRanRef.current = false;
       }
     }
   }, [isHubHomePath, showHint]);
@@ -397,6 +398,7 @@ export function EdgeSwipeNav() {
           <button
             aria-label={handleConfig.ariaLabel}
             className="fixed top-1/2 z-50 flex h-20 w-5 -translate-y-1/2 touch-pan-y items-center justify-center rounded-full border border-black/10 bg-white/60 shadow-[0_6px_18px_rgba(0,0,0,0.2)] backdrop-blur-sm transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-400/60 dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20"
+            onClick={navigate}
             onPointerCancel={handlePointerCancel}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}

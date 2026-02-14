@@ -13,7 +13,6 @@ const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
   "keydown",
   "scroll",
   "wheel",
-  "pointermove",
   "focus",
 ];
 
