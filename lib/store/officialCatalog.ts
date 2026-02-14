@@ -74,6 +74,17 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     appPath: "/NAMC/reader",
     isOfficial: true,
   },
+  {
+    slug: "namc-lore-playground",
+    name: "NAMC Lore Playground",
+    description:
+      "Dedicated lore sandbox for NAMC worlds, external media canon, and headcanon building",
+    iconUrl: NAMC_APP_ICON_PATH,
+    category: "Media & Entertainment",
+    storePath: "/namc-lore-playground/install",
+    appPath: "/NAMC/lore-playground",
+    isOfficial: true,
+  },
 ];
 
 export const OFFICIAL_CATALOG_TOOL_POLICIES: Record<
@@ -206,7 +217,7 @@ export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
     description: "Main media curator",
   },
   {
-    appSlug: "namc",
+    appSlug: "namc-lore-playground",
     slash: "NAMC/Lore-Playground",
     label: "NAMC Lore Playground",
     description: "Lore exploration & headcanon support",

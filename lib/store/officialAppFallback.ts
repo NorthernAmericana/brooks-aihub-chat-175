@@ -57,4 +57,14 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
     category: "Media & Reading",
     description: "Placeholder reader experience for NAMC content previews",
   },
+  {
+    slug: "namc-lore-playground",
+    name: "NAMC Lore Playground",
+    iconUrl: NAMC_APP_ICON_PATH,
+    appPath: "/NAMC/lore-playground",
+    storePath: "/namc-lore-playground/install",
+    category: "Media & Entertainment",
+    description:
+      "Dedicated lore sandbox for NAMC worlds, external media canon, and headcanon building",
+  },
 ];
