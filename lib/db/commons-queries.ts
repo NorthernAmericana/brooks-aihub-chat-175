@@ -1,6 +1,12 @@
-import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { commonsCampfire, commonsComment, commonsPost } from "@/lib/db/schema";
+import { getCampfireAccess } from "@/lib/commons/access";
+import {
+  commonsCampfire,
+  commonsCampfireSettings,
+  commonsComment,
+  commonsPost,
+} from "@/lib/db/schema";
 
 const PUBLIC_ACTIVE_CAMPFIRE_FILTER = and(
   eq(commonsCampfire.isDeleted, false),
@@ -199,10 +205,25 @@ export async function createPost(options: {
   title: string;
   body: string;
 }) {
+  const access = await getCampfireAccess({
+    campfirePath: options.campfirePath,
+    viewerId: options.authorId,
+  });
+
+  if (!access.canWrite) {
+    return null;
+  }
+
   const [campfire] = await db
     .select({ id: commonsCampfire.id })
     .from(commonsCampfire)
-    .where(and(eq(commonsCampfire.path, options.campfirePath), PUBLIC_ACTIVE_CAMPFIRE_FILTER))
+    .where(
+      and(
+        eq(commonsCampfire.path, options.campfirePath),
+        eq(commonsCampfire.isDeleted, false),
+        eq(commonsCampfire.isActive, true)
+      )
+    )
     .limit(1);
 
   if (!campfire) {
@@ -224,6 +245,22 @@ export async function createPost(options: {
     .set({ lastActivityAt: sql`now()` })
     .where(eq(commonsCampfire.id, campfire.id));
 
+  const [campfireSettings] = await db
+    .select({
+      retentionMode: commonsCampfireSettings.retentionMode,
+      rollingWindowSize: commonsCampfireSettings.rollingWindowSize,
+    })
+    .from(commonsCampfireSettings)
+    .where(eq(commonsCampfireSettings.campfireId, campfire.id))
+    .limit(1);
+
+  if (
+    campfireSettings?.retentionMode === "rolling_window" &&
+    campfireSettings.rollingWindowSize
+  ) {
+    await pruneCampfireToRollingWindow(campfire.id, campfireSettings.rollingWindowSize);
+  }
+
   return post;
 }
 
@@ -234,7 +271,11 @@ export async function createComment(options: {
   parentCommentId?: string;
 }) {
   const [post] = await db
-    .select({ id: commonsPost.id, campfireId: commonsPost.campfireId })
+    .select({
+      id: commonsPost.id,
+      campfireId: commonsPost.campfireId,
+      campfirePath: commonsCampfire.path,
+    })
     .from(commonsPost)
     .innerJoin(commonsCampfire, eq(commonsCampfire.id, commonsPost.campfireId))
     .where(
@@ -242,12 +283,22 @@ export async function createComment(options: {
         eq(commonsPost.id, options.postId),
         eq(commonsPost.isDeleted, false),
         eq(commonsPost.isVisible, true),
-        PUBLIC_ACTIVE_CAMPFIRE_FILTER
+        eq(commonsCampfire.isDeleted, false),
+        eq(commonsCampfire.isActive, true)
       )
     )
     .limit(1);
 
   if (!post) {
+    return null;
+  }
+
+  const access = await getCampfireAccess({
+    campfirePath: post.campfirePath,
+    viewerId: options.authorId,
+  });
+
+  if (!access.canWrite) {
     return null;
   }
 
@@ -286,5 +337,68 @@ export async function createComment(options: {
     .set({ lastActivityAt: sql`now()` })
     .where(eq(commonsCampfire.id, post.campfireId));
 
+  const [campfireSettings] = await db
+    .select({
+      retentionMode: commonsCampfireSettings.retentionMode,
+      rollingWindowSize: commonsCampfireSettings.rollingWindowSize,
+    })
+    .from(commonsCampfireSettings)
+    .where(eq(commonsCampfireSettings.campfireId, post.campfireId))
+    .limit(1);
+
+  if (
+    campfireSettings?.retentionMode === "rolling_window" &&
+    campfireSettings.rollingWindowSize
+  ) {
+    await pruneCampfireToRollingWindow(post.campfireId, campfireSettings.rollingWindowSize);
+  }
+
   return comment;
+}
+
+export async function pruneCampfireToRollingWindow(campfireId: string, rollingWindowSize: number) {
+  if (rollingWindowSize <= 0) {
+    return;
+  }
+
+  const stalePosts = await db
+    .select({ id: commonsPost.id })
+    .from(commonsPost)
+    .where(
+      and(
+        eq(commonsPost.campfireId, campfireId),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true)
+      )
+    )
+    .orderBy(desc(commonsPost.createdAt), desc(commonsPost.id))
+    .offset(rollingWindowSize);
+
+  if (!stalePosts.length) {
+    return;
+  }
+
+  const stalePostIds = stalePosts.map((post) => post.id);
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(commonsComment)
+      .set({
+        isDeleted: true,
+        isVisible: false,
+        deletedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      })
+      .where(and(inArray(commonsComment.postId, stalePostIds), eq(commonsComment.isDeleted, false)));
+
+    await tx
+      .update(commonsPost)
+      .set({
+        isDeleted: true,
+        isVisible: false,
+        deletedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      })
+      .where(and(inArray(commonsPost.id, stalePostIds), eq(commonsPost.isDeleted, false)));
+  });
 }
