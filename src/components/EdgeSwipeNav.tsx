@@ -8,6 +8,8 @@ import { useInactivity } from "@/hooks/use-inactivity";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 
 const SWIPE_THRESHOLD_PX = 90;
+const HUB_EDGE_ZONE_PX = 120;
+const HUB_SWIPE_THRESHOLD_PX = 60;
 const NAVIGATION_COOLDOWN_MS = 600;
 const PREVIEW_WIDTH_PX = 240;
 const HINT_DURATION_MS = 6000;
@@ -59,11 +61,11 @@ export function EdgeSwipeNav() {
   const cooldownTimeoutRef = useRef<number | null>(null);
 
   useSwipeGesture({
-    edgeZone: 50,
+    edgeZone: HUB_EDGE_ZONE_PX,
     enabled: isHubHomePath,
     onSwipeLeftFromRightEdge: () => router.push("/store"),
     onSwipeRightFromLeftEdge: () => router.push("/commons"),
-    threshold: 100,
+    threshold: HUB_SWIPE_THRESHOLD_PX,
   });
 
   const clearHintTimer = useCallback(() => {
