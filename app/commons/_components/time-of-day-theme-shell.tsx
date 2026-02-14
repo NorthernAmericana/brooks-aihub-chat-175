@@ -6,20 +6,23 @@ import schedule from "@/data/nat-commons-background-time-schedule.json";
 type CommonsThemeName = keyof typeof schedule.theme_definitions;
 
 const THEME_TO_BACKGROUND: Record<CommonsThemeName, string> = {
-  midnight: "/nat-commons/midnight-background-nat-commons.png",
-  night: "/nat-commons/night-background-nat-commons.png",
-  dawn: "/nat-commons/dawn-background-nat-commons.png",
-  morning: "/nat-commons/morning-background-nat-commons.png",
-  midday: "/nat-commons/midday-background-nat-commons.png",
-  afternoon: "/nat-commons/afternoon-background-nat-commons.png",
-  dusk: "/nat-commons/dusk-background-nat-commons.png",
-  evening: "/nat-commons/evening-background-nat-commons.png",
+  midnight: "/backgrounds/nat-commons/midnight-background-nat-commons.png.png",
+  night: "/backgrounds/nat-commons/night-background-nat-commons.png.png",
+  dawn: "/backgrounds/nat-commons/dawn-background-nat-commons.png.png",
+  morning: "/backgrounds/nat-commons/morning-background-nat-commons.png.png",
+  midday: "/backgrounds/nat-commons/midday-background-nat-commons.png.png",
+  afternoon:
+    "/backgrounds/nat-commons/afternoon-background-nat-commons.png.png",
+  dusk: "/backgrounds/nat-commons/dusk-background-nat-commons.png.png",
+  evening: "/backgrounds/nat-commons/evening-background-nat-commons.png.png",
 };
 
 const FADE_DURATION_MS = 8000;
 
 function getThemeForDate(date: Date): CommonsThemeName {
-  return schedule.hour_to_theme[`${date.getHours()}` as keyof typeof schedule.hour_to_theme] as CommonsThemeName;
+  return schedule.hour_to_theme[
+    `${date.getHours()}` as keyof typeof schedule.hour_to_theme
+  ] as CommonsThemeName;
 }
 
 function msUntilNextHour(date: Date): number {
@@ -29,10 +32,17 @@ function msUntilNextHour(date: Date): number {
   return Math.max(1000, nextHour.getTime() - date.getTime());
 }
 
-export function TimeOfDayThemeShell({ children }: { children: React.ReactNode }) {
+export function TimeOfDayThemeShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const initialTheme = useMemo(() => getThemeForDate(new Date()), []);
-  const [currentTheme, setCurrentTheme] = useState<CommonsThemeName>(initialTheme);
-  const [previousTheme, setPreviousTheme] = useState<CommonsThemeName | null>(null);
+  const [currentTheme, setCurrentTheme] =
+    useState<CommonsThemeName>(initialTheme);
+  const [previousTheme, setPreviousTheme] = useState<CommonsThemeName | null>(
+    null
+  );
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
@@ -77,7 +87,9 @@ export function TimeOfDayThemeShell({ children }: { children: React.ReactNode })
   }, []);
 
   const currentBackground = THEME_TO_BACKGROUND[currentTheme];
-  const previousBackground = previousTheme ? THEME_TO_BACKGROUND[previousTheme] : null;
+  const previousBackground = previousTheme
+    ? THEME_TO_BACKGROUND[previousTheme]
+    : null;
 
   return (
     <div className="nat-commons-theme-shell relative min-h-dvh overflow-hidden">
