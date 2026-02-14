@@ -117,9 +117,9 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
         borderRadius: "9999px",
         position: "relative",
         overflow: "hidden",
-        background: "rgba(20,20,20,0.08)",
-        border: "1px solid rgba(15, 23, 42, 0.18)",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+        background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(15, 23, 42, 0.28))",
+        border: "1px solid rgba(255, 255, 255, 0.32)",
+        boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
       }}
     >
       <Hand deg={hDeg} width={6} lengthPct={28} color="var(--clock-hand-hour)" />
@@ -144,8 +144,8 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
           height: 10,
           transform: "translate(-50%, -50%)",
           borderRadius: "9999px",
-          background: "rgba(15, 23, 42, 0.9)",
-          boxShadow: "0 0 0 3px rgba(0,0,0,0.2)",
+          background: "rgba(248, 250, 252, 0.95)",
+          boxShadow: "0 0 0 3px rgba(15, 23, 42, 0.28)",
         }}
       />
     </div>
@@ -480,6 +480,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   );
   const [now, setNow] = useState(() => new Date());
   const [clockMode, setClockMode] = useState(false);
+  const [isFoundersPerksOpen, setIsFoundersPerksOpen] = useState(true);
   const { data: atoData, mutate: mutateAtos } = useSWR<AtoListResponse>(
     "/api/ato",
     fetcher
@@ -745,7 +746,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="greeting-time mt-2 w-full max-w-sm rounded-3xl border border-white/15 bg-black/60 px-4 py-3 text-left shadow-lg shadow-black/40 supports-[backdrop-filter]:backdrop-blur-md sm:max-w-md"
+        className="greeting-time mt-2 w-[calc(100vw-2rem)] max-w-none rounded-3xl border border-white/30 bg-gradient-to-r from-slate-900/55 via-slate-800/45 to-slate-900/55 px-4 py-3 text-left shadow-lg shadow-black/25 supports-[backdrop-filter]:backdrop-blur-md md:w-[calc(100vw-19rem)] md:peer-data-[state=collapsed]:w-[calc(100vw-7rem)] lg:w-[calc(100vw-21rem)] lg:peer-data-[state=collapsed]:w-[calc(100vw-9rem)] xl:w-[calc(100vw-23rem)] xl:peer-data-[state=collapsed]:w-[calc(100vw-11rem)]"
         data-build-sha={
           process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
           process.env.NEXT_PUBLIC_COMMIT_SHA ||
@@ -800,65 +801,75 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-amber-500/10 via-background/80 to-background p-4 shadow-sm sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
-            <div>
-              <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                Founders perks
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {foundersAccess
-                  ? "Your Founders perks are active across premium ATO routes and higher limits."
-                  : "Upgrade to unlock premium ATO routes, higher quotas, and avatar pairing."}
-              </p>
-            </div>
-            <div
-              className={cn(
-                "rounded-full border px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em]",
-                foundersAccess
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                  : "border-amber-400/40 bg-amber-400/10 text-amber-500"
-              )}
+        {isFoundersPerksOpen ? (
+          <div className="relative mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-amber-500/10 via-background/80 to-background p-4 shadow-sm sm:p-5">
+            <button
+              aria-label="Close founders perks"
+              className="absolute -left-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/70 bg-background/90 text-base font-semibold text-foreground shadow-sm transition hover:bg-background"
+              onClick={() => setIsFoundersPerksOpen(false)}
+              type="button"
             >
-              {foundersAccess ? "Active" : "Upgrade"}
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 text-left sm:grid-cols-2">
-            {foundersPerks.map((perk) => (
-              <div
-                className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3"
-                key={perk.id}
-              >
-                <div className="flex items-center justify-between gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  <span>{perk.title}</span>
-                  <span
-                    className={cn(
-                      "rounded-full border px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em]",
-                      perk.isUnlocked
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                        : "border-border/60 bg-background/80 text-muted-foreground"
-                    )}
-                  >
-                    {perk.isUnlocked ? "Unlocked" : "Locked"}
-                  </span>
+              ×
+            </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
+              <div>
+                <div className="text-[0.55rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                  Founders perks
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {perk.description}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {foundersAccess
+                    ? "Your Founders perks are active across premium ATO routes and higher limits."
+                    : "Upgrade to unlock premium ATO routes, higher quotas, and avatar pairing."}
                 </p>
               </div>
-            ))}
-          </div>
-          {!foundersAccess ? (
-            <div className="mt-4 text-left">
-              <Link
-                className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-500 transition hover:bg-amber-400/20"
-                href="/pricing"
+              <div
+                className={cn(
+                  "rounded-full border px-3 py-1 text-[0.55rem] font-semibold uppercase tracking-[0.25em]",
+                  foundersAccess
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                    : "border-amber-400/40 bg-amber-400/10 text-amber-500"
+                )}
               >
-                View pricing
-              </Link>
+                {foundersAccess ? "Active" : "Upgrade"}
+              </div>
             </div>
-          ) : null}
-        </div>
+            <div className="mt-4 grid gap-3 text-left sm:grid-cols-2">
+              {foundersPerks.map((perk) => (
+                <div
+                  className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3"
+                  key={perk.id}
+                >
+                  <div className="flex items-center justify-between gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    <span>{perk.title}</span>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em]",
+                        perk.isUnlocked
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                          : "border-border/60 bg-background/80 text-muted-foreground"
+                      )}
+                    >
+                      {perk.isUnlocked ? "Unlocked" : "Locked"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {perk.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {!foundersAccess ? (
+              <div className="mt-4 text-left">
+                <Link
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-500 transition hover:bg-amber-400/20"
+                  href="/pricing"
+                >
+                  View pricing
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-left">
             <div>

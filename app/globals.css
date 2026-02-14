@@ -108,10 +108,10 @@
 }
 
 .analog-clock {
-  --clock-hand-hour: rgba(15, 23, 42, 0.95);
-  --clock-hand-minute: rgba(30, 41, 59, 0.85);
-  --clock-hand-second: rgba(16, 185, 129, 0.95);
-  --clock-hand-shadow: rgba(15, 23, 42, 0.25);
+  --clock-hand-hour: rgba(248, 250, 252, 0.98);
+  --clock-hand-minute: rgba(226, 232, 240, 0.95);
+  --clock-hand-second: rgba(34, 211, 238, 0.95);
+  --clock-hand-shadow: rgba(15, 23, 42, 0.35);
 }
 
 .dark .analog-clock {
