@@ -380,23 +380,25 @@ export async function pruneCampfireToRollingWindow(campfireId: string, rollingWi
 
   const stalePostIds = stalePosts.map((post) => post.id);
 
-  await db
-    .update(commonsComment)
-    .set({
-      isDeleted: true,
-      isVisible: false,
-      deletedAt: sql`now()`,
-      updatedAt: sql`now()`,
-    })
-    .where(and(inArray(commonsComment.postId, stalePostIds), eq(commonsComment.isDeleted, false)));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(commonsComment)
+      .set({
+        isDeleted: true,
+        isVisible: false,
+        deletedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      })
+      .where(and(inArray(commonsComment.postId, stalePostIds), eq(commonsComment.isDeleted, false)));
 
-  await db
-    .update(commonsPost)
-    .set({
-      isDeleted: true,
-      isVisible: false,
-      deletedAt: sql`now()`,
-      updatedAt: sql`now()`,
-    })
-    .where(and(inArray(commonsPost.id, stalePostIds), eq(commonsPost.isDeleted, false)));
+    await tx
+      .update(commonsPost)
+      .set({
+        isDeleted: true,
+        isVisible: false,
+        deletedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      })
+      .where(and(inArray(commonsPost.id, stalePostIds), eq(commonsPost.isDeleted, false)));
+  });
 }
