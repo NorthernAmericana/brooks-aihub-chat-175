@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { commonsCampfire, commonsComment, commonsPost } from "@/lib/db/schema";
 
@@ -24,6 +24,61 @@ export async function listCampfires() {
     .from(commonsCampfire)
     .where(PUBLIC_ACTIVE_CAMPFIRE_FILTER)
     .orderBy(desc(commonsCampfire.lastActivityAt));
+}
+
+export async function listCampfireDirectory(options?: {
+  sort?: "activity" | "newest" | "alphabetical";
+  query?: string;
+}) {
+  const sort = options?.sort ?? "activity";
+  const query = options?.query?.trim();
+  const queryFilter = query
+    ? or(
+        ilike(commonsCampfire.name, `%${query}%`),
+        ilike(commonsCampfire.description, `%${query}%`)
+      )
+    : undefined;
+
+  let orderByClause;
+  if (sort === "alphabetical") {
+    orderByClause = asc(commonsCampfire.name);
+  } else if (sort === "newest") {
+    orderByClause = desc(commonsCampfire.createdAt);
+  } else {
+    orderByClause = desc(commonsCampfire.lastActivityAt);
+  }
+
+  return db
+    .select({
+      id: commonsCampfire.id,
+      slug: commonsCampfire.slug,
+      path: commonsCampfire.path,
+      name: commonsCampfire.name,
+      description: commonsCampfire.description,
+      createdAt: commonsCampfire.createdAt,
+      lastActivityAt: commonsCampfire.lastActivityAt,
+      postCount: count(commonsPost.id),
+    })
+    .from(commonsCampfire)
+    .leftJoin(
+      commonsPost,
+      and(
+        eq(commonsPost.campfireId, commonsCampfire.id),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true)
+      )
+    )
+    .where(queryFilter ? and(PUBLIC_ACTIVE_CAMPFIRE_FILTER, queryFilter) : PUBLIC_ACTIVE_CAMPFIRE_FILTER)
+    .groupBy(
+      commonsCampfire.id,
+      commonsCampfire.slug,
+      commonsCampfire.path,
+      commonsCampfire.name,
+      commonsCampfire.description,
+      commonsCampfire.createdAt,
+      commonsCampfire.lastActivityAt
+    )
+    .orderBy(orderByClause, desc(commonsCampfire.lastActivityAt), asc(commonsCampfire.name));
 }
 
 export async function listPostsByCampfirePath(options: {
@@ -164,6 +219,11 @@ export async function createPost(options: {
     })
     .returning();
 
+  await db
+    .update(commonsCampfire)
+    .set({ lastActivityAt: sql`now()` })
+    .where(eq(commonsCampfire.id, campfire.id));
+
   return post;
 }
 
@@ -174,7 +234,7 @@ export async function createComment(options: {
   parentCommentId?: string;
 }) {
   const [post] = await db
-    .select({ id: commonsPost.id })
+    .select({ id: commonsPost.id, campfireId: commonsPost.campfireId })
     .from(commonsPost)
     .innerJoin(commonsCampfire, eq(commonsCampfire.id, commonsPost.campfireId))
     .where(
@@ -220,6 +280,11 @@ export async function createComment(options: {
       parentCommentId: options.parentCommentId,
     })
     .returning();
+
+  await db
+    .update(commonsCampfire)
+    .set({ lastActivityAt: sql`now()` })
+    .where(eq(commonsCampfire.id, post.campfireId));
 
   return comment;
 }
