@@ -75,13 +75,13 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     isOfficial: true,
   },
   {
-    slug: "namc-lore-playground",
-    name: "NAMC Lore Playground",
+    slug: "lore-playground",
+    name: "Lore Playground",
     description:
-      "Dedicated lore sandbox for NAMC worlds, external media canon, and headcanon building",
-    iconUrl: NAMC_APP_ICON_PATH,
-    category: "Media & Entertainment",
-    storePath: "/namc-lore-playground/install",
+      "Pop-culture headcanon studio for hangout scenes, worldbuilding, and spoiler-aware lore exploration",
+    iconUrl: "/icons/lore-playground-appicon.svg",
+    category: "Pop Culture / Worldbuilding / Creative Companion",
+    storePath: "/lore-playground/install",
     appPath: "/NAMC/lore-playground",
     isOfficial: true,
   },
@@ -154,7 +154,20 @@ export const OFFICIAL_CATALOG_TOOL_POLICIES: Record<
     tools: ["saveMemory"],
   },
   "NAMC/Lore-Playground": {
-    tools: ["saveMemory"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
+  },
+  "NAMC/Lore-Playground/App": {
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
   },
   "NAMC/Reader": {
     tools: ["saveMemory"],
@@ -217,10 +230,16 @@ export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
     description: "Main media curator",
   },
   {
-    appSlug: "namc-lore-playground",
+    appSlug: "lore-playground",
     slash: "NAMC/Lore-Playground",
-    label: "NAMC Lore Playground",
+    label: "Lore Playground",
     description: "Lore exploration & headcanon support",
+  },
+  {
+    appSlug: "lore-playground",
+    slash: "NAMC/Lore-Playground/App",
+    label: "Lore Playground App Mode",
+    description: "Standalone app UI route for hangout/workbench workflows",
   },
   {
     appSlug: "namc",

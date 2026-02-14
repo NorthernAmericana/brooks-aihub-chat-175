@@ -58,13 +58,13 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
     description: "Placeholder reader experience for NAMC content previews",
   },
   {
-    slug: "namc-lore-playground",
-    name: "NAMC Lore Playground",
-    iconUrl: NAMC_APP_ICON_PATH,
+    slug: "lore-playground",
+    name: "Lore Playground",
+    iconUrl: "/icons/lore-playground-appicon.svg",
     appPath: "/NAMC/lore-playground",
-    storePath: "/namc-lore-playground/install",
-    category: "Media & Entertainment",
+    storePath: "/lore-playground/install",
+    category: "Pop Culture / Worldbuilding / Creative Companion",
     description:
-      "Dedicated lore sandbox for NAMC worlds, external media canon, and headcanon building",
+      "Pop-culture headcanon studio for hangout scenes, worldbuilding, and spoiler-aware lore exploration",
   },
 ];
