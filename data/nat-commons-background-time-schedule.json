@@ -1,0 +1,40 @@
+{
+  "title": "nat-commons-background-time-schedule",
+  "type": "time_of_day_theme_map",
+  "hour_to_theme": {
+    "0": "midnight",
+    "1": "night",
+    "2": "night",
+    "3": "night",
+    "4": "night",
+    "5": "dawn",
+    "6": "dawn",
+    "7": "morning",
+    "8": "morning",
+    "9": "morning",
+    "10": "morning",
+    "11": "morning",
+    "12": "midday",
+    "13": "afternoon",
+    "14": "afternoon",
+    "15": "afternoon",
+    "16": "afternoon",
+    "17": "dusk",
+    "18": "dusk",
+    "19": "evening",
+    "20": "evening",
+    "21": "evening",
+    "22": "evening",
+    "23": "evening"
+  },
+  "theme_definitions": {
+    "midnight": { "range_local": "00:00-00:59" },
+    "night": { "range_local": "01:00-04:59" },
+    "dawn": { "range_local": "05:00-06:59" },
+    "morning": { "range_local": "07:00-11:59" },
+    "midday": { "range_local": "12:00-12:59" },
+    "afternoon": { "range_local": "13:00-16:59" },
+    "dusk": { "range_local": "17:00-18:59" },
+    "evening": { "range_local": "19:00-23:59" }
+  }
+}

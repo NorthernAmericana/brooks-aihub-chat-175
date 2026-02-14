@@ -870,3 +870,9 @@
     }
   }
 }
+
+.nat-commons-theme-content section,
+.nat-commons-theme-content article,
+.nat-commons-theme-content nav {
+  backdrop-filter: blur(4px);
+}
