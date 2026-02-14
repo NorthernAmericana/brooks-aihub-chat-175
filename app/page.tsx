@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import forestGreenUiWelcome from "@/public/ui/forest-green-ui-welcome.png";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -134,9 +136,33 @@ export default function IntroPage() {
         )}
       </div>
 
-      <div className="intro-card intro-float absolute left-[8%] top-[18%] hidden h-28 w-48 rounded-2xl border border-white/20 sm:block" />
-      <div className="intro-card intro-float-slow absolute right-[10%] top-[14%] hidden h-32 w-56 rounded-2xl border border-white/20 sm:block" />
-      <div className="intro-card intro-float absolute bottom-[18%] right-[18%] hidden h-24 w-44 rounded-2xl border border-white/20 md:block" />
+      <Image
+        alt=""
+        aria-hidden
+        className="intro-float pointer-events-none absolute left-[8%] top-[18%] hidden h-auto w-48 select-none sm:block"
+        height={520}
+        priority
+        src={forestGreenUiWelcome}
+        width={900}
+      />
+      <Image
+        alt=""
+        aria-hidden
+        className="intro-float-slow pointer-events-none absolute right-[10%] top-[14%] hidden h-auto w-56 select-none sm:block"
+        height={520}
+        priority
+        src={forestGreenUiWelcome}
+        width={900}
+      />
+      <Image
+        alt=""
+        aria-hidden
+        className="intro-float pointer-events-none absolute bottom-[18%] right-[18%] hidden h-auto w-44 select-none md:block"
+        height={520}
+        priority
+        src={forestGreenUiWelcome}
+        width={900}
+      />
 
       <div className="intro-sparkle absolute right-[22%] top-[22%] h-3 w-3 rotate-45 rounded-sm bg-emerald-200/80 shadow-[0_0_12px_rgba(150,255,210,0.8)]" />
       <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-emerald-100/70 shadow-[0_0_10px_rgba(140,240,200,0.7)]" />
