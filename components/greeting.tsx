@@ -746,7 +746,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="greeting-time mt-2 w-[calc(100vw-2rem)] max-w-none rounded-3xl border border-white/30 bg-gradient-to-r from-slate-900/55 via-slate-800/45 to-slate-900/55 px-4 py-3 text-left shadow-lg shadow-black/25 supports-[backdrop-filter]:backdrop-blur-md md:w-[calc(100vw-19rem)] lg:w-[calc(100vw-21rem)] xl:w-[calc(100vw-23rem)]"
+        className="greeting-time mt-2 w-[calc(100vw-2rem)] max-w-none rounded-3xl border border-white/30 bg-gradient-to-r from-slate-900/55 via-slate-800/45 to-slate-900/55 px-4 py-3 text-left shadow-lg shadow-black/25 supports-[backdrop-filter]:backdrop-blur-md md:w-[calc(100vw-19rem)] md:peer-data-[state=collapsed]:w-[calc(100vw-7rem)] lg:w-[calc(100vw-21rem)] lg:peer-data-[state=collapsed]:w-[calc(100vw-9rem)] xl:w-[calc(100vw-23rem)] xl:peer-data-[state=collapsed]:w-[calc(100vw-11rem)]"
         data-build-sha={
           process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
           process.env.NEXT_PUBLIC_COMMIT_SHA ||
