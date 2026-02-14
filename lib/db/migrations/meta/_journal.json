@@ -260,6 +260,13 @@
       "when": 1770835187832,
       "tag": "0036_mycarmind_ato",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1770900000000,
+      "tag": "0037_add_namc_lore_playground_standalone_route",
+      "breakpoints": true
     }
   ]
 }
