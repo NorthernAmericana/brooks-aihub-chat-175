@@ -837,8 +837,24 @@ export async function getApprovedMemoriesForContext({
 
     const now = Date.now();
 
+    const toValidDate = (value: Date | string | null | undefined) => {
+      if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return value;
+      }
+
+      if (typeof value === "string") {
+        const parsed = new Date(value);
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed;
+        }
+      }
+
+      return null;
+    };
+
     return rows.map((row) => {
-      const referenceTimestamp = row.approvedAt ?? row.createdAt;
+      const referenceTimestamp =
+        toValidDate(row.approvedAt) ?? toValidDate(row.createdAt) ?? new Date();
       const ageInDays = Math.floor(
         (now - referenceTimestamp.getTime()) / 86_400_000
       );
