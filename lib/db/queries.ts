@@ -865,11 +865,15 @@ export async function getApprovedMemoriesForContext({
         ageInDays: Math.max(ageInDays, 0),
       };
     });
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get approved memories for context"
-    );
+  } catch (error) {
+    const details = getDbErrorDetails(error);
+    console.warn("[DB_FALLBACK] Returning empty memory context", {
+      fn: "getApprovedMemoriesForContext",
+      code: details.code,
+      message: details.message,
+    });
+
+    return [];
   }
 }
 
