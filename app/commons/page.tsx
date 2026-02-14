@@ -54,7 +54,15 @@ export default async function CommonsPage({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
             Commons Directory
           </p>
-          <h1 className="text-3xl font-semibold sm:text-4xl">NAT: Commons</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-3xl font-semibold sm:text-4xl">NAT: Commons</h1>
+            <Link
+              className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+              href="/commons/create"
+            >
+              + Create campfire
+            </Link>
+          </div>
           <p className="max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
             NAT: Commons is our shared mission space for founders, builders, and
             stewards. Explore active campfires, catch up on recent posts, and
