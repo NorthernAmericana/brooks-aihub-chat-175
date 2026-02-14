@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -29,7 +30,7 @@ const STYLE_OPTIONS = [
 type ProfileIconAiModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUseIcon?: (iconSrc: string) => void;
+  onUseIcon?: (iconSrc: string) => Promise<void> | void;
 };
 
 export function ProfileIconAiModal({
@@ -111,19 +112,10 @@ export function ProfileIconAiModal({
     }
 
     setError(null);
-    onUseIcon?.(previewSrc);
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/user-settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: previewSrc }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save avatar");
-      }
+      await onUseIcon?.(previewSrc);
 
       onOpenChange(false);
     } catch (_err) {
@@ -190,10 +182,13 @@ export function ProfileIconAiModal({
             </div>
             <div className="flex min-h-[220px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-background">
               {previewSrc ? (
-                <img
+                <ImageWithFallback
                   alt="Generated profile icon preview"
-                  className="h-40 w-40 rounded-2xl object-cover"
+                  className="h-full w-full rounded-2xl object-cover"
+                  containerClassName="h-40 w-40"
+                  height={160}
                   src={previewSrc}
+                  width={160}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -201,9 +196,7 @@ export function ProfileIconAiModal({
                 </p>
               )}
             </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button
                 disabled={!previewSrc || isGenerating || isSaving}
