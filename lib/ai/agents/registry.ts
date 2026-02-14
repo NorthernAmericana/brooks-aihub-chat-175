@@ -537,14 +537,14 @@ const agentRegistry: AgentConfig[] = [
     id: "namc-lore-playground",
     label: "NAMC Lore Playground",
     slash: "NAMC/Lore-Playground",
-    tools: ["saveMemory"],
+    tools: ["createDocument", "updateDocument", "requestSuggestions", "saveMemory"],
     systemPromptOverride: namcLorePlaygroundPrompt,
   },
   {
     id: "namc-lore-playground-standalone",
     label: "NAMC Lore Playground (Standalone)",
     slash: "NAMC/Lore-Playground/App",
-    tools: ["saveMemory"],
+    tools: ["createDocument", "updateDocument", "requestSuggestions", "saveMemory"],
     systemPromptOverride: namcLorePlaygroundStandalonePrompt,
   },
   {

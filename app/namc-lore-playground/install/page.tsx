@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function NamcLorePlaygroundInstallPage() {
-  redirect("/namc-lore-playground-app");
+export default function LegacyNamcLorePlaygroundInstallPage() {
+  redirect("/lore-playground/install");
 }
