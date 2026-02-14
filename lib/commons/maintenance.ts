@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import {
@@ -18,6 +18,14 @@ export type PruneCampfireSummary = {
   windowSize: number;
   deletedPosts: number;
   deletedComments: number;
+};
+
+export type PruneRollingWindowBacklogSummary = {
+  scannedCampfires: number;
+  prunedCampfires: number;
+  deletedPosts: number;
+  deletedComments: number;
+  campfires: PruneCampfireSummary[];
 };
 
 export async function expireTempCampfires(): Promise<ExpireTempCampfiresSummary> {
@@ -70,7 +78,10 @@ export async function expireTempCampfires(): Promise<ExpireTempCampfiresSummary>
       await tx.execute(sql`
         UPDATE campfires
         SET deleted_at = now()
-        WHERE id IN (${sql.join(expiredCampfireIds.map((id) => sql`${id}`), sql`, `)})
+        WHERE id IN (${sql.join(
+          expiredCampfireIds.map((id) => sql`${id}`),
+          sql`, `
+        )})
           AND deleted_at IS NULL;
       `);
     }
@@ -128,7 +139,12 @@ export async function pruneCampfireToRollingWindow(
         deletedAt: sql`now()`,
         updatedAt: sql`now()`,
       })
-      .where(and(inArray(commonsComment.postId, stalePostIds), eq(commonsComment.isDeleted, false)))
+      .where(
+        and(
+          inArray(commonsComment.postId, stalePostIds),
+          eq(commonsComment.isDeleted, false)
+        )
+      )
       .returning({ id: commonsComment.id });
 
     const deletedPostsResult = await tx
@@ -139,7 +155,12 @@ export async function pruneCampfireToRollingWindow(
         deletedAt: sql`now()`,
         updatedAt: sql`now()`,
       })
-      .where(and(inArray(commonsPost.id, stalePostIds), eq(commonsPost.isDeleted, false)))
+      .where(
+        and(
+          inArray(commonsPost.id, stalePostIds),
+          eq(commonsPost.isDeleted, false)
+        )
+      )
       .returning({ id: commonsPost.id });
 
     return {
@@ -153,5 +174,60 @@ export async function pruneCampfireToRollingWindow(
     windowSize,
     deletedPosts: summary.deletedPosts,
     deletedComments: summary.deletedComments,
+  };
+}
+
+export async function pruneRollingWindowBacklog(): Promise<PruneRollingWindowBacklogSummary> {
+  const campfires = await db
+    .select({
+      campfireId: commonsCampfire.id,
+      rollingWindowSize: commonsCampfireSettings.rollingWindowSize,
+    })
+    .from(commonsCampfire)
+    .innerJoin(
+      commonsCampfireSettings,
+      eq(commonsCampfireSettings.campfireId, commonsCampfire.id)
+    )
+    .where(
+      and(
+        eq(commonsCampfire.isActive, true),
+        eq(commonsCampfire.isDeleted, false),
+        eq(commonsCampfireSettings.retentionMode, "rolling_window"),
+        isNotNull(commonsCampfireSettings.rollingWindowSize)
+      )
+    );
+
+  if (!campfires.length) {
+    return {
+      scannedCampfires: 0,
+      prunedCampfires: 0,
+      deletedPosts: 0,
+      deletedComments: 0,
+      campfires: [],
+    };
+  }
+
+  const summaries = await Promise.all(
+    campfires.map((campfire) =>
+      pruneCampfireToRollingWindow(
+        campfire.campfireId,
+        campfire.rollingWindowSize ?? 0
+      )
+    )
+  );
+
+  return {
+    scannedCampfires: campfires.length,
+    prunedCampfires: summaries.filter((summary) => summary.deletedPosts > 0)
+      .length,
+    deletedPosts: summaries.reduce(
+      (total, summary) => total + summary.deletedPosts,
+      0
+    ),
+    deletedComments: summaries.reduce(
+      (total, summary) => total + summary.deletedComments,
+      0
+    ),
+    campfires: summaries,
   };
 }
