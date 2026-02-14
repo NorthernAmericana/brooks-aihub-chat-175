@@ -27,7 +27,7 @@ export async function renderCommonsSubmit(campfire: string[]) {
   }
 
   return (
-    <main className="min-h-dvh bg-slate-50 px-6 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <main className="min-h-dvh bg-transparent px-6 py-10 text-slate-100 [text-shadow:0_2px_12px_rgba(0,0,0,0.72)]">
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
