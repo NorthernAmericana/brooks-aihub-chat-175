@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Command,
@@ -17,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { cn } from "@/lib/utils";
 
 export type ModelSelectorProps = ComponentProps<typeof Dialog>;
@@ -168,9 +168,10 @@ export const ModelSelectorLogo = ({
   provider,
   className,
 }: ModelSelectorLogoProps) => (
-  <Image
+  <ImageWithFallback
     alt={`${provider} logo`}
     className={cn("size-3 dark:invert", className)}
+    containerClassName="size-3"
     height={12}
     src={`https://models.dev/logos/${provider}.svg`}
     unoptimized

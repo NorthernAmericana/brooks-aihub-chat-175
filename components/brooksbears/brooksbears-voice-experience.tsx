@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/toast";
 import { cn } from "@/lib/utils";
 import { getOfficialVoiceId } from "@/lib/voice";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 type RecordingState = "idle" | "recording" | "transcribing";
 
@@ -183,9 +183,10 @@ export function BrooksBearsVoiceExperience({
 
             <div className="absolute inset-x-0 top-16 flex items-center justify-center px-8">
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-                <Image
+                <ImageWithFallback
                   alt="Benjamin Bear"
-                  className="h-14 w-14 rounded-2xl object-cover"
+                  className="h-full w-full object-cover"
+                  containerClassName="size-14 overflow-hidden rounded-2xl"
                   height={56}
                   src="/icons/brooksbears-appicon.png"
                   width={56}
@@ -203,8 +204,10 @@ export function BrooksBearsVoiceExperience({
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="rounded-3xl border border-white/10 bg-white/5 px-10 py-12 backdrop-blur-sm">
-                <Image
+                <ImageWithFallback
                   alt="Benjamin Bear mascot"
+                  className="h-full w-full object-contain"
+                  containerClassName="size-40"
                   height={160}
                   priority={true}
                   src="/icons/brooksbears-appicon.png"

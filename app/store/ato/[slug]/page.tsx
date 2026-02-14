@@ -1,26 +1,29 @@
 import { ArrowLeft, Check, Download, Lock } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { getEntitlements } from "@/lib/entitlements/getEntitlements";
+import { FOUNDERS_ACCESS_PERKS } from "@/lib/entitlements/products";
 import { getAppDetails } from "@/lib/store/getAppDetails";
 import { installApp } from "@/lib/store/installApp";
 import { listAppsWithInstallState } from "@/lib/store/listAppsWithInstallState";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 export const dynamic = "force-dynamic";
 
 type AtoStoreDetailsPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function AtoStoreDetailsPage({
   params,
 }: AtoStoreDetailsPageProps) {
-  const details = await getAppDetails(params.slug);
+  const { slug } = await params;
+
+  const details = await getAppDetails(slug);
   if (!details) {
     notFound();
   }
@@ -38,6 +41,8 @@ export default async function AtoStoreDetailsPage({
   const isInstalled = installedEntry?.isInstalled ?? false;
   const requiresFoundersAccess = details.requiresFoundersAccess;
   const isLocked = requiresFoundersAccess && !entitlements.foundersAccess;
+  const isInstallUnavailable = details.app.slug === "namc-reader";
+  const foundersPerksPreview = FOUNDERS_ACCESS_PERKS;
 
   const installAction = async () => {
     "use server";
@@ -51,6 +56,10 @@ export default async function AtoStoreDetailsPage({
       if (!entitlements.foundersAccess) {
         redirect("/pricing");
       }
+    }
+
+    if (details.app.slug === "namc-reader") {
+      return;
     }
 
     await installApp(session.user.id, details.app.id);
@@ -71,9 +80,10 @@ export default async function AtoStoreDetailsPage({
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
             {details.app.iconUrl ? (
-              <Image
+              <ImageWithFallback
                 alt={`${details.app.name} icon`}
                 className="h-full w-full object-cover"
+                containerClassName="size-full"
                 height={36}
                 src={details.app.iconUrl}
                 width={36}
@@ -99,9 +109,10 @@ export default async function AtoStoreDetailsPage({
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
                 {details.app.iconUrl ? (
-                  <Image
+                  <ImageWithFallback
                     alt={`${details.app.name} icon`}
                     className="h-full w-full object-cover"
+                    containerClassName="size-full"
                     height={64}
                     src={details.app.iconUrl}
                     width={64}
@@ -132,7 +143,7 @@ export default async function AtoStoreDetailsPage({
                       ? "bg-emerald-600/80 text-white"
                       : "bg-pink-500 text-white hover:bg-pink-600"
                   }`}
-                  disabled={isInstalled || isLocked}
+                  disabled={isInstalled || isLocked || isInstallUnavailable}
                   type="submit"
                 >
                   {isInstalled ? (
@@ -140,6 +151,8 @@ export default async function AtoStoreDetailsPage({
                       <Check className="h-4 w-4" />
                       Installed
                     </>
+                  ) : isInstallUnavailable ? (
+                    <>Install unavailable</>
                   ) : isLocked ? (
                     <>
                       <Lock className="h-4 w-4" />
@@ -165,6 +178,17 @@ export default async function AtoStoreDetailsPage({
             </div>
           </div>
 
+          {isInstallUnavailable && (
+            <div className="mt-4 rounded-2xl border border-sky-300/30 bg-sky-500/10 p-4 text-sm text-sky-100">
+              <p className="font-semibold">Coming soon</p>
+              <p className="mt-1 text-xs text-sky-100/80">
+                NAMC Reader is listed in the ATO Store for early visibility, but
+                installs are not enabled yet while we finish staging and launch
+                checks.
+              </p>
+            </div>
+          )}
+
           {isLocked && (
             <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
               <div className="flex items-center gap-2 font-semibold">
@@ -175,12 +199,40 @@ export default async function AtoStoreDetailsPage({
                 This app includes Founders-only routes. Upgrade to unlock the
                 full experience.
               </p>
+              <div className="mt-3 space-y-2 text-xs text-amber-100/80">
+                <div className="font-semibold uppercase tracking-wide text-amber-100/90">
+                  Founders perks include
+                </div>
+                <ul className="space-y-1">
+                  {foundersPerksPreview.map((perk) => (
+                    <li key={perk.id}>• {perk.title}</li>
+                  ))}
+                </ul>
+              </div>
               <Link
                 className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/40 bg-amber-200/20 px-4 py-2 text-xs font-semibold text-amber-50 transition hover:bg-amber-200/30"
                 href="/pricing"
               >
                 View pricing
               </Link>
+            </div>
+          )}
+
+          {requiresFoundersAccess && entitlements.foundersAccess && (
+            <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+              <div className="flex items-center gap-2 font-semibold">
+                <Check className="h-4 w-4" />
+                Founders perks unlocked
+              </div>
+              <p className="mt-1 text-xs text-emerald-100/80">
+                This ATO includes Founders-only routes, and your membership is
+                active.
+              </p>
+              <ul className="mt-3 space-y-1 text-xs text-emerald-100/80">
+                {foundersPerksPreview.map((perk) => (
+                  <li key={perk.id}>• {perk.title}</li>
+                ))}
+              </ul>
             </div>
           )}
         </section>
@@ -191,6 +243,12 @@ export default async function AtoStoreDetailsPage({
             {details.app.description ??
               "Explore this ATO and its routes inside Brooks AI HUB."}
           </p>
+          {isInstallUnavailable && (
+            <p className="mt-2 text-xs text-white/60">
+              Install access is staged for this app and will be enabled in a
+              future rollout.
+            </p>
+          )}
         </section>
 
         <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">

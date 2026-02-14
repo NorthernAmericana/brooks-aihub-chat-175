@@ -1,12 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { AtoSettingsPanel } from "@/components/ato-settings-panel";
-import { VoiceSettingsPanel } from "@/components/voice-settings-panel";
-import {
-  getChatsByUserId,
-  getUnofficialAtosByOwner,
-  getUserById,
-} from "@/lib/db/queries";
+import { BirthdaySettingsPanel } from "@/components/birthday-settings-panel";
+import { ChatHistorySettingsPanel } from "@/components/chat-history-settings-panel";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -15,51 +10,43 @@ export default async function SettingsPage() {
     redirect("/api/auth/guest");
   }
 
-  const { chats } = await getChatsByUserId({
-    id: session.user.id,
-    limit: 50,
-    startingAfter: null,
-    endingBefore: null,
-  });
+  const isValidUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    session.user.id
+  );
 
-  const [atos, user] = await Promise.all([
-    getUnofficialAtosByOwner({ ownerUserId: session.user.id }),
-    getUserById({ id: session.user.id }),
-  ]);
-  const maxFileCount = user?.foundersAccess ? 10 : 5;
+  if (!isValidUserId) {
+    redirect("/api/auth/guest");
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
       <div>
         <h1 className="font-semibold text-2xl">Chat Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Configure voice playback and tool access for your chats.
+          Keep your birthday on file for personalized celebrations.
         </p>
       </div>
 
       <section className="flex flex-col gap-3">
         <div>
-          <h2 className="font-semibold text-lg">NAMC Voice Options</h2>
+          <h2 className="font-semibold text-lg">Birthday</h2>
           <p className="text-sm text-muted-foreground">
-            Bruce NAMC is the default voice for NAMC chats. You can switch to
-            Selena NAMC using the settings below or the three-dot menu in any
-            NAMC chat.
+            Keep your birthday on file for personalized celebrations.
           </p>
         </div>
 
-        <VoiceSettingsPanel chats={chats} />
+        <BirthdaySettingsPanel />
       </section>
 
       <section className="flex flex-col gap-3">
         <div>
-          <h2 className="font-semibold text-lg">Unofficial ATO Tool Access</h2>
+          <h2 className="font-semibold text-lg">Chat History</h2>
           <p className="text-sm text-muted-foreground">
-            Manage web and file search availability for your unofficial ATO
-            chats.
+            Delete chat threads only. This will not delete Memories.
           </p>
         </div>
 
-        <AtoSettingsPanel atos={atos} maxFileCount={maxFileCount} />
+        <ChatHistorySettingsPanel />
       </section>
     </div>
   );

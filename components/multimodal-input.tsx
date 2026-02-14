@@ -4,7 +4,6 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { CheckIcon } from "lucide-react";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -35,7 +34,12 @@ import { useEntitlements } from "@/hooks/use-entitlements";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { NAMC_TRAILERS } from "@/lib/namc-trailers";
 import type { RouteSuggestion } from "@/lib/routes/types";
+import { requiresFoundersForSlashRoute } from "@/lib/routes/founders-slash-gating";
 import { normalizeRouteKey } from "@/lib/routes/utils";
+import {
+  getUnknownRouteFeedback,
+  UNKNOWN_ROUTE_FALLBACK_MESSAGE,
+} from "@/lib/routes/resolve-route-feedback";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
@@ -44,8 +48,9 @@ import {
 import { parseSlashAction, rememberSlashAction } from "@/lib/suggested-actions";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
-import { cn, fetcher } from "@/lib/utils";
+import { cn, fetcher, getContrastingTextColor } from "@/lib/utils";
 import { shouldDisableAds, trackMessageAndCheckAdGate } from "@/lib/ad-gate";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -54,6 +59,7 @@ import {
   PromptInputTools,
 } from "./elements/prompt-input";
 import { ArrowUpIcon, MicIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ChatHistoryPanel } from "./chat-history-panel";
 import { ChatProfilePanel } from "./chat-profile-panel";
 import { ChatSwipeMenu } from "./chat-swipe-menu";
 import { PreviewAttachment } from "./preview-attachment";
@@ -61,6 +67,7 @@ import { RouteChangeModal } from "./route-change-modal";
 import { SlashSuggestions } from "./slash-suggestions";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import {
   Dialog,
   DialogContent,
@@ -144,6 +151,8 @@ function PureMultimodalInput({
   const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const { entitlements } = useEntitlements(session?.user?.id);
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
+  const { messageColor } = useUserMessageColor();
+  const inputTextColor = getContrastingTextColor(messageColor);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -268,15 +277,16 @@ function PureMultimodalInput({
     RouteSuggestion[]
   >([]);
   const [slashSuggestionTitle, setSlashSuggestionTitle] = useState<string>("");
+  const [unknownRouteHelper, setUnknownRouteHelper] = useState<string>("");
   const [redirectBannerUrl, setRedirectBannerUrl] = useState<string | null>(
     null
   );
   const overlayRef = useRef<HTMLDivElement>(null);
   const slashPrefixRef = useRef<HTMLSpanElement>(null);
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
-  const [activeMenu, setActiveMenu] = useState<"history" | "profile" | null>(
-    "history"
-  );
+  const [activeMenu, setActiveMenu] = useState<
+    "history" | "profile" | "suggestions" | null
+  >(null);
   const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [canCloseAdModal, setCanCloseAdModal] = useState(false);
@@ -331,7 +341,7 @@ function PureMultimodalInput({
   const isAtoUpload = Boolean(atoId);
   const maxChatImages = entitlements.foundersAccess ? 10 : 5;
   const maxChatVideos = 1;
-  const chatUploadPlanLabel = entitlements.foundersAccess ? "Founders" : "Free";
+  const chatUploadPlanLabel = entitlements.foundersAccess ? "Paid" : "Free";
   const isNamcChatRoute = (chatRouteKey ?? "").toLowerCase() === "namc";
 
   // Detect when user types "/" at the start to show suggestions
@@ -354,22 +364,52 @@ function PureMultimodalInput({
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
       setRedirectBannerUrl(null);
+      setUnknownRouteHelper("");
     }
   }, [input]);
 
+  const canActivateRoute = useCallback(
+    (route: RouteSuggestion | undefined, slash: string) => {
+      const requiresFounders =
+        route?.foundersOnly ?? requiresFoundersForSlashRoute(route?.slash ?? slash);
+
+      if (requiresFounders && !entitlements.foundersAccess) {
+        toast.error("This route requires paid access. Upgrade to unlock it.");
+        setShowSlashSuggestions(false);
+        return false;
+      }
+
+      return true;
+    },
+    [entitlements.foundersAccess]
+  );
+
   const handleSlashSelect = useCallback(
     (slash: string, options?: { atoId?: string }) => {
+      const selectedRoute =
+        (routeData?.routes ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        ) ??
+        (inlineSlashSuggestions ?? []).find(
+          (route) => normalizeRouteKey(route.slash) === normalizeRouteKey(slash)
+        );
+
+      if (!canActivateRoute(selectedRoute, slash)) {
+        return;
+      }
+
       setInput(`/${slash}/ `);
       setShowSlashSuggestions(false);
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
+      setUnknownRouteHelper("");
       onSelectAto?.(options?.atoId ?? null);
       // Focus the textarea
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 0);
     },
-    [onSelectAto, setInput]
+    [canActivateRoute, inlineSlashSuggestions, onSelectAto, routeData?.routes, setInput]
   );
 
   const handleStartRecording = useCallback(async () => {
@@ -486,11 +526,28 @@ function PureMultimodalInput({
             const resolved = (await response.json()) as ResolveRouteResponse;
 
             if (resolved.status === "unknown") {
-              setInlineSlashSuggestions(resolved.suggestions.slice(0, 3));
-              setSlashSuggestionTitle(
-                `Unknown route: /${parsedAction.slash}/. Try one of these:`
+              const feedback = getUnknownRouteFeedback(
+                parsedAction.slash,
+                resolved.suggestions
               );
-              setShowSlashSuggestions(resolved.suggestions.length > 0);
+
+              if (feedback.kind === "fallback") {
+                setInlineSlashSuggestions([]);
+                setSlashSuggestionTitle("");
+                setShowSlashSuggestions(false);
+                setUnknownRouteHelper(feedback.message);
+                toast.error(feedback.message);
+                return;
+              }
+
+              setInlineSlashSuggestions(resolved.suggestions);
+              setSlashSuggestionTitle(feedback.title);
+              setShowSlashSuggestions(true);
+              setUnknownRouteHelper("");
+              return;
+            }
+
+            if (!canActivateRoute(resolved.route, parsedAction.slash)) {
               return;
             }
 
@@ -511,6 +568,7 @@ function PureMultimodalInput({
 
       setInlineSlashSuggestions([]);
       setSlashSuggestionTitle("");
+      setUnknownRouteHelper("");
       const promptText = parsedAction?.prompt ?? input;
       if (
         isNamcChatRoute &&
@@ -556,6 +614,16 @@ function PureMultimodalInput({
       }
 
       if (parsedAction) {
+        const selectedRoute = (routeData?.routes ?? []).find(
+          (route) =>
+            normalizeRouteKey(route.slash) ===
+            normalizeRouteKey(parsedAction?.slash ?? "")
+        );
+
+        if (!canActivateRoute(selectedRoute, parsedAction.slash)) {
+          return;
+        }
+
         rememberSlashAction(parsedAction);
       }
 
@@ -609,6 +677,7 @@ function PureMultimodalInput({
     isNamcChatRoute,
     onSelectAto,
     entitlements.foundersAccess,
+    canActivateRoute,
     pathname,
     sendMessageParts,
   ]);
@@ -856,11 +925,6 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  const shouldShowMenuPanel =
-    messages.length === 0 &&
-    attachments.length === 0 &&
-    uploadQueue.length === 0;
-
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       <div className="flex flex-col gap-3">
@@ -880,9 +944,10 @@ function PureMultimodalInput({
             }
             type="button"
           >
-            <Image
+            <ImageWithFallback
               alt={session?.user?.email ?? "Guest"}
-              className="rounded-full"
+              className="size-full object-cover"
+              containerClassName="size-8 overflow-hidden rounded-full"
               height={32}
               src={avatarSrc}
               width={32}
@@ -895,12 +960,17 @@ function PureMultimodalInput({
               [
                 { id: "profile", label: "Profile" },
                 { id: "history", label: "History" },
+                { id: "suggestions", label: "Suggestions" },
               ] as const
             }
             onChange={setActiveMenu}
           />
         </div>
-        {activeMenu === "history" && shouldShowMenuPanel && (
+        {activeMenu === "profile" && <ChatProfilePanel />}
+        {activeMenu === "history" && (
+          <ChatHistoryPanel currentChatId={chatId} user={session?.user} />
+        )}
+        {activeMenu === "suggestions" && (
           <SuggestedActions
             chatId={chatId}
             messages={messages}
@@ -908,7 +978,6 @@ function PureMultimodalInput({
             sendMessage={sendMessage}
           />
         )}
-        {activeMenu === "profile" && <ChatProfilePanel />}
       </div>
 
       <input
@@ -926,6 +995,7 @@ function PureMultimodalInput({
 
       <PromptInput
         className="rounded-xl border border-border bg-background p-3 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
+        style={{ backgroundColor: messageColor, color: inputTextColor }}
         onSubmit={(event) => {
           event.preventDefault();
           if (!input.trim() && attachments.length === 0) {
@@ -977,6 +1047,7 @@ function PureMultimodalInput({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 overflow-auto p-2 text-base leading-6 tracking-normal text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [white-space:pre-wrap] [word-break:break-word] [&::-webkit-scrollbar]:hidden"
               ref={overlayRef}
+              style={{ color: inputTextColor }}
             >
               {slashPrefix ? (
                 <>
@@ -999,6 +1070,12 @@ function PureMultimodalInput({
               maxHeight={200}
               minHeight={44}
               onChange={handleInput}
+              style={{
+                caretColor: inputTextColor,
+                ...(slashPrefixIndent
+                  ? { textIndent: `${slashPrefixIndent}px` }
+                  : {}),
+              }}
               onScroll={(event) => {
                 if (overlayRef.current) {
                   overlayRef.current.scrollTop = event.currentTarget.scrollTop;
@@ -1009,17 +1086,20 @@ function PureMultimodalInput({
               placeholder="Send a message..."
               ref={textareaRef}
               rows={1}
-              style={
-                slashPrefixIndent
-                  ? { textIndent: `${slashPrefixIndent}px` }
-                  : undefined
-              }
               value={input}
             />
           </div>
         </div>
         <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
+          {unknownRouteHelper ? (
+            <p
+              className="mb-2 text-xs text-destructive"
+              data-testid="unknown-route-helper"
+            >
+              {unknownRouteHelper}
+            </p>
+          ) : null}
+          <PromptInputTools className="flex w-full flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
               isUploadEnabled={canUploadFiles}
@@ -1032,7 +1112,7 @@ function PureMultimodalInput({
             />
             <Button
               className={cn(
-                "aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent",
+                "inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent",
                 isRecording && "bg-red-500 text-white hover:bg-red-600"
               )}
               data-testid="mic-button"
@@ -1045,7 +1125,7 @@ function PureMultimodalInput({
                   <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                 </div>
               ) : (
-                <MicIcon />
+                <MicIcon size={14} />
               )}
             </Button>
           </PromptInputTools>
@@ -1233,7 +1313,7 @@ function PureAttachmentsButton({
 
   return (
     <Button
-      className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
+      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
       disabled={status !== "ready" || isReasoningModel || !isUploadEnabled}
       onClick={(event) => {
@@ -1276,9 +1356,9 @@ function PureModelSelectorCompact({
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 w-[200px] justify-between px-2" variant="ghost">
+        <Button className="h-8 min-w-0 max-w-[160px] flex-1 justify-between gap-1 px-2 sm:w-[200px] sm:max-w-[200px] sm:flex-none" variant="ghost">
           {provider && <ModelSelectorLogo provider={provider} />}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName className="truncate">{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>

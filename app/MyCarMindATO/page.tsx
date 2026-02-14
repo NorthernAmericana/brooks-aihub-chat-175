@@ -12,7 +12,6 @@ import {
   Star,
   X,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -31,6 +30,7 @@ import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import type { RouteSuggestion } from "@/lib/routes/types";
 import { normalizeRouteKey } from "@/lib/routes/utils";
 import { fetcher } from "@/lib/utils";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 type TownSummary = {
   id: string;
@@ -1000,9 +1000,10 @@ export default function MyCarMindATOPage() {
         </button>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
+            <ImageWithFallback
               alt="MyCarMindATO icon"
               className="h-full w-full object-cover"
+              containerClassName="size-full"
               height={36}
               src="/icons/mycarmindato-appicon.png"
               width={36}
@@ -1031,9 +1032,10 @@ export default function MyCarMindATOPage() {
             </button>
           )}
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5">
-            <Image
+            <ImageWithFallback
               alt="Profile avatar"
               className="h-full w-full object-cover"
+              containerClassName="size-full"
               height={40}
               src={avatarSrc}
               width={40}
@@ -1122,6 +1124,32 @@ export default function MyCarMindATOPage() {
                   </div>
                 </button>
               ))}
+            </div>
+          </section>
+        )}
+
+        {!isMapOnly && (
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                  Personal memories
+                </p>
+                <h2 className="text-xl font-semibold text-white">
+                  Review your MyCarMindATO memories
+                </h2>
+                <p className="text-sm text-white/60">
+                  See your home location and saved vehicle for the
+                  /MyCarMindATO/ route only.
+                </p>
+              </div>
+              <button
+                className="inline-flex items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                onClick={() => router.push("/MyCarMindATO/memories")}
+                type="button"
+              >
+                Personal /MyCarMindATO/ Memories
+              </button>
             </div>
           </section>
         )}

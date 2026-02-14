@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "tsx lib/db/migrate && next build",
-    "start": "next start",
+    "build": "next build",
+    "build:vercel": "pnpm db:migrate && pnpm build",
+    "start": "pnpm db:migrate && next start",
     "lint": "ultracite check",
     "format": "ultracite fix",
     "db:generate": "drizzle-kit generate",
@@ -19,7 +20,8 @@
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
     "check:pwa": "tsx scripts/check-pwa.ts",
     "migrate:myflowerai": "tsx scripts/migrate-myflowerai-schema.ts",
-    "validate:myflowerai": "tsx scripts/validate-myflowerai-schema.ts"
+    "validate:myflowerai": "tsx scripts/validate-myflowerai-schema.ts",
+    "mycarmind:sync": "tsx scripts/mycarmind-sync.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.15",

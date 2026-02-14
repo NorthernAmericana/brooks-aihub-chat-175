@@ -6,7 +6,7 @@ import { DUMMY_PASSWORD } from "@/lib/constants";
 import { createGuestUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
-export type UserType = "guest" | "regular";
+export type UserType = "guest" | "regular" | "paid";
 
 const authSecret =
   process.env.AUTH_SECRET ??
@@ -67,7 +67,7 @@ export const {
           return null;
         }
 
-        return { ...user, type: "regular" };
+        return { ...user, type: user.foundersAccess ? "paid" : "regular" };
       },
     }),
     Credentials({

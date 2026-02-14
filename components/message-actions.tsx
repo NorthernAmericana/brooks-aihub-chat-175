@@ -1,20 +1,46 @@
 import equal from "fast-deep-equal";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { getChatRouteKey, getOfficialVoiceId } from "@/lib/voice";
+import { useUserMessageColor } from "@/hooks/use-user-message-color";
+import ColorWheelPalette from "./color-wheel-palette";
 import { Action, Actions } from "./elements/actions";
 import {
   CopyIcon,
+  MenuIcon,
   PencilEditIcon,
   SpeakerIcon,
   ThumbDownIcon,
   ThumbUpIcon,
 } from "./icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
+
+const SPEECH_EVENT = "brooksbears:tts-playback";
+const VISEME_EVENT = "brooksbears:tts-viseme";
+
+const dispatchSpeechPlaybackEvent = (state: "start" | "end" | "pause") => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SPEECH_EVENT, { detail: { state } }));
+};
+
+const dispatchVisemeFrameEvent = (timeSeconds: number) => {
+  if (typeof window === "undefined") return;
+  const visemes = ["M", "AA", "E", "O", "FV", "I"];
+  const index = Math.floor(timeSeconds * 12) % visemes.length;
+  window.dispatchEvent(
+    new CustomEvent(VISEME_EVENT, { detail: { viseme: visemes[index] } })
+  );
+};
 export function PureMessageActions({
   chatId,
   chatRouteKey,
@@ -37,6 +63,36 @@ export function PureMessageActions({
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const { messageColor, setMessageColor } = useUserMessageColor();
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [pickerColor, setPickerColor] = useState(messageColor);
+  const [isMobilePalette, setIsMobilePalette] = useState(false);
+  const colorCommitTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingColor = useRef(messageColor);
+
+  useEffect(() => {
+    setPickerColor(messageColor);
+    pendingColor.current = messageColor;
+  }, [messageColor]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const updateMatches = () => setIsMobilePalette(mediaQuery.matches);
+    updateMatches();
+    mediaQuery.addEventListener("change", updateMatches);
+    return () => mediaQuery.removeEventListener("change", updateMatches);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (colorCommitTimeout.current) {
+        clearTimeout(colorCommitTimeout.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return null;
@@ -66,6 +122,13 @@ export function PureMessageActions({
   };
 
   const handleSpeak = async () => {
+    const routeKeyForAvatarEvents = getChatRouteKey({
+      routeKey: chatRouteKey,
+      title: chatTitle,
+    });
+    const shouldDispatchAvatarEvents =
+      routeKeyForAvatarEvents.toLowerCase() === "brooksbears" ||
+      routeKeyForAvatarEvents.toLowerCase().startsWith("brooksbears/");
     // If already playing, stop current playback and start fresh
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
@@ -74,6 +137,8 @@ export function PureMessageActions({
         URL.revokeObjectURL(audioUrlRef.current);
         audioUrlRef.current = null;
       }
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("pause");
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
       setIsPlaying(false);
       audioRef.current = null;
       return;
@@ -106,11 +171,8 @@ export function PureMessageActions({
       }
 
       // Determine voice ID: use persisted setting or route default
-      const routeKey = getChatRouteKey({
-        routeKey: chatRouteKey,
-        title: chatTitle,
-      });
-      const voiceId = chatData.ttsVoiceId || getOfficialVoiceId(routeKey);
+      const voiceId =
+        chatData.ttsVoiceId || getOfficialVoiceId(routeKeyForAvatarEvents);
 
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 15_000);
@@ -139,6 +201,7 @@ export function PureMessageActions({
       audioRef.current = audio;
 
       audio.addEventListener("ended", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
@@ -148,6 +211,7 @@ export function PureMessageActions({
       });
 
       audio.addEventListener("error", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
@@ -157,7 +221,16 @@ export function PureMessageActions({
         toast.error("Audio playback failed.");
       });
 
+      audio.addEventListener("pause", () => {
+        if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("pause");
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        if (shouldDispatchAvatarEvents) dispatchVisemeFrameEvent(audio.currentTime);
+      });
+
       setIsPlaying(true);
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("start");
       const playPromise = audio.play();
       requestThemeAudioResume();
       await playPromise;
@@ -168,6 +241,7 @@ export function PureMessageActions({
       } else {
         toast.error("Unable to generate speech right now.");
       }
+      if (shouldDispatchAvatarEvents) dispatchSpeechPlaybackEvent("end");
       setIsPlaying(false);
       audioRef.current = null;
     } finally {
@@ -182,7 +256,7 @@ export function PureMessageActions({
   if (message.role === "user") {
     return (
       <Actions className="-mr-0.5 justify-end">
-        <div className="relative">
+        <div className="relative flex items-center gap-1">
           {setMode && (
             <Action
               className="absolute top-0 -left-10 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/message:opacity-100"
@@ -196,6 +270,64 @@ export function PureMessageActions({
           <Action onClick={handleCopy} tooltip="Copy">
             <CopyIcon />
           </Action>
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsColorPickerOpen(false);
+              }
+            }}
+          >
+            <DropdownMenuTrigger asChild>
+              <Action tooltip="Message color">
+                <MenuIcon />
+              </Action>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsColorPickerOpen((previous) => !previous);
+                }}
+              >
+                Change color text bar
+              </DropdownMenuItem>
+              {isColorPickerOpen && (
+                <div className="w-[360px] max-w-[92vw] px-3 py-3">
+                  <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Message color</span>
+                    <button
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setIsColorPickerOpen(false)}
+                      type="button"
+                    >
+                      Done
+                    </button>
+                  </div>
+                  <ColorWheelPalette
+                    initialColor={pickerColor}
+                    initialMode="Complementary"
+                    layout={isMobilePalette ? "mobile" : "desktop"}
+                    showSwatches
+                    showCopyButtons={false}
+                    onPaletteChange={({ base }) => {
+                      setPickerColor(base);
+                      pendingColor.current = base;
+                      if (colorCommitTimeout.current) {
+                        clearTimeout(colorCommitTimeout.current);
+                      }
+                      colorCommitTimeout.current = setTimeout(async () => {
+                        try {
+                          await setMessageColor(pendingColor.current);
+                        } catch (_error) {
+                          toast.error("Unable to save message color.");
+                        }
+                      }, 250);
+                    }}
+                  />
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </Actions>
     );

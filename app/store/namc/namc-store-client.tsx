@@ -1,11 +1,12 @@
 "use client";
 
 import { ArrowLeft, ChevronLeft, ExternalLink } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreProduct } from "@/lib/db/schema";
+import namcAppIcon from "@/public/icons/namc-appicon.png";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 function formatPrice(priceInCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -50,13 +51,14 @@ export function NamcStoreClient({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-0.5">
+            <ImageWithFallback
               alt="NAMC icon"
-              className="h-full w-full object-cover"
-              height={36}
-              src="/icons/namc-appicon.png"
-              width={36}
+              className="h-full w-full object-contain"
+              containerClassName="size-full"
+              height={44}
+              src={namcAppIcon}
+              width={44}
             />
           </div>
           <div>
@@ -70,13 +72,14 @@ export function NamcStoreClient({
         <section className="rounded-3xl border border-pink-300/20 bg-gradient-to-br from-pink-500/15 via-white/5 to-transparent p-5 backdrop-blur-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
-                <Image
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-1.5">
+                <ImageWithFallback
                   alt="NAMC icon"
-                  className="h-full w-full object-cover"
-                  height={64}
-                  src="/icons/namc-appicon.png"
-                  width={64}
+                  className="h-full w-full object-contain"
+                  containerClassName="size-full"
+                  height={96}
+                  src={namcAppIcon}
+                  width={96}
                 />
               </div>
               <div>
@@ -179,9 +182,10 @@ export function NamcStoreClient({
                   >
                     <div className="relative mb-3 h-40 overflow-hidden rounded-xl bg-white/10">
                       {product.imageUrl ? (
-                        <Image
+                        <ImageWithFallback
                           alt={product.title}
                           className="h-full w-full object-cover"
+                          containerClassName="size-full"
                           fill
                           src={product.imageUrl}
                           unoptimized

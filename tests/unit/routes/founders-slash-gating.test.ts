@@ -1,5 +1,6 @@
 import {
   FREE_SLASH_ROUTES,
+  getSlashRouteAccessMetadata,
   requiresFoundersForSlashRoute,
 } from "@/lib/routes/founders-slash-gating";
 
@@ -22,6 +23,23 @@ assert(
 assert(
   requiresFoundersForSlashRoute("MyCarMindATO/Driver") === false,
   "expected MyCarMindATO/Driver to remain free"
+);
+
+
+assert(
+  FREE_SLASH_ROUTES.has("NAMC/Reader") === false,
+  "expected NAMC/Reader to stay founders-only and not be allowlisted as free"
+);
+
+assert(
+  requiresFoundersForSlashRoute("NAMC/Reader") === true,
+  "expected founders-only subroute NAMC/Reader to remain protected"
+);
+
+const namcReaderAccess = getSlashRouteAccessMetadata("NAMC/Reader");
+assert(
+  namcReaderAccess.foundersOnly === true && namcReaderAccess.isFreeRoute === false,
+  "expected NAMC/Reader route metadata to indicate founders-only access"
 );
 
 assert(

@@ -25,9 +25,21 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
         .string()
         .optional()
         .describe("Optional source identifier; defaults to the current chat."),
+      memoryKeyHint: z
+        .string()
+        .optional()
+        .describe(
+          "Optional stable key hint to version the same real-world fact over time."
+        ),
+      intent: z
+        .enum(["new_fact", "update_fact"])
+        .optional()
+        .describe(
+          "Optional save intent: new_fact creates a fresh fact; update_fact versions an existing fact."
+        ),
     }),
     needsApproval: true,
-    execute: async ({ rawText, tags, route, sourceUri }) => {
+    execute: async ({ rawText, tags, route, sourceUri, memoryKeyHint, intent }) => {
       if (!session.user?.id) {
         throw new Error("Missing user session for saveMemory.");
       }
@@ -40,6 +52,8 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
         route: route ?? agent.slash,
         agentId: agent.id,
         agentLabel: agent.label,
+        memoryKeyHint,
+        intent,
       });
 
       return {
@@ -50,6 +64,11 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
         rawText: record.rawText,
         tags: record.tags,
         sourceUri: record.sourceUri,
+        memoryKey: record.memoryKey,
+        memoryVersion: record.memoryVersion,
+        supersedesMemoryId: record.supersedesMemoryId,
+        validFrom: record.validFrom,
+        validTo: record.validTo,
         approvedAt: record.approvedAt,
       };
     },

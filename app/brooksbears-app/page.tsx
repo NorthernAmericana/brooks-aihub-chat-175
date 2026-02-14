@@ -1,106 +1,306 @@
-"use client";
-
-import { ArrowLeft, Check, Download } from "lucide-react";
+import { Check, Download, ExternalLink, Trash2 } from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { auth } from "@/app/(auth)/auth";
+import { db } from "@/lib/db";
+import { atoAppReviews, atoApps, user, userInstalls } from "@/lib/db/schema";
+import { isAtoAppReviewsTableReady } from "@/lib/ato/reviews-table";
+import { getSafeDisplayName } from "@/lib/ato/reviews";
+import { installApp } from "@/lib/store/installApp";
+import { uninstallApp } from "@/lib/store/uninstallApp";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { BackButton } from "./BackButton";
+import { ReviewsSection } from "./ReviewsSection";
 
-const INSTALL_STORAGE_KEY = "ato-app-installed:brooksbears";
+export const dynamic = "force-dynamic";
 
-export default function BrooksBearsAppPage() {
-  const router = useRouter();
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [hasHydratedInstallState, setHasHydratedInstallState] = useState(false);
+const APP_SLUG = "brooksbears";
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
+type ScreenshotData = {
+  src: string;
+  alt: string;
+  caption?: string;
+};
+
+const SCREENSHOT_BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNicgaGVpZ2h0PSc5Jz48cmVjdCB3aWR0aD0nMTYnIGhlaWdodD0nOScgZmlsbD0nI2UyZThmMCcvPjwvc3ZnPg==";
+
+const screenshots: ScreenshotData[] = [
+  {
+    src: "/store-screenshots/brooksbears/cover.svg",
+    alt: "BrooksBears landing screen showing Benjamin Bear and quick actions.",
+    caption: "Welcome screen",
+  },
+  {
+    src: "/store-screenshots/brooksbears/chat.svg",
+    alt: "BrooksBears chat interface with a friendly storytelling conversation.",
+    caption: "Story mode chat",
+  },
+  {
+    src: "/store-screenshots/brooksbears/tools.svg",
+    alt: "BrooksBears tools panel with jokes, check-ins, and companion prompts.",
+    caption: "Companion tools",
+  },
+];
+
+type AppStats = {
+  avgRating: number | null;
+  reviewsCount: number;
+  downloadsCount: number;
+};
+
+type ReviewsPayload = {
+  reviews: Array<{
+    id: string;
+    rating: number;
+    body: string | null;
+    createdAt: string;
+    displayName: string;
+  }>;
+  nextCursor: string | null;
+};
+
+const formatDownloads = (downloads: number) =>
+  new Intl.NumberFormat("en", { notation: "compact" }).format(downloads);
+
+const formatRating = (rating: number) => rating.toFixed(1);
+
+const getAppStats = async (): Promise<AppStats | null> => {
+  const [app] = await db
+    .select({ id: atoApps.id })
+    .from(atoApps)
+    .where(eq(atoApps.slug, APP_SLUG))
+    .limit(1);
+
+  if (!app) {
+    return null;
+  }
+
+  const [installStats] = await db
+    .select({ downloads: sql<number>`count(*)` })
+    .from(userInstalls)
+    .where(eq(userInstalls.appId, app.id));
+
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+  const [ratingStats] = hasReviewsTable
+    ? await db
+        .select({
+          averageRating: sql<number | null>`avg(${atoAppReviews.rating})`,
+          reviewsCount: sql<number>`count(*)`,
+        })
+        .from(atoAppReviews)
+        .where(eq(atoAppReviews.appId, app.id))
+    : [null];
+
+  return {
+    downloadsCount: Number(installStats?.downloads ?? 0),
+    avgRating:
+      ratingStats?.averageRating == null
+        ? null
+        : Number(ratingStats.averageRating),
+    reviewsCount: Number(ratingStats?.reviewsCount ?? 0),
+  };
+};
+
+const getAppReviews = async (): Promise<ReviewsPayload | null> => {
+  const [app] = await db
+    .select({ id: atoApps.id })
+    .from(atoApps)
+    .where(eq(atoApps.slug, APP_SLUG))
+    .limit(1);
+
+  if (!app) {
+    return null;
+  }
+
+  const hasReviewsTable = await isAtoAppReviewsTableReady();
+
+  if (!hasReviewsTable) {
+    return {
+      reviews: [],
+      nextCursor: null,
+    };
+  }
+
+  const rows = await db
+    .select({
+      id: atoAppReviews.id,
+      rating: atoAppReviews.rating,
+      body: atoAppReviews.body,
+      createdAt: atoAppReviews.createdAt,
+      email: user.email,
+    })
+    .from(atoAppReviews)
+    .innerJoin(user, eq(atoAppReviews.userId, user.id))
+    .where(eq(atoAppReviews.appId, app.id))
+    .orderBy(desc(atoAppReviews.createdAt), desc(atoAppReviews.id))
+    .limit(5);
+
+  const limit = 4;
+  const hasNextPage = rows.length > limit;
+  const trimmedRows = hasNextPage ? rows.slice(0, limit) : rows;
+  const nextCursor = hasNextPage
+    ? `${trimmedRows[trimmedRows.length - 1]?.createdAt.toISOString()}|${
+        trimmedRows[trimmedRows.length - 1]?.id
+      }`
+    : null;
+
+  return {
+    reviews: trimmedRows.map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      body: review.body,
+      createdAt: review.createdAt.toISOString(),
+      displayName: getSafeDisplayName(review.email),
+    })),
+    nextCursor,
+  };
+};
+
+export default async function BrooksBearsAppPage() {
+  const [app, session, stats, reviewsPayload] = await Promise.all([
+    db
+      .select()
+      .from(atoApps)
+      .where(eq(atoApps.slug, APP_SLUG))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    auth(),
+    getAppStats(),
+    getAppReviews(),
+  ]);
+
+  const userId = session?.user?.id ?? null;
+  const appId = app?.id ?? null;
+
+  const [installRecord] =
+    userId && appId
+      ? await db
+          .select()
+          .from(userInstalls)
+          .where(and(eq(userInstalls.userId, userId), eq(userInstalls.appId, appId)))
+          .limit(1)
+      : [null];
+
+  const isInstalled = Boolean(installRecord);
+  const isInstallDisabled = isInstalled || !appId;
+  const installAction = async () => {
+    "use server";
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    if (!appId) {
       return;
     }
 
-    const storedValue = window.localStorage.getItem(INSTALL_STORAGE_KEY);
-    setIsInstalled(storedValue === "true");
-    setHasHydratedInstallState(true);
-  }, []);
+    await installApp(session.user.id, appId);
+    revalidatePath("/brooksbears-app");
+  };
 
-  useEffect(() => {
-    if (!hasHydratedInstallState || typeof window === "undefined") {
+  const uninstallAction = async () => {
+    "use server";
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    if (!appId) {
       return;
     }
 
-    window.localStorage.setItem(INSTALL_STORAGE_KEY, String(isInstalled));
-  }, [hasHydratedInstallState, isInstalled]);
-
-  const handleInstallClick = () => {
-    if (!isInstalled) {
-      setIsInstalled(true);
-    }
+    await uninstallApp(session.user.id, appId);
+    revalidatePath("/brooksbears-app");
   };
 
-  const handleGoToApp = () => {
-    router.push("/BrooksBears/");
-  };
+  const ratingLabel =
+    stats?.avgRating != null
+      ? `${formatRating(stats.avgRating)} (${stats.reviewsCount} reviews)`
+      : "New";
+  const downloadsLabel = stats
+    ? `${formatDownloads(stats.downloadsCount)} downloads`
+    : "Downloads unavailable";
+
+  const userReview =
+    userId && appId && (await isAtoAppReviewsTableReady())
+      ? await db
+          .select({
+            rating: atoAppReviews.rating,
+            body: atoAppReviews.body,
+          })
+          .from(atoAppReviews)
+          .where(
+            and(
+              eq(atoAppReviews.userId, userId),
+              eq(atoAppReviews.appId, appId)
+            )
+          )
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : null;
+
+  const currentUserDisplayName = getSafeDisplayName(session?.user?.email);
 
   return (
-    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#1b1118] via-[#160e14] to-[#120c16] text-white">
-      <div className="app-page-header sticky top-0 z-10 flex items-center gap-4 border-b border-white/10 bg-[#1b1118]/90 px-4 py-3 backdrop-blur-sm">
-        <button
-          aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-          onClick={() => router.back()}
-          type="button"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-            <Image
-              alt="BrooksBears icon"
-              className="h-full w-full object-cover"
-              height={36}
-              src="/icons/brooksbears-appicon.png"
-              width={36}
-            />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-white">BrooksBears</h1>
-            <p className="text-xs text-white/60">Companion chats & stories</p>
-          </div>
-        </div>
+    <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900">
+      <div className="app-page-header sticky top-0 z-10 flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <BackButton />
+        <h1 className="text-sm font-medium text-slate-700">
+          {app?.name ?? "BrooksBears"}
+        </h1>
       </div>
 
-      <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 space-y-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+      <div className="app-page-content flex-1 space-y-6 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
-                <Image
-                  alt="BrooksBears icon"
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                <ImageWithFallback
+                  alt={`${app?.name ?? "BrooksBears"} icon`}
                   className="h-full w-full object-cover"
+                  containerClassName="size-full"
                   height={64}
-                  src="/icons/brooksbears-appicon.png"
+                  src={app?.iconUrl ?? "/icons/brooksbears-appicon.png"}
                   width={64}
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">BrooksBears</h2>
-                <p className="text-sm text-white/60">Entertainment • 13+</p>
-                <div className="mt-1 flex items-center gap-4 text-sm text-white/50">
-                  <span>Rating 4.9</span>
-                  <span>12K+ downloads</span>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  {app?.name ?? "BrooksBears"}
+                </h2>
+                <p className="text-sm text-slate-500">Entertainment • 13+</p>
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                  <span>{ratingLabel}</span>
+                  <span>{downloadsLabel}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-3 md:w-auto">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+              <div className="font-medium text-slate-700">Live stats</div>
+              <div className="mt-1 flex flex-col gap-1">
+                <span>{ratingLabel}</span>
+                <span>{downloadsLabel}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <form action={installAction} className="w-full md:w-auto">
               <button
-                className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
+                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 md:w-48 ${
                   isInstalled
-                    ? "bg-emerald-600/80 text-white"
-                    : "bg-rose-500 hover:bg-rose-600 text-white"
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-slate-200 bg-slate-900 text-white hover:bg-slate-800"
                 }`}
-                disabled={isInstalled}
-                onClick={handleInstallClick}
-                type="button"
+                disabled={isInstallDisabled}
+                type="submit"
               >
                 {isInstalled ? (
                   <>
@@ -114,70 +314,121 @@ export default function BrooksBearsAppPage() {
                   </>
                 )}
               </button>
+            </form>
 
-              {isInstalled && (
-                <button
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                  onClick={handleGoToApp}
-                  type="button"
+            {isInstalled ? (
+              <>
+                <Link
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:w-40"
+                  href="/BrooksBears/"
                 >
-                  Enter BrooksBears
-                </button>
-              )}
-            </div>
+                  <ExternalLink className="h-4 w-4" />
+                  Open
+                </Link>
+                <form action={uninstallAction} className="w-full md:w-auto">
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 md:w-40"
+                    type="submit"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </button>
+                </form>
+              </>
+            ) : null}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">About</h3>
-          <p className="mt-2 text-sm text-white/70">
-            BrooksBears is a cozy companion experience with Benjamin Bear,
-            blending storytelling, jokes, and friendly check-ins inside Brooks
-            AI HUB.
-          </p>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">
-            Routes in Brooks AI HUB
-          </h3>
-          <div className="mt-3 space-y-3 text-sm text-white/70">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-400" />
-              <span className="font-mono">/BrooksBears/</span>
-              <span className="text-xs text-white/50">
-                Main companion space
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              <span className="font-mono">/BrooksBears/BenjaminBear/</span>
-              <span className="text-xs text-white/50">
-                Benjamin Bear focus
-              </span>
-            </div>
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-700">Screenshots</h3>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {screenshots.map((screenshot) => (
+              <figure
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                key={screenshot.src}
+              >
+                <div className="relative aspect-[16/9] bg-slate-100 animate-pulse">
+                  <Image
+                    alt={screenshot.alt}
+                    blurDataURL={SCREENSHOT_BLUR_DATA_URL}
+                    className="object-cover"
+                    fill
+                    loading="lazy"
+                    placeholder="blur"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    src={screenshot.src}
+                  />
+                </div>
+                {screenshot.caption ? (
+                  <figcaption className="border-t border-slate-100 px-3 py-2 text-xs text-slate-600">
+                    {screenshot.caption}
+                  </figcaption>
+                ) : null}
+              </figure>
+            ))}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-white">Preview</h3>
-          <p className="mt-2 text-sm text-white/70">
-            Voice-first conversations, quick stories, and gentle check-ins
-            await inside the BrooksBears app view.
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-[#1f1218]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(248,150,180,0.35),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,8,12,0.2),rgba(13,8,12,0.85))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-sm text-white/70">
-                Storytelling preview
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
+              Overview
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              Reviews
+            </span>
+            <span className="rounded-full border border-slate-200 px-3 py-1">
+              About
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-4 text-sm text-slate-600">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Overview</h4>
+              <p className="mt-1">
+                {app?.description ??
+                  "BrooksBears is a cozy companion experience with Benjamin Bear, blending storytelling, jokes, and friendly check-ins inside Brooks AI HUB."}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Reviews</h4>
+              <div className="mt-3">
+                <ReviewsSection
+                  appSlug={APP_SLUG}
+                  currentUserDisplayName={currentUserDisplayName}
+                  initialNextCursor={reviewsPayload?.nextCursor ?? null}
+                  initialReviews={reviewsPayload?.reviews ?? []}
+                  initialStats={{
+                    avgRating: stats?.avgRating ?? null,
+                    downloadsCount: stats?.downloadsCount ?? 0,
+                    reviewsCount: stats?.reviewsCount ?? 0,
+                  }}
+                  initialUserReview={userReview}
+                  isLoggedIn={Boolean(userId)}
+                />
               </div>
             </div>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1016]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(142,255,226,0.25),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,8,12,0.2),rgba(13,8,12,0.85))]" />
-              <div className="relative z-10 flex h-full items-center justify-center text-sm text-white/70">
-                Friendly chat preview
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">About</h4>
+              <div className="mt-2 space-y-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
+                  <span className="font-mono text-xs text-slate-700">
+                    /BrooksBears/
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Main companion space
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="font-mono text-xs text-slate-700">
+                    /BrooksBears/BenjaminBear/
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Benjamin Bear focus
+                  </span>
+                </div>
               </div>
             </div>
           </div>

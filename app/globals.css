@@ -107,6 +107,20 @@
   --cloud-text-muted: rgba(20, 10, 14, 0.62);
 }
 
+.analog-clock {
+  --clock-hand-hour: rgba(15, 23, 42, 0.95);
+  --clock-hand-minute: rgba(30, 41, 59, 0.85);
+  --clock-hand-second: rgba(16, 185, 129, 0.95);
+  --clock-hand-shadow: rgba(15, 23, 42, 0.25);
+}
+
+.dark .analog-clock {
+  --clock-hand-hour: rgba(248, 250, 252, 0.98);
+  --clock-hand-minute: rgba(226, 232, 240, 0.92);
+  --clock-hand-second: rgba(56, 189, 248, 0.95);
+  --clock-hand-shadow: rgba(0, 0, 0, 0.45);
+}
+
 /* define theme */
 @theme {
   --font-sans: var(--font-geist);
@@ -182,6 +196,36 @@
 
 @utility text-balance {
   text-wrap: balance;
+}
+
+@keyframes hero-float-breathe {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes hero-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.02);
+  }
+}
+
+.animate-hero-float {
+  animation: hero-float-breathe 6s ease-in-out infinite;
+}
+
+.animate-hero-float-talk {
+  animation:
+    hero-float-breathe 6s ease-in-out infinite,
+    hero-talk 0.6s ease-in-out infinite;
 }
 
 @utility -webkit-overflow-scrolling-touch {
@@ -800,8 +844,8 @@
   }
 
   .store-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(20, 13, 18, 0.95);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
   }
 
   .store-app-card {

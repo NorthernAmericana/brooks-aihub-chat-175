@@ -1,13 +1,16 @@
-import type { InferSelectModel } from "drizzle-orm";
+import { sql, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
   integer,
   json,
+  jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -18,6 +21,9 @@ export const user = pgTable("User", {
   password: varchar("password", { length: 64 }),
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  birthday: varchar("birthday", { length: 10 }),
+  messageColor: text("messageColor"),
+  avatarUrl: text("avatarUrl"),
   foundersAccess: boolean("foundersAccess").default(false),
   foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
 });
@@ -183,6 +189,12 @@ export type Stream = InferSelectModel<typeof stream>;
 
 export const memory = pgTable("Memory", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
+  memoryKey: text("memoryKey").notNull(),
+  memoryVersion: integer("memoryVersion").notNull().default(1),
+  supersedesMemoryId: uuid("supersedesMemoryId"),
+  validFrom: timestamp("validFrom").notNull().defaultNow(),
+  validTo: timestamp("validTo"),
+  stalenessReason: text("stalenessReason"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   sourceType: varchar("sourceType", {
@@ -205,7 +217,20 @@ export const memory = pgTable("Memory", {
   rawText: text("rawText").notNull(),
   normalizedText: text("normalizedText"),
   embeddingsRef: text("embeddingsRef"),
-});
+},
+  (table) => ({
+    ownerMemoryVersionIdx: uniqueIndex("Memory_owner_memory_version_idx").on(
+      table.ownerId,
+      table.memoryKey,
+      table.memoryVersion
+    ),
+    supersedesMemoryRef: foreignKey({
+      columns: [table.supersedesMemoryId],
+      foreignColumns: [table.id],
+      name: "Memory_supersedesMemoryId_Memory_id_fk",
+    }),
+  })
+);
 
 export type Memory = InferSelectModel<typeof memory>;
 
@@ -228,6 +253,24 @@ export const userLocation = pgTable("UserLocation", {
 });
 
 export type UserLocation = InferSelectModel<typeof userLocation>;
+
+export const userVehicle = pgTable("UserVehicle", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ownerId: uuid("ownerId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
+  route: varchar("route", { length: 128 }).notNull(),
+  make: text("make").notNull(),
+  model: text("model").notNull(),
+  year: integer("year"),
+  isApproved: boolean("isApproved").notNull().default(false),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserVehicle = InferSelectModel<typeof userVehicle>;
 
 export const unofficialAto = pgTable("UnofficialAto", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -312,9 +355,35 @@ export const userInstalls = pgTable("user_installs", {
     .references(() => atoApps.id),
   installedAt: timestamp("installed_at").notNull().defaultNow(),
   lastOpenedAt: timestamp("last_opened_at"),
-});
+}, (table) => ({
+  appUserUnique: uniqueIndex("user_installs_app_id_user_id_unique").on(
+    table.appId,
+    table.userId
+  ),
+}));
 
 export type UserInstall = InferSelectModel<typeof userInstalls>;
+
+export const atoAppReviews = pgTable("ato_app_reviews", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  appId: uuid("app_id")
+    .notNull()
+    .references(() => atoApps.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  rating: integer("rating").notNull(),
+  body: text("body"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  appUserUnique: uniqueIndex("ato_app_reviews_app_id_user_id_unique").on(
+    table.appId,
+    table.userId
+  ),
+}));
+
+export type AtoAppReview = InferSelectModel<typeof atoAppReviews>;
 
 export const entitlements = pgTable("entitlements", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -568,3 +637,226 @@ export const myfloweraiImages = pgTable("myflowerai_images", {
 });
 
 export type MyfloweraiImage = InferSelectModel<typeof myfloweraiImages>;
+
+export const myflowerDailyGoals = pgTable("myflower_daily_goals", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  targetG: numeric("target_g").notNull().default("0"),
+  targetMgThc: numeric("target_mg_thc"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerDailyGoal = InferSelectModel<typeof myflowerDailyGoals>;
+
+export const mediaAssets = pgTable("media_assets", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  url: text("url").notNull(),
+  contentType: text("content_type").notNull(),
+  bytes: integer("bytes").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MediaAsset = InferSelectModel<typeof mediaAssets>;
+
+export const myflowerLogs = pgTable("myflower_logs", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  productType: varchar("product_type", {
+    enum: [
+      "flower",
+      "vape",
+      "edible",
+      "tincture",
+      "concentrate",
+      "topical",
+      "other",
+    ],
+  }).notNull(),
+  strainSlug: varchar("strain_slug", { length: 255 }),
+  strainName: text("strain_name"),
+  amountG: numeric("amount_g"),
+  amountMgThc: numeric("amount_mg_thc"),
+  notes: text("notes"),
+  photoAssetId: uuid("photo_asset_id").references(() => mediaAssets.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerLog = InferSelectModel<typeof myflowerLogs>;
+
+export const myflowerPosts = pgTable("myflower_posts", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  kind: varchar("kind", {
+    enum: ["log", "photo", "check_in", "note"],
+  }).notNull(),
+  caption: text("caption"),
+  mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id),
+  metadata: jsonb("metadata"),
+  visibility: varchar("visibility", {
+    enum: ["public", "private", "unlisted"],
+  }).notNull(),
+  sourceApp: text("source_app").notNull().default("myflowerai"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerPost = InferSelectModel<typeof myflowerPosts>;
+
+export const commonsCampfire = pgTable(
+  "campfires",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    slug: varchar("slug", { length: 64 }).notNull(),
+    path: varchar("path", { length: 128 }).notNull(),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: text("description").notNull().default(""),
+    createdById: uuid("created_by_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    isActive: boolean("is_active").notNull().default(true),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+    isPrivate: boolean("is_private").notNull().default(false),
+  },
+  (table) => ({
+    slugUniqueIdx: uniqueIndex("campfires_slug_unique_idx").on(table.slug),
+    pathUniqueIdx: uniqueIndex("campfires_path_unique_idx").on(table.path),
+  })
+);
+
+export type CommonsCampfire = InferSelectModel<typeof commonsCampfire>;
+
+export const commonsPost = pgTable("commons_posts", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  campfireId: uuid("campfire_id")
+    .notNull()
+    .references(() => commonsCampfire.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: text("body").notNull(),
+  bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
+    .notNull()
+    .default("markdown"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  editedAt: timestamp("edited_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  isVisible: boolean("is_visible").notNull().default(true),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+});
+
+export type CommonsPost = InferSelectModel<typeof commonsPost>;
+
+export const commonsComment = pgTable(
+  "commons_comments",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => commonsPost.id, { onDelete: "cascade" }),
+    parentCommentId: uuid("parent_comment_id"),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
+      .notNull()
+      .default("markdown"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    isVisible: boolean("is_visible").notNull().default(true),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+  },
+  (table) => ({
+    parentCommentRef: foreignKey({
+      columns: [table.parentCommentId],
+      foreignColumns: [table.id],
+      name: "commons_comments_parent_comment_id_commons_comments_id_fk",
+    }),
+  })
+);
+
+export type CommonsComment = InferSelectModel<typeof commonsComment>;
+
+export const commonsVote = pgTable(
+  "commons_votes",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    postId: uuid("post_id").references(() => commonsPost.id, {
+      onDelete: "cascade",
+    }),
+    commentId: uuid("comment_id").references(() => commonsComment.id, {
+      onDelete: "cascade",
+    }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    value: integer("value").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+  },
+  (table) => ({
+    postVotePerUserUniqueIdx: uniqueIndex("commons_votes_post_user_unique_idx")
+      .on(table.postId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
+    commentVotePerUserUniqueIdx: uniqueIndex(
+      "commons_votes_comment_user_unique_idx"
+    )
+      .on(table.commentId, table.userId)
+      .where(sql`${table.isDeleted} = false`),
+  })
+);
+
+export type CommonsVote = InferSelectModel<typeof commonsVote>;
+
+export const commonsReport = pgTable("commons_reports", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  postId: uuid("post_id").references(() => commonsPost.id, {
+    onDelete: "cascade",
+  }),
+  commentId: uuid("comment_id").references(() => commonsComment.id, {
+    onDelete: "cascade",
+  }),
+  reporterId: uuid("reporter_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  reason: varchar("reason", { length: 64 }).notNull(),
+  details: text("details"),
+  status: varchar("status", {
+    enum: ["open", "reviewing", "dismissed", "resolved"],
+  })
+    .notNull()
+    .default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+});
+
+export type CommonsReport = InferSelectModel<typeof commonsReport>;

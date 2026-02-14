@@ -1,0 +1,13 @@
+{
+  "id": "mycarmindato",
+  "name": "MyCarMindATO",
+  "version": "1.0.0",
+  "tierGating": {
+    "install": "free",
+    "premiumFeatures": "founders"
+  },
+  "routes": {
+    "ui": ["/mycarmind", "/mycarmind/explore", "/mycarmind/missions", "/mycarmind/profile", "/mycarmind/leaderboard"],
+    "api": "/api/mycarmind/*"
+  }
+}

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import { Toaster } from "sonner";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { EdgeSwipeNav } from "@/src/components/EdgeSwipeNav";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
@@ -18,10 +19,6 @@ export const metadata: Metadata = {
   description:
     "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
   manifest: "/manifest.webmanifest",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
   icons: {
     icon: [
       { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },
@@ -31,7 +28,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  maximumScale: 1, // Disable auto-zoom on mobile Safari
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 const geist = Geist({
@@ -112,6 +114,7 @@ export default function RootLayout({
         >
           <PwaRegister />
           <Toaster position="top-center" />
+          <EdgeSwipeNav />
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
       </body>

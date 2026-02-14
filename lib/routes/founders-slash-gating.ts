@@ -3,7 +3,19 @@ const FREE_SLASH_ROUTES = new Set([
   "MyCarMindATO/DeliveryDriver",
   "MyCarMindATO/Traveler",
   "NAMC/Lore-Playground",
+  "NAMC/Lore-Playground/App",
 ]);
+
+export function getSlashRouteAccessMetadata(slashRoute: string | undefined): {
+  foundersOnly: boolean;
+  isFreeRoute: boolean;
+} {
+  const foundersOnly = requiresFoundersForSlashRoute(slashRoute);
+  return {
+    foundersOnly,
+    isFreeRoute: !foundersOnly,
+  };
+}
 
 export function requiresFoundersForSlashRoute(
   slashRoute: string | undefined

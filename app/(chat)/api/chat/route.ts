@@ -30,17 +30,17 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveHomeLocation } from "@/lib/ai/tools/save-home-location";
 import { saveMemory } from "@/lib/ai/tools/save-memory";
+import { saveVehicle } from "@/lib/ai/tools/save-vehicle";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
-  getApprovedMemoriesByUserId,
-  getApprovedMemoriesByUserIdAndRoute,
-  getApprovedMemoriesByUserIdAndProjectRoute,
+  getApprovedMemoriesForContext,
   getChatById,
+  getCurrentVehicleByUserIdAndRoute,
   getEnabledAtoFilesByAtoId,
-  getHomeLocationByUserId,
+  getHomeLocationByUserIdAndRoute,
   getMessageCountByUserId,
   getMessagesByChatId,
   getUnofficialAtoById,
@@ -53,6 +53,10 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage, UnofficialAto } from "@/lib/db/schema";
+import {
+  RECENT_WINDOW_DAYS,
+  getMemoryRecencyStatus,
+} from "@/lib/memory/policy";
 import {
   deriveEntitlementRules,
   formatSpoilerAccessContext,
@@ -114,32 +118,77 @@ const getProjectRoute = (agentSlash: string): string | null => {
   return null;
 };
 
-const formatMemoryContext = (
-  memories: Awaited<ReturnType<typeof getApprovedMemoriesByUserId>>
-) => {
-  if (!memories.length) {
-    return null;
+const formatMemoryAge = (ageInDays: number): string => {
+  if (ageInDays <= 0) {
+    return "today";
   }
 
-  const formatted = memories
-    .slice(0, 8)
-    .map((memory) => {
-      const routeLabel = memory.route ? ` (${memory.route})` : "";
-      return `- ${memory.rawText}${routeLabel}`;
-    })
-    .join("\n");
+  if (ageInDays === 1) {
+    return "1 day ago";
+  }
 
-  return `MEMORY CONTEXT\nUse these approved user memories when relevant:\n${formatted}`;
+  return `${ageInDays} days ago`;
+};
+
+const formatMemoryContext = (
+  memories: Awaited<ReturnType<typeof getApprovedMemoriesForContext>>
+) => {
+  const instructionBlock = [
+    "MEMORY RULES",
+    `- Treat memories with status=recent (<=${RECENT_WINDOW_DAYS} days old) as recent context.`,
+    "- If a memory is older/outdated or conflicts with the user's current message, acknowledge the memory's age/status and ask a brief clarification question before relying on it.",
+    "- Never present stale/outdated memory as a present fact without a qualifier.",
+  ].join("\n");
+
+  if (!memories.length) {
+    return [
+      instructionBlock,
+      "MEMORY CONTEXT",
+      `No recent memory found in the last ${RECENT_WINDOW_DAYS} days.`,
+      "Ask a brief follow-up if personal context is needed.",
+    ].join("\n");
+  }
+
+  const formatted = memories.map((memory) => {
+    const routeLabel = memory.route ? ` (${memory.route})` : "";
+    const timestamp = memory.referenceTimestamp.toISOString();
+    const relativeAge = formatMemoryAge(memory.ageInDays);
+    const status = getMemoryRecencyStatus(memory.ageInDays);
+
+    return `- [memory.v1 status=${status} saved_at=${timestamp} age=${relativeAge}] ${memory.rawText}${routeLabel}`;
+  });
+
+  return [
+    instructionBlock,
+    "MEMORY CONTEXT",
+    `Use approved memories from the last ${RECENT_WINDOW_DAYS} days when relevant:`,
+    "Memory line schema: [memory.v1 status=<recent|stale> saved_at=<ISO-8601> age=<relative age>] <memory text>",
+    ...formatted,
+  ].join("\n");
 };
 
 const formatHomeLocationContext = (
-  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserId>>
+  homeLocation: Awaited<ReturnType<typeof getHomeLocationByUserIdAndRoute>>
 ) => {
   if (!homeLocation) {
     return null;
   }
 
   return `HOME LOCATION\nUser-approved home location:\n- ${homeLocation.rawText}`;
+};
+
+const formatVehicleContext = (
+  vehicle: Awaited<ReturnType<typeof getCurrentVehicleByUserIdAndRoute>>
+) => {
+  if (!vehicle) {
+    return null;
+  }
+
+  const vehicleLabel = [vehicle.year, vehicle.make, vehicle.model]
+    .filter(Boolean)
+    .join(" ");
+
+  return `CURRENT VEHICLE\nUser-approved current vehicle:\n- ${vehicleLabel}`;
 };
 
 function getStreamContext() {
@@ -251,6 +300,45 @@ function isHomeLocationRequest(text: string | null): boolean {
   );
 }
 
+function isVehicleSaveRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  return /(\b(save|set|store|remember)\b[\s\S]*\b(vehicle|car)\b)|(\bmy car is\b)|(\bmy vehicle is\b)|(\bcurrent car\b)|(\bcurrent vehicle\b)/i.test(
+    text
+  );
+}
+
+function isSaveApproval(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  /*
+   * Manual match samples:
+   * - "save this"
+   * - "save this as a memory"
+   * - "yes please save it"
+   */
+  return /(?:\b(yes|yep|yeah|ok|okay|please|sure)\b[\s\S]*\b(save|store|remember)\b|\b(save|store|remember)\s+(it|that|this|them)\b(?:\s+as\s+(?:a\s+)?memory\b)?)/i.test(
+    text
+  );
+}
+
+function isMemorySaveRequest(text: string | null): boolean {
+  if (!text) {
+    return false;
+  }
+
+  /*
+   * Manual match samples:
+   * - "save this as a memory"
+   * - "remember this memory"
+   */
+  return /\b(save|store|remember)\b[\s\S]*\b(memory)\b/i.test(text);
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
   const vercelId = request.headers.get("x-vercel-id");
@@ -278,12 +366,15 @@ export async function POST(request: Request) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
 
-    const userType: UserType = session.user.type;
     const user = await getUserById({ id: session.user.id });
 
     if (!user) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
+    const userType: UserType =
+      session.user.type !== "guest" && user.foundersAccess
+        ? "paid"
+        : session.user.type;
 
     const enabledFileUrls = new Set<string>();
     let activeAto: UnofficialAto | null = null;
@@ -398,7 +489,7 @@ export async function POST(request: Request) {
       if (requiresFoundersForNewChat && !user.foundersAccess) {
         return new ChatSDKError(
           "forbidden:auth",
-          "Founders access required for this subroute."
+          "Paid access required for this subroute."
         ).toResponse();
       }
       initialRouteKey = activeAto
@@ -511,7 +602,7 @@ export async function POST(request: Request) {
     if (requiresFoundersAccess && !user.foundersAccess) {
       return new ChatSDKError(
         "forbidden:auth",
-        "Founders access required for this subroute."
+        "Paid access required for this subroute."
       ).toResponse();
     }
 
@@ -528,25 +619,25 @@ export async function POST(request: Request) {
     let approvedMemories;
     if (isMyCarMindProject && projectRoute) {
       // Project-level memory sharing for MyCarMindATO subroutes
-      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         projectRoute,
       });
     } else if (isBrooksBearsProject && projectRoute) {
       // Project-level memory sharing for BrooksBears subroutes
-      approvedMemories = await getApprovedMemoriesByUserIdAndProjectRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         projectRoute,
       });
     } else if (isMyCarMindAgent) {
       // Exact route for standalone MyCarMindATO
-      approvedMemories = await getApprovedMemoriesByUserIdAndRoute({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
         route: selectedAgent.slash,
       });
     } else {
       // All memories for other agents
-      approvedMemories = await getApprovedMemoriesByUserId({
+      approvedMemories = await getApprovedMemoriesForContext({
         userId: session.user.id,
       });
     }
@@ -554,22 +645,42 @@ export async function POST(request: Request) {
     const baseMemoryContext = formatMemoryContext(approvedMemories);
     const homeLocation =
       isMyCarMindAgent || isMyCarMindProject
-        ? await getHomeLocationByUserId({
+        ? await getHomeLocationByUserIdAndRoute({
             userId: session.user.id,
-            chatId: id,
             // Guard: home-location reads must remain scoped to MY_CAR_MIND_ROUTE only.
             route: MY_CAR_MIND_ROUTE,
           })
         : null;
     const homeLocationContext = formatHomeLocationContext(homeLocation);
+    let currentVehicle = null;
+    if (isMyCarMindAgent || isMyCarMindProject) {
+      try {
+        currentVehicle = await getCurrentVehicleByUserIdAndRoute({
+          userId: session.user.id,
+          route: MY_CAR_MIND_ROUTE,
+        });
+      } catch (error) {
+        console.warn("Current vehicle lookup degraded in chat API", {
+          vercelId,
+          userId: session.user.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    const vehicleContext = formatVehicleContext(currentVehicle);
     const userEntitlements = await getUserEntitlements({
       userId: session.user.id,
     });
     const entitlementRules = deriveEntitlementRules(userEntitlements);
     const spoilerSummary = getSpoilerAccessSummary(entitlementRules);
     const spoilerAccessContext = formatSpoilerAccessContext(spoilerSummary);
-    const memoryContext =
-      [baseMemoryContext, homeLocationContext, spoilerAccessContext]
+    const enrichedMemoryContext =
+      [
+        baseMemoryContext,
+        homeLocationContext,
+        vehicleContext,
+        spoilerAccessContext,
+      ]
         .filter(Boolean)
         .join("\n\n") || null;
 
@@ -578,16 +689,23 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const isNamcAgent = selectedAgent.id === "namc";
         const isNamcLorePlaygroundAgent =
-          selectedAgent.id === "namc-lore-playground";
+          selectedAgent.id === "namc-lore-playground" ||
+          selectedAgent.id === "namc-lore-playground-standalone";
         const isMyFlowerAiAgent = selectedAgent.id === "my-flower-ai";
         const lastUserText = getLastUserMessageText(uiMessages);
         const isNamcDocumentRequest =
           isNamcAgent && isDocumentRequest(lastUserText);
         const isNamcSuggestionRequest =
           isNamcAgent && isDocumentSuggestionRequest(lastUserText);
+        const isMyCarMindFamily = isMyCarMindAgent || isMyCarMindProject;
         const isHomeLocationSaveRequest =
-          selectedAgent.id === "my-car-mind" &&
-          isHomeLocationRequest(lastUserText);
+          isMyCarMindFamily && isHomeLocationRequest(lastUserText);
+        const isVehicleSaveIntent =
+          isMyCarMindFamily && isVehicleSaveRequest(lastUserText);
+        const isExplicitSaveApproval =
+          isMyCarMindFamily && isSaveApproval(lastUserText);
+        const isMemorySaveIntent =
+          isMyCarMindFamily && isMemorySaveRequest(lastUserText);
         type ToolDefinition =
           | typeof getDirections
           | typeof getWeather
@@ -595,7 +713,8 @@ export async function POST(request: Request) {
           | ReturnType<typeof updateDocument>
           | ReturnType<typeof requestSuggestions>
           | ReturnType<typeof saveMemory>
-          | ReturnType<typeof saveHomeLocation>;
+          | ReturnType<typeof saveHomeLocation>
+          | ReturnType<typeof saveVehicle>;
 
         const toolImplementations = {
           getDirections,
@@ -605,6 +724,7 @@ export async function POST(request: Request) {
           requestSuggestions: requestSuggestions({ session, dataStream }),
           saveMemory: saveMemory({ session, chatId: id, agent: selectedAgent }),
           saveHomeLocation: saveHomeLocation({ session, chatId: id }),
+          saveVehicle: saveVehicle({ session, chatId: id }),
         } satisfies Record<AgentToolId, ToolDefinition>;
 
         const namcDocumentTools: AgentToolId[] = [
@@ -631,7 +751,7 @@ export async function POST(request: Request) {
           const responseText = await runNamcMediaCurator({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
@@ -650,7 +770,14 @@ export async function POST(request: Request) {
           const responseText = await runNamcLorePlayground({
             messages: uiMessages,
             latestUserMessage: lastUserMessage,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
+            memorySaveConfig: {
+              userId: session.user.id,
+              chatId: id,
+              route: projectRoute ?? selectedAgent.slash,
+              agentId: selectedAgent.id,
+              agentLabel: selectedAgent.label,
+            },
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
@@ -665,7 +792,7 @@ export async function POST(request: Request) {
         } else if (isMyFlowerAiAgent) {
           const responseText = await runMyFlowerAIWorkflow({
             messages: uiMessages,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
           });
           const responseId = generateUUID();
           dataStream.write({ type: "text-start", id: responseId });
@@ -678,13 +805,16 @@ export async function POST(request: Request) {
           }
           dataStream.write({ type: "text-end", id: responseId });
         } else if (
-          selectedAgent.id === "my-car-mind" &&
+          isMyCarMindFamily &&
           !isToolApprovalFlow &&
-          !isHomeLocationSaveRequest
+          !isHomeLocationSaveRequest &&
+          !isVehicleSaveIntent &&
+          !isExplicitSaveApproval &&
+          !isMemorySaveIntent
         ) {
           const responseText = await runMyCarMindAtoWorkflow({
             messages: uiMessages,
-            memoryContext,
+            memoryContext: enrichedMemoryContext,
             homeLocationText: homeLocation?.rawText ?? null,
           });
           const responseId = generateUUID();
@@ -704,7 +834,7 @@ export async function POST(request: Request) {
               selectedChatModel,
               requestHints,
               basePrompt: selectedAgent.systemPromptOverride,
-              memoryContext: memoryContext ?? undefined,
+              memoryContext: enrichedMemoryContext ?? undefined,
               includeArtifactsPrompt: !isNamcAgent || isNamcDocumentRequest,
             }),
             messages: modelMessages,

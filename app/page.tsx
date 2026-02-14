@@ -57,11 +57,8 @@ export default function IntroPage() {
     }
   }, [session?.user]);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/welcome");
-    }
-  }, [router, status]);
+  // Removed auto-redirect to /welcome for unauthenticated users
+  // This allows crawlers to index the landing page
 
   useEffect(() => {
     const audio = audioRef.current;

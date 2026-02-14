@@ -11,6 +11,7 @@ import {
   inArray,
   lt,
   lte,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -23,6 +24,7 @@ import {
   rethrowChatSdkErrorOrWrapDbError,
 } from "./query-error-handling";
 import { generateUUID } from "../utils";
+import { RECENT_WINDOW_DAYS } from "../memory/policy";
 import {
   assertChatRateLimitTablesReady,
   assertChatTableColumnsReady,
@@ -50,17 +52,284 @@ import {
   suggestion,
   type User,
   type UserLocation,
+  type UserVehicle,
   unofficialAto,
   user,
   userInstalls,
   userLocation,
+  userVehicle,
   vote,
+  voteDeprecated,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
 async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
   await assertChatTableColumnsReady();
   return operation();
+}
+
+type UserBirthdayColumnState = "unchecked" | "ready" | "failed";
+let userBirthdayColumnState: UserBirthdayColumnState = "unchecked";
+let userBirthdayColumnPromise: Promise<void> | null = null;
+
+type UserMessageColorColumnState = "unchecked" | "ready" | "failed";
+let userMessageColorColumnState: UserMessageColorColumnState = "unchecked";
+let userMessageColorColumnPromise: Promise<void> | null = null;
+
+type UserAvatarUrlColumnState = "unchecked" | "ready" | "failed";
+let userAvatarUrlColumnState: UserAvatarUrlColumnState = "unchecked";
+let userAvatarUrlColumnPromise: Promise<void> | null = null;
+
+type MemoryVersioningColumnsState = "unchecked" | "ready" | "failed";
+let memoryVersioningColumnsState: MemoryVersioningColumnsState = "unchecked";
+let memoryVersioningColumnsPromise: Promise<void> | null = null;
+
+async function ensureUserBirthdayColumnReady() {
+  if (userBirthdayColumnState === "ready") {
+    return;
+  }
+
+  if (userBirthdayColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "birthday". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userBirthdayColumnPromise) {
+    userBirthdayColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasBirthdayColumn = rows.some(
+        (row) => row.column_name === "birthday"
+      );
+
+      if (!hasBirthdayColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."birthday" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "birthday" varchar(10);
+        `);
+      }
+    })()
+      .then(() => {
+        userBirthdayColumnState = "ready";
+      })
+      .catch((error) => {
+        userBirthdayColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userBirthdayColumnPromise;
+}
+
+async function ensureUserMessageColorColumnReady() {
+  if (userMessageColorColumnState === "ready") {
+    return;
+  }
+
+  if (userMessageColorColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "messageColor". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userMessageColorColumnPromise) {
+    userMessageColorColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasMessageColorColumn = rows.some(
+        (row) => row.column_name === "messageColor"
+      );
+
+      if (!hasMessageColorColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."messageColor" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "messageColor" text;
+        `);
+      }
+    })()
+      .then(() => {
+        userMessageColorColumnState = "ready";
+      })
+      .catch((error) => {
+        userMessageColorColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userMessageColorColumnPromise;
+}
+
+async function ensureUserAvatarUrlColumnReady() {
+  if (userAvatarUrlColumnState === "ready") {
+    return;
+  }
+
+  if (userAvatarUrlColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "avatarUrl". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userAvatarUrlColumnPromise) {
+    userAvatarUrlColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasAvatarUrlColumn = rows.some(
+        (row) => row.column_name === "avatarUrl"
+      );
+
+      if (!hasAvatarUrlColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."avatarUrl" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "avatarUrl" text;
+        `);
+      }
+    })()
+      .then(() => {
+        userAvatarUrlColumnState = "ready";
+      })
+      .catch((error) => {
+        userAvatarUrlColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userAvatarUrlColumnPromise;
+}
+
+async function ensureMemoryVersioningColumnsReady() {
+  if (memoryVersioningColumnsState === "ready") {
+    return;
+  }
+
+  if (memoryVersioningColumnsState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'Memory table schema is missing versioning columns. Run migrations and restart the service.'
+    );
+  }
+
+  if (!memoryVersioningColumnsPromise) {
+    memoryVersioningColumnsPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'Memory';
+      `);
+
+      const existingColumns = new Set(rows.map((row) => row.column_name));
+
+      if (!existingColumns.has("memoryKey")) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."Memory" versioning columns. Run migrations to keep schema in sync.'
+        );
+
+        await db.execute(sql`
+          ALTER TABLE "Memory"
+          ADD COLUMN IF NOT EXISTS "memoryKey" text;
+        `);
+
+        await db.execute(sql`
+          UPDATE "Memory"
+          SET "memoryKey" = COALESCE("memoryKey", "id"::text)
+          WHERE "memoryKey" IS NULL;
+        `);
+
+        await db.execute(sql`
+          ALTER TABLE "Memory"
+          ALTER COLUMN "memoryKey" SET NOT NULL;
+        `);
+      }
+
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "memoryVersion" integer;
+      `);
+      await db.execute(sql`
+        UPDATE "Memory"
+        SET "memoryVersion" = COALESCE("memoryVersion", 1)
+        WHERE "memoryVersion" IS NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "memoryVersion" SET DEFAULT 1;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "memoryVersion" SET NOT NULL;
+      `);
+
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "supersedesMemoryId" uuid;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "validFrom" timestamp;
+      `);
+      await db.execute(sql`
+        UPDATE "Memory"
+        SET "validFrom" = COALESCE("validFrom", COALESCE("approvedAt", "createdAt", now()))
+        WHERE "validFrom" IS NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "validFrom" SET DEFAULT now();
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ALTER COLUMN "validFrom" SET NOT NULL;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "validTo" timestamp;
+      `);
+      await db.execute(sql`
+        ALTER TABLE "Memory"
+        ADD COLUMN IF NOT EXISTS "stalenessReason" text;
+      `);
+
+      await db.execute(sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS "Memory_owner_memory_version_idx"
+        ON "Memory" ("ownerId", "memoryKey", "memoryVersion");
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS "Memory_owner_memory_current_idx"
+        ON "Memory" ("ownerId", "memoryKey", "validTo");
+      `);
+    })()
+      .then(() => {
+        memoryVersioningColumnsState = "ready";
+      })
+      .catch((error) => {
+        memoryVersioningColumnsState = "failed";
+        throw error;
+      });
+  }
+
+  await memoryVersioningColumnsPromise;
 }
 
 function logDbError({
@@ -99,6 +368,7 @@ export async function createUser(email: string, password: string) {
   const hashedPassword = generateHashedPassword(password);
 
   try {
+    await ensureUserAvatarUrlColumnReady();
     return await db.insert(user).values({ email, password: hashedPassword });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
@@ -106,20 +376,36 @@ export async function createUser(email: string, password: string) {
 }
 
 export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
+  await ensureUserAvatarUrlColumnReady();
   const password = generateHashedPassword(generateUUID());
+  const maxAttempts = 3;
 
-  try {
-    return await db.insert(user).values({ email, password }).returning({
-      id: user.id,
-      email: user.email,
-    });
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to create guest user"
-    );
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const email = `guest-${Date.now()}-${generateUUID()}`;
+
+    try {
+      return await db.insert(user).values({ email, password }).returning({
+        id: user.id,
+        email: user.email,
+      });
+    } catch (error) {
+      const { code } = getDbErrorDetails(error);
+
+      if (code === "23505" && attempt < maxAttempts - 1) {
+        continue;
+      }
+
+      rethrowChatSdkErrorOrWrapDbError({
+        error,
+        operation: "create guest user",
+      });
+    }
   }
+
+  throw new ChatSDKError(
+    "bad_request:database",
+    "Failed to create guest user"
+  );
 }
 
 export async function listRouteRegistryEntries() {
@@ -243,12 +529,75 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
   }
 }
 
+export async function purgeChatsByUserIdAndRange({
+  userId,
+  cutoff,
+}: {
+  userId: string;
+  cutoff: Date | null;
+}) {
+  try {
+    const userChats = await withChatTableSchemaGuard(() => {
+      const whereCondition = cutoff
+        ? and(eq(chat.userId, userId), gte(chat.createdAt, cutoff))
+        : eq(chat.userId, userId);
+
+      return db.select({ id: chat.id }).from(chat).where(whereCondition);
+    });
+
+    if (userChats.length === 0) {
+      return { deletedSessions: 0, deletedMessages: 0 };
+    }
+
+    const chatIds = userChats.map((chatRecord) => chatRecord.id);
+
+    return await db.transaction(async (tx) => {
+      await tx
+        .update(userLocation)
+        .set({ chatId: null })
+        .where(inArray(userLocation.chatId, chatIds));
+
+      await tx
+        .delete(voteDeprecated)
+        .where(inArray(voteDeprecated.chatId, chatIds));
+      const deletedLegacyMessages = await tx
+        .delete(messageDeprecated)
+        .where(inArray(messageDeprecated.chatId, chatIds))
+        .returning({ id: messageDeprecated.id });
+
+      await tx.delete(vote).where(inArray(vote.chatId, chatIds));
+      const deletedMessages = await tx
+        .delete(message)
+        .where(inArray(message.chatId, chatIds))
+        .returning({ id: message.id });
+
+      await tx.delete(stream).where(inArray(stream.chatId, chatIds));
+
+      const deletedChats = await tx
+        .delete(chat)
+        .where(inArray(chat.id, chatIds))
+        .returning({ id: chat.id });
+
+      return {
+        deletedSessions: deletedChats.length,
+        deletedMessages: deletedMessages.length + deletedLegacyMessages.length,
+      };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to purge chat history"
+    );
+  }
+}
+
 export async function getApprovedMemoriesByUserId({
   userId,
 }: {
   userId: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     return await db
       .select()
       .from(memory)
@@ -268,6 +617,96 @@ export async function getApprovedMemoriesByUserId({
   }
 }
 
+export async function getApprovedMemoriesByUserIdPage({
+  userId,
+  limit,
+  offset = 0,
+  route,
+  projectRoute,
+}: {
+  userId: string;
+  limit: number;
+  offset?: number;
+  route?: string;
+  projectRoute?: string;
+}) {
+  try {
+    await ensureMemoryVersioningColumnsReady();
+    const pageSize = Math.min(Math.max(limit, 1), 50);
+    const whereClauses = [
+      eq(memory.ownerId, userId),
+      eq(memory.isApproved, true),
+      eq(memory.sourceType, "chat"),
+    ];
+
+    if (route) {
+      whereClauses.push(eq(memory.route, route));
+    }
+
+    if (projectRoute) {
+      const normalizedProjectRoute = projectRoute.startsWith("/")
+        ? projectRoute.slice(1)
+        : projectRoute;
+      const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+      const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
+      whereClauses.push(sql`
+        (
+          ${memory.route} LIKE ${`${projectRoute}%`}
+          OR ${memory.route} LIKE ${`${normalizedProjectRoute}%`}
+          OR ${memory.route} = ${baseProjectRoute}
+          OR ${memory.route} = ${slashedBaseProjectRoute}
+        )
+      `);
+    }
+
+    const rows = await db
+      .select()
+      .from(memory)
+      .where(and(...whereClauses))
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+      .limit(pageSize + 1)
+      .offset(offset);
+
+    const hasNext = rows.length > pageSize;
+
+    return {
+      rows: hasNext ? rows.slice(0, pageSize) : rows,
+      nextCursor: hasNext ? offset + pageSize : null,
+    };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories"
+    );
+  }
+}
+
+export async function getDistinctApprovedMemoryRoutesByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    await ensureMemoryVersioningColumnsReady();
+    return await db
+      .select({ route: memory.route })
+      .from(memory)
+      .where(
+        and(
+          eq(memory.ownerId, userId),
+          eq(memory.isApproved, true),
+          eq(memory.sourceType, "chat")
+        )
+      )
+      .groupBy(memory.route);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get memory routes"
+    );
+  }
+}
+
 export async function getApprovedMemoriesByUserIdAndRoute({
   userId,
   route,
@@ -276,6 +715,7 @@ export async function getApprovedMemoriesByUserIdAndRoute({
   route: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     return await db
       .select()
       .from(memory)
@@ -304,6 +744,12 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
   projectRoute: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
+    const normalizedProjectRoute = projectRoute.startsWith("/")
+      ? projectRoute.slice(1)
+      : projectRoute;
+    const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+    const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
     return await db
       .select()
       .from(memory)
@@ -313,7 +759,12 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
           eq(memory.isApproved, true),
           eq(memory.sourceType, "chat"),
           // Match routes that start with the project route (e.g., /MyCarMindATO/)
-          sql`${memory.route} LIKE ${`${projectRoute}%`}`
+          or(
+            sql`${memory.route} LIKE ${`${projectRoute}%`}`,
+            sql`${memory.route} LIKE ${`${normalizedProjectRoute}%`}`,
+            eq(memory.route, baseProjectRoute),
+            eq(memory.route, slashedBaseProjectRoute)
+          )
         )
       )
       .orderBy(desc(memory.approvedAt), desc(memory.createdAt));
@@ -325,12 +776,98 @@ export async function getApprovedMemoriesByUserIdAndProjectRoute({
   }
 }
 
+type ApprovedMemoryScopeInput = {
+  userId: string;
+  route?: string;
+  projectRoute?: string;
+};
+
+function buildApprovedMemoryScopeFilters({
+  userId,
+  route,
+  projectRoute,
+}: ApprovedMemoryScopeInput): SQL[] {
+  const whereClauses: SQL[] = [
+    eq(memory.ownerId, userId),
+    eq(memory.isApproved, true),
+    eq(memory.sourceType, "chat"),
+  ];
+
+  if (route) {
+    whereClauses.push(eq(memory.route, route));
+  }
+
+  if (projectRoute) {
+    const normalizedProjectRoute = projectRoute.startsWith("/")
+      ? projectRoute.slice(1)
+      : projectRoute;
+    const baseProjectRoute = normalizedProjectRoute.replace(/\/$/, "");
+    const slashedBaseProjectRoute = projectRoute.replace(/\/$/, "");
+    whereClauses.push(sql`
+      (
+        ${memory.route} LIKE ${`${projectRoute}%`}
+        OR ${memory.route} LIKE ${`${normalizedProjectRoute}%`}
+        OR ${memory.route} = ${baseProjectRoute}
+        OR ${memory.route} = ${slashedBaseProjectRoute}
+      )
+    `);
+  }
+
+  return whereClauses;
+}
+
+export type ApprovedMemoryForContext = Awaited<
+  ReturnType<typeof getApprovedMemoriesForContext>
+>[number];
+
+export async function getApprovedMemoriesForContext({
+  userId,
+  route,
+  projectRoute,
+  recentOnly = true,
+  limit = 8,
+}: ApprovedMemoryScopeInput & {
+  recentOnly?: boolean;
+  limit?: number;
+}) {
+  try {
+    const rows = await getLatestApprovedMemoryVersionsForContext({
+      userId,
+      route,
+      projectRoute,
+      recentOnly,
+      limit,
+    });
+
+    const now = Date.now();
+
+    return rows.map((row) => {
+      const referenceTimestamp = row.approvedAt ?? row.createdAt;
+      const ageInDays = Math.floor(
+        (now - referenceTimestamp.getTime()) / 86400000
+      );
+
+      return {
+        ...row,
+        referenceTimestamp,
+        ageInDays: Math.max(ageInDays, 0),
+      };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get approved memories for context"
+    );
+  }
+}
+
 export async function deleteApprovedMemoriesByUserId({
   userId,
 }: {
   userId: string;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const deletedMemories = await db
       .delete(memory)
       .where(
@@ -361,6 +898,7 @@ export async function deleteApprovedMemoriesByUserIdInRange({
   endDate: Date;
 }) {
   try {
+    await ensureMemoryVersioningColumnsReady();
     const deletedMemories = await db
       .delete(memory)
       .where(
@@ -913,6 +1451,9 @@ export async function createMemoryRecord({
   agentId,
   agentLabel,
   tags,
+  memoryKeyHint,
+  intent,
+  stalenessReason,
 }: {
   ownerId: string;
   sourceUri: string;
@@ -921,25 +1462,76 @@ export async function createMemoryRecord({
   agentId?: string | null;
   agentLabel?: string | null;
   tags?: string[];
+  memoryKeyHint?: string | null;
+  intent?: "new_fact" | "update_fact";
+  stalenessReason?: string | null;
 }) {
   try {
-    const [record] = await db
-      .insert(memory)
-      .values({
-        ownerId,
-        sourceType: "chat",
-        sourceUri,
-        route: route ?? null,
-        agentId: agentId ?? null,
-        agentLabel: agentLabel ?? null,
-        rawText,
-        tags: tags ?? [],
-        isApproved: true,
-        approvedAt: new Date(),
-      })
-      .returning();
+    await ensureMemoryVersioningColumnsReady();
 
-    return record;
+    return await db.transaction(async (tx) => {
+      const now = new Date();
+      const resolvedMemoryKey = memoryKeyHint?.trim()
+        ? memoryKeyHint.trim()
+        : generateUUID();
+
+      const [latestVersion] = await tx
+        .select()
+        .from(memory)
+        .where(
+          and(
+            eq(memory.ownerId, ownerId),
+            eq(memory.memoryKey, resolvedMemoryKey),
+            eq(memory.sourceType, "chat")
+          )
+        )
+        .orderBy(desc(memory.memoryVersion), desc(memory.createdAt))
+        .limit(1);
+
+      const shouldCreateNextVersion =
+        intent === "update_fact" || Boolean(latestVersion);
+      const nextVersion = latestVersion
+        ? latestVersion.memoryVersion + 1
+        : 1;
+
+      if (shouldCreateNextVersion && latestVersion && latestVersion.validTo === null) {
+        await tx
+          .update(memory)
+          .set({
+            validTo: now,
+            stalenessReason: stalenessReason ?? "superseded",
+            updatedAt: now,
+          })
+          .where(eq(memory.id, latestVersion.id));
+      }
+
+      const [record] = await tx
+        .insert(memory)
+        .values({
+          ownerId,
+          sourceType: "chat",
+          sourceUri,
+          route: route ?? null,
+          agentId: agentId ?? null,
+          agentLabel: agentLabel ?? null,
+          rawText,
+          tags: tags ?? [],
+          isApproved: true,
+          approvedAt: now,
+          updatedAt: now,
+          memoryKey: resolvedMemoryKey,
+          memoryVersion: nextVersion,
+          supersedesMemoryId:
+            shouldCreateNextVersion && latestVersion
+              ? latestVersion.id
+              : null,
+          validFrom: now,
+          validTo: null,
+        })
+        .returning();
+
+      return record;
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -947,6 +1539,64 @@ export async function createMemoryRecord({
     );
   }
 }
+
+export async function getLatestApprovedMemoryVersionsForContext({
+  userId,
+  route,
+  projectRoute,
+  recentOnly = true,
+  limit = 8,
+}: ApprovedMemoryScopeInput & {
+  recentOnly?: boolean;
+  limit?: number;
+}) {
+  try {
+    await ensureMemoryVersioningColumnsReady();
+
+    const whereClauses = buildApprovedMemoryScopeFilters({
+      userId,
+      route,
+      projectRoute,
+    });
+    const now = new Date();
+
+    whereClauses.push(lte(memory.validFrom, now));
+    whereClauses.push(sql`${memory.validTo} IS NULL OR ${memory.validTo} > ${now}`);
+    whereClauses.push(sql`
+      NOT EXISTS (
+        SELECT 1
+        FROM "Memory" newer
+        WHERE newer."ownerId" = ${memory.ownerId}
+          AND newer."memoryKey" = ${memory.memoryKey}
+          AND newer."memoryVersion" > ${memory.memoryVersion}
+          AND newer."validFrom" <= ${now}
+          AND (newer."validTo" IS NULL OR newer."validTo" > ${now})
+      )
+    `);
+
+    if (recentOnly) {
+      const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000);
+      whereClauses.push(
+        gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate)
+      );
+    }
+
+    const pageSize = Math.min(Math.max(limit, 1), 25);
+
+    return await db
+      .select()
+      .from(memory)
+      .where(and(...whereClauses))
+      .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+      .limit(pageSize);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get latest approved memory versions for context"
+    );
+  }
+}
+
 
 export async function createHomeLocationRecord({
   ownerId,
@@ -985,6 +1635,45 @@ export async function createHomeLocationRecord({
   }
 }
 
+export async function createVehicleRecord({
+  ownerId,
+  chatId,
+  route,
+  make,
+  model,
+  year,
+}: {
+  ownerId: string;
+  chatId: string;
+  route: string;
+  make: string;
+  model: string;
+  year?: number | null;
+}) {
+  try {
+    const [record] = await db
+      .insert(userVehicle)
+      .values({
+        ownerId,
+        chatId,
+        route,
+        make,
+        model,
+        year: year ?? null,
+        isApproved: true,
+        approvedAt: new Date(),
+      })
+      .returning();
+
+    return record;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create vehicle record"
+    );
+  }
+}
+
 export async function getHomeLocationByUserId({
   userId,
   chatId,
@@ -1015,6 +1704,67 @@ export async function getHomeLocationByUserId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get home location"
+    );
+  }
+}
+
+export async function getHomeLocationByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}): Promise<UserLocation | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userLocation)
+      .where(
+        and(
+          eq(userLocation.ownerId, userId),
+          eq(userLocation.route, route),
+          eq(userLocation.locationType, "home-location"),
+          eq(userLocation.isApproved, true)
+        )
+      )
+      .orderBy(desc(userLocation.updatedAt), desc(userLocation.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get home location"
+    );
+  }
+}
+
+export async function getCurrentVehicleByUserIdAndRoute({
+  userId,
+  route,
+}: {
+  userId: string;
+  route: string;
+}): Promise<UserVehicle | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(userVehicle)
+      .where(
+        and(
+          eq(userVehicle.ownerId, userId),
+          eq(userVehicle.route, route),
+          eq(userVehicle.isApproved, true)
+        )
+      )
+      .orderBy(desc(userVehicle.updatedAt), desc(userVehicle.createdAt))
+      .limit(1);
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get current vehicle"
     );
   }
 }
@@ -1701,6 +2451,123 @@ export async function getUserById({ id }: { id: string }) {
     return selectedUser ?? null;
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function getUserBirthday({ userId }: { userId: string }) {
+  try {
+    await ensureUserBirthdayColumnReady();
+    const [selectedUser] = await db
+      .select({ birthday: user.birthday })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.birthday ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user birthday"
+    );
+  }
+}
+
+export async function updateUserBirthday({
+  userId,
+  birthday,
+}: {
+  userId: string;
+  birthday: string | null;
+}) {
+  try {
+    await ensureUserBirthdayColumnReady();
+    const [updatedUser] = await db
+      .update(user)
+      .set({ birthday })
+      .where(eq(user.id, userId))
+      .returning({ birthday: user.birthday });
+    return updatedUser?.birthday ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user birthday"
+    );
+  }
+}
+
+export async function getUserMessageColor({ userId }: { userId: string }) {
+  try {
+    await ensureUserMessageColorColumnReady();
+    const [selectedUser] = await db
+      .select({ messageColor: user.messageColor })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.messageColor ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user message color"
+    );
+  }
+}
+
+export async function updateUserMessageColor({
+  userId,
+  messageColor,
+}: {
+  userId: string;
+  messageColor: string | null;
+}) {
+  try {
+    await ensureUserMessageColorColumnReady();
+    const [updatedUser] = await db
+      .update(user)
+      .set({ messageColor })
+      .where(eq(user.id, userId))
+      .returning({ messageColor: user.messageColor });
+    return updatedUser?.messageColor ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user message color"
+    );
+  }
+}
+
+export async function getUserAvatarUrl({ userId }: { userId: string }) {
+  try {
+    await ensureUserAvatarUrlColumnReady();
+    const [selectedUser] = await db
+      .select({ avatarUrl: user.avatarUrl })
+      .from(user)
+      .where(eq(user.id, userId));
+    return selectedUser?.avatarUrl ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user avatar url"
+    );
+  }
+}
+
+export async function updateUserAvatarUrl({
+  userId,
+  avatarUrl,
+}: {
+  userId: string;
+  avatarUrl: string | null;
+}) {
+  try {
+    await ensureUserAvatarUrlColumnReady();
+    const [updatedUser] = await db
+      .update(user)
+      .set({ avatarUrl })
+      .where(eq(user.id, userId))
+      .returning({ avatarUrl: user.avatarUrl });
+    return updatedUser?.avatarUrl ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user avatar url"
+    );
   }
 }
 

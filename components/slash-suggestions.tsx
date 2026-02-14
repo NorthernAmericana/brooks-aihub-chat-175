@@ -13,6 +13,8 @@ type RoutesResponse = {
   routes: RouteSuggestion[];
 };
 
+const INITIAL_VISIBLE_SUGGESTIONS = 10;
+
 export function SlashSuggestions({
   onSelect,
   onClose,
@@ -25,6 +27,7 @@ export function SlashSuggestions({
   title?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAllMatches, setShowAllMatches] = useState(false);
   const { data: routeData } = useSWR<RoutesResponse>("/api/routes", fetcher);
   const recentActions = useMemo(() => getStoredSlashActions(), []);
 
@@ -75,7 +78,11 @@ export function SlashSuggestions({
     });
   }, [searchQuery, suggestions, recentActions]);
 
-  const topThree = filteredSuggestions.slice(0, 3);
+  const hasHiddenMatches =
+    filteredSuggestions.length > INITIAL_VISIBLE_SUGGESTIONS && !showAllMatches;
+  const visibleSuggestions = showAllMatches
+    ? filteredSuggestions
+    : filteredSuggestions.slice(0, INITIAL_VISIBLE_SUGGESTIONS);
 
   return (
     <div className="absolute bottom-full left-0 z-10 mb-2 w-full rounded-lg border border-border bg-background p-3 shadow-lg">
@@ -90,12 +97,17 @@ export function SlashSuggestions({
         <input
           autoFocus
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowAllMatches(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               onClose();
-            } else if (e.key === "Enter" && topThree.length > 0) {
-              onSelect(topThree[0].slash, { atoId: topThree[0].atoId });
+            } else if (e.key === "Enter" && filteredSuggestions.length > 0) {
+              onSelect(filteredSuggestions[0].slash, {
+                atoId: filteredSuggestions[0].atoId,
+              });
             }
           }}
           placeholder="Search routes..."
@@ -105,26 +117,50 @@ export function SlashSuggestions({
       </div>
 
       {/* Suggestions */}
-      <div className="flex flex-col gap-1">
-        {topThree.length > 0 ? (
-          topThree.map((agent) => (
-            <Button
-              className="cloud-button cloud-button--inline w-full justify-start text-left text-sm transition hover:scale-[1.01] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
-              key={agent.id}
-              onClick={() => onSelect(agent.slash, { atoId: agent.atoId })}
-              variant="ghost"
-            >
-              <span className="font-mono text-primary/90 tracking-[0.04em]">
-                /{agent.slash}/
-              </span>
-              <span className="ml-2 text-muted-foreground">{agent.label}</span>
-            </Button>
-          ))
-        ) : (
-          <div className="py-4 text-center text-sm text-muted-foreground">
-            No routes found
-          </div>
-        )}
+      <div className="max-h-72 space-y-2 overflow-y-auto">
+        <div className="flex flex-col gap-1">
+          {visibleSuggestions.length > 0 ? (
+            visibleSuggestions.map((agent) => (
+              <Button
+                className="cloud-button cloud-button--inline w-full justify-start text-left text-sm transition hover:scale-[1.01] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground/40"
+                key={agent.id}
+                onClick={() => onSelect(agent.slash, { atoId: agent.atoId })}
+                variant="ghost"
+              >
+                <span className="font-mono text-primary/90 tracking-[0.04em]">
+                  /{agent.slash}/
+                </span>
+                <span className="ml-2 text-muted-foreground">
+                  {agent.label}
+                </span>
+                {agent.foundersOnly ? (
+                  <span className="ml-2" title="Founders access only">
+                    💎
+                  </span>
+                ) : agent.isFreeRoute ? (
+                  <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.2em] text-emerald-500">
+                    Free
+                  </span>
+                ) : null}
+              </Button>
+            ))
+          ) : (
+            <div className="py-4 text-center text-sm text-muted-foreground">
+              No routes found
+            </div>
+          )}
+        </div>
+
+        {hasHiddenMatches ? (
+          <Button
+            className="w-full text-xs"
+            onClick={() => setShowAllMatches(true)}
+            type="button"
+            variant="outline"
+          >
+            View all matches ({filteredSuggestions.length})
+          </Button>
+        ) : null}
       </div>
     </div>
   );

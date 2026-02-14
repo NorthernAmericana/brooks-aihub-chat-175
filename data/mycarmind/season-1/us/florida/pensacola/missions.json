@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "pensacola-scenic-two-stop",
+    "name": "Pensacola Scenic Two-Stop",
+    "description": "Visit two scenic or waterfront places in Pensacola.",
+    "city": "Pensacola",
+    "state": "Florida",
+    "category": "exploration",
+    "targetCount": 2,
+    "pointsReward": 100
+  }
+]

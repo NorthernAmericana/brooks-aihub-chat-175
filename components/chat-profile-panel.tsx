@@ -1,13 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
 import { DEFAULT_AVATAR_SRC } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 import { Button } from "./ui/button";
+import { ProfileIconAiModal } from "./profile-icon-ai-modal";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
 export function ChatProfilePanel() {
   const { data: session } = useSession();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
   const { profileIcon, setProfileIcon } = useProfileIcon();
 
   const avatarSrc = profileIcon ?? session?.user?.image ?? DEFAULT_AVATAR_SRC;
@@ -26,9 +28,10 @@ export function ChatProfilePanel() {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/70 p-3">
       <div className="flex items-center gap-3">
-        <Image
+        <ImageWithFallback
           alt={session?.user?.email ?? "Profile"}
-          className="size-10 rounded-full"
+          className="size-full object-cover"
+          containerClassName="size-10 overflow-hidden rounded-full"
           height={40}
           src={avatarSrc}
           width={40}
@@ -40,15 +43,29 @@ export function ChatProfilePanel() {
           </span>
         </div>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Button
-          className="w-full sm:w-auto"
-          onClick={() => setIsPickerOpen(true)}
-          type="button"
-          variant="outline"
-        >
-          Change Profile Icon
-        </Button>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setIsAiOpen(true)}
+              type="button"
+            >
+              Generate Profile Icon (AI)
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Describe your icon vibe (optional).
+            </span>
+          </div>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => setIsPickerOpen(true)}
+            type="button"
+            variant="outline"
+          >
+            Change Profile Icon
+          </Button>
+        </div>
         <Button
           className="w-full sm:w-auto"
           onClick={() => signOut({ redirectTo: "/" })}
@@ -59,6 +76,11 @@ export function ChatProfilePanel() {
         </Button>
       </div>
 
+      <ProfileIconAiModal
+        onOpenChange={setIsAiOpen}
+        onUseIcon={(iconSrc) => setProfileIcon(iconSrc)}
+        open={isAiOpen}
+      />
       <Dialog onOpenChange={setIsPickerOpen} open={isPickerOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -89,9 +111,10 @@ export function ChatProfilePanel() {
                       isSelected ? "border-primary" : "border-transparent"
                     )}
                   >
-                    <Image
+                    <ImageWithFallback
                       alt={option.label}
                       className="h-full w-full object-cover"
+                      containerClassName="size-full"
                       height={48}
                       src={option.src}
                       width={48}

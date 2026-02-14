@@ -9,11 +9,29 @@ type StrainRecord = {
     name?: string;
     type?: string;
     brand?: string;
+    aliases?: string[];
   };
   description?: {
     dispensary_bio?: string;
     product_positioning?: string;
   };
+  stats?: {
+    total_thc_percent?: number | null;
+    total_cbd_percent?: number | null;
+    top_terpenes?: Array<{
+      name?: string | null;
+    }>;
+  };
+  meaning?: {
+    effect_tags?: string[];
+    dominant_terpenes?: string[];
+  };
+  tags?: string[];
+  sources?: Array<{
+    type?: string;
+    where?: string;
+    url?: string | null;
+  }>;
 };
 
 const DESCRIPTION_FALLBACK = "Description coming soon.";
@@ -49,6 +67,37 @@ const isPlaceholderStrain = (record: StrainRecord): boolean => {
   return id.startsWith("example-") || name.startsWith("example ");
 };
 
+const formatPercent = (value?: number | null): string | null => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null;
+  }
+
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded}%`;
+};
+
+const uniqueList = (values: Array<string | null | undefined>): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(trimmed);
+  }
+
+  return result;
+};
+
 const toListItem = (record: StrainRecord): StrainListItem | null => {
   const id = record.id?.trim();
   const name = record.strain?.name?.trim();
@@ -78,7 +127,20 @@ const toListItem = (record: StrainRecord): StrainListItem | null => {
     name,
     type: record.strain?.type,
     brand: record.strain?.brand,
+    aliases: record.strain?.aliases,
     description,
+    thcRange: formatPercent(record.stats?.total_thc_percent),
+    cbdRange: formatPercent(record.stats?.total_cbd_percent),
+    thcPercent: record.stats?.total_thc_percent ?? null,
+    terpenes: uniqueList([
+      ...(record.stats?.top_terpenes ?? []).map((terpene) => terpene.name),
+      ...(record.meaning?.dominant_terpenes ?? []),
+    ]),
+    effects: uniqueList([
+      ...(record.meaning?.effect_tags ?? []),
+      ...(record.tags ?? []),
+    ]),
+    sources: record.sources ?? [],
   };
 };
 

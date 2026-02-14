@@ -15,17 +15,23 @@ Review the required environment variables in [`.env.example`](../../.env.example
 ## Minimal deployment checklist
 
 - **Environment variables**: Load every variable listed in `.env.example` into your hosting project.
-- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic.
+- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic. The Vercel build command runs `pnpm db:migrate`, so make sure `POSTGRES_URL` or `DATABASE_URL` is configured for the target environment during builds.
 - **Blob storage**: Enable your blob storage provider and provide the required blob credentials.
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
 - **Chat schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Also confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production.
 
+For a full production release checklist, see [docs/ops/release-checklist.md](./release-checklist.md).
+
 ## Post-deploy verification checklist (managed hosting)
 
 Run these checks against the production URL **https://www.brooksaihub.app/** after each deploy.
 
+1. **Health endpoint (monitoring)**
+   - **URL**: https://www.brooksaihub.app/api/health
+   - **How**: Configure Vercel/StatusCake/other monitors to hit the endpoint at a regular interval.
+   - **Expected outcome**: `200` response with JSON payload containing `status: "ok"`, plus `uptime`, `version`, and `timestamp` fields.
 1. **Lighthouse PWA audit**
    - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Lighthouse → select **Progressive Web App** → Analyze.

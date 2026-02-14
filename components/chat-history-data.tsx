@@ -1,17 +1,27 @@
 "use client";
 
-import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import {
+  endOfWeek,
+  format,
+  isSameWeek,
+  parseISO,
+  startOfWeek,
+} from "date-fns";
 import useSWRInfinite from "swr/infinite";
 import type { User } from "next-auth";
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
 
-type GroupedChats = {
-  today: Chat[];
-  yesterday: Chat[];
-  lastWeek: Chat[];
-  lastMonth: Chat[];
-  older: Chat[];
+type WeekGroup = {
+  id: string;
+  label: string;
+  chats: Chat[];
+};
+
+export type MonthChatGroup = {
+  id: string;
+  label: string;
+  weeks: WeekGroup[];
 };
 
 export type ChatHistory = {
@@ -21,37 +31,54 @@ export type ChatHistory = {
 
 const PAGE_SIZE = 20;
 
-export const groupChatsByDate = (chats: Chat[]): GroupedChats => {
-  const now = new Date();
-  const oneWeekAgo = subWeeks(now, 1);
-  const oneMonthAgo = subMonths(now, 1);
+const toDate = (value: string | Date) =>
+  value instanceof Date ? value : parseISO(value);
 
-  return chats.reduce(
-    (groups, chat) => {
-      const chatDate = new Date(chat.createdAt);
+const getWeekLabel = (date: Date) => {
+  const weekStart = startOfWeek(date);
+  const weekEnd = endOfWeek(date);
+  return `Week ${format(weekStart, "MM/dd/yyyy")} - ${format(weekEnd, "MM/dd/yyyy")}`;
+};
 
-      if (isToday(chatDate)) {
-        groups.today.push(chat);
-      } else if (isYesterday(chatDate)) {
-        groups.yesterday.push(chat);
-      } else if (chatDate > oneWeekAgo) {
-        groups.lastWeek.push(chat);
-      } else if (chatDate > oneMonthAgo) {
-        groups.lastMonth.push(chat);
-      } else {
-        groups.older.push(chat);
-      }
-
-      return groups;
-    },
-    {
-      today: [],
-      yesterday: [],
-      lastWeek: [],
-      lastMonth: [],
-      older: [],
-    } as GroupedChats
+export const groupChatsByDate = (chats: Chat[]): MonthChatGroup[] => {
+  const sortedChats = [...chats].sort(
+    (a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime()
   );
+
+  const monthMap = new Map<string, MonthChatGroup>();
+
+  for (const chat of sortedChats) {
+    const chatDate = toDate(chat.createdAt);
+    const monthId = format(chatDate, "yyyy-MM");
+    const monthLabel = format(chatDate, "MMMM yyyy");
+
+    let monthGroup = monthMap.get(monthId);
+    if (!monthGroup) {
+      monthGroup = {
+        id: monthId,
+        label: monthLabel,
+        weeks: [],
+      };
+      monthMap.set(monthId, monthGroup);
+    }
+
+    const existingWeek = monthGroup.weeks.find((week) =>
+      isSameWeek(toDate(week.chats[0].createdAt), chatDate)
+    );
+
+    if (existingWeek) {
+      existingWeek.chats.push(chat);
+      continue;
+    }
+
+    monthGroup.weeks.push({
+      id: format(startOfWeek(chatDate), "yyyy-MM-dd"),
+      label: getWeekLabel(chatDate),
+      chats: [chat],
+    });
+  }
+
+  return Array.from(monthMap.values());
 };
 
 export function getChatHistoryPaginationKey(

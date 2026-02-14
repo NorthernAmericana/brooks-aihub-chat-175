@@ -67,15 +67,21 @@ export type MemoryItem = {
   id: string;
   rawText: string;
   route: string | null;
+  source_route?: string | null;
+  metadata?: { route?: string | null } | null;
   agentLabel: string;
   approvedAt: string;
   createdAt: string;
+  memoryAgeHours: number;
+  freshnessStatus: "recent" | "outdated";
+  freshnessLabel: string;
   tags: string[];
   source: MemorySource;
 };
 
 type MemoriesClientProps = {
-  memories: MemoryItem[];
+  initialMemories: MemoryItem[];
+  initialNextCursor: number | null;
 };
 
 type MemoryScope = {
@@ -89,14 +95,46 @@ const SHARED_PROJECTS = new Map([
   ["brooksbears", "BrooksBears"],
 ]);
 
-const formatRoute = (route: string | null) => {
+type MemoryRouteInfo = {
+  routeKey: string | null;
+  productRoute: string | null;
+  fullRoute: string | null;
+};
+
+const normalizeRoute = (route: string | null | undefined) => {
   if (!route) {
-    return "General";
+    return null;
   }
 
-  const trimmed = route.replace(/^\/|\/$/g, "");
+  const trimmed = route.trim().replace(/^\/|\/$/g, "");
+  if (!trimmed) {
+    return null;
+  }
+
   return `/${trimmed}/`;
 };
+
+const deriveMemoryRoute = (memory: MemoryItem): MemoryRouteInfo => {
+  const candidate =
+    memory.route ??
+    memory.source_route ??
+    (typeof memory.metadata?.route === "string"
+      ? memory.metadata.route
+      : null);
+  const fullRoute = normalizeRoute(candidate);
+  const trimmed = fullRoute ? fullRoute.replace(/^\/|\/$/g, "") : null;
+  const rootSegment = trimmed ? trimmed.split("/")[0] : null;
+  const productRoute = rootSegment ? `/${rootSegment}/` : null;
+
+  return {
+    routeKey: fullRoute,
+    productRoute,
+    fullRoute,
+  };
+};
+
+const formatDerivedRoute = (routeInfo: MemoryRouteInfo) =>
+  routeInfo.fullRoute ? routeInfo.fullRoute : "General";
 
 const getMemoryDate = (memory: MemoryItem) =>
   memory.approvedAt || memory.createdAt;
@@ -142,6 +180,35 @@ const getVoiceOption = (voiceId: string | null) => {
   return ALL_VOICES.find((voice) => voice.id === voiceId) ?? ALL_VOICES[0];
 };
 
+const PAGE_LIMIT = 50;
+
+type MemoryListResponse = {
+  rows: MemoryItem[];
+  nextCursor: number | null;
+  distinctRoutes: string[];
+};
+
+const getFreshnessBadgeVariant = (status: MemoryItem["freshnessStatus"]) =>
+  status === "recent" ? "default" : "destructive";
+
+const FreshnessBadge = ({ memory }: { memory: MemoryItem }) => (
+  <Badge variant={getFreshnessBadgeVariant(memory.freshnessStatus)}>
+    {memory.freshnessStatus === "recent" ? "Recent" : "Outdated"}
+  </Badge>
+);
+
+const FreshnessHint = ({ memory }: { memory: MemoryItem }) => {
+  if (memory.freshnessStatus !== "outdated") {
+    return null;
+  }
+
+  return (
+    <p className="text-xs text-amber-600">
+      Verify with user: this memory may no longer be current.
+    </p>
+  );
+};
+
 const MemoryDialog = ({
   memory,
   scope,
@@ -151,6 +218,7 @@ const MemoryDialog = ({
 }) => {
   const sourceLabel =
     memory.source.type === "chat" ? "Chat source" : "Source";
+  const routeInfo = deriveMemoryRoute(memory);
 
   return (
     <Dialog>
@@ -169,11 +237,16 @@ const MemoryDialog = ({
           </div>
           <div className="grid gap-2 text-xs text-muted-foreground">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+              <Badge variant="outline">
+                {formatDerivedRoute(routeInfo)}
+              </Badge>
               <Badge variant="secondary">{memory.agentLabel}</Badge>
               <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+              <FreshnessBadge memory={memory} />
             </div>
             <div>{scope.detail}</div>
+            <div>{memory.freshnessLabel}</div>
+            <FreshnessHint memory={memory} />
             <div>
               {sourceLabel}:{" "}
               {memory.source.href ? (
@@ -207,16 +280,28 @@ const MemoryDialog = ({
 const MemoriesTable = ({
   memories,
   onSpeak,
+  onLoadMore,
+  onPrevious,
+  hasNext,
+  hasPrevious,
+  isLoading,
+  pageLabel,
 }: {
   memories: MemoryItem[];
   onSpeak: (memory: MemoryItem) => void;
+  onLoadMore: () => void;
+  onPrevious: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  isLoading: boolean;
+  pageLabel: string;
 }) => {
   if (memories.length === 0) {
     return (
       <Card>
         <CardContent className="py-6 text-sm text-muted-foreground">
           No approved memories yet. When you approve a saved memory in chat, it
-          will show up here with its route, scope, and source.
+          will show up here with its route and summary.
         </CardContent>
       </Card>
     );
@@ -229,20 +314,26 @@ const MemoriesTable = ({
           Memory ledger
         </CardTitle>
         <CardDescription>
-          {memories.length} approved memories available.
+          {memories.length} memories shown on {pageLabel}.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
-                <th className="px-4 py-3 text-left font-medium">Summary</th>
-                <th className="px-4 py-3 text-left font-medium">Route</th>
-                <th className="px-4 py-3 text-left font-medium">Scope</th>
-                <th className="px-4 py-3 text-left font-medium">Source</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Date
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Route
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-left font-medium">
+                  Memory
+                </th>
+                <th className="sticky top-0 z-10 bg-muted/60 px-3 py-2 text-right font-medium">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -251,49 +342,46 @@ const MemoriesTable = ({
                   parseISO(getMemoryDate(memory)),
                   "MMM d, yyyy"
                 );
-                const scope = getScopeInfo(memory.route);
+                const routeInfo = deriveMemoryRoute(memory);
+                const trimmedRoute = routeInfo.fullRoute
+                  ? routeInfo.fullRoute.replace(/^\/|\/$/g, "")
+                  : null;
+                const routeParts = trimmedRoute ? trimmedRoute.split("/") : [];
+                const productRoute = routeParts.length
+                  ? `/${routeParts[0]}/`
+                  : "General";
+                const subroute =
+                  routeParts.length > 1
+                    ? `/${routeParts.slice(1).join("/")}/`
+                    : null;
                 return (
                   <tr className="hover:bg-muted/40" key={memory.id}>
-                    <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                      {dateLabel}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="line-clamp-3 text-sm text-foreground">
-                        {memory.rawText}
+                    <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                      <div className="flex flex-col gap-1">
+                        <span>{dateLabel}</span>
+                        <span>{memory.freshnessLabel}</span>
+                        <FreshnessBadge memory={memory} />
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="secondary">{memory.agentLabel}</Badge>
-                        {memory.tags.length > 0 ? (
-                          <span>{memory.tags.length} tags</span>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-col gap-1">
+                        <Badge className="w-fit" variant="outline">
+                          {productRoute}
+                        </Badge>
+                        {subroute ? (
+                          <span className="text-xs text-muted-foreground">
+                            {subroute}
+                          </span>
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3 align-top">
-                      <Badge variant="outline">{formatRoute(memory.route)}</Badge>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col gap-1">
-                        <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {scope.detail}
-                        </span>
+                    <td className="px-3 py-2 align-top">
+                      <div className="line-clamp-1 text-sm text-foreground">
+                        {memory.rawText}
                       </div>
+                      <FreshnessHint memory={memory} />
                     </td>
-                    <td className="px-4 py-3 align-top text-xs">
-                      {memory.source.href ? (
-                        <Link
-                          className="text-primary hover:underline"
-                          href={memory.source.href}
-                        >
-                          {memory.source.label}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {memory.source.label}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-3 py-2 align-top">
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           onClick={() => onSpeak(memory)}
@@ -303,7 +391,10 @@ const MemoriesTable = ({
                         >
                           Speak
                         </Button>
-                        <MemoryDialog memory={memory} scope={scope} />
+                        <MemoryDialog
+                          memory={memory}
+                          scope={getScopeInfo(routeInfo.fullRoute)}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -313,7 +404,154 @@ const MemoriesTable = ({
           </table>
         </div>
       </CardContent>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 px-4 py-3 text-xs text-muted-foreground">
+        <span>
+          Showing {memories.length} memories on {pageLabel}.
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            disabled={isLoading || !hasPrevious}
+            onClick={onPrevious}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Previous
+          </Button>
+          <Button
+            disabled={isLoading || !hasNext}
+            onClick={onLoadMore}
+            size="sm"
+            type="button"
+          >
+            Load more
+          </Button>
+        </div>
+      </div>
     </Card>
+  );
+};
+
+const MemoriesMobileList = ({
+  memories,
+  onSpeak,
+  onLoadMore,
+  onPrevious,
+  hasNext,
+  hasPrevious,
+  isLoading,
+  pageLabel,
+}: {
+  memories: MemoryItem[];
+  onSpeak: (memory: MemoryItem) => void;
+  onLoadMore: () => void;
+  onPrevious: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  isLoading: boolean;
+  pageLabel: string;
+}) => {
+  if (memories.length === 0) {
+    return (
+      <Card className="md:hidden">
+        <CardContent className="py-6 text-sm text-muted-foreground">
+          No approved memories yet. When you approve a saved memory in chat, it
+          will show up here with its route and summary.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 md:hidden">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{memories.length} memories shown on {pageLabel}.</span>
+      </div>
+      {memories.map((memory) => {
+        const dateLabel = format(
+          parseISO(getMemoryDate(memory)),
+          "MMM d, yyyy"
+        );
+        const routeInfo = deriveMemoryRoute(memory);
+        const trimmedRoute = routeInfo.fullRoute
+          ? routeInfo.fullRoute.replace(/^\/|\/$/g, "")
+          : null;
+        const routeParts = trimmedRoute ? trimmedRoute.split("/") : [];
+        const productRoute = routeParts.length ? `/${routeParts[0]}/` : null;
+        const subroute =
+          routeParts.length > 1
+            ? `/${routeParts.slice(1).join("/")}/`
+            : null;
+        const scope = getScopeInfo(routeInfo.fullRoute);
+
+        return (
+          <Card key={memory.id}>
+            <CardHeader className="space-y-2 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-sm font-semibold">
+                  {dateLabel}
+                </CardTitle>
+                <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {productRoute ? (
+                  <Badge className="w-fit" variant="outline">
+                    {productRoute}
+                  </Badge>
+                ) : (
+                  <Badge className="w-fit" variant="outline">
+                    General
+                  </Badge>
+                )}
+                {subroute ? <span>{subroute}</span> : null}
+                <Badge variant="secondary">{memory.agentLabel}</Badge>
+                <FreshnessBadge memory={memory} />
+                <span>{memory.freshnessLabel}</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
+              <p className="text-sm text-foreground">{memory.rawText}</p>
+              <FreshnessHint memory={memory} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={() => onSpeak(memory)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Speak
+                </Button>
+                <MemoryDialog memory={memory} scope={scope} />
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground">
+        <span>
+          Showing {memories.length} memories on {pageLabel}.
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            disabled={isLoading || !hasPrevious}
+            onClick={onPrevious}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Previous
+          </Button>
+          <Button
+            disabled={isLoading || !hasNext}
+            onClick={onLoadMore}
+            size="sm"
+            type="button"
+          >
+            Load more
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -466,18 +704,24 @@ const CalendarDayDetails = ({
         </div>
       ) : (
         memories.map((memory) => {
-          const scope = getScopeInfo(memory.route);
+          const routeInfo = deriveMemoryRoute(memory);
+          const scope = getScopeInfo(routeInfo.fullRoute);
           return (
             <div
               className="rounded-lg border border-border/60 bg-background p-3"
               key={memory.id}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{formatRoute(memory.route)}</Badge>
+                <Badge variant="outline">
+                  {formatDerivedRoute(routeInfo)}
+                </Badge>
                 <Badge variant="secondary">{memory.agentLabel}</Badge>
                 <Badge variant={scope.badgeVariant}>{scope.label}</Badge>
+                <FreshnessBadge memory={memory} />
+                <Badge variant="outline">{memory.freshnessLabel}</Badge>
               </div>
               <p className="mt-2 text-sm text-foreground">{memory.rawText}</p>
+              <FreshnessHint memory={memory} />
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 {memory.source.href ? (
                   <Link
@@ -553,6 +797,17 @@ const CalendarView = ({
       setSelectedDay(getMemoryDateKey(memories[0]));
     }
   }, [memories, selectedDay]);
+
+  useEffect(() => {
+    if (!selectedDay) {
+      return;
+    }
+
+    if (!memoriesByDate.has(selectedDay)) {
+      const firstAvailableDay = memories[0] ? getMemoryDateKey(memories[0]) : null;
+      setSelectedDay(firstAvailableDay);
+    }
+  }, [memories, memoriesByDate, selectedDay]);
 
   const openCalendar = () => {
     setCalendarMode("calendar");
@@ -715,47 +970,174 @@ const CalendarView = ({
   );
 };
 
-export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
+export const MemoriesClient = ({
+  initialMemories: memories,
+  initialNextCursor,
+}: MemoriesClientProps) => {
   const router = useRouter();
-  const [localMemories, setLocalMemories] = useState<MemoryItem[]>(memories);
+  const [localMemories, setLocalMemories] = useState<MemoryItem[]>(
+    memories
+  );
   const [view, setView] = useState<"table" | "calendar">("table");
-  const [scopeFilter, setScopeFilter] = useState<
-    "all" | "shared" | "official" | "general"
+  const [routeFilter, setRouteFilter] = useState("all");
+  const [subrouteFilter, setSubrouteFilter] = useState("all");
+  const [freshnessFilter, setFreshnessFilter] = useState<
+    "all" | "recent" | "outdated"
   >("all");
+  const [freshnessSort, setFreshnessSort] = useState<
+    "newest" | "oldest" | "recent-first" | "outdated-first"
+  >("newest");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState(
     getVoiceOption(null).id
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [nextCursor, setNextCursor] = useState<number | null>(
+    initialNextCursor
+  );
+  const pageCacheRef = useRef(
+    new Map<number, { rows: MemoryItem[]; nextCursor: number | null }>()
+  );
   const [playingMemoryId, setPlayingMemoryId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    pageCacheRef.current.set(0, {
+      rows: memories,
+      nextCursor: initialNextCursor,
+    });
     setLocalMemories(memories);
-  }, [memories]);
+    setNextCursor(initialNextCursor);
+  }, [initialNextCursor, memories]);
+
+  const loadPage = async (offset: number, options?: { force?: boolean }) => {
+    const cached = pageCacheRef.current.get(offset);
+    if (cached && !options?.force) {
+      setLocalMemories(cached.rows);
+      setNextCursor(cached.nextCursor);
+      setCurrentOffset(offset);
+      return;
+    }
+
+    setIsLoadingPage(true);
+    try {
+      const searchParams = new URLSearchParams({
+        limit: PAGE_LIMIT.toString(),
+        offset: offset.toString(),
+      });
+      const response = await fetch(
+        `/api/memories/list?${searchParams.toString()}`
+      );
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        toast.error(errorPayload?.error ?? "Unable to load memories.");
+        return;
+      }
+
+      const payload = (await response.json()) as MemoryListResponse;
+      pageCacheRef.current.set(offset, {
+        rows: payload.rows,
+        nextCursor: payload.nextCursor,
+      });
+      setLocalMemories(payload.rows);
+      setNextCursor(payload.nextCursor);
+      setCurrentOffset(offset);
+    } catch (_error) {
+      toast.error("Unable to load memories.");
+    } finally {
+      setIsLoadingPage(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPage(0, { force: true });
+  }, []);
 
   const selectedVoice = useMemo<VoiceOption>(() => {
     return getVoiceOption(selectedVoiceId);
   }, [selectedVoiceId]);
 
-  const filteredMemories = useMemo(() => {
-    if (scopeFilter === "all") {
-      return localMemories;
-    }
+  const routeData = useMemo(() => {
+    return localMemories.map((memory) => ({
+      memory,
+      routeInfo: deriveMemoryRoute(memory),
+    }));
+  }, [localMemories]);
 
-    return localMemories.filter((memory) => {
-      const scope = getScopeInfo(memory.route);
-      if (scopeFilter === "shared") {
-        return scope.label === "Shared";
+  const productRoutes = useMemo(() => {
+    const routes = new Set<string>();
+    for (const { routeInfo } of routeData) {
+      if (routeInfo.productRoute) {
+        routes.add(routeInfo.productRoute);
       }
-      if (scopeFilter === "official") {
-        return scope.label === "Official ATO";
+    }
+    return Array.from(routes).sort((a, b) => a.localeCompare(b));
+  }, [routeData]);
+
+  const subroutes = useMemo(() => {
+    if (routeFilter === "all") {
+      return [];
+    }
+    const routes = new Set<string>();
+    for (const { routeInfo } of routeData) {
+      if (routeInfo.productRoute === routeFilter && routeInfo.fullRoute) {
+        routes.add(routeInfo.fullRoute);
       }
-      return scope.label === "General";
+    }
+    return Array.from(routes).sort((a, b) => a.localeCompare(b));
+  }, [routeData, routeFilter]);
+
+  const filteredMemories = useMemo(() => {
+    const scopedMemories = routeData
+      .filter(({ routeInfo, memory }) => {
+        if (routeFilter === "all") {
+          if (freshnessFilter === "all") {
+            return true;
+          }
+          return memory.freshnessStatus === freshnessFilter;
+        }
+        if (routeInfo.productRoute !== routeFilter) {
+          return false;
+        }
+        if (subrouteFilter !== "all") {
+          if (routeInfo.fullRoute !== subrouteFilter) {
+            return false;
+          }
+        }
+        if (freshnessFilter !== "all") {
+          return memory.freshnessStatus === freshnessFilter;
+        }
+        return true;
+      })
+      .map(({ memory }) => memory);
+
+    return [...scopedMemories].sort((a, b) => {
+      if (freshnessSort === "recent-first") {
+        return a.memoryAgeHours - b.memoryAgeHours;
+      }
+
+      if (freshnessSort === "outdated-first") {
+        return b.memoryAgeHours - a.memoryAgeHours;
+      }
+
+      const timeDiff =
+        new Date(getMemoryDate(b)).getTime() -
+        new Date(getMemoryDate(a)).getTime();
+
+      return freshnessSort === "oldest" ? -timeDiff : timeDiff;
     });
-  }, [localMemories, scopeFilter]);
+  }, [
+    routeData,
+    routeFilter,
+    subrouteFilter,
+    freshnessFilter,
+    freshnessSort,
+  ]);
 
   const resetAudio = () => {
     if (audioRef.current) {
@@ -871,6 +1253,10 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
       } else {
         setLocalMemories([]);
       }
+      pageCacheRef.current.clear();
+      setCurrentOffset(0);
+      setNextCursor(null);
+      void loadPage(0, { force: true });
       toast.success(`Deleted ${result.deletedCount} memories.`);
       router.refresh();
     } catch (_error) {
@@ -892,8 +1278,8 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="grid gap-1">
             <Label htmlFor="memories-view">View</Label>
             <Select
@@ -913,21 +1299,94 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="memories-scope">Scope</Label>
+            <Label htmlFor="memories-route">Route</Label>
             <Select
-              onValueChange={(value) =>
-                setScopeFilter(value as typeof scopeFilter)
-              }
-              value={scopeFilter}
+              onValueChange={(value) => {
+                setRouteFilter(value);
+                setSubrouteFilter("all");
+              }}
+              value={routeFilter}
             >
-              <SelectTrigger className="w-[160px]" id="memories-scope">
-                <SelectValue placeholder="All scopes" />
+              <SelectTrigger className="w-[180px]" id="memories-route">
+                <SelectValue placeholder="All routes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All memories</SelectItem>
-                <SelectItem value="shared">Shared</SelectItem>
-                <SelectItem value="official">Official ATO</SelectItem>
-                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="all">All routes</SelectItem>
+                {productRoutes.map((route) => (
+                  <SelectItem key={route} value={route}>
+                    {route}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {routeFilter !== "all" && subroutes.length > 0 ? (
+            <div className="grid gap-1">
+              <Label htmlFor="memories-subroute">Subroute</Label>
+              <Select
+                onValueChange={(value) => setSubrouteFilter(value)}
+                value={subrouteFilter}
+              >
+                <SelectTrigger className="w-[200px]" id="memories-subroute">
+                  <SelectValue placeholder="All subroutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All subroutes</SelectItem>
+                  {subroutes.map((route) => (
+                    <SelectItem key={route} value={route}>
+                      {route}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+
+          <div className="grid gap-1">
+            <Label htmlFor="memories-freshness">Freshness</Label>
+            <Select
+              onValueChange={(value) =>
+                setFreshnessFilter(
+                  value === "recent" || value === "outdated"
+                    ? value
+                    : "all"
+                )
+              }
+              value={freshnessFilter}
+            >
+              <SelectTrigger className="w-[180px]" id="memories-freshness">
+                <SelectValue placeholder="All freshness" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All freshness</SelectItem>
+                <SelectItem value="recent">Recent (≤7 days)</SelectItem>
+                <SelectItem value="outdated">Outdated (&gt;7 days)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-1">
+            <Label htmlFor="memories-sort">Sort</Label>
+            <Select
+              onValueChange={(value) =>
+                setFreshnessSort(
+                  value === "oldest" ||
+                    value === "recent-first" ||
+                    value === "outdated-first"
+                    ? value
+                    : "newest"
+                )
+              }
+              value={freshnessSort}
+            >
+              <SelectTrigger className="w-[220px]" id="memories-sort">
+                <SelectValue placeholder="Sort memories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="recent-first">Recent first</SelectItem>
+                <SelectItem value="outdated-first">Outdated first</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1048,7 +1507,47 @@ export const MemoriesClient = ({ memories }: MemoriesClientProps) => {
       {view === "calendar" ? (
         <CalendarView memories={filteredMemories} onSpeak={handleSpeak} />
       ) : (
-        <MemoriesTable memories={filteredMemories} onSpeak={handleSpeak} />
+        <>
+          <MemoriesMobileList
+            hasNext={Boolean(nextCursor)}
+            hasPrevious={currentOffset > 0}
+            isLoading={isLoadingPage}
+            memories={filteredMemories}
+            onLoadMore={() => {
+              if (nextCursor !== null) {
+                void loadPage(nextCursor);
+              }
+            }}
+            onPrevious={() => {
+              const previousOffset = Math.max(0, currentOffset - PAGE_LIMIT);
+              void loadPage(previousOffset);
+            }}
+            onSpeak={handleSpeak}
+            pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
+          />
+          <div className="hidden md:block">
+            <MemoriesTable
+              hasNext={Boolean(nextCursor)}
+              hasPrevious={currentOffset > 0}
+              isLoading={isLoadingPage}
+              memories={filteredMemories}
+              onLoadMore={() => {
+                if (nextCursor !== null) {
+                  void loadPage(nextCursor);
+                }
+              }}
+              onPrevious={() => {
+                const previousOffset = Math.max(
+                  0,
+                  currentOffset - PAGE_LIMIT
+                );
+                void loadPage(previousOffset);
+              }}
+              onSpeak={handleSpeak}
+              pageLabel={`page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`}
+            />
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+[Start here: What is Brooks AI HUB?](docs/product/what-is-brooks-ai-hub.md)
+
 <a href="https://www.brooksaihub.app/">
   <img alt="Brooks AI HUB conversational app." src="app/(chat)/opengraph-image.png">
   <h1 align="center">Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media</h1>
@@ -40,8 +42,16 @@ The **[Console Edition](https://github.com/NorthernAmericana/brooks-ai-hub-conso
 ## Master Docs
 
 Start with the [Master Docs landing page](docs/README.md) to navigate project scope, architecture context, and contributor setup.
+Review the [Brand Architecture](docs/brand-architecture.md) doc for company, media, and platform role definitions.
 Use the [hosting deployment guide](docs/ops/vercel.md) for production deployment steps.
 See the [Stripe & Entitlements guide](docs/stripe-entitlements.md) for payment integration and access control.
+Use the [Launch readiness matrix](docs/launch/readiness-matrix.md) for a transparent view of Live/Beta/Planned user-facing value.
+Review [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows and [SUPPORT.md](SUPPORT.md) for support channels.
+Report vulnerabilities responsibly by following the [Security Policy](SECURITY.md).
+
+## Governance & Team
+
+See docs/team-and-ownership.md for leadership structure, decision ownership, and collaboration pathways.
 
 ## Routing model: agentic chat subroutes vs UI pages (ATO apps)
 
@@ -56,6 +66,7 @@ They’re used to **select an agent/persona/mode inside the chat system**.
 - UI “app” pages can forward into chat by constructing a query string that starts with one of these routes.
 
 Example:
+
 - The `/BrooksBears/` UI route can push the user into chat by routing a transcript to `/brooks-ai-hub/?query=/BrooksBears/BenjaminBear/ ...`
 
 ### 2) Normal page routes (UI pages)
@@ -69,7 +80,7 @@ In practice, an **ATO app** should behave like a **single-page UI playground**:
 
 - **App detail/description page** (store-like page): explains what the app is and lists the available slash routes.
   - Example: `/brooksbears-app`, `/mycarmindato-app`, `/namc-app`
-- **App UI page**: a focused UI that can *optionally* launch chat interactions by generating a query that targets an agentic subroute.
+- **App UI page**: a focused UI that can _optionally_ launch chat interactions by generating a query that targets an agentic subroute.
   - Example: `/BrooksBears/` can route to `/BrooksBears/BenjaminBear/ ...`
 
 This keeps Brooks AI HUB as the “big app,” while ATO pages act as lightweight, themed surfaces that **drive** agentic chat subroutes when needed.
@@ -108,11 +119,22 @@ With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to 
 
 Deploy your own version of Brooks AI HUB using the production guide in [`docs/ops/vercel.md`](docs/ops/vercel.md).
 
+**Production migrations:** Ensure `pnpm db:migrate` runs against your production database before the app starts. The Vercel build pipeline is configured to run migrations automatically, but self-hosted environments should run the command as part of their deploy/start process.
+
 ## Running locally
 
 You will need to use the environment variables [defined in `.env.example`](.env.example) to run Brooks AI HUB. A local `.env` file is sufficient for development.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
+
+### Required environment variables
+
+- `DATABASE_URL`: Neon Postgres connection string for production or local development (used by `/api/myflower/upload` and the app database layer).
+  - `POSTGRES_URL` is also supported when using Vercel Postgres; set either `DATABASE_URL` or `POSTGRES_URL`.
+- `BLOB_READ_WRITE_TOKEN`: Vercel Blob token for uploads (used by `/api/myflower/upload`).
+  - If you use a different storage provider, set the provider-specific envs instead.
+
+> Note: `/api/myflower/upload` stores only the uploaded asset URL and metadata (content type, byte size, dimensions) in Postgres, not the binary file.
 
 ```bash
 pnpm install
@@ -200,3 +222,100 @@ When updating the service worker:
 1. Increment `CACHE_VERSION` in `public/sw.js` (e.g., "v1" → "v2")
 2. Old caches are automatically cleaned up on activation
 3. Users will receive the updated service worker on next page load
+
+## Redirect Loop Debugging
+
+Use the built-in redirect diagnostics when investigating `ERR_TOO_MANY_REDIRECTS`.
+
+### 1) Trace redirect decisions
+
+Use the diagnostic endpoint (never redirected by proxy middleware):
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace' | jq
+```
+
+You can emulate Vercel host/proto behavior with forwarded headers:
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace' \
+  -H 'host: brooksaihub.app' \
+  -H 'x-forwarded-host: brooksaihub.app' \
+  -H 'x-forwarded-proto: https' \
+  -H 'x-forwarded-for: 203.0.113.10' | jq
+```
+
+To force proxy middleware to skip redirects during debugging:
+
+```bash
+curl -sS 'http://localhost:3000/api/diag/redirect-trace?noredirect=1' \
+  -H 'x-redirect-debug: 1' | jq
+```
+
+### 2) Reproduce loop conditions locally
+
+1. Start dev server:
+
+```bash
+pnpm dev
+```
+
+2. Follow redirects from the homepage:
+
+```bash
+curl -I -L --max-redirs 20 'http://localhost:3000/'
+```
+
+3. Compare with no-redirect debug mode:
+
+```bash
+curl -I 'http://localhost:3000/?noredirect=1'
+```
+
+4. Check diagnostics and metadata routes:
+
+```bash
+curl -I 'http://localhost:3000/api/diag/redirect-trace'
+curl -I 'http://localhost:3000/robots.txt'
+curl -I 'http://localhost:3000/sitemap.xml'
+```
+
+### 3) Resolution checklist
+
+- Choose **one canonical host** (`www.brooksaihub.app` or `brooksaihub.app`) and keep it consistent.
+- Ensure Vercel domain redirect settings and app-level host redirects do **not** fight each other.
+- Avoid duplicate redirect logic across:
+  - Vercel dashboard domain settings
+  - `next.config.*` (`redirects`, `rewrites`, `trailingSlash`, `basePath`, i18n redirects)
+  - proxy/middleware auth guards
+- Ensure auth guard logic does not create login loops (`/login -> auth redirect -> /login`).
+- Keep `/api/diag/redirect-trace`, `/robots.txt`, `/sitemap.xml`, `/favicon.ico`, and `/_next/*` out of middleware redirect flows.
+
+## MyCarMindATO architecture + how to add a new city
+
+### Architecture (MVP)
+
+- **UI routes**: `/mycarmind` with subpages for Explore, Place Detail, Missions, Profile, and Leaderboard.
+- **API routes**: `/api/mycarmind/*` for search, place reads, saves, visits, missions, leaderboard, and media attach flows.
+- **Data source model**:
+  1. Curated JSON registry in `data/mycarmind/season-1/us/{state}/{city}`
+  2. Synced relational records in Neon Postgres (`mycarmind_*` tables)
+  3. Place citations persisted in `mycarmind_place_sources`
+- **Gamification**: points are awarded on visit events and mission progress updates (`visit=10`, `mission=100`, `city badge=250` config target).
+- **Store integration**: app catalog references MyCarMindATO at `/mycarmind/install` and app entry `/mycarmind`.
+
+### Add a new city
+
+1. Create a city folder: `data/mycarmind/season-1/us/{state-slug}/{city-slug}/`
+2. Add three files:
+   - `city.json` (city metadata)
+   - `places.json` (curated places + `sources` URLs)
+   - `missions.json` (city/season mission templates)
+3. Ensure each place includes stable `slug`, `name`, `city`, `state`, `category`, and source citations.
+4. Run sync:
+   ```bash
+   pnpm mycarmind:sync
+   ```
+5. Validate via API:
+   - `GET /api/mycarmind/places?city=...&state=...`
+   - `GET /api/mycarmind/search?q=...`

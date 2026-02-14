@@ -38,6 +38,13 @@ const defaultPromptsByAgentId = new Map([
   ["namc", "brainstorm a scene"],
 ]);
 
+const beginnerStarters = [
+  "What can I do here?",
+  "Show me available /routes/",
+  "Help me pick a mode",
+  "Give me a quick tour of this chat",
+];
+
 const createActionKey = (action: { slash: string; prompt: string }) =>
   `${normalizeSlash(action.slash)}::${action.prompt.toLowerCase()}`;
 
@@ -132,8 +139,14 @@ function PureSuggestedActions({
       });
     }
 
-    return combined.slice(0, 4).map(formatSlashAction);
-  }, [agentConfigs, rememberedActions, storedActions]);
+    const formattedSlashActions = combined.slice(0, 4).map(formatSlashAction);
+
+    if (messages.length === 0) {
+      return [...beginnerStarters, ...formattedSlashActions].slice(0, 5);
+    }
+
+    return formattedSlashActions;
+  }, [agentConfigs, rememberedActions, storedActions, messages.length]);
 
   const displaySuggestedAction = (suggestedAction: string) => {
     const parsed = parseSlashAction(suggestedAction, agentConfigs);

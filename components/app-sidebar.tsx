@@ -147,6 +147,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 variant="ghost"
               >
                 <Link
+                  href="/settings"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  Settings
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="justify-start px-2 text-sm"
+                size="sm"
+                variant="ghost"
+              >
+                <Link
                   href="/memories"
                   onClick={() => {
                     setOpenMobile(false);
@@ -170,7 +185,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               variant="outline"
             >
               <Link
-                href="/create-ato"
+                href="/create-ato/onboarding"
                 onClick={() => {
                   setOpenMobile(false);
                 }}
