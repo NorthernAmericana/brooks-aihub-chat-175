@@ -189,7 +189,7 @@ const TreeNodeItem = ({
 }) => {
   const hasChildren = node.children.length > 0;
   const label = node.label ?? node.segment;
-  const [expanded, setExpanded] = useState(depth === 0);
+  const [expanded, setExpanded] = useState(false);
   const childrenId = `tree-children-${node.path
     .replace(/[^a-zA-Z0-9_-]/g, "-")
     .toLowerCase()}`;

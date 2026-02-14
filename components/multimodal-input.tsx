@@ -286,7 +286,7 @@ function PureMultimodalInput({
   const [slashPrefixIndent, setSlashPrefixIndent] = useState(0);
   const [activeMenu, setActiveMenu] = useState<
     "history" | "profile" | "suggestions" | null
-  >("history");
+  >(null);
   const [isTrailerMenuOpen, setIsTrailerMenuOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [canCloseAdModal, setCanCloseAdModal] = useState(false);
