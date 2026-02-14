@@ -23,30 +23,51 @@ export function CommonsSubmitForm({ campfirePath }: SubmitFormProps) {
         const title = String(formData.get("title") ?? "").trim();
         const body = String(formData.get("body") ?? "").trim();
 
-        startTransition(async () => {
-          const response = await fetch("/api/commons/posts", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              campfirePath,
-              title,
-              body,
-            }),
-          });
+        if (title.length < 5) {
+          setError("Title must be at least 5 non-space characters.");
+          return;
+        }
 
-          if (!response.ok) {
+        if (body.length < 1) {
+          setError("Body must not be empty.");
+          return;
+        }
+
+        startTransition(async () => {
+          try {
+            const response = await fetch("/api/commons/posts", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                campfirePath,
+                title,
+                body,
+              }),
+            });
+
+            if (!response.ok) {
+              const payload = (await response.json().catch(() => null)) as
+                | { error?: string }
+                | null;
+
+              setError(payload?.error ?? "Unable to create post.");
+              return;
+            }
+
             const payload = (await response.json().catch(() => null)) as
-              | { error?: string }
+              | { post?: { id?: string } }
               | null;
 
-            setError(payload?.error ?? "Unable to create post.");
-            return;
+            if (!payload?.post?.id) {
+              setError("Unable to create post.");
+              return;
+            }
+
+            router.push(`/commons/${campfirePath}/posts/${payload.post.id}`);
+            router.refresh();
+          } catch (_error) {
+            setError("Unable to create post. Please check your connection and try again.");
           }
-
-          const payload = (await response.json()) as { post: { id: string } };
-
-          router.push(`/commons/${campfirePath}/posts/${payload.post.id}`);
-          router.refresh();
         });
       }}
     >

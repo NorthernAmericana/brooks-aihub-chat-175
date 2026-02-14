@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { auth } from "@/app/(auth)/auth";
+import { notFound, redirect } from "next/navigation";
 import { validateCampfirePath } from "@/lib/commons/routing";
 import { listCampfires } from "@/lib/db/commons-queries";
 import { CommonsSubmitForm } from "@/app/commons/_components/submit-form";
@@ -8,6 +9,12 @@ export async function renderCommonsSubmit(campfire: string[]) {
 
   if (!validation.isValid) {
     notFound();
+  }
+
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect(`/api/auth/guest?redirectUrl=${encodeURIComponent(`/commons/${validation.campfirePath}/submit`)}`);
   }
 
   const campfires = await listCampfires();

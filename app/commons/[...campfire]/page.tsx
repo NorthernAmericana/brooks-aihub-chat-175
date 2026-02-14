@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { validateCampfirePath } from "@/lib/commons/routing";
 import { listPostsByCampfirePath } from "@/lib/db/commons-queries";
 
@@ -71,8 +71,14 @@ export default async function CommonsCampfireFeedPage({
   }
 
   const totalPages = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
-  const canGoBack = page > 1;
-  const canGoForward = page < totalPages;
+  const clampedPage = Math.min(page, totalPages);
+
+  if (page !== clampedPage) {
+    redirect(`/commons/${validation.campfirePath}?sort=${sort}&page=${clampedPage}`);
+  }
+
+  const canGoBack = clampedPage > 1;
+  const canGoForward = clampedPage < totalPages;
 
   return (
     <main className="min-h-dvh bg-slate-50 px-6 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -152,13 +158,13 @@ export default async function CommonsCampfireFeedPage({
 
         <nav className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-900">
           <span className="text-slate-500 dark:text-slate-400">
-            Page {Math.min(page, totalPages)} of {totalPages}
+            Page {clampedPage} of {totalPages}
           </span>
           <div className="flex items-center gap-2">
             {canGoBack ? (
               <Link
                 className="rounded-full border border-slate-200 px-3 py-1.5 dark:border-slate-700"
-                href={`/commons/${validation.campfirePath}?sort=${sort}&page=${page - 1}`}
+                href={`/commons/${validation.campfirePath}?sort=${sort}&page=${clampedPage - 1}`}
               >
                 Previous
               </Link>
@@ -166,7 +172,7 @@ export default async function CommonsCampfireFeedPage({
             {canGoForward ? (
               <Link
                 className="rounded-full border border-slate-200 px-3 py-1.5 dark:border-slate-700"
-                href={`/commons/${validation.campfirePath}?sort=${sort}&page=${page + 1}`}
+                href={`/commons/${validation.campfirePath}?sort=${sort}&page=${clampedPage + 1}`}
               >
                 Next
               </Link>
