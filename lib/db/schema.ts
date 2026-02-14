@@ -747,6 +747,47 @@ export const commonsCampfire = pgTable(
 
 export type CommonsCampfire = InferSelectModel<typeof commonsCampfire>;
 
+export const commonsCampfireSettings = pgTable("commons_campfire_settings", {
+  campfireId: uuid("campfire_id")
+    .primaryKey()
+    .notNull()
+    .references(() => commonsCampfire.id, { onDelete: "cascade" }),
+  retentionMode: varchar("retention_mode", {
+    enum: ["permanent", "rolling_window", "timeboxed", "burn_on_empty"],
+  }).notNull(),
+  rollingWindowSize: integer("rolling_window_size"),
+  expiresInHours: integer("expires_in_hours"),
+  isTemp: boolean("is_temp").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type CommonsCampfireSettings = InferSelectModel<typeof commonsCampfireSettings>;
+
+export const commonsCampfireMembers = pgTable(
+  "commons_campfire_members",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    campfireId: uuid("campfire_id")
+      .notNull()
+      .references(() => commonsCampfire.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: varchar("role", { enum: ["host", "member"] }).notNull(),
+    invitedByUserId: uuid("invited_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    campfireUserUniqueIdx: uniqueIndex(
+      "commons_campfire_members_campfire_user_unique_idx"
+    ).on(table.campfireId, table.userId),
+  })
+);
+
+export type CommonsCampfireMember = InferSelectModel<typeof commonsCampfireMembers>;
+
 export const commonsPost = pgTable("commons_posts", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   campfireId: uuid("campfire_id")

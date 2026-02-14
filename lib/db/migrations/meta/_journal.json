@@ -267,6 +267,13 @@
       "when": 1770900000000,
       "tag": "0037_add_namc_lore_playground_standalone_route",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1771107961648,
+      "tag": "0038_nat_commons_campfire_settings_members",
+      "breakpoints": true
     }
   ]
 }
