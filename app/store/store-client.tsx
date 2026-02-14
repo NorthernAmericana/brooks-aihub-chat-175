@@ -141,7 +141,9 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {filteredApps.map((app) => {
               const actionLabel = actionLabelForApp(app);
-              const targetPath = app.storePath ?? app.appPath;
+              const targetPath = app.isInstalled
+                ? (app.appPath ?? app.storePath)
+                : (app.storePath ?? app.appPath);
 
               return (
                 <button
