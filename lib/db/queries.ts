@@ -18,18 +18,18 @@ import {
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
-import {
-  buildDbOperationCause,
-  getDbErrorDetails,
-  rethrowChatSdkErrorOrWrapDbError,
-} from "./query-error-handling";
-import { generateUUID } from "../utils";
 import { RECENT_WINDOW_DAYS } from "../memory/policy";
+import { generateUUID } from "../utils";
 import {
   assertChatRateLimitTablesReady,
   assertChatTableColumnsReady,
   db,
 } from "./index";
+import {
+  buildDbOperationCause,
+  getDbErrorDetails,
+  rethrowChatSdkErrorOrWrapDbError,
+} from "./query-error-handling";
 import {
   atoApps,
   atoFile,
@@ -227,7 +227,7 @@ async function ensureMemoryVersioningColumnsReady() {
   if (memoryVersioningColumnsState === "failed") {
     throw new ChatSDKError(
       "offline:database",
-      'Memory table schema is missing versioning columns. Run migrations and restart the service.'
+      "Memory table schema is missing versioning columns. Run migrations and restart the service."
     );
   }
 
@@ -352,7 +352,6 @@ function logDbError({
   return details;
 }
 
-
 export async function getUser(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -402,10 +401,7 @@ export async function createGuestUser() {
     }
   }
 
-  throw new ChatSDKError(
-    "bad_request:database",
-    "Failed to create guest user"
-  );
+  throw new ChatSDKError("bad_request:database", "Failed to create guest user");
 }
 
 export async function listRouteRegistryEntries() {
@@ -469,7 +465,7 @@ export async function saveChat({
       })
     );
   } catch (error) {
-    const details = logDbError({
+    logDbError({
       fn: "saveChat",
       operation: "insert_chat",
       error,
@@ -844,7 +840,7 @@ export async function getApprovedMemoriesForContext({
     return rows.map((row) => {
       const referenceTimestamp = row.approvedAt ?? row.createdAt;
       const ageInDays = Math.floor(
-        (now - referenceTimestamp.getTime()) / 86400000
+        (now - referenceTimestamp.getTime()) / 86_400_000
       );
 
       return {
@@ -1490,11 +1486,13 @@ export async function createMemoryRecord({
 
       const shouldCreateNextVersion =
         intent === "update_fact" || Boolean(latestVersion);
-      const nextVersion = latestVersion
-        ? latestVersion.memoryVersion + 1
-        : 1;
+      const nextVersion = latestVersion ? latestVersion.memoryVersion + 1 : 1;
 
-      if (shouldCreateNextVersion && latestVersion && latestVersion.validTo === null) {
+      if (
+        shouldCreateNextVersion &&
+        latestVersion &&
+        latestVersion.validTo === null
+      ) {
         await tx
           .update(memory)
           .set({
@@ -1522,9 +1520,7 @@ export async function createMemoryRecord({
           memoryKey: resolvedMemoryKey,
           memoryVersion: nextVersion,
           supersedesMemoryId:
-            shouldCreateNextVersion && latestVersion
-              ? latestVersion.id
-              : null,
+            shouldCreateNextVersion && latestVersion ? latestVersion.id : null,
           validFrom: now,
           validTo: null,
         })
@@ -1550,18 +1546,28 @@ export async function getLatestApprovedMemoryVersionsForContext({
   recentOnly?: boolean;
   limit?: number;
 }) {
+  const whereClauses = buildApprovedMemoryScopeFilters({
+    userId,
+    route,
+    projectRoute,
+  });
+  const pageSize = Math.min(Math.max(limit, 1), 25);
+
+  if (recentOnly) {
+    const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86_400_000);
+    whereClauses.push(
+      gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate)
+    );
+  }
+
   try {
     await ensureMemoryVersioningColumnsReady();
-
-    const whereClauses = buildApprovedMemoryScopeFilters({
-      userId,
-      route,
-      projectRoute,
-    });
     const now = new Date();
 
     whereClauses.push(lte(memory.validFrom, now));
-    whereClauses.push(sql`${memory.validTo} IS NULL OR ${memory.validTo} > ${now}`);
+    whereClauses.push(
+      sql`${memory.validTo} IS NULL OR ${memory.validTo} > ${now}`
+    );
     whereClauses.push(sql`
       NOT EXISTS (
         SELECT 1
@@ -1574,29 +1580,40 @@ export async function getLatestApprovedMemoryVersionsForContext({
       )
     `);
 
-    if (recentOnly) {
-      const cutoffDate = new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000);
-      whereClauses.push(
-        gte(sql`coalesce(${memory.approvedAt}, ${memory.createdAt})`, cutoffDate)
-      );
-    }
-
-    const pageSize = Math.min(Math.max(limit, 1), 25);
-
     return await db
       .select()
       .from(memory)
       .where(and(...whereClauses))
       .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
       .limit(pageSize);
-  } catch (_error) {
+  } catch (error) {
+    const details = getDbErrorDetails(error);
+    console.warn(
+      "[DB_FALLBACK] Falling back to legacy approved memory context query",
+      {
+        fn: "getLatestApprovedMemoryVersionsForContext",
+        code: details.code,
+        message: details.message,
+      }
+    );
+
+    try {
+      return await db
+        .select()
+        .from(memory)
+        .where(and(...whereClauses))
+        .orderBy(desc(memory.approvedAt), desc(memory.createdAt))
+        .limit(pageSize);
+    } catch (_fallbackError) {
+      // Fall through to preserve existing error contract.
+    }
+
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get latest approved memory versions for context"
     );
   }
 }
-
 
 export async function createHomeLocationRecord({
   ownerId,
