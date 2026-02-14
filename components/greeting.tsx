@@ -302,6 +302,18 @@ type BirthdayResponse = {
   birthday: string | null;
 };
 
+type PersonalEventMemory = {
+  id: string;
+  title: string;
+  date: string;
+  time: string | null;
+  route: string | null;
+};
+
+type PersonalEventsResponse = {
+  rows: PersonalEventMemory[];
+};
+
 type EventWeekGroup = {
   weekKey: string;
   title: string;
@@ -455,6 +467,87 @@ const buildBirthdayEvent = ({
   ];
 };
 
+const getEventCountdownCaption = (daysUntil: number, eventTitle: string) => {
+  if (daysUntil <= 0) {
+    return `It's event day for ${eventTitle}! Have an amazing time ✨`;
+  }
+
+  if (daysUntil === 1) {
+    return `Tomorrow is the big day for ${eventTitle} — last-minute hype unlocked 🚀`;
+  }
+
+  if (daysUntil <= 7) {
+    const finalWeekLines = [
+      `Only ${daysUntil} days to go — excitement level: maxed out 🎉`,
+      `${daysUntil} days left. This countdown is getting real!`,
+      `${daysUntil} days remaining — future you is already smiling.`,
+      `${daysUntil} sleeps until ${eventTitle}. Let's go!`,
+    ];
+    return finalWeekLines[daysUntil % finalWeekLines.length];
+  }
+
+  if (daysUntil <= 14) {
+    return `${daysUntil} days out — the vibe is building for ${eventTitle}.`;
+  }
+
+  return `${daysUntil} days away — plenty of time to prep for ${eventTitle}.`;
+};
+
+const buildMemoryEvents = ({
+  events,
+  now,
+}: {
+  events: PersonalEventMemory[];
+  now: Date;
+}): TimelineEvent[] => {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const timelineEvents: TimelineEvent[] = [];
+
+  for (const event of events) {
+      const eventDate = new Date(`${event.date}T00:00:00`);
+      if (Number.isNaN(eventDate.getTime())) {
+        continue;
+      }
+
+      const daysUntil = Math.floor(
+        (eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
+      );
+
+      if (daysUntil < 0 || daysUntil > 30) {
+        continue;
+      }
+
+      const weekStart = new Date(eventDate);
+      weekStart.setDate(eventDate.getDate() - eventDate.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      const caption = getEventCountdownCaption(daysUntil, event.title);
+      const dateWithTime = event.time ? `${event.date}T${event.time}:00` : event.date;
+      const timeLabel = event.time
+        ? ` at ${new Date(dateWithTime).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+          })}`
+        : "";
+
+      timelineEvents.push({
+        title: `${event.title}${timeLabel} · ${caption}`,
+        date: event.date,
+        weekStart: formatSlashDate(weekStart),
+        weekEnd: formatSlashDate(weekEnd),
+        monthLabel: eventDate.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        }),
+        source: "personal",
+      });
+    }
+
+  return timelineEvents;
+};
+
 export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   const router = useRouter();
   const { data: session } = useSession();
@@ -496,6 +589,10 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     "/api/user-birthday",
     fetcher
   );
+  const { data: personalEventsData } = useSWR<PersonalEventsResponse>(
+    "/api/personal-events",
+    fetcher
+  );
   const displayName = useMemo(() => {
     const name = session?.user?.name?.trim();
     if (name) {
@@ -507,15 +604,20 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
     }
     return "Hub Creator";
   }, [session?.user?.email, session?.user?.name]);
-  const personalEvents = useMemo<TimelineEvent[]>(
-    () =>
-      buildBirthdayEvent({
-        birthday: birthdayData?.birthday,
-        now,
-        displayName,
-      }),
-    [birthdayData?.birthday, displayName, now]
-  );
+  const personalEvents = useMemo<TimelineEvent[]>(() => {
+    const birthdayEvents = buildBirthdayEvent({
+      birthday: birthdayData?.birthday,
+      now,
+      displayName,
+    });
+
+    const memoryEvents = buildMemoryEvents({
+      events: personalEventsData?.rows ?? [],
+      now,
+    });
+
+    return [...birthdayEvents, ...memoryEvents];
+  }, [birthdayData?.birthday, displayName, now, personalEventsData?.rows]);
   const officialEventsTimeline = useMemo<TimelineEvent[]>(
     () =>
       officialEvents.map((event) => ({

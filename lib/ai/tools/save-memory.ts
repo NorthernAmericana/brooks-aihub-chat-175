@@ -17,6 +17,30 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
     inputSchema: z.object({
       rawText: z.string().describe("The receipt-style memory text to save."),
       tags: z.array(z.string()).optional(),
+      personalEvent: z
+        .object({
+          title: z
+            .string()
+            .min(2)
+            .describe("Event title, like 'Concert with Alex'."),
+          date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .describe("Event date in YYYY-MM-DD."),
+          time: z
+            .string()
+            .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+            .optional()
+            .describe("Optional 24h event time (HH:mm)."),
+          note: z
+            .string()
+            .optional()
+            .describe("Optional extra context for the event memory."),
+        })
+        .optional()
+        .describe(
+          "Optional personal event alarm metadata. Include this to create an event that appears on the home Events Board countdown."
+        ),
       route: z
         .string()
         .optional()
@@ -39,16 +63,37 @@ export const saveMemory = ({ session, chatId, agent }: SaveMemoryProps) =>
         ),
     }),
     needsApproval: true,
-    execute: async ({ rawText, tags, route, sourceUri, memoryKeyHint, intent }) => {
+    execute: async ({
+      rawText,
+      tags,
+      personalEvent,
+      route,
+      sourceUri,
+      memoryKeyHint,
+      intent,
+    }) => {
       if (!session.user?.id) {
         throw new Error("Missing user session for saveMemory.");
       }
 
+      const eventTags = personalEvent
+        ? [
+            "personal-event",
+            `event-date:${personalEvent.date}`,
+            ...(personalEvent.time ? [`event-time:${personalEvent.time}`] : []),
+          ]
+        : [];
+
+      const mergedTags = Array.from(new Set([...(tags ?? []), ...eventTags]));
+      const eventText = personalEvent
+        ? `${personalEvent.title}${personalEvent.note ? ` — ${personalEvent.note}` : ""}`
+        : rawText;
+
       const record = await createMemoryRecord({
         ownerId: session.user.id,
         sourceUri: sourceUri ?? `chat:${chatId}`,
-        rawText,
-        tags,
+        rawText: eventText,
+        tags: mergedTags,
         route: route ?? agent.slash,
         agentId: agent.id,
         agentLabel: agent.label,
