@@ -139,7 +139,7 @@ export default function IntroPage() {
       <Image
         alt=""
         aria-hidden
-        className="intro-float pointer-events-none absolute left-[8%] top-[18%] hidden h-auto w-48 select-none sm:block"
+        className="intro-float pointer-events-none absolute left-[3%] top-[16%] h-auto w-24 select-none opacity-95 sm:left-[8%] sm:top-[18%] sm:w-48"
         height={520}
         priority
         src={forestGreenUiWelcome}
@@ -148,7 +148,7 @@ export default function IntroPage() {
       <Image
         alt=""
         aria-hidden
-        className="intro-float-slow pointer-events-none absolute right-[10%] top-[14%] hidden h-auto w-56 select-none sm:block"
+        className="intro-float-slow pointer-events-none absolute right-[4%] top-[14%] h-auto w-28 select-none opacity-95 sm:right-[10%] sm:w-56"
         height={520}
         priority
         src={forestGreenUiWelcome}
