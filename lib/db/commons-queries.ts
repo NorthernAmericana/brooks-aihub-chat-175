@@ -1,6 +1,7 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { getCampfireAccess } from "@/lib/commons/access";
+import { pruneCampfireToRollingWindow } from "@/lib/commons/maintenance";
 import {
   commonsCampfire,
   commonsCampfireSettings,
@@ -354,51 +355,4 @@ export async function createComment(options: {
   }
 
   return comment;
-}
-
-export async function pruneCampfireToRollingWindow(campfireId: string, rollingWindowSize: number) {
-  if (rollingWindowSize <= 0) {
-    return;
-  }
-
-  const stalePosts = await db
-    .select({ id: commonsPost.id })
-    .from(commonsPost)
-    .where(
-      and(
-        eq(commonsPost.campfireId, campfireId),
-        eq(commonsPost.isDeleted, false),
-        eq(commonsPost.isVisible, true)
-      )
-    )
-    .orderBy(desc(commonsPost.createdAt), desc(commonsPost.id))
-    .offset(rollingWindowSize);
-
-  if (!stalePosts.length) {
-    return;
-  }
-
-  const stalePostIds = stalePosts.map((post) => post.id);
-
-  await db.transaction(async (tx) => {
-    await tx
-      .update(commonsComment)
-      .set({
-        isDeleted: true,
-        isVisible: false,
-        deletedAt: sql`now()`,
-        updatedAt: sql`now()`,
-      })
-      .where(and(inArray(commonsComment.postId, stalePostIds), eq(commonsComment.isDeleted, false)));
-
-    await tx
-      .update(commonsPost)
-      .set({
-        isDeleted: true,
-        isVisible: false,
-        deletedAt: sql`now()`,
-        updatedAt: sql`now()`,
-      })
-      .where(and(inArray(commonsPost.id, stalePostIds), eq(commonsPost.isDeleted, false)));
-  });
 }
