@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { resolveAuthSecret } from "@/lib/auth/secret";
 import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
 import {
   deriveCanonicalHost,
@@ -97,7 +98,7 @@ export async function proxy(request: NextRequest) {
 
   const token = await getToken({
     req: request,
-    secret: process.env.AUTH_SECRET,
+    secret: resolveAuthSecret(),
     secureCookie: !isDevelopmentEnvironment,
   });
 
