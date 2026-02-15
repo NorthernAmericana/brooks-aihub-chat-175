@@ -274,6 +274,13 @@
       "when": 1771107961648,
       "tag": "0038_nat_commons_campfire_settings_members",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1771170579992,
+      "tag": "0040_mycarmind_daily_missions",
+      "breakpoints": true
     }
   ]
 }
