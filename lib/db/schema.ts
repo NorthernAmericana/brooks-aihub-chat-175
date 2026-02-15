@@ -1,4 +1,4 @@
-import { sql, type InferSelectModel } from "drizzle-orm";
+import { type InferSelectModel, sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -29,6 +29,27 @@ export const user = pgTable("User", {
 });
 
 export type User = InferSelectModel<typeof user>;
+
+export const passwordResetToken = pgTable(
+  "PasswordResetToken",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    tokenHash: varchar("tokenHash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    usedAt: timestamp("usedAt"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    tokenHashIdx: uniqueIndex("PasswordResetToken_tokenHash_idx").on(
+      table.tokenHash
+    ),
+  })
+);
+
+export type PasswordResetToken = InferSelectModel<typeof passwordResetToken>;
 
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -187,37 +208,39 @@ export const stream = pgTable(
 
 export type Stream = InferSelectModel<typeof stream>;
 
-export const memory = pgTable("Memory", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  memoryKey: text("memoryKey").notNull(),
-  memoryVersion: integer("memoryVersion").notNull().default(1),
-  supersedesMemoryId: uuid("supersedesMemoryId"),
-  validFrom: timestamp("validFrom").notNull().defaultNow(),
-  validTo: timestamp("validTo"),
-  stalenessReason: text("stalenessReason"),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-  sourceType: varchar("sourceType", {
-    enum: ["chat", "document", "file", "web", "integration", "manual"],
-  }).notNull(),
-  sourceUri: text("sourceUri").notNull(),
-  ownerId: uuid("ownerId")
-    .notNull()
-    .references(() => user.id),
-  orgId: varchar("orgId", { length: 64 }).notNull().default("default"),
-  productId: varchar("productId", { length: 64 })
-    .notNull()
-    .default("brooks-aihub"),
-  route: varchar("route", { length: 128 }),
-  agentId: varchar("agentId", { length: 64 }),
-  agentLabel: varchar("agentLabel", { length: 128 }),
-  isApproved: boolean("isApproved").notNull().default(false),
-  approvedAt: timestamp("approvedAt"),
-  tags: json("tags").$type<string[]>().notNull().default([]),
-  rawText: text("rawText").notNull(),
-  normalizedText: text("normalizedText"),
-  embeddingsRef: text("embeddingsRef"),
-},
+export const memory = pgTable(
+  "Memory",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    memoryKey: text("memoryKey").notNull(),
+    memoryVersion: integer("memoryVersion").notNull().default(1),
+    supersedesMemoryId: uuid("supersedesMemoryId"),
+    validFrom: timestamp("validFrom").notNull().defaultNow(),
+    validTo: timestamp("validTo"),
+    stalenessReason: text("stalenessReason"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    sourceType: varchar("sourceType", {
+      enum: ["chat", "document", "file", "web", "integration", "manual"],
+    }).notNull(),
+    sourceUri: text("sourceUri").notNull(),
+    ownerId: uuid("ownerId")
+      .notNull()
+      .references(() => user.id),
+    orgId: varchar("orgId", { length: 64 }).notNull().default("default"),
+    productId: varchar("productId", { length: 64 })
+      .notNull()
+      .default("brooks-aihub"),
+    route: varchar("route", { length: 128 }),
+    agentId: varchar("agentId", { length: 64 }),
+    agentLabel: varchar("agentLabel", { length: 128 }),
+    isApproved: boolean("isApproved").notNull().default(false),
+    approvedAt: timestamp("approvedAt"),
+    tags: json("tags").$type<string[]>().notNull().default([]),
+    rawText: text("rawText").notNull(),
+    normalizedText: text("normalizedText"),
+    embeddingsRef: text("embeddingsRef"),
+  },
   (table) => ({
     ownerMemoryVersionIdx: uniqueIndex("Memory_owner_memory_version_idx").on(
       table.ownerId,
@@ -345,43 +368,51 @@ export const atoRoutes = pgTable("ato_routes", {
 
 export type AtoRoute = InferSelectModel<typeof atoRoutes>;
 
-export const userInstalls = pgTable("user_installs", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id),
-  appId: uuid("app_id")
-    .notNull()
-    .references(() => atoApps.id),
-  installedAt: timestamp("installed_at").notNull().defaultNow(),
-  lastOpenedAt: timestamp("last_opened_at"),
-}, (table) => ({
-  appUserUnique: uniqueIndex("user_installs_app_id_user_id_unique").on(
-    table.appId,
-    table.userId
-  ),
-}));
+export const userInstalls = pgTable(
+  "user_installs",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id),
+    appId: uuid("app_id")
+      .notNull()
+      .references(() => atoApps.id),
+    installedAt: timestamp("installed_at").notNull().defaultNow(),
+    lastOpenedAt: timestamp("last_opened_at"),
+  },
+  (table) => ({
+    appUserUnique: uniqueIndex("user_installs_app_id_user_id_unique").on(
+      table.appId,
+      table.userId
+    ),
+  })
+);
 
 export type UserInstall = InferSelectModel<typeof userInstalls>;
 
-export const atoAppReviews = pgTable("ato_app_reviews", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  appId: uuid("app_id")
-    .notNull()
-    .references(() => atoApps.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id),
-  rating: integer("rating").notNull(),
-  body: text("body"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => ({
-  appUserUnique: uniqueIndex("ato_app_reviews_app_id_user_id_unique").on(
-    table.appId,
-    table.userId
-  ),
-}));
+export const atoAppReviews = pgTable(
+  "ato_app_reviews",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    appId: uuid("app_id")
+      .notNull()
+      .references(() => atoApps.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id),
+    rating: integer("rating").notNull(),
+    body: text("body"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    appUserUnique: uniqueIndex("ato_app_reviews_app_id_user_id_unique").on(
+      table.appId,
+      table.userId
+    ),
+  })
+);
 
 export type AtoAppReview = InferSelectModel<typeof atoAppReviews>;
 
@@ -550,16 +581,18 @@ export const userInventory = pgTable("user_inventory", {
   userId: uuid("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  schemaVersion: varchar("schema_version", { length: 10 })
+    .notNull()
+    .default("1.0"),
   inventoryId: uuid("inventory_id").notNull().unique().defaultRandom(),
   strainId: varchar("strain_id", { length: 255 }).notNull(),
-  
+
   // Privacy metadata
   storageLocation: varchar("storage_location", { length: 50 })
     .notNull()
     .default("database_user_private"),
   userConsent: boolean("user_consent").notNull().default(false),
-  
+
   // Inventory details (privacy-safe with bucketed values and month granularity)
   acquiredMonth: varchar("acquired_month", { length: 7 }), // YYYY-MM format only
   opened: boolean("opened").default(false),
@@ -569,7 +602,7 @@ export const userInventory = pgTable("user_inventory", {
   storageLocationType: varchar("storage_location_type", { length: 50 }),
   qualityNotes: text("quality_notes"),
   tags: text("tags").array(),
-  
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -583,23 +616,25 @@ export const personalFit = pgTable("personal_fit", {
   userId: uuid("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  schemaVersion: varchar("schema_version", { length: 10 })
+    .notNull()
+    .default("1.0"),
   personalFitId: uuid("personal_fit_id").notNull().unique().defaultRandom(),
   strainId: varchar("strain_id", { length: 255 }).notNull(),
-  
+
   // Privacy metadata
   storageLocation: varchar("storage_location", { length: 50 })
     .notNull()
     .default("database_user_private"),
   userConsent: boolean("user_consent").notNull().default(false),
-  
+
   // Personal fit details
   rating1to10: varchar("rating_1to10", { length: 10 }), // Stored as string to allow null/optional
   bestFor: text("best_for").array(), // User's personal tags for what this works best for
   avoidFor: text("avoid_for").array(), // User's personal tags for when to avoid
   repeatProbability0to1: varchar("repeat_probability_0to1", { length: 10 }), // Stored as string to allow null/optional
   notes: text("notes"),
-  
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -619,7 +654,9 @@ export const myfloweraiQuizResults = pgTable("myflowerai_quiz_results", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export type MyfloweraiQuizResult = InferSelectModel<typeof myfloweraiQuizResults>;
+export type MyfloweraiQuizResult = InferSelectModel<
+  typeof myfloweraiQuizResults
+>;
 
 // MyFlowerAI Generated Images table for privacy-safe image tracking
 // See: /docs/myflowerai/quiz-to-aura.md
@@ -732,9 +769,15 @@ export const commonsCampfire = pgTable(
     createdById: uuid("created_by_id").references(() => user.id, {
       onDelete: "set null",
     }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     isActive: boolean("is_active").notNull().default(true),
     isDeleted: boolean("is_deleted").notNull().default(false),
     isPrivate: boolean("is_private").notNull().default(false),
@@ -758,10 +801,14 @@ export const commonsCampfireSettings = pgTable("commons_campfire_settings", {
   rollingWindowSize: integer("rolling_window_size"),
   expiresInHours: integer("expires_in_hours"),
   isTemp: boolean("is_temp").notNull().default(false),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export type CommonsCampfireSettings = InferSelectModel<typeof commonsCampfireSettings>;
+export type CommonsCampfireSettings = InferSelectModel<
+  typeof commonsCampfireSettings
+>;
 
 export const commonsCampfireMembers = pgTable(
   "commons_campfire_members",
@@ -777,7 +824,9 @@ export const commonsCampfireMembers = pgTable(
     invitedByUserId: uuid("invited_by_user_id").references(() => user.id, {
       onDelete: "set null",
     }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     campfireUserUniqueIdx: uniqueIndex(
@@ -786,7 +835,9 @@ export const commonsCampfireMembers = pgTable(
   })
 );
 
-export type CommonsCampfireMember = InferSelectModel<typeof commonsCampfireMembers>;
+export type CommonsCampfireMember = InferSelectModel<
+  typeof commonsCampfireMembers
+>;
 
 export const commonsPost = pgTable("commons_posts", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -801,8 +852,12 @@ export const commonsPost = pgTable("commons_posts", {
   bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
     .notNull()
     .default("markdown"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   editedAt: timestamp("edited_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   isVisible: boolean("is_visible").notNull().default(true),
@@ -826,8 +881,12 @@ export const commonsComment = pgTable(
     bodyFormat: varchar("body_format", { enum: ["markdown", "plain"] })
       .notNull()
       .default("markdown"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     editedAt: timestamp("edited_at", { withTimezone: true }),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     isVisible: boolean("is_visible").notNull().default(true),
@@ -858,8 +917,12 @@ export const commonsVote = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     value: integer("value").notNull().default(1),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     isDeleted: boolean("is_deleted").notNull().default(false),
   },
   (table) => ({
@@ -894,8 +957,12 @@ export const commonsReport = pgTable("commons_reports", {
   })
     .notNull()
     .default("open"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   isDeleted: boolean("is_deleted").notNull().default(false),
 });

@@ -43,6 +43,7 @@ import {
   memory,
   message,
   messageDeprecated,
+  passwordResetToken,
   redemption,
   redemptionCode,
   routeRegistry,
@@ -2510,6 +2511,82 @@ export async function updateUserPassword({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update user password"
+    );
+  }
+}
+
+export async function createPasswordResetToken({
+  userId,
+  tokenHash,
+  expiresAt,
+}: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  try {
+    const [createdToken] = await db
+      .insert(passwordResetToken)
+      .values({ userId, tokenHash, expiresAt })
+      .returning();
+
+    return createdToken ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create password reset token"
+    );
+  }
+}
+
+export async function getPasswordResetTokenByHash({
+  tokenHash,
+}: {
+  tokenHash: string;
+}) {
+  try {
+    const [selectedToken] = await db
+      .select()
+      .from(passwordResetToken)
+      .where(eq(passwordResetToken.tokenHash, tokenHash));
+
+    return selectedToken ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get password reset token"
+    );
+  }
+}
+
+export async function markPasswordResetTokenUsed({
+  tokenId,
+  now,
+}: {
+  tokenId: string;
+  now: Date;
+}) {
+  try {
+    const [updatedToken] = await db
+      .update(passwordResetToken)
+      .set({ usedAt: now })
+      .where(
+        and(
+          eq(passwordResetToken.id, tokenId),
+          sql`${passwordResetToken.usedAt} IS NULL`,
+          gt(passwordResetToken.expiresAt, now)
+        )
+      )
+      .returning({
+        id: passwordResetToken.id,
+        userId: passwordResetToken.userId,
+      });
+
+    return updatedToken ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to mark password reset token used"
     );
   }
 }
