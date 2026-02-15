@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { DM_RECIPIENT_LIMIT_FOUNDER } from "@/lib/commons/constants";
-import { CAMPFIRE_SEGMENT_REGEX } from "@/lib/commons/routing";
+import { isValidCampfirePathValue } from "@/lib/commons/routing";
 
 const MARKDOWN_DISALLOWED_PATTERN = /<\s*\w/i;
 
@@ -20,13 +20,9 @@ export const campfirePathSchema = z
   .refine((value) => !value.includes(".."), {
     message: "Campfire path must not contain relative segments.",
   })
-  .refine(
-    (value) =>
-      value.split("/").every((segment) => CAMPFIRE_SEGMENT_REGEX.test(segment)),
-    {
-      message: "Campfire path contains invalid segments.",
-    }
-  );
+  .refine((value) => isValidCampfirePathValue(value), {
+    message: "Campfire path contains invalid segments.",
+  });
 
 export const listPostsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
