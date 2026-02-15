@@ -10,8 +10,8 @@ export type CampfireAccess = {
   memberLimit: number | null;
 };
 
-const PRIVATE_MEMBER_LIMIT_DEFAULT = 4;
-const PRIVATE_MEMBER_LIMIT_FOUNDER_HOST = 12;
+const PRIVATE_MEMBER_LIMIT_DEFAULT = 5;
+const PRIVATE_MEMBER_LIMIT_FOUNDER_HOST = 13;
 
 export async function getCampfireAccess(options: {
   campfirePath: string;

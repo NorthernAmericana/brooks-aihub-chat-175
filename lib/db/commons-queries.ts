@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { getCampfireAccess } from "@/lib/commons/access";
 import { pruneCampfireToRollingWindow } from "@/lib/commons/maintenance";
@@ -401,30 +402,80 @@ export async function createCampfire(options: {
   description?: string;
   campfirePath?: string;
   recipientEmail?: string;
+  recipientEmails?: string[];
 }) {
   if (options.mode === "dm") {
-    const recipientEmail = options.recipientEmail?.trim().toLowerCase();
-    if (!recipientEmail) {
-      return { error: "Recipient email is required." as const };
-    }
-
-    const [recipient] = await db
-      .select({ id: user.id, email: user.email })
+    const [creator] = await db
+      .select({ id: user.id, foundersAccess: user.foundersAccess })
       .from(user)
-      .where(eq(user.email, recipientEmail))
+      .where(eq(user.id, options.creatorId))
       .limit(1);
 
-    if (!recipient) {
-      return { error: "Recipient account not found." as const };
+    if (!creator) {
+      return { error: "Creator account not found." as const };
     }
 
-    if (recipient.id === options.creatorId) {
+    const recipientEmails = Array.from(
+      new Set(
+        [
+          ...(options.recipientEmails ?? []),
+          ...(options.recipientEmail ? [options.recipientEmail] : []),
+        ]
+          .map((email) => email.trim().toLowerCase())
+          .filter((email) => email.length > 0)
+      )
+    );
+
+    if (!recipientEmails.length) {
+      return { error: "At least one recipient email is required." as const };
+    }
+
+    const recipientLimit = creator.foundersAccess ? 12 : 4;
+
+    if (recipientEmails.length > recipientLimit) {
+      return {
+        error: creator.foundersAccess
+          ? "Founders can include up to 12 recipient emails in a direct campfire."
+          : "Direct campfires are limited to 4 recipient emails. Upgrade to founders for up to 12.",
+      } as const;
+    }
+
+    const recipients = await db
+      .select({ id: user.id, email: user.email })
+      .from(user)
+      .where(or(...recipientEmails.map((email) => eq(user.email, email))));
+
+    if (recipients.length !== recipientEmails.length) {
+      const matchedEmails = new Set(
+        recipients.map((recipient) => recipient.email)
+      );
+      const missingEmails = recipientEmails.filter(
+        (email) => !matchedEmails.has(email)
+      );
+
+      return {
+        error:
+          missingEmails.length === 1
+            ? `Recipient account not found: ${missingEmails[0]}.`
+            : `Recipient accounts not found: ${missingEmails.join(", ")}.`,
+      } as const;
+    }
+
+    const recipientIds = recipients.map((recipient) => recipient.id);
+    if (recipientIds.includes(options.creatorId)) {
       return { error: "You cannot DM yourself." as const };
     }
 
-    const participants = [options.creatorId, recipient.id].sort();
-    const dmPath = `dm/${participants.join("-")}`;
-    const dmSlug = `dm-${participants[0].slice(0, 8)}-${participants[1].slice(0, 8)}`;
+    const participants = [options.creatorId, ...recipientIds].sort();
+    const participantsHash = createHash("sha256")
+      .update(participants.join("|"))
+      .digest("hex")
+      .slice(0, 32);
+    const dmPath = `dm/${participantsHash}`;
+    const dmSlug = `dm-${participantsHash.slice(0, 24)}`;
+    const recipientLabel = recipients
+      .map((recipient) => recipient.email)
+      .join(", ");
 
     const [existingDm] = await db
       .select({ id: commonsCampfire.id, path: commonsCampfire.path })
@@ -454,8 +505,11 @@ export async function createCampfire(options: {
           .values({
             slug: dmSlug,
             path: dmPath,
-            name: `DM: ${recipient.email}`,
-            description: `Direct campfire between you and ${recipient.email}.`,
+            name:
+              recipients.length === 1
+                ? `DM: ${recipients[0].email}`
+                : `Group DM (${recipients.length + 1} members)`,
+            description: `Direct campfire between you and ${recipientLabel}.`,
             createdById: options.creatorId,
             isPrivate: true,
           })
@@ -472,12 +526,12 @@ export async function createCampfire(options: {
             userId: options.creatorId,
             role: "host",
           },
-          {
+          ...recipients.map((recipient) => ({
             campfireId: row.id,
             userId: recipient.id,
-            role: "member",
+            role: "member" as const,
             invitedByUserId: options.creatorId,
-          },
+          })),
         ]);
 
         return row;
