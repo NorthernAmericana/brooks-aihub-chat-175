@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useActionState, useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "@/components/toast";
 import { type RegisterActionState, register } from "../actions";
+import { waitForAuthenticatedSession } from "../session";
 
 export default function Page() {
   const router = useRouter();
@@ -22,22 +23,6 @@ export default function Page() {
       status: "idle",
     }
   );
-
-  const waitForAuthenticatedSession = async (timeoutMs = 3000) => {
-    const deadline = Date.now() + timeoutMs;
-
-    while (Date.now() < deadline) {
-      const session = await getSession();
-
-      if (session) {
-        return true;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-
-    return false;
-  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
