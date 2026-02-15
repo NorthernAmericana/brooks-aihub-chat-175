@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { useActionState, useEffect, useState } from "react";
 
 import { AuthForm } from "@/components/auth-form";
@@ -12,9 +12,10 @@ import { type LoginActionState, login } from "../actions";
 
 export default function Page() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
 
   const [email, setEmail] = useState("");
-  const [isSuccessful, setIsSuccessful] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
@@ -23,24 +24,59 @@ export default function Page() {
     }
   );
 
-  const { update: updateSession } = useSession();
+  const waitForAuthenticatedSession = async (timeoutMs = 3000) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const session = await getSession();
+
+      if (session) {
+        return true;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    return false;
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
     if (state.status === "failed") {
+      setIsRedirecting(false);
       toast({
         type: "error",
         description: "Invalid credentials!",
       });
     } else if (state.status === "invalid_data") {
+      setIsRedirecting(false);
       toast({
         type: "error",
         description: "Failed validating your submission!",
       });
     } else if (state.status === "success") {
-      setIsSuccessful(true);
-      updateSession();
-      router.refresh();
+      void (async () => {
+        setIsRedirecting(true);
+
+        await updateSession();
+
+        const isAuthenticated = await waitForAuthenticatedSession();
+
+        if (!isAuthenticated) {
+          setIsRedirecting(false);
+          toast({
+            type: "error",
+            description: "Sign in succeeded, but session could not be established. Please try again.",
+          });
+
+          return;
+        }
+
+        router.replace("/brooks-ai-hub/");
+        router.refresh();
+      })();
+    } else {
+      setIsRedirecting(false);
     }
   }, [state.status]);
 
@@ -59,7 +95,7 @@ export default function Page() {
           </p>
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email}>
-          <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
+          <SubmitButton isRedirecting={isRedirecting}>Sign in</SubmitButton>
           <p className="mt-4 text-center text-gray-600 text-sm dark:text-zinc-400">
             {"Don't have an account? "}
             <Link
