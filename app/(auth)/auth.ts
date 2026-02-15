@@ -2,16 +2,14 @@ import { compare } from "bcrypt-ts";
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
+import { resolveAuthSecret } from "@/lib/auth/secret";
 import { DUMMY_PASSWORD } from "@/lib/constants";
 import { createGuestUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
 export type UserType = "guest" | "regular" | "paid";
 
-const authSecret =
-  process.env.AUTH_SECRET ??
-  process.env.NEXTAUTH_SECRET ??
-  (process.env.NODE_ENV === "production" ? undefined : "dev-auth-secret");
+const authSecret = resolveAuthSecret();
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
