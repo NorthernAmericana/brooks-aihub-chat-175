@@ -1,27 +1,7 @@
+import type { DmRoomForViewer } from "@/lib/db/commons-queries";
+
 type DmCampfireRoomProps = {
-  room: {
-    campfire: {
-      id: string;
-      name: string;
-      path: string;
-      lastActivityAt: Date;
-    };
-    access: {
-      canRead: boolean;
-    };
-    members: Array<{
-      id: string;
-      email: string;
-      role: string;
-    }>;
-    posts: Array<{
-      id: string;
-      title: string;
-      body: string;
-      createdAt: Date;
-      authorEmail: string;
-    }>;
-  };
+  room: DmRoomForViewer;
 };
 
 export function DmCampfireRoom({ room }: DmCampfireRoomProps) {

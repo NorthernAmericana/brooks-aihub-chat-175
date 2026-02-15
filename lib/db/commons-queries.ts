@@ -11,7 +11,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { getCampfireAccess } from "@/lib/commons/access";
+import { getCampfireAccess, type CampfireAccess } from "@/lib/commons/access";
 import {
   DM_RECIPIENT_LIMIT_DEFAULT,
   DM_RECIPIENT_LIMIT_FOUNDER,
@@ -748,10 +748,32 @@ export async function listPrivateDmCampfiresForMember(
   });
 }
 
+export type DmRoomForViewer = {
+  campfire: {
+    id: string;
+    name: string;
+    path: string;
+    lastActivityAt: Date;
+  };
+  access: CampfireAccess;
+  members: Array<{
+    id: string;
+    email: string;
+    role: string;
+  }>;
+  posts: Array<{
+    id: string;
+    title: string;
+    body: string;
+    createdAt: Date;
+    authorEmail: string;
+  }>;
+};
+
 export async function getDmRoomForViewer(options: {
   campfirePath: string;
   viewerId: string;
-}) {
+}): Promise<DmRoomForViewer | null> {
   const [campfire] = await db
     .select({
       id: commonsCampfire.id,
