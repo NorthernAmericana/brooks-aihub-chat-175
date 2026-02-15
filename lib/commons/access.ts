@@ -1,4 +1,8 @@
 import { and, count, eq } from "drizzle-orm";
+import {
+  PRIVATE_MEMBER_LIMIT_DEFAULT,
+  PRIVATE_MEMBER_LIMIT_FOUNDER_HOST,
+} from "@/lib/commons/constants";
 import { db } from "@/lib/db";
 import { commonsCampfire, commonsCampfireMembers, user } from "@/lib/db/schema";
 
@@ -9,9 +13,6 @@ export type CampfireAccess = {
   memberCount: number;
   memberLimit: number | null;
 };
-
-const PRIVATE_MEMBER_LIMIT_DEFAULT = 5;
-const PRIVATE_MEMBER_LIMIT_FOUNDER_HOST = 13;
 
 export async function getCampfireAccess(options: {
   campfirePath: string;

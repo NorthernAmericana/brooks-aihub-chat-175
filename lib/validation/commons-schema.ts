@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DM_RECIPIENT_LIMIT_FOUNDER } from "@/lib/commons/constants";
 import { CAMPFIRE_SEGMENT_REGEX } from "@/lib/commons/routing";
 
 const MARKDOWN_DISALLOWED_PATTERN = /<\s*\w/i;
@@ -48,7 +49,7 @@ export const createCampfireSchema = z
     recipientEmail: z.string().trim().toLowerCase().email().optional(),
     recipientEmails: z
       .array(z.string().trim().toLowerCase().email())
-      .max(12)
+      .max(DM_RECIPIENT_LIMIT_FOUNDER)
       .optional(),
   })
   .superRefine((value, ctx) => {

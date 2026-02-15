@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import {
+  DM_RECIPIENT_LIMIT_DEFAULT,
+  DM_RECIPIENT_LIMIT_FOUNDER,
+} from "@/lib/commons/constants";
 
 type CampfireMode = "community" | "dm";
 
@@ -52,8 +56,10 @@ export function CreateCampfireForm() {
             return;
           }
 
-          if (payload.recipientEmails.length > 12) {
-            setError("Direct campfires support up to 12 recipient emails.");
+          if (payload.recipientEmails.length > DM_RECIPIENT_LIMIT_FOUNDER) {
+            setError(
+              `Direct campfires support up to ${DM_RECIPIENT_LIMIT_FOUNDER} recipient emails.`
+            );
             return;
           }
         }
@@ -174,7 +180,8 @@ export function CreateCampfireForm() {
           />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Add emails separated by commas or new lines. Free accounts support
-            up to 4 recipient emails; founders support up to 12.
+            up to {DM_RECIPIENT_LIMIT_DEFAULT} recipient emails; founders
+            support up to {DM_RECIPIENT_LIMIT_FOUNDER}.
           </p>
         </div>
       )}

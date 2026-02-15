@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { getCampfireAccess } from "@/lib/commons/access";
+import {
+  DM_RECIPIENT_LIMIT_DEFAULT,
+  DM_RECIPIENT_LIMIT_FOUNDER,
+} from "@/lib/commons/constants";
 import { pruneCampfireToRollingWindow } from "@/lib/commons/maintenance";
 import { db } from "@/lib/db";
 import {
@@ -430,7 +434,9 @@ export async function createCampfire(options: {
       return { error: "At least one recipient email is required." as const };
     }
 
-    const recipientLimit = creator.foundersAccess ? 12 : 4;
+    const recipientLimit = creator.foundersAccess
+      ? DM_RECIPIENT_LIMIT_FOUNDER
+      : DM_RECIPIENT_LIMIT_DEFAULT;
 
     if (recipientEmails.length > recipientLimit) {
       return {
@@ -443,7 +449,13 @@ export async function createCampfire(options: {
     const recipients = await db
       .select({ id: user.id, email: user.email })
       .from(user)
-      .where(or(...recipientEmails.map((email) => eq(user.email, email))));
+      .where(
+        or(
+          ...recipientEmails.map(
+            (email) => sql`lower(${user.email}) = ${email}`
+          )
+        )
+      );
 
     if (recipients.length !== recipientEmails.length) {
       const matchedEmails = new Set(
