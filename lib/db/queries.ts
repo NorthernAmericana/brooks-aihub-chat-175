@@ -2491,6 +2491,29 @@ export async function getUserById({ id }: { id: string }) {
   }
 }
 
+export async function updateUserPassword({
+  userId,
+  hashedPassword,
+}: {
+  userId: string;
+  hashedPassword: string;
+}) {
+  try {
+    const [updatedUser] = await db
+      .update(user)
+      .set({ password: hashedPassword })
+      .where(eq(user.id, userId))
+      .returning({ id: user.id });
+
+    return updatedUser ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user password"
+    );
+  }
+}
+
 export async function getUserBirthday({ userId }: { userId: string }) {
   try {
     await ensureUserBirthdayColumnReady();

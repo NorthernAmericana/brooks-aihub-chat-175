@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { BirthdaySettingsPanel } from "@/components/birthday-settings-panel";
 import { ChatHistorySettingsPanel } from "@/components/chat-history-settings-panel";
+import { PasswordSettingsPanel } from "@/components/password-settings-panel";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -36,6 +37,18 @@ export default async function SettingsPage() {
         </div>
 
         <BirthdaySettingsPanel />
+      </section>
+
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg">Password</h2>
+          <p className="text-sm text-muted-foreground">
+            Change your password to keep your account secure.
+          </p>
+        </div>
+
+        <PasswordSettingsPanel />
       </section>
 
       <section className="flex flex-col gap-3">
