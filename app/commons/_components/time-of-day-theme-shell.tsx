@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import schedule from "@/data/nat-commons-background-time-schedule.json";
 
 type CommonsThemeName = keyof typeof schedule.theme_definitions;
@@ -37,6 +38,8 @@ export function TimeOfDayThemeShell({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const useClearBackground = pathname?.startsWith("/commons/dm") ?? false;
   const initialTheme = useMemo(() => getThemeForDate(new Date()), []);
   const [currentTheme, setCurrentTheme] =
     useState<CommonsThemeName>(initialTheme);
@@ -93,12 +96,20 @@ export function TimeOfDayThemeShell({
 
   return (
     <div className="nat-commons-theme-shell relative min-h-dvh overflow-hidden">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${currentBackground})` }}
-      />
-      {previousBackground ? (
+      {useClearBackground ? (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(180deg,#d0e8f7_0%,#a8d0ea_48%,#93c2e2_100%)]"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${currentBackground})` }}
+        />
+      )}
+
+      {!useClearBackground && previousBackground ? (
         <div
           aria-hidden
           className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[8000ms] ${
@@ -110,7 +121,11 @@ export function TimeOfDayThemeShell({
 
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/30"
+        className={`pointer-events-none absolute inset-0 ${
+          useClearBackground
+            ? "bg-gradient-to-b from-white/45 via-transparent to-sky-900/10"
+            : "bg-gradient-to-b from-black/30 via-black/20 to-black/30"
+        }`}
       />
 
       <div className="nat-commons-theme-content relative z-10">{children}</div>
