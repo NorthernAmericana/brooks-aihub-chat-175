@@ -73,8 +73,13 @@ const parseNumberParam = (value: string | null) => {
   if (value === null) {
     return null;
   }
+
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return parsed;
 };
 
 const parseLimit = (value: string | null) => {
@@ -110,6 +115,30 @@ const getRelevanceScore = (place: PlaceRecord, q: string | null) => {
   }
 
   return score;
+};
+
+const parseGoogleAddressLocation = (formattedAddress: string | null) => {
+  if (!formattedAddress) {
+    return {
+      city: null,
+      state: null,
+    };
+  }
+
+  const tokens = formattedAddress
+    .split(",")
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  const city = tokens.at(-3) ?? null;
+  const stateSegment = tokens.at(-2) ?? null;
+  const stateMatch = stateSegment?.match(/\b([A-Z]{2})\b/);
+  const state = stateMatch?.[1] ?? stateSegment ?? null;
+
+  return {
+    city,
+    state,
+  };
 };
 
 async function fetchGooglePlacesTextSearch({
@@ -156,20 +185,32 @@ async function fetchGooglePlacesTextSearch({
   );
 
   if (!response.ok) {
+    console.warn("[mycarmind/places] Google Places HTTP error", {
+      httpStatus: response.status,
+      httpStatusText: response.statusText,
+    });
     return [];
   }
 
   const data = (await response.json()) as {
+    status?: string;
+    error_message?: string;
     results?: GoogleTextSearchResult[];
   };
+
+  if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    console.warn("[mycarmind/places] Google Places API status error", {
+      status: data.status,
+      errorMessage: data.error_message,
+    });
+    return [];
+  }
+
   const results = data.results ?? [];
 
   return results.slice(0, limit).map((result, index) => {
     const address = result.formatted_address ?? null;
-    const tokens = (address ?? "").split(",").map((token) => token.trim());
-    const cityFromAddress = tokens.length >= 2 ? (tokens.at(-3) ?? null) : null;
-    const stateFromAddress =
-      tokens.length >= 2 ? (tokens.at(-2) ?? null) : null;
+    const location = parseGoogleAddressLocation(address);
 
     return {
       id: result.place_id
@@ -182,8 +223,8 @@ async function fetchGooglePlacesTextSearch({
           ?.replace(/_/g, " ")
           .replace(/\b\w/g, (char) => char.toUpperCase()) ?? null,
       address,
-      city: cityFromAddress,
-      state: stateFromAddress,
+      city: location.city,
+      state: location.state,
       lat: result.geometry?.location?.lat ?? null,
       lng: result.geometry?.location?.lng ?? null,
       external_id: result.place_id,
@@ -302,7 +343,7 @@ export async function GET(request: Request) {
 
   const placesWithDistance = merged.map((place, index) => {
     const distance =
-      hasCoords && place.lat !== null && place.lng !== null
+      lat !== null && lng !== null && place.lat !== null && place.lng !== null
         ? distanceMiles(lat, lng, place.lat, place.lng)
         : null;
 
