@@ -1028,6 +1028,75 @@ export async function createCustomAtoWithInstall({
   }
 }
 
+export async function createUnofficialAtoInstallRecords({
+  atoId,
+  name,
+  route,
+  description,
+  ownerUserId,
+}: {
+  atoId: string;
+  name: string;
+  route: string;
+  description?: string | null;
+  ownerUserId: string;
+}) {
+  try {
+    return await db.transaction(async (tx) => {
+      const slugBase = route
+        .toLowerCase()
+        .replace(/[^a-z0-9-_/]/g, "")
+        .replace(/\//g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      const suffix = atoId.replace(/-/g, "").slice(0, 8);
+      const appSlug = `custom-ato-${slugBase || "route"}-${suffix}`.slice(
+        0,
+        64
+      );
+
+      const [app] = await tx
+        .insert(atoApps)
+        .values({
+          slug: appSlug,
+          name,
+          description: description ?? null,
+          category: "Custom ATO",
+          storePath: `/store/ato/${appSlug}`,
+          appPath: `/custom/${route}/`,
+          isOfficial: false,
+        })
+        .returning();
+
+      if (!app) {
+        return null;
+      }
+
+      await tx.insert(atoRoutes).values({
+        appId: app.id,
+        slash: `/custom/${route}/`,
+        label: name,
+        description: description ?? null,
+        agentId: `custom-ato-${atoId}`,
+        toolPolicy: {},
+        isFoundersOnly: false,
+      });
+
+      await tx
+        .insert(userInstalls)
+        .values({ userId: ownerUserId, appId: app.id })
+        .onConflictDoNothing();
+
+      return app;
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create unofficial ATO install records"
+    );
+  }
+}
+
 export async function createUnofficialAto({
   ownerUserId,
   name,
