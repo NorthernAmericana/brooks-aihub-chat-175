@@ -459,7 +459,7 @@ export async function createCampfire(options: {
 
     if (recipients.length !== recipientEmails.length) {
       const matchedEmails = new Set(
-        recipients.map((recipient) => recipient.email)
+        recipients.map((recipient) => recipient.email.toLowerCase())
       );
       const missingEmails = recipientEmails.filter(
         (email) => !matchedEmails.has(email)
