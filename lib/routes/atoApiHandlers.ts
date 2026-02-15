@@ -28,8 +28,7 @@ export type CreateAtoDeps = {
     ownerUserId: string;
     createdAfter?: Date;
   }) => Promise<number>;
-  getUnofficialAtoByRoute: (args: {
-    ownerUserId: string;
+  getUnofficialAtoByRouteGlobal: (args: {
     route: string;
   }) => Promise<{ id: string } | null>;
   getUnofficialAtosByOwner: (args: {
@@ -83,7 +82,7 @@ export function createAtoHandlers(deps: CreateAtoDeps) {
       return NextResponse.json({ error: "Slash route conflicts with an existing ATO." }, { status: 400 });
     }
 
-    const existingRoute = await deps.getUnofficialAtoByRoute({ ownerUserId: session.user.id, route: formattedRoute });
+    const existingRoute = await deps.getUnofficialAtoByRouteGlobal({ route: formattedRoute });
     if (existingRoute) {
       return NextResponse.json({ error: "Slash route is already in use." }, { status: 400 });
     }
@@ -144,7 +143,7 @@ export function createAtoHandlers(deps: CreateAtoDeps) {
 export type AtoByIdDeps = {
   auth: () => Promise<Session>;
   deleteUnofficialAto: (args: { id: string; ownerUserId: string }) => Promise<unknown | null>;
-  getUnofficialAtoByRoute: (args: { ownerUserId: string; route: string }) => Promise<{ id: string } | null>;
+  getUnofficialAtoByRouteGlobal: (args: { route: string }) => Promise<{ id: string } | null>;
   getUnofficialAtoById: (args: { id: string; ownerUserId: string }) => Promise<unknown | null>;
   getUserById: (args: { id: string }) => Promise<{ foundersAccess?: boolean | null } | null>;
   listRouteRegistryEntries: () => Promise<Array<{ slash: string }>>;
@@ -197,7 +196,7 @@ export function createAtoByIdHandlers(deps: AtoByIdDeps) {
       return NextResponse.json({ error: "Slash route conflicts with an existing ATO." }, { status: 400 });
     }
     if (typeof formattedRoute === "string") {
-      const existingRoute = await deps.getUnofficialAtoByRoute({ ownerUserId: session.user.id, route: formattedRoute });
+      const existingRoute = await deps.getUnofficialAtoByRouteGlobal({ route: formattedRoute });
       if (existingRoute && existingRoute.id !== atoId) return NextResponse.json({ error: "Slash route is already in use." }, { status: 400 });
     }
     const instructionsValue = typeof payload.instructions === "string" ? payload.instructions.trim() : payload.instructions === null ? null : undefined;

@@ -1,7 +1,7 @@
 import { auth } from "@/app/(auth)/auth";
 import {
   deleteUnofficialAto,
-  getUnofficialAtoByRoute,
+  getUnofficialAtoByRouteGlobal,
   getUnofficialAtoById,
   getUserById,
   listRouteRegistryEntries,
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const handlers = createAtoByIdHandlers({
   auth,
   deleteUnofficialAto,
-  getUnofficialAtoByRoute,
+  getUnofficialAtoByRouteGlobal,
   getUnofficialAtoById,
   getUserById,
   listRouteRegistryEntries,

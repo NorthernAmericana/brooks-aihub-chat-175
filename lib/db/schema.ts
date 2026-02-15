@@ -295,31 +295,39 @@ export const userVehicle = pgTable("UserVehicle", {
 
 export type UserVehicle = InferSelectModel<typeof userVehicle>;
 
-export const unofficialAto = pgTable("UnofficialAto", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  name: text("name").notNull(),
-  route: text("route"),
-  description: text("description"),
-  personalityName: text("personalityName"),
-  instructions: text("instructions"),
-  intelligenceMode: varchar("intelligenceMode", {
-    enum: ["Hive", "ATO-Limited"],
+export const unofficialAto = pgTable(
+  "UnofficialAto",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+    route: text("route"),
+    description: text("description"),
+    personalityName: text("personalityName"),
+    instructions: text("instructions"),
+    intelligenceMode: varchar("intelligenceMode", {
+      enum: ["Hive", "ATO-Limited"],
+    })
+      .notNull()
+      .default("ATO-Limited"),
+    defaultVoiceId: text("defaultVoiceId"),
+    defaultVoiceLabel: text("defaultVoiceLabel"),
+    webSearchEnabled: boolean("webSearchEnabled").notNull().default(false),
+    fileSearchEnabled: boolean("fileSearchEnabled").notNull().default(false),
+    fileUsageEnabled: boolean("fileUsageEnabled").notNull().default(false),
+    fileStoragePath: text("fileStoragePath"),
+    ownerUserId: uuid("ownerUserId")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    planMetadata: json("planMetadata").$type<Record<string, unknown>>(),
+  },
+  (table) => ({
+    routeUniqueIdx: uniqueIndex("UnofficialAto_route_unique_idx")
+      .on(table.route)
+      .where(sql`${table.route} IS NOT NULL`),
   })
-    .notNull()
-    .default("ATO-Limited"),
-  defaultVoiceId: text("defaultVoiceId"),
-  defaultVoiceLabel: text("defaultVoiceLabel"),
-  webSearchEnabled: boolean("webSearchEnabled").notNull().default(false),
-  fileSearchEnabled: boolean("fileSearchEnabled").notNull().default(false),
-  fileUsageEnabled: boolean("fileUsageEnabled").notNull().default(false),
-  fileStoragePath: text("fileStoragePath"),
-  ownerUserId: uuid("ownerUserId")
-    .notNull()
-    .references(() => user.id),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-  planMetadata: json("planMetadata").$type<Record<string, unknown>>(),
-});
+);
 
 export type UnofficialAto = InferSelectModel<typeof unofficialAto>;
 
