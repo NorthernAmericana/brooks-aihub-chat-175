@@ -25,6 +25,17 @@ function normalizeNullableString(value: string | null | undefined) {
   return normalized.length > 0 ? normalized : null;
 }
 
+function normalizeLegacyValue(
+  incoming: string | number | null | undefined,
+  existing: string | number | null | undefined
+) {
+  if (incoming === undefined || incoming === null) {
+    return existing ?? null;
+  }
+
+  return incoming;
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -96,6 +107,36 @@ export async function POST(request: Request) {
   const carModel = normalizeNullableString(data.car_model);
   const subtitle = normalizeNullableString(data.subtitle);
 
+  const existingRows = await withUserDbContext(session.user.id, (tx) =>
+    tx.execute<{
+      nickname: string | null;
+      home_city: string | null;
+      home_state: string | null;
+      car_make: string | null;
+      car_model: string | null;
+      car_year: number | null;
+      subtitle: string | null;
+      show_subtitle: boolean | null;
+      hands_free_mode: boolean | null;
+    }>(sql`
+      SELECT
+        nickname,
+        home_city,
+        home_state,
+        car_make,
+        car_model,
+        car_year,
+        subtitle,
+        show_subtitle,
+        hands_free_mode
+      FROM mycarmind_user_profiles
+      WHERE user_id = ${session.user.id}
+      LIMIT 1;
+    `)
+  );
+
+  const existing = existingRows[0];
+
   const rows = await withUserDbContext(session.user.id, (tx) =>
     tx.execute(sql`
       INSERT INTO mycarmind_user_profiles (
@@ -114,26 +155,26 @@ export async function POST(request: Request) {
       )
       VALUES (
         ${session.user.id},
-        ${nickname ?? null},
-        ${homeCity ?? null},
-        ${homeState ?? null},
-        ${carMake ?? null},
-        ${carModel ?? null},
-        ${data.car_year ?? null},
-        ${subtitle ?? null},
-        ${data.show_subtitle ?? false},
-        ${data.hands_free_mode ?? false},
+        ${normalizeLegacyValue(nickname, existing?.nickname)},
+        ${normalizeLegacyValue(homeCity, existing?.home_city)},
+        ${normalizeLegacyValue(homeState, existing?.home_state)},
+        ${normalizeLegacyValue(carMake, existing?.car_make)},
+        ${normalizeLegacyValue(carModel, existing?.car_model)},
+        ${normalizeLegacyValue(data.car_year, existing?.car_year)},
+        ${subtitle ?? existing?.subtitle ?? null},
+        ${data.show_subtitle ?? existing?.show_subtitle ?? false},
+        ${data.hands_free_mode ?? existing?.hands_free_mode ?? false},
         now(),
         now()
       )
       ON CONFLICT (user_id)
       DO UPDATE SET
-        nickname = COALESCE(EXCLUDED.nickname, mycarmind_user_profiles.nickname),
-        home_city = COALESCE(EXCLUDED.home_city, mycarmind_user_profiles.home_city),
-        home_state = COALESCE(EXCLUDED.home_state, mycarmind_user_profiles.home_state),
-        car_make = COALESCE(EXCLUDED.car_make, mycarmind_user_profiles.car_make),
-        car_model = COALESCE(EXCLUDED.car_model, mycarmind_user_profiles.car_model),
-        car_year = COALESCE(EXCLUDED.car_year, mycarmind_user_profiles.car_year),
+        nickname = EXCLUDED.nickname,
+        home_city = EXCLUDED.home_city,
+        home_state = EXCLUDED.home_state,
+        car_make = EXCLUDED.car_make,
+        car_model = EXCLUDED.car_model,
+        car_year = EXCLUDED.car_year,
         subtitle = EXCLUDED.subtitle,
         show_subtitle = EXCLUDED.show_subtitle,
         hands_free_mode = EXCLUDED.hands_free_mode,
