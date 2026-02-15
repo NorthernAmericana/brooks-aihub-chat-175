@@ -385,6 +385,15 @@ function slugifyCampfireValue(value: string): string {
     .slice(0, 56);
 }
 
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
+}
+
 export async function createCampfire(options: {
   creatorId: string;
   mode: "community" | "dm";
@@ -436,36 +445,69 @@ export async function createCampfire(options: {
       };
     }
 
-    const [campfire] = await db
-      .insert(commonsCampfire)
-      .values({
-        slug: dmSlug,
-        path: dmPath,
-        name: `DM: ${recipient.email}`,
-        description: `Direct campfire between you and ${recipient.email}.`,
-        createdById: options.creatorId,
-        isPrivate: true,
-      })
-      .returning({ id: commonsCampfire.id, path: commonsCampfire.path });
+    let campfire: { id: string; path: string };
 
-    await db.insert(commonsCampfireSettings).values({
-      campfireId: campfire.id,
-      retentionMode: "permanent",
-    });
+    try {
+      campfire = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .insert(commonsCampfire)
+          .values({
+            slug: dmSlug,
+            path: dmPath,
+            name: `DM: ${recipient.email}`,
+            description: `Direct campfire between you and ${recipient.email}.`,
+            createdById: options.creatorId,
+            isPrivate: true,
+          })
+          .returning({ id: commonsCampfire.id, path: commonsCampfire.path });
 
-    await db.insert(commonsCampfireMembers).values([
-      {
-        campfireId: campfire.id,
-        userId: options.creatorId,
-        role: "host",
-      },
-      {
-        campfireId: campfire.id,
-        userId: recipient.id,
-        role: "member",
-        invitedByUserId: options.creatorId,
-      },
-    ]);
+        await tx.insert(commonsCampfireSettings).values({
+          campfireId: row.id,
+          retentionMode: "permanent",
+        });
+
+        await tx.insert(commonsCampfireMembers).values([
+          {
+            campfireId: row.id,
+            userId: options.creatorId,
+            role: "host",
+          },
+          {
+            campfireId: row.id,
+            userId: recipient.id,
+            role: "member",
+            invitedByUserId: options.creatorId,
+          },
+        ]);
+
+        return row;
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+
+      const [concurrentDm] = await db
+        .select({ id: commonsCampfire.id, path: commonsCampfire.path })
+        .from(commonsCampfire)
+        .where(
+          and(
+            eq(commonsCampfire.path, dmPath),
+            eq(commonsCampfire.isDeleted, false),
+            eq(commonsCampfire.isActive, true)
+          )
+        )
+        .limit(1);
+
+      if (!concurrentDm) {
+        throw error;
+      }
+
+      return {
+        campfire: concurrentDm,
+        isExisting: true,
+      };
+    }
 
     return {
       campfire,
@@ -485,7 +527,7 @@ export async function createCampfire(options: {
   const slug = slugBase || `campfire-${crypto.randomUUID().slice(0, 8)}`;
 
   const [existingPathCampfire] = await db
-    .select({ id: commonsCampfire.id })
+    .select({ id: commonsCampfire.id, path: commonsCampfire.path })
     .from(commonsCampfire)
     .where(eq(commonsCampfire.path, campfirePath))
     .limit(1);
@@ -504,22 +546,46 @@ export async function createCampfire(options: {
     ? `${slug.slice(0, 47)}-${crypto.randomUUID().slice(0, 8)}`
     : slug;
 
-  const [campfire] = await db
-    .insert(commonsCampfire)
-    .values({
-      slug: finalSlug,
-      path: campfirePath,
-      name,
-      description: options.description?.trim() ?? "",
-      createdById: options.creatorId,
-      isPrivate: false,
-    })
-    .returning({ id: commonsCampfire.id, path: commonsCampfire.path });
+  let campfire: { id: string; path: string };
 
-  await db.insert(commonsCampfireSettings).values({
-    campfireId: campfire.id,
-    retentionMode: "permanent",
-  });
+  try {
+    campfire = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(commonsCampfire)
+        .values({
+          slug: finalSlug,
+          path: campfirePath,
+          name,
+          description: options.description?.trim() ?? "",
+          createdById: options.creatorId,
+          isPrivate: false,
+        })
+        .returning({ id: commonsCampfire.id, path: commonsCampfire.path });
+
+      await tx.insert(commonsCampfireSettings).values({
+        campfireId: row.id,
+        retentionMode: "permanent",
+      });
+
+      return row;
+    });
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) {
+      throw error;
+    }
+
+    const [concurrentCampfire] = await db
+      .select({ id: commonsCampfire.id, path: commonsCampfire.path })
+      .from(commonsCampfire)
+      .where(eq(commonsCampfire.path, campfirePath))
+      .limit(1);
+
+    if (concurrentCampfire) {
+      return { error: "That campfire path is already in use." as const };
+    }
+
+    throw error;
+  }
 
   return {
     campfire,

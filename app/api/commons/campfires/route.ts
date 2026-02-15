@@ -37,10 +37,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await createCampfire({
-    creatorId: session.user.id,
-    ...parsedPayload.data,
-  });
+  let result: Awaited<ReturnType<typeof createCampfire>>;
+
+  try {
+    result = await createCampfire({
+      creatorId: session.user.id,
+      ...parsedPayload.data,
+    });
+  } catch (_error) {
+    return NextResponse.json(
+      { error: "Unable to create campfire." },
+      { status: 500 }
+    );
+  }
 
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 400 });
