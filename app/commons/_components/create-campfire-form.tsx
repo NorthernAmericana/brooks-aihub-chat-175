@@ -23,40 +23,50 @@ export function CreateCampfireForm() {
         setError(null);
 
         const formData = new FormData(event.currentTarget);
-        const payload = {
-          mode,
-          name: String(formData.get("name") ?? "").trim(),
-          description: String(formData.get("description") ?? "").trim(),
-          campfirePath: String(formData.get("campfirePath") ?? "")
-            .trim()
-            .toLowerCase(),
-          recipientEmails: String(formData.get("recipientEmails") ?? "")
-            .split(/[\n,]/)
-            .map((value) => value.trim().toLowerCase())
-            .filter((value) => value.length > 0),
-        };
+        const name = String(formData.get("name") ?? "").trim();
+        const description = String(formData.get("description") ?? "").trim();
+        const campfirePath = String(formData.get("campfirePath") ?? "")
+          .trim()
+          .toLowerCase();
+        const recipientEmails = String(formData.get("recipientEmails") ?? "")
+          .split(/[\n,]/)
+          .map((value) => value.trim().toLowerCase())
+          .filter((value) => value.length > 0);
+
+        const payload =
+          mode === "community"
+            ? {
+                mode,
+                name,
+                description,
+                campfirePath,
+              }
+            : {
+                mode,
+                recipientEmails,
+              };
 
         if (mode === "community") {
-          if (payload.name.length < 3) {
+          if (name.length < 3) {
             setError("Campfire name must be at least 3 characters.");
             return;
           }
 
-          if (!payload.campfirePath) {
+          if (!campfirePath) {
             setError("Campfire path is required.");
             return;
           }
         }
 
         if (mode === "dm") {
-          if (!payload.recipientEmails.length) {
+          if (!recipientEmails.length) {
             setError(
               "At least one recipient email is required for direct campfires."
             );
             return;
           }
 
-          if (payload.recipientEmails.length > DM_RECIPIENT_LIMIT_FOUNDER) {
+          if (recipientEmails.length > DM_RECIPIENT_LIMIT_FOUNDER) {
             setError(
               `Direct campfires support up to ${DM_RECIPIENT_LIMIT_FOUNDER} recipient emails.`
             );
