@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Place = {
   id: string;
@@ -40,6 +40,29 @@ export function PlaceDetailSheet({
   const [isStartingVisit, setIsStartingVisit] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      dialogRef.current?.focus();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
   const mapsHref = useMemo(() => {
     if (!place) {
       return "#";
@@ -54,7 +77,14 @@ export function PlaceDetailSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div
+      aria-label={place.name}
+      aria-modal="true"
+      className="fixed inset-0 z-50"
+      ref={dialogRef}
+      role="dialog"
+      tabIndex={-1}
+    >
       <button
         aria-label="Close details"
         className="absolute inset-0 bg-black/60"
@@ -92,17 +122,21 @@ export function PlaceDetailSheet({
               setIsStartingVisit(true);
               setStatusMessage("Visit queued locally.");
 
-              const pendingVisits = JSON.parse(
-                localStorage.getItem("mycarmind-pending-visits") ?? "[]"
-              ) as Array<{ placeId: string; createdAt: string }>;
-              pendingVisits.push({
-                placeId: place.id,
-                createdAt: new Date().toISOString(),
-              });
-              localStorage.setItem(
-                "mycarmind-pending-visits",
-                JSON.stringify(pendingVisits)
-              );
+              try {
+                const pendingVisits = JSON.parse(
+                  localStorage.getItem("mycarmind-pending-visits") ?? "[]"
+                ) as Array<{ placeId: string; createdAt: string }>;
+                pendingVisits.push({
+                  placeId: place.id,
+                  createdAt: new Date().toISOString(),
+                });
+                localStorage.setItem(
+                  "mycarmind-pending-visits",
+                  JSON.stringify(pendingVisits)
+                );
+              } catch {
+                // localStorage unavailable; continue with remote sync attempt.
+              }
 
               try {
                 const response = await fetch("/api/mycarmind/visit", {

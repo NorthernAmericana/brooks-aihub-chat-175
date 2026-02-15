@@ -17,15 +17,6 @@ type Place = {
 
 const FALLBACK_CATEGORIES = ["Coffee", "Thrift", "Food", "Parks", "Museums"];
 
-function toNumberOrNull(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function formatDistanceMiles(
   userLat: number,
   userLng: number,
@@ -108,35 +99,19 @@ export default function ExplorePage() {
         `/api/mycarmind/places?${params.toString()}`,
         { signal: controller.signal }
       );
+      if (!response.ok) {
+        setPlaces([]);
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
-      let fetchedPlaces = (data.places ?? []) as Place[];
-
-      if (selectedCategory) {
-        fetchedPlaces = fetchedPlaces.filter((place) =>
-          (place.category ?? "")
-            .toLowerCase()
-            .includes(selectedCategory.toLowerCase())
-        );
-      }
-
-      if (q.trim()) {
-        const query = q.toLowerCase();
-        fetchedPlaces = fetchedPlaces.filter((place) =>
-          [place.name, place.address, place.city, place.state, place.category]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(query)
-        );
-      }
-
-      setPlaces(fetchedPlaces);
+      setPlaces((data.places ?? []) as Place[]);
       setLoading(false);
     };
 
     run().catch(() => setLoading(false));
     return () => controller.abort();
-  }, [q, city, state, lat, lng, selectedCategory]);
+  }, [q, city, state, lat, lng]);
 
   const categories = useMemo(() => {
     const dynamicCategories = places
@@ -150,6 +125,18 @@ export default function ExplorePage() {
     setSelectedPlace(place);
     setSheetOpen(true);
   };
+
+  const filteredPlaces = useMemo(() => {
+    if (!selectedCategory) {
+      return places;
+    }
+
+    return places.filter((place) =>
+      (place.category ?? "")
+        .toLowerCase()
+        .includes(selectedCategory.toLowerCase())
+    );
+  }, [places, selectedCategory]);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
@@ -176,18 +163,21 @@ export default function ExplorePage() {
 
         <div className="mb-3 grid gap-2 sm:grid-cols-3">
           <input
+            aria-label="Search places"
             className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
             onChange={(event) => setQ(event.target.value)}
             placeholder="Search places"
             value={q}
           />
           <input
+            aria-label="City"
             className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
             onChange={(event) => setCity(event.target.value)}
             placeholder="City"
             value={city}
           />
           <input
+            aria-label="State"
             className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
             onChange={(event) => setState(event.target.value)}
             placeholder="State"
@@ -226,7 +216,7 @@ export default function ExplorePage() {
               </p>
             )}
             <div className="grid gap-2 sm:grid-cols-2">
-              {places.slice(0, 8).map((place) => (
+              {filteredPlaces.slice(0, 8).map((place) => (
                 <button
                   className="rounded-xl border border-white/10 bg-slate-900/60 p-3 text-left"
                   key={place.id}
@@ -244,20 +234,12 @@ export default function ExplorePage() {
             {loading ? (
               <p className="text-sm text-slate-400">Loading places...</p>
             ) : null}
-            {!loading && places.length === 0 ? (
+            {!loading && filteredPlaces.length === 0 ? (
               <p className="text-sm text-slate-400">No places found.</p>
             ) : null}
-            {places.map((place) => {
-              const placeLat = toNumberOrNull(
-                place.lat === null || place.lat === undefined
-                  ? null
-                  : String(place.lat)
-              );
-              const placeLng = toNumberOrNull(
-                place.lng === null || place.lng === undefined
-                  ? null
-                  : String(place.lng)
-              );
+            {filteredPlaces.map((place) => {
+              const placeLat = place.lat ?? null;
+              const placeLng = place.lng ?? null;
               const distance =
                 lat !== null &&
                 lng !== null &&
