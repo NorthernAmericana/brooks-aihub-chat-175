@@ -748,12 +748,10 @@ export async function listPrivateDmCampfiresForMember(
   });
 }
 
-export async function getPrivateDmCampfireForViewer(options: {
+export async function getDmRoomForViewer(options: {
+  campfirePath: string;
   viewerId: string;
-  dmId: string;
 }) {
-  const dmPath = `dm/${options.dmId}`;
-
   const [campfire] = await db
     .select({
       id: commonsCampfire.id,
@@ -764,7 +762,7 @@ export async function getPrivateDmCampfireForViewer(options: {
     .from(commonsCampfire)
     .where(
       and(
-        eq(commonsCampfire.path, dmPath),
+        eq(commonsCampfire.path, options.campfirePath),
         eq(commonsCampfire.isPrivate, true),
         eq(commonsCampfire.isActive, true),
         eq(commonsCampfire.isDeleted, false)
@@ -773,29 +771,18 @@ export async function getPrivateDmCampfireForViewer(options: {
     .limit(1);
 
   if (!campfire) {
-    return {
-      campfire: null,
-      isMember: false,
-      members: [],
-      posts: [],
-    };
+    return null;
   }
 
-  const [membership] = await db
-    .select({ id: commonsCampfireMembers.id })
-    .from(commonsCampfireMembers)
-    .where(
-      and(
-        eq(commonsCampfireMembers.campfireId, campfire.id),
-        eq(commonsCampfireMembers.userId, options.viewerId)
-      )
-    )
-    .limit(1);
+  const access = await getCampfireAccess({
+    campfirePath: options.campfirePath,
+    viewerId: options.viewerId,
+  });
 
-  if (!membership) {
+  if (!access.canRead) {
     return {
       campfire,
-      isMember: false,
+      access,
       members: [],
       posts: [],
     };
@@ -834,8 +821,34 @@ export async function getPrivateDmCampfireForViewer(options: {
 
   return {
     campfire,
-    isMember: true,
+    access,
     members,
     posts,
+  };
+}
+
+export async function getPrivateDmCampfireForViewer(options: {
+  viewerId: string;
+  dmId: string;
+}) {
+  const dmCampfire = await getDmRoomForViewer({
+    campfirePath: `dm/${options.dmId}`,
+    viewerId: options.viewerId,
+  });
+
+  if (!dmCampfire) {
+    return {
+      campfire: null,
+      isMember: false,
+      members: [],
+      posts: [],
+    };
+  }
+
+  return {
+    campfire: dmCampfire.campfire,
+    isMember: dmCampfire.access.canRead,
+    members: dmCampfire.members,
+    posts: dmCampfire.posts,
   };
 }
