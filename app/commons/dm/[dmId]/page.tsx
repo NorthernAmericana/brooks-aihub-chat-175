@@ -25,5 +25,14 @@ export default async function PrivateDmCampfirePage({
     notFound();
   }
 
-  return <DmCampfireRoom room={dmRoom} />;
+  return (
+    <DmCampfireRoom
+      access={dmRoom.access}
+      campfire={dmRoom.campfire}
+      campfirePath={campfirePath}
+      host={dmRoom.host}
+      members={dmRoom.members}
+      messages={dmRoom.messages}
+    />
+  );
 }
