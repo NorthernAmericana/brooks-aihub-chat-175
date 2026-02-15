@@ -757,23 +757,42 @@ export type DmRoomForViewer = {
   };
   access: CampfireAccess;
   members: Array<{
-    id: string;
+    userId: string;
     email: string;
+    avatarUrl: string | null;
+    messageColor: string | null;
     role: string;
   }>;
-  posts: Array<{
+  host: {
+    userId: string;
+    email: string;
+    foundersAccess: boolean;
+  } | null;
+  messages: Array<{
     id: string;
-    title: string;
     body: string;
     createdAt: Date;
+    authorId: string;
     authorEmail: string;
+    authorAvatarUrl: string | null;
+    authorMessageColor: string | null;
   }>;
 };
 
 export async function getDmRoomForViewer(options: {
   campfirePath: string;
   viewerId: string;
+  messageLimit?: number;
 }): Promise<DmRoomForViewer | null> {
+  const access = await getCampfireAccess({
+    campfirePath: options.campfirePath,
+    viewerId: options.viewerId,
+  });
+
+  if (!access.canRead) {
+    return null;
+  }
+
   const [campfire] = await db
     .select({
       id: commonsCampfire.id,
@@ -785,7 +804,6 @@ export async function getDmRoomForViewer(options: {
     .where(
       and(
         eq(commonsCampfire.path, options.campfirePath),
-        eq(commonsCampfire.isPrivate, true),
         eq(commonsCampfire.isActive, true),
         eq(commonsCampfire.isDeleted, false)
       )
@@ -796,38 +814,31 @@ export async function getDmRoomForViewer(options: {
     return null;
   }
 
-  const access = await getCampfireAccess({
-    campfirePath: options.campfirePath,
-    viewerId: options.viewerId,
-  });
-
-  if (!access.canRead) {
-    return {
-      campfire,
-      access,
-      members: [],
-      posts: [],
-    };
-  }
-
   const members = await db
     .select({
-      id: user.id,
+      userId: user.id,
       email: user.email,
+      avatarUrl: user.avatarUrl,
+      messageColor: user.messageColor,
       role: commonsCampfireMembers.role,
+      foundersAccess: user.foundersAccess,
     })
     .from(commonsCampfireMembers)
     .innerJoin(user, eq(user.id, commonsCampfireMembers.userId))
     .where(eq(commonsCampfireMembers.campfireId, campfire.id))
     .orderBy(asc(commonsCampfireMembers.createdAt));
 
-  const posts = await db
+  const hostMember = members.find((member) => member.role === "host");
+
+  const messages = await db
     .select({
       id: commonsPost.id,
-      title: commonsPost.title,
       body: commonsPost.body,
       createdAt: commonsPost.createdAt,
+      authorId: commonsPost.authorId,
       authorEmail: user.email,
+      authorAvatarUrl: user.avatarUrl,
+      authorMessageColor: user.messageColor,
     })
     .from(commonsPost)
     .innerJoin(user, eq(user.id, commonsPost.authorId))
@@ -838,14 +849,21 @@ export async function getDmRoomForViewer(options: {
         eq(commonsPost.isVisible, true)
       )
     )
-    .orderBy(desc(commonsPost.createdAt))
-    .limit(30);
+    .orderBy(asc(commonsPost.createdAt))
+    .limit(options.messageLimit ?? 100);
 
   return {
     campfire,
     access,
     members,
-    posts,
+    host: hostMember
+      ? {
+          userId: hostMember.userId,
+          email: hostMember.email,
+          foundersAccess: Boolean(hostMember.foundersAccess),
+        }
+      : null,
+    messages,
   };
 }
 
@@ -863,7 +881,7 @@ export async function getPrivateDmCampfireForViewer(options: {
       campfire: null,
       isMember: false,
       members: [],
-      posts: [],
+      messages: [],
     };
   }
 
@@ -871,6 +889,6 @@ export async function getPrivateDmCampfireForViewer(options: {
     campfire: dmCampfire.campfire,
     isMember: dmCampfire.access.canRead,
     members: dmCampfire.members,
-    posts: dmCampfire.posts,
+    messages: dmCampfire.messages,
   };
 }
