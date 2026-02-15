@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import {
+  DM_RECIPIENT_LIMIT_DEFAULT,
+  DM_RECIPIENT_LIMIT_FOUNDER,
+} from "@/lib/commons/constants";
 
 type CampfireMode = "community" | "dm";
 
@@ -26,9 +30,10 @@ export function CreateCampfireForm() {
           campfirePath: String(formData.get("campfirePath") ?? "")
             .trim()
             .toLowerCase(),
-          recipientEmail: String(formData.get("recipientEmail") ?? "")
-            .trim()
-            .toLowerCase(),
+          recipientEmails: String(formData.get("recipientEmails") ?? "")
+            .split(/[\n,]/)
+            .map((value) => value.trim().toLowerCase())
+            .filter((value) => value.length > 0),
         };
 
         if (mode === "community") {
@@ -43,9 +48,20 @@ export function CreateCampfireForm() {
           }
         }
 
-        if (mode === "dm" && !payload.recipientEmail) {
-          setError("Recipient email is required for direct campfires.");
-          return;
+        if (mode === "dm") {
+          if (!payload.recipientEmails.length) {
+            setError(
+              "At least one recipient email is required for direct campfires."
+            );
+            return;
+          }
+
+          if (payload.recipientEmails.length > DM_RECIPIENT_LIMIT_FOUNDER) {
+            setError(
+              `Direct campfires support up to ${DM_RECIPIENT_LIMIT_FOUNDER} recipient emails.`
+            );
+            return;
+          }
         }
 
         startTransition(async () => {
@@ -152,19 +168,20 @@ export function CreateCampfireForm() {
         </>
       ) : (
         <div className="space-y-1">
-          <label className="text-sm font-medium" htmlFor="recipient-email">
-            Recipient email
+          <label className="text-sm font-medium" htmlFor="recipient-emails">
+            Recipient emails
           </label>
-          <input
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            id="recipient-email"
-            name="recipientEmail"
-            placeholder="friend@brooksaihub.app"
+          <textarea
+            className="min-h-24 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            id="recipient-emails"
+            name="recipientEmails"
+            placeholder="friend@brooksaihub.app, teammate@brooksaihub.app"
             required
-            type="email"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Creates a private two-member campfire and opens it immediately.
+            Add emails separated by commas or new lines. Free accounts support
+            up to {DM_RECIPIENT_LIMIT_DEFAULT} recipient emails; founders
+            support up to {DM_RECIPIENT_LIMIT_FOUNDER}.
           </p>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DM_RECIPIENT_LIMIT_FOUNDER } from "@/lib/commons/constants";
 import { CAMPFIRE_SEGMENT_REGEX } from "@/lib/commons/routing";
 
 const MARKDOWN_DISALLOWED_PATTERN = /<\s*\w/i;
@@ -46,6 +47,10 @@ export const createCampfireSchema = z
     description: z.string().trim().max(300).default(""),
     campfirePath: campfirePathSchema.optional(),
     recipientEmail: z.string().trim().toLowerCase().email().optional(),
+    recipientEmails: z
+      .array(z.string().trim().toLowerCase().email())
+      .max(DM_RECIPIENT_LIMIT_FOUNDER)
+      .optional(),
   })
   .superRefine((value, ctx) => {
     if (value.mode === "community") {
@@ -66,12 +71,20 @@ export const createCampfireSchema = z
       }
     }
 
-    if (value.mode === "dm" && !value.recipientEmail) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Recipient email is required for direct campfires.",
-        path: ["recipientEmail"],
-      });
+    if (value.mode === "dm") {
+      const normalizedEmails = [
+        ...(value.recipientEmails ?? []),
+        ...(value.recipientEmail ? [value.recipientEmail] : []),
+      ];
+
+      if (!normalizedEmails.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "At least one recipient email is required for direct campfires.",
+          path: ["recipientEmails"],
+        });
+      }
     }
   });
 
