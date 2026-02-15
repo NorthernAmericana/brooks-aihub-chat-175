@@ -21,6 +21,9 @@ export default async function PrivateDmCampfirePage({
     viewerId: session.user.id,
   });
 
+  // Default product behavior is to hide inaccessible private DMs behind a 404.
+  // If we ever want an invite-required experience, gate it behind an explicit
+  // product decision before replacing this path.
   if (!dmRoom || !dmRoom.access.canRead) {
     notFound();
   }
