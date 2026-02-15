@@ -70,31 +70,35 @@ export default function ProfilePage() {
     setSaving(true);
     setStatus(null);
 
-    const response = await fetch("/api/mycarmind/profile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(profile),
-    });
+    try {
+      const response = await fetch("/api/mycarmind/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(profile),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      setStatus(data.error ?? "Unable to save profile.");
+      if (!response.ok) {
+        setStatus(data.error ?? "Unable to save profile.");
+        return;
+      }
+
+      setProfile((current) => ({
+        ...current,
+        ...data.profile,
+        car_year: data.profile?.car_year ?? null,
+        show_subtitle: Boolean(data.profile?.show_subtitle),
+        hands_free_mode: Boolean(data.profile?.hands_free_mode),
+      }));
+      setStatus("Profile saved.");
+    } catch {
+      setStatus("Unable to save profile.");
+    } finally {
       setSaving(false);
-      return;
     }
-
-    setProfile((current) => ({
-      ...current,
-      ...data.profile,
-      car_year: data.profile?.car_year ?? null,
-      show_subtitle: Boolean(data.profile?.show_subtitle),
-      hands_free_mode: Boolean(data.profile?.hands_free_mode),
-    }));
-    setStatus("Profile saved.");
-    setSaving(false);
   }
 
   function updateField<K extends keyof Profile>(key: K, value: Profile[K]) {

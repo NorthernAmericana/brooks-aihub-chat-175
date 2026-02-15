@@ -56,12 +56,18 @@ export async function GET(request: Request) {
     }
   }
 
-  const where =
-    scope === "city"
-      ? sql`WHERE profile.home_city ILIKE ${homeCity ?? ""} AND profile.home_state ILIKE ${homeState ?? ""}`
-      : scope === "state"
-        ? sql`WHERE profile.home_state ILIKE ${homeState ?? ""}`
-        : sql``;
+  let where = sql``;
+
+  if (scope === "city") {
+    where = sql`
+      WHERE LOWER(profile.home_city) = LOWER(${homeCity ?? ""})
+        AND LOWER(profile.home_state) = LOWER(${homeState ?? ""})
+    `;
+  } else if (scope === "state") {
+    where = sql`
+      WHERE LOWER(profile.home_state) = LOWER(${homeState ?? ""})
+    `;
+  }
 
   const rows = await db.execute(sql`
     SELECT

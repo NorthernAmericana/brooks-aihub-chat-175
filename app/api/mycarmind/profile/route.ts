@@ -16,6 +16,18 @@ const profileSchema = z.object({
   hands_free_mode: z.boolean().optional(),
 });
 
+type ExistingProfile = {
+  nickname: string | null;
+  home_city: string | null;
+  home_state: string | null;
+  car_make: string | null;
+  car_model: string | null;
+  car_year: number | null;
+  subtitle: string | null;
+  show_subtitle: boolean | null;
+  hands_free_mode: boolean | null;
+};
+
 function normalizeNullableString(value: string | null | undefined) {
   if (value === undefined) {
     return undefined;
@@ -29,7 +41,7 @@ function normalizeLegacyValue(
   incoming: string | number | null | undefined,
   existing: string | number | null | undefined
 ) {
-  if (incoming === undefined || incoming === null) {
+  if (incoming === undefined) {
     return existing ?? null;
   }
 
@@ -107,18 +119,8 @@ export async function POST(request: Request) {
   const carModel = normalizeNullableString(data.car_model);
   const subtitle = normalizeNullableString(data.subtitle);
 
-  const existingRows = await withUserDbContext(session.user.id, (tx) =>
-    tx.execute<{
-      nickname: string | null;
-      home_city: string | null;
-      home_state: string | null;
-      car_make: string | null;
-      car_model: string | null;
-      car_year: number | null;
-      subtitle: string | null;
-      show_subtitle: boolean | null;
-      hands_free_mode: boolean | null;
-    }>(sql`
+  const rows = await withUserDbContext(session.user.id, async (tx) => {
+    const existingRows = await tx.execute<ExistingProfile>(sql`
       SELECT
         nickname,
         home_city,
@@ -132,13 +134,11 @@ export async function POST(request: Request) {
       FROM mycarmind_user_profiles
       WHERE user_id = ${session.user.id}
       LIMIT 1;
-    `)
-  );
+    `);
 
-  const existing = existingRows[0];
+    const existing = existingRows[0];
 
-  const rows = await withUserDbContext(session.user.id, (tx) =>
-    tx.execute(sql`
+    return tx.execute(sql`
       INSERT INTO mycarmind_user_profiles (
         user_id,
         nickname,
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
         ${normalizeLegacyValue(carMake, existing?.car_make)},
         ${normalizeLegacyValue(carModel, existing?.car_model)},
         ${normalizeLegacyValue(data.car_year, existing?.car_year)},
-        ${subtitle ?? existing?.subtitle ?? null},
+        ${subtitle === undefined ? (existing?.subtitle ?? null) : subtitle},
         ${data.show_subtitle ?? existing?.show_subtitle ?? false},
         ${data.hands_free_mode ?? existing?.hands_free_mode ?? false},
         now(),
@@ -192,8 +192,8 @@ export async function POST(request: Request) {
         hands_free_mode,
         created_at,
         updated_at;
-    `)
-  );
+    `);
+  });
 
   return NextResponse.json({ profile: rows[0] });
 }
