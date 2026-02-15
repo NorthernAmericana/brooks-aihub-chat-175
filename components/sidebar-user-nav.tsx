@@ -1,12 +1,16 @@
 "use client";
 
-import * as DialogPrimitive from "@radix-ui/react-dialog";
+import {
+  Close as DialogPrimitiveClose,
+  Content as DialogPrimitiveContent,
+} from "@radix-ui/react-dialog";
 import { ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,23 +19,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogOverlay,
-  DialogPortal,
-} from "@/components/ui/dialog";
-import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { useProfileIcon } from "@/hooks/use-profile-icon";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { DEFAULT_AVATAR_SRC, guestRegex } from "@/lib/constants";
 import { PROFILE_ICON_OPTIONS } from "@/lib/profile-icon";
-import { ImageWithFallback } from "./ui/image-with-fallback";
 import { CodeRedemptionDialog } from "./code-redemption-dialog";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
+import { ImageWithFallback } from "./ui/image-with-fallback";
 
 export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -139,6 +138,13 @@ export function SidebarUserNav({ user }: { user: User }) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer"
+                data-testid="user-nav-item-forgot-password"
+                onSelect={() => router.push("/forgot-password")}
+              >
+                Forgot password
+              </DropdownMenuItem>
               <DropdownMenuItem asChild data-testid="user-nav-item-auth">
                 <button
                   className="w-full cursor-pointer"
@@ -177,7 +183,7 @@ export function SidebarUserNav({ user }: { user: User }) {
       <Dialog onOpenChange={setShowProfilePicker} open={showProfilePicker}>
         <DialogPortal>
           <DialogOverlay className="fixed inset-0 z-[9998] bg-black/80" />
-          <DialogPrimitive.Content className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
+          <DialogPrimitiveContent className="fixed inset-0 z-[9999] isolate flex min-h-svh flex-col overflow-y-auto bg-black px-6 py-8 text-white">
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-0 bg-black" />
               <ImageWithFallback
@@ -197,14 +203,14 @@ export function SidebarUserNav({ user }: { user: User }) {
                 </p>
                 <h2 className="text-2xl font-semibold">Choose your look</h2>
               </div>
-              <DialogPrimitive.Close asChild>
+              <DialogPrimitiveClose asChild>
                 <button
                   className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
                   type="button"
                 >
                   Close
                 </button>
-              </DialogPrimitive.Close>
+              </DialogPrimitiveClose>
             </div>
             <div className="relative z-10 mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {PROFILE_ICON_OPTIONS.map((option) => {
@@ -242,7 +248,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 );
               })}
             </div>
-          </DialogPrimitive.Content>
+          </DialogPrimitiveContent>
         </DialogPortal>
       </Dialog>
     </>
