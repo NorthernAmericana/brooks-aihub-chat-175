@@ -38,6 +38,12 @@ export default function Page() {
         type: "error",
         description: "Failed validating your submission!",
       });
+    } else if (state.status === "password_mismatch") {
+      setIsRedirecting(false);
+      toast({
+        type: "error",
+        description: "Passwords do not match. Please try again.",
+      });
     } else if (state.status === "success") {
       void (async () => {
         toast({ type: "success", description: "Account created successfully!" });
@@ -81,7 +87,7 @@ export default function Page() {
             Create an account with your email and password
           </p>
         </div>
-        <AuthForm action={handleSubmit} defaultEmail={email}>
+        <AuthForm action={handleSubmit} defaultEmail={email} mode="register">
           <SubmitButton isRedirecting={isRedirecting}>Sign Up</SubmitButton>
           <p className="mt-4 text-center text-gray-600 text-sm dark:text-zinc-400">
             {"Already have an account? "}

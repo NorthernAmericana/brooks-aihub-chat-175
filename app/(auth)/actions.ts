@@ -11,6 +11,15 @@ const authFormSchema = z.object({
   password: z.string().min(6),
 });
 
+const registerSchema = authFormSchema
+  .extend({
+    confirmPassword: z.string().min(6),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  });
+
 export type LoginActionState = {
   status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
 };
@@ -48,7 +57,8 @@ export type RegisterActionState = {
     | "success"
     | "failed"
     | "user_exists"
-    | "invalid_data";
+    | "invalid_data"
+    | "password_mismatch";
 };
 
 export const register = async (
@@ -56,9 +66,10 @@ export const register = async (
   formData: FormData
 ): Promise<RegisterActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
+    const validatedData = registerSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
     });
 
     const [user] = await getUser(validatedData.email);
@@ -66,6 +77,7 @@ export const register = async (
     if (user) {
       return { status: "user_exists" } as RegisterActionState;
     }
+
     await createUser(validatedData.email, validatedData.password);
     await signIn("credentials", {
       email: validatedData.email,
@@ -76,6 +88,16 @@ export const register = async (
     return { status: "success" };
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const hasPasswordMismatch = error.issues.some(
+        (issue) =>
+          issue.path.includes("confirmPassword") &&
+          issue.message === "Passwords must match"
+      );
+
+      if (hasPasswordMismatch) {
+        return { status: "password_mismatch" };
+      }
+
       return { status: "invalid_data" };
     }
 
