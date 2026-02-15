@@ -1,5 +1,16 @@
 import { createHash } from "node:crypto";
-import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { getCampfireAccess } from "@/lib/commons/access";
 import {
   DM_RECIPIENT_LIMIT_DEFAULT,
@@ -656,5 +667,175 @@ export async function createCampfire(options: {
   return {
     campfire,
     isExisting: false,
+  };
+}
+
+type DmLobbyCampfire = {
+  id: string;
+  name: string;
+  path: string;
+  invitedCount: number;
+  invitedLimit: number;
+  accessLabel: "Founder’s Access" | "Free Access";
+  lastActivityAt: Date;
+};
+
+export async function listPrivateDmCampfiresForMember(
+  viewerId: string
+): Promise<DmLobbyCampfire[]> {
+  const viewerMember = alias(commonsCampfireMembers, "viewer_member");
+  const allMembers = alias(commonsCampfireMembers, "all_members");
+  const hostMember = alias(commonsCampfireMembers, "host_member");
+  const hostUser = alias(user, "host_user");
+
+  const rows = await db
+    .select({
+      id: commonsCampfire.id,
+      name: commonsCampfire.name,
+      path: commonsCampfire.path,
+      lastActivityAt: commonsCampfire.lastActivityAt,
+      memberCount: count(allMembers.id),
+      hostFoundersAccess: hostUser.foundersAccess,
+    })
+    .from(commonsCampfire)
+    .innerJoin(
+      viewerMember,
+      and(
+        eq(viewerMember.campfireId, commonsCampfire.id),
+        eq(viewerMember.userId, viewerId)
+      )
+    )
+    .leftJoin(allMembers, eq(allMembers.campfireId, commonsCampfire.id))
+    .leftJoin(
+      hostMember,
+      and(
+        eq(hostMember.campfireId, commonsCampfire.id),
+        eq(hostMember.role, "host")
+      )
+    )
+    .leftJoin(hostUser, eq(hostUser.id, hostMember.userId))
+    .where(
+      and(
+        eq(commonsCampfire.isPrivate, true),
+        eq(commonsCampfire.isActive, true),
+        eq(commonsCampfire.isDeleted, false),
+        ilike(commonsCampfire.path, "dm/%")
+      )
+    )
+    .groupBy(
+      commonsCampfire.id,
+      commonsCampfire.name,
+      commonsCampfire.path,
+      commonsCampfire.lastActivityAt,
+      hostUser.foundersAccess
+    )
+    .orderBy(desc(commonsCampfire.lastActivityAt));
+
+  return rows.map((row) => {
+    const invitedCount = Math.max(0, Number(row.memberCount) - 1);
+    const hasFounderAccess = Boolean(row.hostFoundersAccess);
+    return {
+      id: row.id,
+      name: row.name,
+      path: row.path,
+      invitedCount,
+      invitedLimit: hasFounderAccess
+        ? DM_RECIPIENT_LIMIT_FOUNDER
+        : DM_RECIPIENT_LIMIT_DEFAULT,
+      accessLabel: hasFounderAccess ? "Founder’s Access" : "Free Access",
+      lastActivityAt: row.lastActivityAt,
+    };
+  });
+}
+
+export async function getPrivateDmCampfireForViewer(options: {
+  viewerId: string;
+  dmId: string;
+}) {
+  const dmPath = `dm/${options.dmId}`;
+
+  const [campfire] = await db
+    .select({
+      id: commonsCampfire.id,
+      name: commonsCampfire.name,
+      path: commonsCampfire.path,
+      lastActivityAt: commonsCampfire.lastActivityAt,
+    })
+    .from(commonsCampfire)
+    .where(
+      and(
+        eq(commonsCampfire.path, dmPath),
+        eq(commonsCampfire.isPrivate, true),
+        eq(commonsCampfire.isActive, true),
+        eq(commonsCampfire.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  if (!campfire) {
+    return {
+      campfire: null,
+      isMember: false,
+      members: [],
+      posts: [],
+    };
+  }
+
+  const [membership] = await db
+    .select({ id: commonsCampfireMembers.id })
+    .from(commonsCampfireMembers)
+    .where(
+      and(
+        eq(commonsCampfireMembers.campfireId, campfire.id),
+        eq(commonsCampfireMembers.userId, options.viewerId)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    return {
+      campfire,
+      isMember: false,
+      members: [],
+      posts: [],
+    };
+  }
+
+  const members = await db
+    .select({
+      id: user.id,
+      email: user.email,
+      role: commonsCampfireMembers.role,
+    })
+    .from(commonsCampfireMembers)
+    .innerJoin(user, eq(user.id, commonsCampfireMembers.userId))
+    .where(eq(commonsCampfireMembers.campfireId, campfire.id))
+    .orderBy(asc(commonsCampfireMembers.createdAt));
+
+  const posts = await db
+    .select({
+      id: commonsPost.id,
+      title: commonsPost.title,
+      body: commonsPost.body,
+      createdAt: commonsPost.createdAt,
+      authorEmail: user.email,
+    })
+    .from(commonsPost)
+    .innerJoin(user, eq(user.id, commonsPost.authorId))
+    .where(
+      and(
+        eq(commonsPost.campfireId, campfire.id),
+        eq(commonsPost.isDeleted, false),
+        eq(commonsPost.isVisible, true)
+      )
+    )
+    .orderBy(desc(commonsPost.createdAt))
+    .limit(30);
+
+  return {
+    campfire,
+    isMember: true,
+    members,
+    posts,
   };
 }

@@ -92,7 +92,11 @@ export function CreateCampfireForm() {
               return;
             }
 
-            router.push(`/commons/${data.campfire.path}`);
+            if (mode === "dm") {
+              router.push("/commons/dm");
+            } else {
+              router.push(`/commons/${data.campfire.path}`);
+            }
             router.refresh();
           } catch (_error) {
             setError("Unable to create campfire right now.");
