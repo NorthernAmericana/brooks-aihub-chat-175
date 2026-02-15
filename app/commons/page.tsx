@@ -48,47 +48,52 @@ export default async function CommonsPage({
   });
 
   return (
-    <main className="min-h-dvh bg-transparent px-6 py-10 text-slate-100 [text-shadow:0_2px_12px_rgba(0,0,0,0.72)]">
+    <main className="min-h-dvh bg-transparent px-4 py-8 text-slate-900 dark:text-amber-50 sm:px-6 sm:py-10">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-        <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Commons Directory
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-semibold sm:text-4xl">NAT: Commons</h1>
+        <header className="overflow-hidden border-[3px] border-[#16224d] bg-[#fef7dc] shadow-[5px_5px_0_#16224d] dark:border-[#f6e8b4] dark:bg-[#111c4a] dark:shadow-[5px_5px_0_#f6e8b4]">
+          <div className="border-b-[3px] border-[#16224d] bg-[#111c4a] px-4 py-4 text-amber-50 dark:border-[#f6e8b4] dark:bg-[#0a1233]">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/90">
+              Commons Directory
+            </p>
+            <h1 className="mt-2 font-mono text-3xl font-bold tracking-tight sm:text-4xl">
+              🔥 /NAT: Commons/
+            </h1>
+          </div>
+          <div className="space-y-4 px-4 py-4 sm:px-5">
             <Link
-              className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+              className="inline-flex border-[3px] border-[#16224d] bg-[#1f2d70] px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-50 shadow-[3px_3px_0_#16224d] transition hover:-translate-y-0.5 hover:bg-[#293a87] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[3px_3px_0_#f6e8b4] dark:hover:bg-[#fff2c4]"
               href="/commons/create"
             >
               + Create campfire
             </Link>
+            <p className="max-w-3xl text-sm leading-relaxed text-[#29366a] dark:text-amber-100 sm:text-base">
+              NAT: Commons is our shared mission space for founders, builders,
+              and stewards. Explore active campfires, catch up on recent posts,
+              and discover the conversations shaping the Brooks AI HUB
+              community.
+            </p>
           </div>
-          <p className="max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-            NAT: Commons is our shared mission space for founders, builders, and
-            stewards. Explore active campfires, catch up on recent posts, and
-            discover the conversations shaping the Brooks AI HUB community.
-          </p>
         </header>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <section className="border-[3px] border-[#16224d] bg-[#fef7dc] p-4 shadow-[5px_5px_0_#16224d] dark:border-[#f6e8b4] dark:bg-[#111c4a] dark:shadow-[5px_5px_0_#f6e8b4] sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <form action="/commons" className="flex-1" method="get">
               <label className="sr-only" htmlFor="commons-filter-input">
                 Filter campfires
               </label>
               <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#1c2552] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
                 defaultValue={query}
                 id="commons-filter-input"
                 name="q"
-                placeholder="Filter by name or description"
+                placeholder="Search campfires..."
                 type="search"
               />
               <input name="sort" type="hidden" value={sort} />
             </form>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#29366a] dark:text-amber-100">
                 Sort
               </span>
               <div className="flex items-center gap-2">
@@ -100,10 +105,10 @@ export default async function CommonsPage({
 
                   return (
                     <Link
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                      className={`border-[3px] px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
                         option.value === sort
-                          ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-slate-100"
+                          ? "border-[#16224d] bg-[#1f2d70] text-amber-50 shadow-[2px_2px_0_#16224d] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[2px_2px_0_#f6e8b4]"
+                          : "border-[#253370] bg-[#fffdf2] text-[#1f2d70] hover:bg-[#f7efcf] dark:border-[#f6e8b4] dark:bg-[#0a1233] dark:text-amber-50 dark:hover:bg-[#16224d]"
                       }`}
                       href={href}
                       key={option.value}
@@ -121,22 +126,22 @@ export default async function CommonsPage({
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {campfires.map((campfire) => (
               <Link
-                className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                className="group flex h-full flex-col border-[3px] border-[#16224d] bg-[#fef7dc] p-5 shadow-[5px_5px_0_#16224d] transition hover:-translate-y-0.5 dark:border-[#f6e8b4] dark:bg-[#111c4a] dark:shadow-[5px_5px_0_#f6e8b4]"
                 href={getCampfireHref(campfire.pathSegments)}
                 key={campfire.id}
               >
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <h2 className="font-mono text-xl font-bold text-[#121f4f] dark:text-amber-50">
                     {campfire.name}
                   </h2>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                  <span className="border-[3px] border-[#16224d] bg-[#1f2d70] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-50 dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a]">
                     {campfire.postCount} posts
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                <p className="text-sm leading-relaxed text-[#2e3b71] dark:text-amber-100">
                   {campfire.description}
                 </p>
-                <div className="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-4 flex items-center justify-between border-t-2 border-dotted border-[#4f5f99] pt-3 text-xs text-[#344277] dark:border-amber-100/40 dark:text-amber-100/90">
                   <span>/commons/{campfire.pathSegments.join("/")}</span>
                   <span>
                     Last active {formatLastActivity(campfire.lastActivityAt)}
@@ -146,11 +151,11 @@ export default async function CommonsPage({
             ))}
           </section>
         ) : (
-          <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <section className="border-[3px] border-dashed border-[#16224d] bg-[#fef7dc] p-10 text-center shadow-[5px_5px_0_#16224d] dark:border-[#f6e8b4] dark:bg-[#111c4a] dark:shadow-[5px_5px_0_#f6e8b4]">
+            <h2 className="font-mono text-lg font-bold text-[#121f4f] dark:text-amber-50">
               No campfires found yet
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm text-[#2e3b71] dark:text-amber-100">
               {query
                 ? "Try adjusting your filter or switching sort options."
                 : "The Commons directory will populate as new campfires go live."}
