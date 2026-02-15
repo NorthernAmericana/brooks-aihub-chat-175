@@ -11,9 +11,16 @@ CREATE TABLE IF NOT EXISTS mycarmind_visits (
   lat double precision,
   lng double precision,
   proof_type text NOT NULL,
+  visit_date date NOT NULL DEFAULT (timezone('utc', now()))::date,
   visited_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE mycarmind_visits
+  ADD COLUMN IF NOT EXISTS visit_date date NOT NULL DEFAULT (timezone('utc', now()))::date;
+
+CREATE UNIQUE INDEX IF NOT EXISTS mycarmind_visits_daily_place_uniq
+  ON mycarmind_visits (user_id, provider, place_ref, visit_date);
 
 CREATE INDEX IF NOT EXISTS mycarmind_visits_user_created_idx
   ON mycarmind_visits (user_id, created_at DESC);
