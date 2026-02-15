@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ExploreMap } from "@/components/mycarmind/ExploreMap";
 import { PlaceDetailSheet } from "@/components/mycarmind/place-detail-sheet";
 
 type Place = {
@@ -54,7 +55,7 @@ export default function ExplorePage() {
 
   const mapKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  useEffect(() => {
+  const requestLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
       return;
     }
@@ -73,32 +74,26 @@ export default function ExplorePage() {
   }, []);
 
   useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
+
+  useEffect(() => {
     const controller = new AbortController();
 
     const run = async () => {
       setLoading(true);
       const params = new URLSearchParams();
-      if (q.trim()) {
-        params.set("q", q.trim());
-      }
-      if (city.trim()) {
-        params.set("city", city.trim());
-      }
-      if (state.trim()) {
-        params.set("state", state.trim());
-      }
-      if (lat !== null) {
-        params.set("lat", String(lat));
-      }
-      if (lng !== null) {
-        params.set("lng", String(lng));
-      }
+      if (q.trim()) params.set("q", q.trim());
+      if (city.trim()) params.set("city", city.trim());
+      if (state.trim()) params.set("state", state.trim());
+      if (lat !== null) params.set("lat", String(lat));
+      if (lng !== null) params.set("lng", String(lng));
+      if (lat !== null && lng !== null) params.set("sort", "distance");
       params.set("limit", "100");
 
-      const response = await fetch(
-        `/api/mycarmind/places?${params.toString()}`,
-        { signal: controller.signal }
-      );
+      const response = await fetch(`/api/mycarmind/places?${params.toString()}`, {
+        signal: controller.signal,
+      });
       if (!response.ok) {
         setPlaces([]);
         setLoading(false);
@@ -121,165 +116,141 @@ export default function ExplorePage() {
     return Array.from(new Set([...FALLBACK_CATEGORIES, ...dynamicCategories]));
   }, [places]);
 
-  const openPlace = (place: Place) => {
-    setSelectedPlace(place);
-    setSheetOpen(true);
-  };
-
   const filteredPlaces = useMemo(() => {
-    if (!selectedCategory) {
-      return places;
-    }
+    if (!selectedCategory) return places;
 
     return places.filter((place) =>
-      (place.category ?? "")
-        .toLowerCase()
-        .includes(selectedCategory.toLowerCase())
+      (place.category ?? "").toLowerCase().includes(selectedCategory.toLowerCase())
     );
   }, [places, selectedCategory]);
 
+  const openPlace = useCallback((place: Place) => {
+    setSelectedPlace(place);
+    setSheetOpen(true);
+  }, []);
+
+  const controls = (
+    <div className="space-y-3 p-4">
+      <div className="mx-auto flex w-full max-w-4xl items-center justify-between rounded-2xl border border-white/15 bg-black/60 px-4 py-3 text-slate-100 backdrop-blur">
+        <h1 className="text-2xl font-bold">Explore</h1>
+        <div className="rounded-full border border-white/15 p-1 text-xs">
+          <button
+            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-emerald-500 text-black" : "text-slate-300"}`}
+            onClick={() => setView("list")}
+            type="button"
+          >
+            List
+          </button>
+          <button
+            className={`rounded-full px-3 py-1 ${view === "map" ? "bg-emerald-500 text-black" : "text-slate-300"}`}
+            onClick={() => setView("map")}
+            type="button"
+          >
+            Map
+          </button>
+        </div>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-4xl gap-2 rounded-2xl border border-white/15 bg-black/60 p-3 backdrop-blur sm:grid-cols-4">
+        <input
+          aria-label="Search places"
+          className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100"
+          onChange={(event) => setQ(event.target.value)}
+          placeholder="Search places"
+          value={q}
+        />
+        <input
+          aria-label="City"
+          className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100"
+          onChange={(event) => setCity(event.target.value)}
+          placeholder="City"
+          value={city}
+        />
+        <input
+          aria-label="State"
+          className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100"
+          onChange={(event) => setState(event.target.value)}
+          placeholder="State"
+          value={state}
+        />
+        <button
+          className="rounded-xl border border-emerald-300/40 bg-emerald-500/20 px-3 py-2 text-sm text-emerald-200"
+          onClick={requestLocation}
+          type="button"
+        >
+          Locate me
+        </button>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-4xl flex-wrap gap-2 rounded-2xl border border-white/15 bg-black/50 p-3 backdrop-blur">
+        {categories.map((category) => (
+          <button
+            className={`rounded-full border px-3 py-1 text-xs ${selectedCategory === category ? "border-emerald-400 bg-emerald-500/20 text-emerald-200" : "border-white/20 text-slate-300"}`}
+            key={category}
+            onClick={() =>
+              setSelectedCategory((current) => (current === category ? null : category))
+            }
+            type="button"
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (view === "map") {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <ExploreMap
+          apiKey={mapKey}
+          onSelectPlace={openPlace}
+          overlay={controls}
+          places={filteredPlaces}
+        />
+        <PlaceDetailSheet onOpenChange={setSheetOpen} open={sheetOpen} place={selectedPlace} />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Explore</h1>
-          <div className="rounded-full border border-white/15 p-1 text-xs">
-            <button
-              className={`rounded-full px-3 py-1 ${view === "list" ? "bg-emerald-500 text-black" : "text-slate-300"}`}
-              onClick={() => setView("list")}
-              type="button"
-            >
-              List
-            </button>
-            <button
-              className={`rounded-full px-3 py-1 ${view === "map" ? "bg-emerald-500 text-black" : "text-slate-300"}`}
-              onClick={() => setView("map")}
-              type="button"
-            >
-              Map
-            </button>
-          </div>
+      <div className="mx-auto max-w-4xl">
+        {controls}
+
+        <div className="max-h-[62vh] space-y-3 overflow-y-auto pr-1">
+          {loading ? <p className="text-sm text-slate-400">Loading places...</p> : null}
+          {!loading && filteredPlaces.length === 0 ? (
+            <p className="text-sm text-slate-400">No places found.</p>
+          ) : null}
+          {filteredPlaces.map((place) => {
+            const placeLat = place.lat ?? null;
+            const placeLng = place.lng ?? null;
+            const distance =
+              lat !== null && lng !== null && placeLat !== null && placeLng !== null
+                ? formatDistanceMiles(lat, lng, placeLat, placeLng)
+                : null;
+
+            return (
+              <button
+                className="block w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-left"
+                key={place.id}
+                onClick={() => openPlace(place)}
+                type="button"
+              >
+                <h2 className="font-semibold">{place.name}</h2>
+                <p className="text-sm text-slate-300">{place.category ?? "Uncategorized"}</p>
+                <p className="text-sm text-slate-400">{place.address ?? "No address provided"}</p>
+                <p className="text-sm text-slate-400">
+                  {[place.city, place.state].filter(Boolean).join(", ") || "Unknown location"}
+                </p>
+                {distance ? <p className="text-xs text-emerald-300">{distance} away</p> : null}
+              </button>
+            );
+          })}
         </div>
-
-        <div className="mb-3 grid gap-2 sm:grid-cols-3">
-          <input
-            aria-label="Search places"
-            className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
-            onChange={(event) => setQ(event.target.value)}
-            placeholder="Search places"
-            value={q}
-          />
-          <input
-            aria-label="City"
-            className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
-            onChange={(event) => setCity(event.target.value)}
-            placeholder="City"
-            value={city}
-          />
-          <input
-            aria-label="State"
-            className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm"
-            onChange={(event) => setState(event.target.value)}
-            placeholder="State"
-            value={state}
-          />
-        </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <button
-              className={`rounded-full border px-3 py-1 text-xs ${selectedCategory === category ? "border-emerald-400 bg-emerald-500/20 text-emerald-200" : "border-white/20 text-slate-300"}`}
-              key={category}
-              onClick={() =>
-                setSelectedCategory((current) =>
-                  current === category ? null : category
-                )
-              }
-              type="button"
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {view === "map" ? (
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-            {mapKey ? (
-              <p>
-                Map integration ready. Hook marker coordinates to Google Maps
-                using the loaded places.
-              </p>
-            ) : (
-              <p>
-                Google Maps key not found. You can still browse curated results
-                in list mode and open details from markers below.
-              </p>
-            )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {filteredPlaces.slice(0, 8).map((place) => (
-                <button
-                  className="rounded-xl border border-white/10 bg-slate-900/60 p-3 text-left"
-                  key={place.id}
-                  onClick={() => openPlace(place)}
-                  type="button"
-                >
-                  <p className="font-medium text-slate-100">{place.name}</p>
-                  <p className="text-xs text-slate-400">Marker preview</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="max-h-[62vh] space-y-3 overflow-y-auto pr-1">
-            {loading ? (
-              <p className="text-sm text-slate-400">Loading places...</p>
-            ) : null}
-            {!loading && filteredPlaces.length === 0 ? (
-              <p className="text-sm text-slate-400">No places found.</p>
-            ) : null}
-            {filteredPlaces.map((place) => {
-              const placeLat = place.lat ?? null;
-              const placeLng = place.lng ?? null;
-              const distance =
-                lat !== null &&
-                lng !== null &&
-                placeLat !== null &&
-                placeLng !== null
-                  ? formatDistanceMiles(lat, lng, placeLat, placeLng)
-                  : null;
-
-              return (
-                <button
-                  className="block w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-left"
-                  key={place.id}
-                  onClick={() => openPlace(place)}
-                  type="button"
-                >
-                  <h2 className="font-semibold">{place.name}</h2>
-                  <p className="text-sm text-slate-300">
-                    {place.category ?? "Uncategorized"}
-                  </p>
-                  <p className="text-sm text-slate-400">
-                    {place.address ?? "No address provided"}
-                  </p>
-                  <p className="text-sm text-slate-400">
-                    {[place.city, place.state].filter(Boolean).join(", ") ||
-                      "Unknown location"}
-                  </p>
-                  {distance ? (
-                    <p className="text-xs text-emerald-300">{distance} away</p>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
-      <PlaceDetailSheet
-        onOpenChange={setSheetOpen}
-        open={sheetOpen}
-        place={selectedPlace}
-      />
+      <PlaceDetailSheet onOpenChange={setSheetOpen} open={sheetOpen} place={selectedPlace} />
     </main>
   );
 }
