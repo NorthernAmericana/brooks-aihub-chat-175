@@ -7,12 +7,14 @@ export function AuthForm({
   action,
   children,
   defaultEmail = "",
+  mode = "login",
 }: {
   action: NonNullable<
     string | ((formData: FormData) => void | Promise<void>) | undefined
   >;
   children: React.ReactNode;
   defaultEmail?: string;
+  mode?: "login" | "register";
 }) {
   return (
     <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
@@ -53,6 +55,25 @@ export function AuthForm({
           type="password"
         />
       </div>
+
+      {mode === "register" && (
+        <div className="flex flex-col gap-2">
+          <Label
+            className="font-normal text-zinc-600 dark:text-zinc-400"
+            htmlFor="confirmPassword"
+          >
+            Confirm Password
+          </Label>
+
+          <Input
+            className="bg-muted text-md md:text-sm"
+            id="confirmPassword"
+            name="confirmPassword"
+            required
+            type="password"
+          />
+        </div>
+      )}
 
       {children}
     </Form>

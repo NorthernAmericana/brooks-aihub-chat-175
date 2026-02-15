@@ -13,6 +13,7 @@ test.describe("Authentication Pages", () => {
     await page.goto("/register");
     await expect(page.getByPlaceholder("user@acme.com")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Confirm Password")).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign Up" })).toBeVisible();
     await expect(page.getByText("Already have an account?")).toBeVisible();
   });
