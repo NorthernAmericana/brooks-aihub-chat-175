@@ -22,7 +22,7 @@ export function DmCampfireRoom({ room }: DmCampfireRoomProps) {
             {room.members.map((member) => (
               <li
                 className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-700"
-                key={member.id}
+                key={member.userId}
               >
                 <span>{member.email}</span>
                 <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -35,13 +35,13 @@ export function DmCampfireRoom({ room }: DmCampfireRoomProps) {
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Messages</h2>
-          {room.posts.length > 0 ? (
+          {room.messages.length > 0 ? (
             <ul className="mt-3 space-y-3">
-              {room.posts.map((post) => (
-                <li className="rounded-xl border border-slate-200 p-3 dark:border-slate-700" key={post.id}>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{post.authorEmail}</p>
+              {room.messages.map((message) => (
+                <li className="rounded-xl border border-slate-200 p-3 dark:border-slate-700" key={message.id}>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{message.authorEmail}</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-200">
-                    {post.body}
+                    {message.body}
                   </p>
                 </li>
               ))}
