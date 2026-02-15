@@ -9,12 +9,14 @@ import { AuthForm } from "@/components/auth-form";
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "@/components/toast";
 import { type LoginActionState, login } from "../actions";
+import { waitForAuthenticatedSession } from "../session";
 
 export default function Page() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
 
   const [email, setEmail] = useState("");
-  const [isSuccessful, setIsSuccessful] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
@@ -23,24 +25,43 @@ export default function Page() {
     }
   );
 
-  const { update: updateSession } = useSession();
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
     if (state.status === "failed") {
+      setIsRedirecting(false);
       toast({
         type: "error",
         description: "Invalid credentials!",
       });
     } else if (state.status === "invalid_data") {
+      setIsRedirecting(false);
       toast({
         type: "error",
         description: "Failed validating your submission!",
       });
     } else if (state.status === "success") {
-      setIsSuccessful(true);
-      updateSession();
-      router.refresh();
+      void (async () => {
+        setIsRedirecting(true);
+
+        await updateSession();
+
+        const isAuthenticated = await waitForAuthenticatedSession();
+
+        if (!isAuthenticated) {
+          setIsRedirecting(false);
+          toast({
+            type: "error",
+            description: "Sign in succeeded, but session could not be established. Please try again.",
+          });
+
+          return;
+        }
+
+        router.replace("/brooks-ai-hub/");
+        router.refresh();
+      })();
+    } else {
+      setIsRedirecting(false);
     }
   }, [state.status]);
 
@@ -59,7 +80,7 @@ export default function Page() {
           </p>
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email}>
-          <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
+          <SubmitButton isRedirecting={isRedirecting}>Sign in</SubmitButton>
           <p className="mt-4 text-center text-gray-600 text-sm dark:text-zinc-400">
             {"Don't have an account? "}
             <Link

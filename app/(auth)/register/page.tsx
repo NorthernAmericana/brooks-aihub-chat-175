@@ -8,12 +8,14 @@ import { AuthForm } from "@/components/auth-form";
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "@/components/toast";
 import { type RegisterActionState, register } from "../actions";
+import { waitForAuthenticatedSession } from "../session";
 
 export default function Page() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
 
   const [email, setEmail] = useState("");
-  const [isSuccessful, setIsSuccessful] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const [state, formAction] = useActionState<RegisterActionState, FormData>(
     register,
@@ -22,25 +24,46 @@ export default function Page() {
     }
   );
 
-  const { update: updateSession } = useSession();
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
     if (state.status === "user_exists") {
+      setIsRedirecting(false);
       toast({ type: "error", description: "Account already exists!" });
     } else if (state.status === "failed") {
+      setIsRedirecting(false);
       toast({ type: "error", description: "Failed to create account!" });
     } else if (state.status === "invalid_data") {
+      setIsRedirecting(false);
       toast({
         type: "error",
         description: "Failed validating your submission!",
       });
     } else if (state.status === "success") {
-      toast({ type: "success", description: "Account created successfully!" });
+      void (async () => {
+        toast({ type: "success", description: "Account created successfully!" });
 
-      setIsSuccessful(true);
-      updateSession();
-      router.refresh();
+        setIsRedirecting(true);
+
+        await updateSession();
+
+        const isAuthenticated = await waitForAuthenticatedSession();
+
+        if (!isAuthenticated) {
+          setIsRedirecting(false);
+          toast({
+            type: "error",
+            description:
+              "Account was created, but session could not be established. Please sign in.",
+          });
+
+          return;
+        }
+
+        router.replace("/brooks-ai-hub/");
+        router.refresh();
+      })();
+    } else {
+      setIsRedirecting(false);
     }
   }, [state.status]);
 
@@ -59,7 +82,7 @@ export default function Page() {
           </p>
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email}>
-          <SubmitButton isSuccessful={isSuccessful}>Sign Up</SubmitButton>
+          <SubmitButton isRedirecting={isRedirecting}>Sign Up</SubmitButton>
           <p className="mt-4 text-center text-gray-600 text-sm dark:text-zinc-400">
             {"Already have an account? "}
             <Link
