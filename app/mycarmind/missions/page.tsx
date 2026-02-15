@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { InstallGate } from "@/components/mycarmind/InstallGate";
 
 type TodayMission = {
   date_key: string;
@@ -69,7 +70,8 @@ export default function MissionsPage() {
   const seasonMissions = payload.season?.missions ?? payload.missions ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
+    <InstallGate>
+      <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
       <div className="mx-auto max-w-3xl space-y-6">
         <h1 className="text-2xl font-bold">Missions</h1>
 
@@ -120,6 +122,7 @@ export default function MissionsPage() {
           })}
         </section>
       </div>
-    </main>
+      </main>
+    </InstallGate>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { InstallGate } from "@/components/mycarmind/InstallGate";
 
 type Scope = "global" | "state" | "city";
 
@@ -92,7 +93,8 @@ export default function LeaderboardPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
+    <InstallGate>
+      <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
       <div className="mx-auto max-w-3xl">
         <h1 className="mb-3 text-2xl font-bold">Leaderboard</h1>
 
@@ -155,6 +157,7 @@ export default function LeaderboardPage() {
           </div>
         ))}
       </div>
-    </main>
+      </main>
+    </InstallGate>
   );
 }

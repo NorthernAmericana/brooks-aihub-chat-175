@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExploreMap } from "@/components/mycarmind/ExploreMap";
 import { PlaceDetailSheet } from "@/components/mycarmind/place-detail-sheet";
+import { InstallGate } from "@/components/mycarmind/InstallGate";
 
 type Place = {
   id: string;
@@ -214,7 +215,8 @@ export default function ExplorePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
+    <InstallGate>
+      <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
       <div className="mx-auto max-w-4xl">
         {controls}
 
@@ -251,6 +253,7 @@ export default function ExplorePage() {
         </div>
       </div>
       <PlaceDetailSheet onOpenChange={setSheetOpen} open={sheetOpen} place={selectedPlace} />
-    </main>
+      </main>
+    </InstallGate>
   );
 }

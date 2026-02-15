@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { InstallGate } from "@/components/mycarmind/InstallGate";
 import { useEffect, useState } from "react";
 
 type Profile = {
@@ -106,7 +107,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
+    <InstallGate>
+      <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100">
       <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-4">
         <h1 className="text-2xl font-bold">Profile</h1>
         <p className="mt-1 text-sm text-slate-300">
@@ -217,7 +219,8 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-    </main>
+      </main>
+    </InstallGate>
   );
 }
 
