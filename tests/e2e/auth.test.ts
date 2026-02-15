@@ -6,6 +6,7 @@ test.describe("Authentication Pages", () => {
     await expect(page.getByPlaceholder("user@acme.com")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Forgot password?" })).toBeVisible();
     await expect(page.getByText("Don't have an account?")).toBeVisible();
   });
 
@@ -28,5 +29,33 @@ test.describe("Authentication Pages", () => {
     await page.goto("/register");
     await page.getByRole("link", { name: "Sign in" }).click();
     await expect(page).toHaveURL("/login");
+  });
+
+  test("signed-in user can update password and sees validation failures", async ({
+    page,
+  }) => {
+    const initialPassword = "Start123!";
+    const nextPassword = "Updated123!";
+    const email = `password-change-${Date.now()}@example.com`;
+
+    await page.goto("/register");
+    await page.getByLabel("Email Address").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(initialPassword);
+    await page.getByLabel("Confirm Password").fill(initialPassword);
+    await page.getByRole("button", { name: "Sign Up" }).click();
+
+    await page.goto("/settings");
+
+    await page.getByLabel("Current password").fill("Wrong123!");
+    await page.getByLabel("New password").fill(nextPassword);
+    await page.getByLabel("Confirm new password").fill(nextPassword);
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.getByText("Current password is incorrect.")).toBeVisible();
+
+    await page.getByLabel("Current password").fill(initialPassword);
+    await page.getByLabel("New password").fill(nextPassword);
+    await page.getByLabel("Confirm new password").fill(nextPassword);
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.getByText("Password updated.")).toBeVisible();
   });
 });
