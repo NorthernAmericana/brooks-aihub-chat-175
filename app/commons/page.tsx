@@ -1,9 +1,12 @@
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/app/(auth)/auth";
 import {
   type CampfireSort,
   getCampfireHref,
   listActiveCampfires,
 } from "@/lib/commons/campfires";
+import { hasPrivateDmCampfiresForMember } from "@/lib/db/commons-queries";
 
 const SORT_OPTIONS: Array<{ label: string; value: CampfireSort }> = [
   { label: "Recent activity", value: "activity" },
@@ -46,6 +49,10 @@ export default async function CommonsPage({
     sort,
     query,
   });
+  const session = await auth();
+  const hasDmCampfires = session?.user?.id
+    ? await hasPrivateDmCampfiresForMember(session.user.id)
+    : false;
 
   return (
     <main className="min-h-dvh bg-transparent px-4 py-8 text-slate-900 dark:text-amber-50 sm:px-6 sm:py-10">
@@ -60,12 +67,37 @@ export default async function CommonsPage({
             </h1>
           </div>
           <div className="space-y-4 px-4 py-4 sm:px-5">
-            <Link
-              className="inline-flex border-[3px] border-[#16224d] bg-[#1f2d70] px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-50 shadow-[3px_3px_0_#16224d] transition hover:-translate-y-0.5 hover:bg-[#293a87] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[3px_3px_0_#f6e8b4] dark:hover:bg-[#fff2c4]"
-              href="/commons/create"
-            >
-              + Create campfire
-            </Link>
+            <div className="flex flex-wrap items-start gap-3">
+              <Link
+                className="inline-flex border-[3px] border-[#16224d] bg-[#1f2d70] px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-50 shadow-[3px_3px_0_#16224d] transition hover:-translate-y-0.5 hover:bg-[#293a87] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[3px_3px_0_#f6e8b4] dark:hover:bg-[#fff2c4]"
+                href="/commons/create"
+              >
+                + Create campfire
+              </Link>
+
+              {hasDmCampfires ? (
+                <Link
+                  className="group flex flex-col items-center text-[#16224d] transition hover:-translate-y-0.5 dark:text-amber-100"
+                  href="/commons/dm"
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center border-[3px] border-[#16224d] bg-[#1f2d70] text-amber-50 shadow-[3px_3px_0_#16224d] transition hover:bg-[#293a87] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[3px_3px_0_#f6e8b4] dark:hover:bg-[#fff2c4]">
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+                  <span className="mt-1 text-[10px] font-bold tracking-wide group-active:underline sm:text-xs">
+                    Already have a Campfire Chat?
+                  </span>
+                </Link>
+              ) : (
+                <div className="flex cursor-not-allowed flex-col items-center text-[#16224d] opacity-50 dark:text-amber-100">
+                  <span className="inline-flex h-11 w-11 items-center justify-center border-[3px] border-[#16224d] bg-[#1f2d70] text-amber-50 shadow-[3px_3px_0_#16224d] dark:border-[#f6e8b4] dark:bg-[#f6e8b4] dark:text-[#111c4a] dark:shadow-[3px_3px_0_#f6e8b4]">
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+                  <span className="mt-1 text-[10px] font-bold tracking-wide sm:text-xs">
+                    Already have a Campfire Chat?
+                  </span>
+                </div>
+              )}
+            </div>
             <p className="max-w-3xl text-sm leading-relaxed text-[#29366a] dark:text-amber-100 sm:text-base">
               NAT: Commons is our shared mission space for founders, builders,
               and stewards. Explore active campfires, catch up on recent posts,
