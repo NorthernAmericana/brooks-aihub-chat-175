@@ -1,3 +1,8 @@
+import {
+  getRouteAccessMetadata,
+  type RouteAccessMetadata,
+} from "@/packages/shared-core/src";
+
 const FREE_SLASH_ROUTES = new Set([
   "MyCarMindATO/Driver",
   "MyCarMindATO/DeliveryDriver",
@@ -6,15 +11,10 @@ const FREE_SLASH_ROUTES = new Set([
   "NAMC/Lore-Playground/App",
 ]);
 
-export function getSlashRouteAccessMetadata(slashRoute: string | undefined): {
-  foundersOnly: boolean;
-  isFreeRoute: boolean;
-} {
-  const foundersOnly = requiresFoundersForSlashRoute(slashRoute);
-  return {
-    foundersOnly,
-    isFreeRoute: !foundersOnly,
-  };
+export function getSlashRouteAccessMetadata(
+  slashRoute: string | undefined
+): RouteAccessMetadata {
+  return getRouteAccessMetadata(requiresFoundersForSlashRoute(slashRoute));
 }
 
 export function requiresFoundersForSlashRoute(
