@@ -21,7 +21,8 @@
     "check:pwa": "tsx scripts/check-pwa.ts",
     "migrate:myflowerai": "tsx scripts/migrate-myflowerai-schema.ts",
     "validate:myflowerai": "tsx scripts/validate-myflowerai-schema.ts",
-    "mycarmind:sync": "tsx scripts/mycarmind-sync.ts"
+    "mycarmind:sync": "tsx scripts/mycarmind-sync.ts",
+    "validate:ato-manifests": "tsx scripts/validate-ato-manifests.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.15",
