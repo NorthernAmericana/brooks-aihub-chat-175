@@ -34,6 +34,7 @@ export type AtoManifest = {
   safetyProfile: AtoManifestSafetyProfile;
   entitlementRequirements: AtoManifestEntitlementRequirement;
   status: AtoManifestStatus;
+  badge?: "free";
 };
 
 export type AtoApp = {

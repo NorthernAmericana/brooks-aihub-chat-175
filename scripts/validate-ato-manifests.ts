@@ -1,8 +1,8 @@
 import {
   OFFICIAL_ATO_MANIFESTS,
   REQUIRED_OFFICIAL_ATO_MANIFEST_IDS,
-} from "../packages/shared-core/src/manifests/officialAto";
-import type { AtoManifest } from "../packages/shared-core/src/types/ato";
+} from "@/packages/shared-core/src/manifests/officialAto";
+import type { AtoManifest } from "@/packages/shared-core/src/types/ato";
 
 const MANIFEST_PATH_LABEL = "packages/shared-core/src/manifests/officialAto.ts";
 
@@ -87,13 +87,17 @@ const validateRequiredEntries = (manifests: AtoManifest[], errors: string[]) => 
 const run = () => {
   const errors: string[] = [];
 
-  OFFICIAL_ATO_MANIFESTS.forEach((manifest) => validateManifest(manifest, errors));
+  for (const manifest of OFFICIAL_ATO_MANIFESTS) {
+    validateManifest(manifest, errors);
+  }
   validateUnique(OFFICIAL_ATO_MANIFESTS, errors);
   validateRequiredEntries(OFFICIAL_ATO_MANIFESTS, errors);
 
   if (errors.length > 0) {
     console.error(`ATO manifest validation failed for ${MANIFEST_PATH_LABEL}.`);
-    errors.forEach((error) => console.error(` - ${error}`));
+    for (const error of errors) {
+      console.error(` - ${error}`);
+    }
     process.exit(1);
   }
 

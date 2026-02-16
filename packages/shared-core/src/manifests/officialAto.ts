@@ -61,6 +61,7 @@ export const OFFICIAL_ATO_MANIFESTS: AtoManifest[] = [
     safetyProfile: DEFAULT_SAFETY_PROFILE,
     entitlementRequirements: "none",
     status: ACTIVE_STATUS,
+    badge: "free",
   },
   {
     id: "mycarmindato-trucker",
@@ -81,6 +82,7 @@ export const OFFICIAL_ATO_MANIFESTS: AtoManifest[] = [
     safetyProfile: DEFAULT_SAFETY_PROFILE,
     entitlementRequirements: "none",
     status: ACTIVE_STATUS,
+    badge: "free",
   },
   {
     id: "mycarmindato-traveler",
@@ -91,6 +93,7 @@ export const OFFICIAL_ATO_MANIFESTS: AtoManifest[] = [
     safetyProfile: DEFAULT_SAFETY_PROFILE,
     entitlementRequirements: "none",
     status: ACTIVE_STATUS,
+    badge: "free",
   },
   {
     id: "myflowerai",
@@ -151,5 +154,6 @@ export const OFFICIAL_ATO_MANIFESTS: AtoManifest[] = [
     safetyProfile: DEFAULT_SAFETY_PROFILE,
     entitlementRequirements: "none",
     status: ACTIVE_STATUS,
+    badge: "free",
   },
 ];

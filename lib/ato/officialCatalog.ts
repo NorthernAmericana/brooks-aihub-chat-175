@@ -1,8 +1,8 @@
 import {
   OFFICIAL_ATO_MANIFESTS,
   REQUIRED_OFFICIAL_ATO_MANIFEST_IDS,
-} from "../../packages/shared-core/src/manifests/officialAto";
-import type { AtoManifest } from "../../packages/shared-core/src/types/ato";
+} from "@/packages/shared-core/src/manifests/officialAto";
+import type { AtoManifest } from "@/packages/shared-core/src/types/ato";
 import { formatRoutePath } from "@/lib/routes/utils";
 
 export type OfficialAtoTreeNode = {
@@ -31,12 +31,6 @@ export type OfficialAtoFlatItem = {
   badge?: "free";
 };
 
-const FREE_BADGE_MANIFEST_IDS = new Set<string>([
-  "mycarmindato-driver",
-  "mycarmindato-delivery-driver",
-  "mycarmindato-traveler",
-  "namc-lore-playground",
-]);
 
 const buildTreeNode = (manifest: AtoManifest): OfficialAtoTreeNode => {
   const segments = manifest.slashPath.split("/").filter(Boolean);
@@ -53,14 +47,16 @@ const buildTreeNode = (manifest: AtoManifest): OfficialAtoTreeNode => {
     premiumIcon: foundersOnly ? "diamond" : undefined,
     requiresEntitlement: foundersOnly ? "founders" : undefined,
     foundersOnly,
-    badge: FREE_BADGE_MANIFEST_IDS.has(manifest.id) ? "free" : undefined,
+    badge: manifest.badge,
     children: [],
   };
 };
 
 const sortTree = (nodes: OfficialAtoTreeNode[]) => {
   nodes.sort((a, b) => a.segment.localeCompare(b.segment));
-  nodes.forEach((node) => sortTree(node.children));
+  for (const node of nodes) {
+    sortTree(node.children);
+  }
   return nodes;
 };
 
@@ -68,7 +64,7 @@ const flattenTree = (
   nodes: OfficialAtoTreeNode[],
   items: OfficialAtoFlatItem[] = []
 ) => {
-  nodes.forEach((node) => {
+  for (const node of nodes) {
     items.push({
       id: node.id,
       label: node.label,
@@ -83,7 +79,7 @@ const flattenTree = (
     if (node.children.length > 0) {
       flattenTree(node.children, items);
     }
-  });
+  }
   return items;
 };
 
