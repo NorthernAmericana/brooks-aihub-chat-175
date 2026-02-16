@@ -1,17 +1,7 @@
 import { createHash } from "node:crypto";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  ilike,
-  isNull,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { getCampfireAccess, type CampfireAccess } from "@/lib/commons/access";
+import { type CampfireAccess, getCampfireAccess } from "@/lib/commons/access";
 import {
   DM_RECIPIENT_LIMIT_DEFAULT,
   DM_RECIPIENT_LIMIT_FOUNDER,
@@ -679,6 +669,32 @@ type DmLobbyCampfire = {
   accessLabel: "Founder’s Access" | "Free Access";
   lastActivityAt: Date;
 };
+
+export async function hasPrivateDmCampfiresForMember(
+  viewerId: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: commonsCampfire.id })
+    .from(commonsCampfire)
+    .innerJoin(
+      commonsCampfireMembers,
+      and(
+        eq(commonsCampfireMembers.campfireId, commonsCampfire.id),
+        eq(commonsCampfireMembers.userId, viewerId)
+      )
+    )
+    .where(
+      and(
+        eq(commonsCampfire.isPrivate, true),
+        eq(commonsCampfire.isActive, true),
+        eq(commonsCampfire.isDeleted, false),
+        ilike(commonsCampfire.path, "dm/%")
+      )
+    )
+    .limit(1);
+
+  return Boolean(row);
+}
 
 export async function listPrivateDmCampfiresForMember(
   viewerId: string
