@@ -1,16 +1,12 @@
-import { formatRoutePath, normalizeRouteKey } from "@/lib/routes/utils";
-
-export type OfficialAtoCatalogNode = {
-  title: string;
-  slash: string;
-  children?: OfficialAtoCatalogNode[];
-  premium?: boolean;
-  premiumIcon?: "diamond";
-  requiresEntitlement?: "founders";
-  badge?: "free";
-};
+import {
+  OFFICIAL_ATO_MANIFESTS,
+  REQUIRED_OFFICIAL_ATO_MANIFEST_IDS,
+} from "@/packages/shared-core/src/manifests/officialAto";
+import type { AtoManifest } from "@/packages/shared-core/src/types/ato";
+import { formatRoutePath } from "@/lib/routes/utils";
 
 export type OfficialAtoTreeNode = {
+  id: string;
   segment: string;
   path: string;
   label: string;
@@ -24,6 +20,7 @@ export type OfficialAtoTreeNode = {
 };
 
 export type OfficialAtoFlatItem = {
+  id: string;
   label: string;
   slash: string;
   folder: string;
@@ -34,107 +31,32 @@ export type OfficialAtoFlatItem = {
   badge?: "free";
 };
 
-const OFFICIAL_ATO_CATALOG: OfficialAtoCatalogNode[] = [
-  {
-    title: "Brooks AI HUB",
-    slash: "Brooks AI HUB",
-  },
-  {
-    title: "BrooksBears",
-    slash: "BrooksBears",
-    children: [
-      {
-        title: "Benjamin Bear",
-        slash: "BrooksBears/BenjaminBear",
-        premium: true,
-        premiumIcon: "diamond",
-        requiresEntitlement: "founders",
-      },
-    ],
-  },
-  {
-    title: "MyCarMindATO",
-    slash: "MyCarMindATO",
-    children: [
-      {
-        title: "MyCarMindATO - Driver",
-        slash: "MyCarMindATO/Driver",
-        badge: "free",
-      },
-      {
-        title: "MyCarMindATO - Trucker",
-        slash: "MyCarMindATO/Trucker",
-        premium: true,
-        premiumIcon: "diamond",
-        requiresEntitlement: "founders",
-      },
-      {
-        title: "MyCarMindATO - Delivery Driver",
-        slash: "MyCarMindATO/DeliveryDriver",
-        badge: "free",
-      },
-      {
-        title: "MyCarMindATO - Traveler",
-        slash: "MyCarMindATO/Traveler",
-        badge: "free",
-      },
-    ],
-  },
-  {
-    title: "MyFlowerAI",
-    slash: "MyFlowerAI",
-  },
-  {
-    title: "Brooks AI HUB Summaries",
-    slash: "Brooks AI HUB/Summaries",
-    premium: true,
-    premiumIcon: "diamond",
-    requiresEntitlement: "founders",
-  },
-  {
-    title: "Northern Americana Tech Agent",
-    slash: "NAT",
-  },
-  {
-    title: "NAMC AI Media Curator",
-    slash: "NAMC",
-    children: [
-      {
-        title: "NAMC Reader",
-        slash: "NAMC/Reader",
-        premium: true,
-        premiumIcon: "diamond",
-        requiresEntitlement: "founders",
-      },
-      {
-        title: "Lore Playground",
-        slash: "NAMC/Lore-Playground",
-        badge: "free",
-      },
-    ],
-  },
-];
 
-const buildTreeNode = (node: OfficialAtoCatalogNode): OfficialAtoTreeNode => {
-  const segments = node.slash.split("/").filter(Boolean);
-  const segment = segments.at(-1) ?? node.slash;
+const buildTreeNode = (manifest: AtoManifest): OfficialAtoTreeNode => {
+  const segments = manifest.slashPath.split("/").filter(Boolean);
+  const segment = segments.at(-1) ?? manifest.slashPath;
+  const foundersOnly = manifest.entitlementRequirements === "founders";
+
   return {
+    id: manifest.id,
     segment,
-    path: node.slash,
-    label: node.title,
-    route: formatRoutePath(node.slash),
-    premium: node.premium,
-    premiumIcon: node.premiumIcon,
-    requiresEntitlement: node.requiresEntitlement,
-    foundersOnly: node.requiresEntitlement === "founders",
-    badge: node.badge,
-    children: node.children?.map(buildTreeNode) ?? [],
+    path: manifest.slashPath,
+    label: manifest.displayName,
+    route: formatRoutePath(manifest.slashPath),
+    premium: foundersOnly || undefined,
+    premiumIcon: foundersOnly ? "diamond" : undefined,
+    requiresEntitlement: foundersOnly ? "founders" : undefined,
+    foundersOnly,
+    badge: manifest.badge,
+    children: [],
   };
 };
 
 const sortTree = (nodes: OfficialAtoTreeNode[]) => {
   nodes.sort((a, b) => a.segment.localeCompare(b.segment));
-  nodes.forEach((node) => sortTree(node.children));
+  for (const node of nodes) {
+    sortTree(node.children);
+  }
   return nodes;
 };
 
@@ -142,8 +64,9 @@ const flattenTree = (
   nodes: OfficialAtoTreeNode[],
   items: OfficialAtoFlatItem[] = []
 ) => {
-  nodes.forEach((node) => {
+  for (const node of nodes) {
     items.push({
+      id: node.id,
       label: node.label,
       slash: node.path,
       folder: node.route,
@@ -156,32 +79,65 @@ const flattenTree = (
     if (node.children.length > 0) {
       flattenTree(node.children, items);
     }
-  });
+  }
   return items;
 };
 
-export const OFFICIAL_ATO_TREE = sortTree(
-  OFFICIAL_ATO_CATALOG.map(buildTreeNode)
-);
+const buildOfficialTree = (manifests: AtoManifest[]): OfficialAtoTreeNode[] => {
+  const nodesByPath = new Map<string, OfficialAtoTreeNode>();
+  const roots: OfficialAtoTreeNode[] = [];
+
+  const sortedByDepth = [...manifests].sort((a, b) => {
+    const depthA = a.slashPath.split("/").length;
+    const depthB = b.slashPath.split("/").length;
+    return depthA - depthB;
+  });
+
+  for (const manifest of sortedByDepth) {
+    const node = buildTreeNode(manifest);
+    nodesByPath.set(manifest.slashPath, node);
+
+    const parentPath = manifest.slashPath.includes("/")
+      ? manifest.slashPath.split("/").slice(0, -1).join("/")
+      : null;
+
+    if (parentPath && nodesByPath.has(parentPath)) {
+      nodesByPath.get(parentPath)?.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return sortTree(roots);
+};
+
+export const OFFICIAL_ATO_TREE = buildOfficialTree(OFFICIAL_ATO_MANIFESTS);
 
 export const OFFICIAL_ATO_FLAT_LIST = flattenTree(OFFICIAL_ATO_TREE);
 
-const NAMC_READER_KEY = normalizeRouteKey("NAMC/Reader");
-
-const hasNamcReaderInTree = (nodes: OfficialAtoTreeNode[]): boolean =>
+const hasManifestIdInTree = (
+  nodes: OfficialAtoTreeNode[],
+  manifestId: string
+): boolean =>
   nodes.some((node) => {
-    if (normalizeRouteKey(node.path) === NAMC_READER_KEY) {
+    if (node.id === manifestId) {
       return true;
     }
-    return hasNamcReaderInTree(node.children);
+    return hasManifestIdInTree(node.children, manifestId);
   });
 
-const hasNamcReaderInFlatList = OFFICIAL_ATO_FLAT_LIST.some(
-  (item) => normalizeRouteKey(item.slash) === NAMC_READER_KEY
-);
-
-if (!hasNamcReaderInTree(OFFICIAL_ATO_TREE) || !hasNamcReaderInFlatList) {
-  throw new Error(
-    "NAMC Reader must exist in both the official ATO tree and the flat catalog list."
+for (const manifestId of REQUIRED_OFFICIAL_ATO_MANIFEST_IDS) {
+  const hasInManifestSource = OFFICIAL_ATO_MANIFESTS.some(
+    (manifest) => manifest.id === manifestId
   );
+  const hasInTree = hasManifestIdInTree(OFFICIAL_ATO_TREE, manifestId);
+  const hasInFlatList = OFFICIAL_ATO_FLAT_LIST.some(
+    (item) => item.id === manifestId
+  );
+
+  if (!hasInManifestSource || !hasInTree || !hasInFlatList) {
+    throw new Error(
+      `Required official ATO manifest '${manifestId}' must exist in manifests, tree projection, and flat catalog projection.`
+    );
+  }
 }

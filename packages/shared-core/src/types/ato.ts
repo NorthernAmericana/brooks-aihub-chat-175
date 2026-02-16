@@ -11,6 +11,32 @@ export type RouteSuggestion = {
   isFreeRoute?: boolean;
 };
 
+export type AtoManifestPermission =
+  | "chat"
+  | "read:memory"
+  | "write:memory"
+  | "suggest:actions";
+
+export type AtoManifestMemoryPolicy = "none" | "session" | "persistent";
+
+export type AtoManifestSafetyProfile = "standard" | "strict";
+
+export type AtoManifestEntitlementRequirement = "none" | "founders";
+
+export type AtoManifestStatus = "active" | "beta" | "deprecated";
+
+export type AtoManifest = {
+  id: string;
+  displayName: string;
+  slashPath: string;
+  permissions: AtoManifestPermission[];
+  memoryPolicy: AtoManifestMemoryPolicy;
+  safetyProfile: AtoManifestSafetyProfile;
+  entitlementRequirements: AtoManifestEntitlementRequirement;
+  status: AtoManifestStatus;
+  badge?: "free";
+};
+
 export type AtoApp = {
   id: string;
   slug: string;
