@@ -19,6 +19,7 @@ import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { RECENT_WINDOW_DAYS } from "../memory/policy";
+import { sanitizeRouteSegment } from "../routes/utils";
 import { generateUUID } from "../utils";
 import {
   assertChatRateLimitTablesReady,
@@ -67,6 +68,10 @@ import { generateHashedPassword } from "./utils";
 async function withChatTableSchemaGuard<T>(operation: () => Promise<T>) {
   await assertChatTableColumnsReady();
   return operation();
+}
+
+function normalizeUnofficialAtoRoute(route: string) {
+  return sanitizeRouteSegment(route).toLowerCase();
 }
 
 type UserBirthdayColumnState = "unchecked" | "ready" | "failed";
@@ -1134,7 +1139,7 @@ export async function createUnofficialAto({
       .values({
         ownerUserId,
         name,
-        route: route ?? null,
+        route: typeof route === "string" ? normalizeUnofficialAtoRoute(route) : null,
         description: description ?? null,
         personalityName: personalityName ?? null,
         instructions: instructions ?? null,
@@ -1239,13 +1244,7 @@ export async function getUnofficialAtoByRoute({
   route: string;
 }) {
   try {
-    const normalizedRoute = route
-      .trim()
-      .replace(/^\/+|\/+$/g, "")
-      .replace(/\s+/g, "")
-      .replace(/\/{2,}/g, "/")
-      .replace(/[^a-zA-Z0-9/_-]/g, "")
-      .toLowerCase();
+    const normalizedRoute = normalizeUnofficialAtoRoute(route);
     const [record] = await db
       .select()
       .from(unofficialAto)
@@ -1255,6 +1254,27 @@ export async function getUnofficialAtoByRoute({
           sql`lower(${unofficialAto.route}) = ${normalizedRoute}`
         )
       );
+
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get unofficial ATO by route"
+    );
+  }
+}
+
+export async function getUnofficialAtoByRouteGlobal({
+  route,
+}: {
+  route: string;
+}) {
+  try {
+    const normalizedRoute = normalizeUnofficialAtoRoute(route);
+    const [record] = await db
+      .select()
+      .from(unofficialAto)
+      .where(sql`lower(${unofficialAto.route}) = ${normalizedRoute}`);
 
     return record ?? null;
   } catch (_error) {
@@ -1332,7 +1352,8 @@ export async function updateUnofficialAtoSettings({
     }
 
     if (typeof route !== "undefined") {
-      updateValues.route = route;
+      updateValues.route =
+        typeof route === "string" ? normalizeUnofficialAtoRoute(route) : route;
     }
 
     if (typeof name === "string") {

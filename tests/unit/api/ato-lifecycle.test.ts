@@ -63,10 +63,8 @@ function createStatefulDeps() {
     getUnofficialAtoCountByOwner: async ({ ownerUserId }) =>
       Array.from(store.values()).filter((entry) => entry.ownerUserId === ownerUserId)
         .length,
-    getUnofficialAtoByRoute: async ({ ownerUserId, route }) =>
-      Array.from(store.values()).find(
-        (entry) => entry.ownerUserId === ownerUserId && entry.route === route
-      ) ?? null,
+    getUnofficialAtoByRouteGlobal: async ({ route }) =>
+      Array.from(store.values()).find((entry) => entry.route === route) ?? null,
     getUnofficialAtosByOwner: async ({ ownerUserId }) =>
       Array.from(store.values()).filter((entry) => entry.ownerUserId === ownerUserId) as never,
     getUserById: async () => ({
@@ -93,10 +91,8 @@ function createStatefulDeps() {
       store.delete(id);
       return record as never;
     },
-    getUnofficialAtoByRoute: async ({ ownerUserId, route }) =>
-      Array.from(store.values()).find(
-        (entry) => entry.ownerUserId === ownerUserId && entry.route === route
-      ) ?? null,
+    getUnofficialAtoByRouteGlobal: async ({ route }) =>
+      Array.from(store.values()).find((entry) => entry.route === route) ?? null,
     getUnofficialAtoById: async ({ id, ownerUserId }) => {
       const record = store.get(id);
       return record && record.ownerUserId === ownerUserId ? (record as never) : null;
@@ -108,6 +104,92 @@ function createStatefulDeps() {
 
   return { create, byId, installRecordCalls };
 }
+
+function createMultiUserDeps() {
+  let currentUserId = "user-a";
+  const store = new Map<string, AtoRecord>();
+  let sequence = 0;
+
+  const create = createAtoHandlers({
+    auth: async () => ({ user: { id: currentUserId } }),
+    createUnofficialAto: async ({ ownerUserId, name, route }) => {
+      const id = `ato-${++sequence}`;
+      const record: AtoRecord = {
+        id,
+        ownerUserId,
+        name,
+        route: route ?? name,
+        createdAt: new Date(),
+      };
+      store.set(id, record);
+      return {
+        ...record,
+        description: null,
+        personalityName: null,
+        instructions: null,
+        intelligenceMode: "ATO-Limited",
+        defaultVoiceId: null,
+        defaultVoiceLabel: null,
+        webSearchEnabled: false,
+        fileSearchEnabled: false,
+        fileUsageEnabled: false,
+        fileStoragePath: null,
+        updatedAt: record.createdAt,
+        planMetadata: null,
+      };
+    },
+    createUnofficialAtoInstallRecords: async () => null,
+    getUnofficialAtoCountByOwner: async ({ ownerUserId }) =>
+      Array.from(store.values()).filter((entry) => entry.ownerUserId === ownerUserId)
+        .length,
+    getUnofficialAtoByRouteGlobal: async ({ route }) =>
+      Array.from(store.values()).find((entry) => entry.route === route) ?? null,
+    getUnofficialAtosByOwner: async ({ ownerUserId }) =>
+      Array.from(store.values()).filter((entry) => entry.ownerUserId === ownerUserId) as never,
+    getUserById: async () => ({
+      id: currentUserId,
+      email: "test@example.com",
+      password: "pw",
+      createdAt: new Date(),
+      foundersAccess: false,
+      premiumUntil: null,
+      stripeCustomerId: null,
+      subscriptionStatus: null,
+      stripeSubscriptionId: null,
+    }),
+    listRouteRegistryEntries: async () => [],
+  });
+
+  const byId = createAtoByIdHandlers({
+    auth: async () => ({ user: { id: currentUserId } }),
+    deleteUnofficialAto: async ({ id, ownerUserId }) => {
+      const record = store.get(id);
+      if (!record || record.ownerUserId !== ownerUserId) {
+        return null;
+      }
+      store.delete(id);
+      return record as never;
+    },
+    getUnofficialAtoByRouteGlobal: async ({ route }) =>
+      Array.from(store.values()).find((entry) => entry.route === route) ?? null,
+    getUnofficialAtoById: async ({ id, ownerUserId }) => {
+      const record = store.get(id);
+      return record && record.ownerUserId === ownerUserId ? (record as never) : null;
+    },
+    getUserById: async () => null,
+    listRouteRegistryEntries: async () => [],
+    updateUnofficialAtoSettings: async () => null,
+  });
+
+  return {
+    create,
+    byId,
+    setCurrentUserId: (userId: string) => {
+      currentUserId = userId;
+    },
+  };
+}
+
 
 test("POST /api/ato -> GET /api/ato/[id] -> DELETE -> recreate keeps id source in UnofficialAto", async () => {
   const { create, byId, installRecordCalls } = createStatefulDeps();
@@ -150,4 +232,46 @@ test("POST /api/ato -> GET /api/ato/[id] -> DELETE -> recreate keeps id source i
   assert.equal(secondPayload.ato.id, "ato-2");
   assert.notEqual(secondPayload.ato.id, firstPayload.ato.id);
   assert.deepEqual(installRecordCalls, ["ato-1", "ato-2"]);
+});
+
+
+test("route claims are global and released immediately after hard delete", async () => {
+  const { create, byId, setCurrentUserId } = createMultiUserDeps();
+
+  setCurrentUserId("user-a");
+  const firstCreate = await create.POST(
+    new Request("http://localhost/api/ato", {
+      method: "POST",
+      body: JSON.stringify({ name: "Support Bot", route: "support" }),
+      headers: { "content-type": "application/json" },
+    })
+  );
+  assert.equal(firstCreate.status, 201);
+  const firstPayload = await firstCreate.json();
+
+  setCurrentUserId("user-b");
+  const blockedCreate = await create.POST(
+    new Request("http://localhost/api/ato", {
+      method: "POST",
+      body: JSON.stringify({ name: "Second Bot", route: "support" }),
+      headers: { "content-type": "application/json" },
+    })
+  );
+  assert.equal(blockedCreate.status, 400);
+
+  setCurrentUserId("user-a");
+  const deleted = await byId.DELETE(new Request("http://localhost") as never, {
+    params: Promise.resolve({ id: firstPayload.ato.id }),
+  });
+  assert.equal(deleted.status, 200);
+
+  setCurrentUserId("user-b");
+  const secondCreate = await create.POST(
+    new Request("http://localhost/api/ato", {
+      method: "POST",
+      body: JSON.stringify({ name: "Second Bot", route: "support" }),
+      headers: { "content-type": "application/json" },
+    })
+  );
+  assert.equal(secondCreate.status, 201);
 });
