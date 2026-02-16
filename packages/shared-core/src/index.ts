@@ -1,6 +1,27 @@
+export {
+  isReceipt,
+  parseReceipt,
+  receiptActorSchema,
+  receiptPolicyDecisionSchema,
+  receiptSchema,
+  receiptSourceRefSchema,
+  receiptV0Schema,
+  safeParseReceipt,
+  validateReceipt,
+} from "./schemas/receipt";
 export type { AtoApp, AtoRoute, CustomAto, RouteKind, RouteSuggestion } from "./types/ato";
+export type {
+  JsonArray,
+  JsonObject,
+  JsonPrimitive,
+  JsonValue,
+  Receipt,
+  ReceiptActor,
+  ReceiptPolicyDecision,
+  ReceiptSourceRef,
+  ReceiptV0,
+} from "./types/receipt";
 export type { Memory, MemoryIngestionPayload, MemoryIngestionRecord, MemoryRecord, MemorySourceType } from "./types/memory";
-export type { Receipt } from "./types/receipt";
 export type { Session, SessionType, SessionVisibility } from "./types/session";
 export type {
   ArtifactKind,
