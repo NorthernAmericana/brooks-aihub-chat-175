@@ -38,7 +38,7 @@ export const receiptV0Schema = z
     sourceRefs: z.array(receiptSourceRefSchema),
     supersedesReceiptId: z.string().min(1).optional(),
   })
-  .strict();
+  .passthrough();
 
 export const receiptSchema = receiptV0Schema;
 
