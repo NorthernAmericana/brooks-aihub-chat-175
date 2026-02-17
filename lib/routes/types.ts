@@ -1,11 +1,14 @@
-import type { RouteSuggestion } from "@/packages/shared-core/src";
-import { formatRoutePath } from "@/lib/routes/utils";
+import {
+  formatRoutePath,
+  type RouteAccessMetadata,
+  type RouteSuggestion,
+} from "@/packages/shared-core/src";
 
 export type { RouteKind, RouteSuggestion } from "@/packages/shared-core/src";
 
 export function mapRouteRegistryToRouteSuggestion(
   route: { id: string; label: string; slash: string },
-  metadata?: Pick<RouteSuggestion, "foundersOnly" | "isFreeRoute">
+  metadata?: RouteAccessMetadata
 ): RouteSuggestion {
   return {
     id: route.id,

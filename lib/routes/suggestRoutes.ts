@@ -1,6 +1,10 @@
 import "server-only";
 
 import {
+  normalizeRouteKey,
+  type RouteSuggestion,
+} from "@/packages/shared-core/src";
+import {
   getUnofficialAtosByOwner,
   listRouteRegistryEntries,
 } from "@/lib/db/queries";
@@ -8,9 +12,7 @@ import { getSlashRouteAccessMetadata } from "@/lib/routes/founders-slash-gating"
 import {
   mapCustomAtoToRouteSuggestion,
   mapRouteRegistryToRouteSuggestion,
-  type RouteSuggestion,
 } from "@/lib/routes/types";
-import { normalizeRouteKey } from "@/lib/routes/utils";
 
 export async function suggestRoutes({
   prefix,

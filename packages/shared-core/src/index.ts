@@ -23,8 +23,6 @@ export type {
   AtoManifestStatus,
   AtoRoute,
   CustomAto,
-  RouteKind,
-  RouteSuggestion,
 } from "./types/ato";
 export type {
   JsonArray,
@@ -54,3 +52,17 @@ export type {
   TurnRole,
   TurnUIDataTypes,
 } from "./types/turn";
+
+export {
+  formatRoutePath,
+  getRouteAccessMetadata,
+  normalizeRouteKey,
+  sanitizeRouteSegment,
+} from "./contracts/routes";
+export { ROUTE_CONTRACT_FIXTURES } from "./contracts/routes.fixtures";
+export type {
+  NormalizedRouteKey,
+  RouteAccessMetadata,
+  RouteKind,
+  RouteSuggestion,
+} from "./contracts/routes";
