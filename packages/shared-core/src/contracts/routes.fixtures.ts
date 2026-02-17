@@ -1,9 +1,4 @@
-import {
-  formatRoutePath,
-  getRouteAccessMetadata,
-  normalizeRouteKey,
-  type RouteKind,
-} from "./routes";
+import type { RouteKind } from "./routes";
 
 export type RouteContractFixture = {
   id: string;
@@ -32,13 +27,16 @@ export const ROUTE_CONTRACT_FIXTURES: RouteContractFixture[] = [
     label: "Brooks Bears",
     slashInput: "/BrooksBears",
     expected: {
-      normalizedKey: normalizeRouteKey("/BrooksBears"),
-      formattedRoute: formatRoutePath("/BrooksBears"),
-      metadata: getRouteAccessMetadata(false),
+      normalizedKey: "/brooksbears/",
+      formattedRoute: "/BrooksBears/",
+      metadata: {
+        foundersOnly: false,
+        isFreeRoute: true,
+      },
       suggestion: {
         kind: "official",
         slash: "/BrooksBears",
-        route: formatRoutePath("/BrooksBears"),
+        route: "/BrooksBears/",
         foundersOnly: false,
         isFreeRoute: true,
       },
@@ -49,13 +47,16 @@ export const ROUTE_CONTRACT_FIXTURES: RouteContractFixture[] = [
     label: "MyCarMind Driver",
     slashInput: "/MyCarMindATO/Driver",
     expected: {
-      normalizedKey: normalizeRouteKey("/MyCarMindATO/Driver"),
-      formattedRoute: formatRoutePath("/MyCarMindATO/Driver"),
-      metadata: getRouteAccessMetadata(false),
+      normalizedKey: "/mycarmindato/driver/",
+      formattedRoute: "/MyCarMindATO/Driver/",
+      metadata: {
+        foundersOnly: false,
+        isFreeRoute: true,
+      },
       suggestion: {
         kind: "official",
         slash: "/MyCarMindATO/Driver",
-        route: formatRoutePath("/MyCarMindATO/Driver"),
+        route: "/MyCarMindATO/Driver/",
         foundersOnly: false,
         isFreeRoute: true,
       },
@@ -66,13 +67,16 @@ export const ROUTE_CONTRACT_FIXTURES: RouteContractFixture[] = [
     label: "Roadtrip Buddy",
     slashInput: " /Custom Garage_Bot// ",
     expected: {
-      normalizedKey: normalizeRouteKey(" /Custom Garage_Bot// "),
-      formattedRoute: formatRoutePath(" /Custom Garage_Bot// "),
-      metadata: getRouteAccessMetadata(false),
+      normalizedKey: "/customgarage_bot/",
+      formattedRoute: "/Custom Garage_Bot/",
+      metadata: {
+        foundersOnly: false,
+        isFreeRoute: true,
+      },
       suggestion: {
         kind: "custom",
         slash: " /Custom Garage_Bot// ",
-        route: formatRoutePath(" /Custom Garage_Bot// "),
+        route: "/Custom Garage_Bot/",
         foundersOnly: false,
         isFreeRoute: true,
       },

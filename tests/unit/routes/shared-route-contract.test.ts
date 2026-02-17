@@ -1,3 +1,6 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
 import {
   ROUTE_CONTRACT_FIXTURES,
   formatRoutePath,
@@ -6,34 +9,29 @@ import {
   sanitizeRouteSegment,
 } from "@/packages/shared-core/src";
 
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message);
-  }
-}
+describe("shared route contract fixtures", () => {
+  it("keeps hardcoded normalized and formatted outputs stable", () => {
+    for (const fixture of ROUTE_CONTRACT_FIXTURES) {
+      assert.equal(normalizeRouteKey(fixture.slashInput), fixture.expected.normalizedKey);
+      assert.equal(formatRoutePath(fixture.slashInput), fixture.expected.formattedRoute);
+    }
+  });
 
-for (const fixture of ROUTE_CONTRACT_FIXTURES) {
-  const normalized = normalizeRouteKey(fixture.slashInput);
-  const formatted = formatRoutePath(fixture.slashInput);
+  it("keeps metadata derivation contract stable", () => {
+    const foundersMetadata = getRouteAccessMetadata(true);
+    assert.deepEqual(foundersMetadata, {
+      foundersOnly: true,
+      isFreeRoute: false,
+    });
 
-  assert(
-    normalized === fixture.expected.normalizedKey,
-    `fixture ${fixture.id}: normalized route key mismatch`
-  );
+    const freeMetadata = getRouteAccessMetadata(false);
+    assert.deepEqual(freeMetadata, {
+      foundersOnly: false,
+      isFreeRoute: true,
+    });
+  });
 
-  assert(
-    formatted === fixture.expected.formattedRoute,
-    `fixture ${fixture.id}: formatted route mismatch`
-  );
-}
-
-const metadata = getRouteAccessMetadata(true);
-assert(metadata.foundersOnly, "expected foundersOnly=true when input is true");
-assert(metadata.isFreeRoute === false, "expected isFreeRoute=false when foundersOnly=true");
-
-assert(
-  sanitizeRouteSegment(" /Custom Garage_Bot// ") === "CustomGarage_Bot",
-  "expected sanitizeRouteSegment to remove whitespace and invalid separators"
-);
-
-console.log("✅ shared route contract tests passed");
+  it("sanitizes custom route segment values consistently", () => {
+    assert.equal(sanitizeRouteSegment(" /Custom Garage_Bot// "), "CustomGarage_Bot");
+  });
+});
