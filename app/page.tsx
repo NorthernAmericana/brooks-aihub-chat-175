@@ -6,7 +6,9 @@ import forestGreenUiWelcome from "@/public/ui/forest-green-ui-welcome.png";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
+import { EarlyReleaseBanner } from "@/components/early-release-banner";
 import { toast } from "@/components/toast";
+import { FOUNDERS_STRIPE_PRICE_ID } from "@/lib/launch-config";
 
 export default function IntroPage() {
   const router = useRouter();
@@ -25,6 +27,14 @@ export default function IntroPage() {
       return;
     }
 
+    if (!FOUNDERS_STRIPE_PRICE_ID) {
+      toast({
+        type: "error",
+        description: "Checkout is temporarily unavailable. Please try again later.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch("/api/stripe/checkout", {
@@ -33,7 +43,7 @@ export default function IntroPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          priceId: "price_1SpBht050iAre6ZtPyv42z6s",
+          priceId: FOUNDERS_STRIPE_PRICE_ID,
         }),
       });
 
@@ -168,6 +178,8 @@ export default function IntroPage() {
       <div className="intro-sparkle absolute left-[18%] bottom-[20%] h-2.5 w-2.5 rotate-45 rounded-sm bg-emerald-100/70 shadow-[0_0_10px_rgba(140,240,200,0.7)]" />
 
       <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 px-6 text-center">
+        <EarlyReleaseBanner className="w-full max-w-2xl text-left" compact />
+
         <div className="intro-glass w-full rounded-[32px] px-6 py-10 sm:px-10 sm:py-12">
           <div className="text-xs uppercase tracking-[0.3em] text-white/70">
             Northern Americana Tech
@@ -196,7 +208,7 @@ export default function IntroPage() {
           onClick={handleFoundersAccess}
           type="button"
         >
-          {loading ? "Loading..." : "Join Founder's Access for $4.99"}
+          {loading ? "Loading..." : "Join Founder's Access for $4.99/mo"}
         </button>
       </div>
     </main>

@@ -6,9 +6,11 @@ It is seeded from:
 - [`docs/master-scope.md`](../master-scope.md)
 - [`docs/ops/release-checklist.md`](../ops/release-checklist.md)
 - [`docs/stripe-entitlements.md`](../stripe-entitlements.md)
+- [`docs/launch/early-release-apr-10-2026.md`](./early-release-apr-10-2026.md)
 
 | Feature area | Status | User-visible capability | Dependencies | Risk / unknowns |
 | --- | --- | --- | --- | --- |
+| Early Release phase definition (Apr 10, 2026) | Live | Product messaging, launch badge/countdown behavior, and Founders-only paid scope all key off a single launch config/date. | Launch config constants, `NEXT_PUBLIC_EARLY_RELEASE_START_AT`, `NEXT_PUBLIC_EARLY_RELEASE_TZ`, `NEXT_PUBLIC_ENABLE_FUTURE_TIERS`. | Misconfigured env values can show incorrect phase messaging or accidentally expose future-tier UI. |
 | Paid Access subscription checkout | Live | Signed-in users can upgrade to Paid Access through Stripe Checkout at `$4.99/month`. | Stripe product + price configuration, authenticated user session, `POST /api/stripe/checkout`. | Checkout depends on correctly configured Stripe keys and price ID in each environment. |
 | Subscription entitlement lifecycle | Beta | Founders Access is granted/revoked from Stripe webhook events and reflected in product access. | `POST /api/stripe/webhook`, webhook secret verification, entitlement persistence in Postgres. | Webhook misconfiguration or delayed delivery can create temporary entitlement mismatches. |
 | Founders perks in product UI | Live | Pricing and in-app surfaces show perk details and locked/unlocked states for members. | Entitlement checks, perks configuration, pricing/store/greeting UI surfaces. | If entitlement polling fails, users may briefly see stale perk states. |

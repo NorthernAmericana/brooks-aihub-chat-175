@@ -22,6 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { FOUNDERS_PRICE_USD, FOUNDERS_STRIPE_PRICE_ID } from "@/lib/launch-config";
 import { PwaInstallButton } from "./pwa-install-button";
 import {
   AlertDialog,
@@ -69,6 +70,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       return;
     }
 
+    if (!FOUNDERS_STRIPE_PRICE_ID) {
+      toast.error("Checkout is temporarily unavailable. Please try again later.");
+      return;
+    }
+
     setLoadingCheckout(true);
     try {
       const response = await fetch("/api/stripe/checkout", {
@@ -77,7 +83,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          priceId: "price_1SpBht050iAre6ZtPyv42z6s",
+          priceId: FOUNDERS_STRIPE_PRICE_ID,
         }),
       });
 
@@ -200,7 +206,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               size="sm"
               variant="outline"
             >
-              {loadingCheckout ? "Loading..." : "Founders Edition • $4.99"}
+              {loadingCheckout
+                ? "Loading..."
+                : `Founders Access • $${FOUNDERS_PRICE_USD.toFixed(2)}`}
             </Button>
             {isStandalone ? (
               <div className="rounded-md border border-muted bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
