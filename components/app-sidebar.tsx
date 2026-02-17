@@ -70,6 +70,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       return;
     }
 
+    if (!FOUNDERS_STRIPE_PRICE_ID) {
+      toast.error("Checkout is temporarily unavailable. Please try again later.");
+      return;
+    }
+
     setLoadingCheckout(true);
     try {
       const response = await fetch("/api/stripe/checkout", {

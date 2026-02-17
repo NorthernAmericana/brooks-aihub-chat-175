@@ -27,9 +27,7 @@ export const EARLY_RELEASE_TIMEZONE =
 export const FOUNDERS_PRICE_USD = 4.99;
 
 export const FOUNDERS_STRIPE_PRICE_ID =
-  process.env.STRIPE_FOUNDERS_PRICE_ID ||
-  process.env.NEXT_PUBLIC_FOUNDERS_STRIPE_PRICE_ID ||
-  "";
+  process.env.NEXT_PUBLIC_FOUNDERS_STRIPE_PRICE_ID || "";
 
 export const ENABLE_FUTURE_TIERS =
   process.env.NEXT_PUBLIC_ENABLE_FUTURE_TIERS === "true";

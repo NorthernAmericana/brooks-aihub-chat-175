@@ -24,6 +24,14 @@ export default function PricingPage() {
       return;
     }
 
+    if (!FOUNDERS_STRIPE_PRICE_ID) {
+      toast({
+        type: "error",
+        description: "Checkout is temporarily unavailable. Please try again later.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch("/api/stripe/checkout", {

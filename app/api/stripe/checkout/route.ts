@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { auth } from "@/app/(auth)/auth";
-import { FOUNDERS_STRIPE_PRICE_ID } from "@/lib/launch-config";
+import { SERVER_FOUNDERS_STRIPE_PRICE_ID } from "@/lib/server/stripe-config";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
@@ -26,7 +26,11 @@ export async function POST(request: NextRequest) {
     const { priceId } = await request.json();
 
     // Validate price ID
-    if (!FOUNDERS_STRIPE_PRICE_ID || priceId !== FOUNDERS_STRIPE_PRICE_ID) {
+    if (!SERVER_FOUNDERS_STRIPE_PRICE_ID) {
+      return NextResponse.json({ error: "Founders price ID is not configured" }, { status: 500 });
+    }
+
+    if (priceId !== SERVER_FOUNDERS_STRIPE_PRICE_ID) {
       return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
 
