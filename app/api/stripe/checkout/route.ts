@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { auth } from "@/app/(auth)/auth";
+import { FOUNDERS_STRIPE_PRICE_ID } from "@/lib/launch-config";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
@@ -10,8 +11,6 @@ if (!stripeSecretKey) {
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-12-15.clover",
 });
-
-const FOUNDERS_ACCESS_PRICE_ID = "price_1SpBht050iAre6ZtPyv42z6s";
 
 // Force dynamic rendering to prevent prerendering issues with auth()
 export const dynamic = "force-dynamic";
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
     const { priceId } = await request.json();
 
     // Validate price ID
-    if (priceId !== FOUNDERS_ACCESS_PRICE_ID) {
+    if (!FOUNDERS_STRIPE_PRICE_ID || priceId !== FOUNDERS_STRIPE_PRICE_ID) {
       return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
 

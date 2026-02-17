@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { EarlyReleaseBanner } from "@/components/early-release-banner";
 import { toast } from "@/components/toast";
 import { FOUNDERS_ACCESS_PERKS } from "@/lib/entitlements/products";
-
-const FOUNDERS_PRICE_ID = "price_1SpBht050iAre6ZtPyv42z6s";
+import { ENABLE_FUTURE_TIERS, FOUNDERS_PRICE_USD, FOUNDERS_STRIPE_PRICE_ID } from "@/lib/launch-config";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function PricingPage() {
     if (!session?.user) {
       toast({
         type: "error",
-        description: "Please sign in to purchase Paid Access",
+        description: "Please sign in to purchase Founders Access",
       });
       router.push("/login");
       return;
@@ -31,7 +31,7 @@ export default function PricingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ priceId: FOUNDERS_PRICE_ID }),
+        body: JSON.stringify({ priceId: FOUNDERS_STRIPE_PRICE_ID }),
       });
 
       if (!response.ok) {
@@ -76,6 +76,8 @@ export default function PricingPage() {
           </p>
         </header>
 
+        <EarlyReleaseBanner />
+
         <section className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 p-6">
           <div className="text-xs uppercase tracking-[0.3em] text-emerald-200/80">
             Live this month
@@ -102,9 +104,9 @@ export default function PricingPage() {
 
         <section className="grid gap-6 md:grid-cols-[2fr_1fr]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-semibold text-white">Paid</h2>
+            <h2 className="text-xl font-semibold text-white">Founders Access</h2>
             <p className="mt-2 text-sm text-white/70">
-              For early adopters who want the full Brooks AI HUB experience.
+              For early adopters who want current premium access during Early Release.
             </p>
             <div className="mt-6 grid gap-3 text-sm text-white/70">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -115,16 +117,16 @@ export default function PricingPage() {
                 uploads.
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                Priority access to NAMC lore drops and experimental apps.
+                Access to currently shipped Founders perks only; roadmap items stay off-plan until shipped.
               </div>
             </div>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
             <div className="text-sm uppercase tracking-[0.3em] text-white/60">
-              Paid Access
+              Founders Access
             </div>
-            <div className="mt-4 text-4xl font-semibold text-white">$4.99</div>
+            <div className="mt-4 text-4xl font-semibold text-white">${FOUNDERS_PRICE_USD.toFixed(2)}</div>
             <div className="mt-1 text-xs text-white/60">per month</div>
             <button
               className="mt-6 w-full rounded-full bg-pink-500 py-3 text-sm font-semibold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-70"
@@ -132,7 +134,7 @@ export default function PricingPage() {
               onClick={handlePaidAccess}
               type="button"
             >
-              {loading ? "Loading..." : "Upgrade to Paid"}
+              {loading ? "Loading..." : "Upgrade to Founders"}
             </button>
             <Link
               className="mt-4 block text-xs text-white/50 transition hover:text-white"
@@ -246,6 +248,12 @@ export default function PricingPage() {
           <div className="text-xs uppercase tracking-[0.3em] text-white/60">
             FAQ
           </div>
+          {!ENABLE_FUTURE_TIERS && (
+            <p className="mt-2 text-xs text-white/60">
+              Future tiers are intentionally disabled for this launch phase.
+              Only Free and Founders are available right now.
+            </p>
+          )}
           <h2 className="mt-2 text-xl font-semibold text-white">
             Clarifications before you subscribe
           </h2>

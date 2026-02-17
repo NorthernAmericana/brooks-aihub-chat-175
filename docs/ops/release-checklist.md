@@ -29,3 +29,13 @@ Use this checklist before promoting a new release to production.
 - [ ] `GET /sw.js` returns `200` and registers a service worker.
 - [ ] Run the PWA check: `PWA_CHECK_BASE_URL=https://www.brooksaihub.app pnpm check:pwa`.
 - [ ] Spot-check key flows (login, chat, any critical user journey).
+
+## Early Release readiness checks
+
+- [ ] Verify `NEXT_PUBLIC_EARLY_RELEASE_START_AT` and `NEXT_PUBLIC_EARLY_RELEASE_TZ` are set correctly for production.
+- [ ] Verify `NEXT_PUBLIC_ENABLE_FUTURE_TIERS=false` unless a future-tier launch is explicitly approved.
+- [ ] Verify pricing copy shows **Founders Access at $4.99/month** as the only paid option.
+- [ ] Verify Stripe checkout uses the configured Founders price ID (`STRIPE_FOUNDERS_PRICE_ID` / `NEXT_PUBLIC_FOUNDERS_STRIPE_PRICE_ID`).
+- [ ] Verify production Stripe webhook endpoint receives events and signature verification passes.
+- [ ] Verify entitlement sync appears in UI for test users (`pay → unlock`, `cancel → relock`).
+- [ ] Re-confirm `GET /manifest.webmanifest` and `GET /sw.js` return `200` after launch-day deploys.

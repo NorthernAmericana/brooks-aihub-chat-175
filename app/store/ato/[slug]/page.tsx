@@ -8,6 +8,7 @@ import { FOUNDERS_ACCESS_PERKS } from "@/lib/entitlements/products";
 import { getAppDetails } from "@/lib/store/getAppDetails";
 import { installApp } from "@/lib/store/installApp";
 import { listAppsWithInstallState } from "@/lib/store/listAppsWithInstallState";
+import { EarlyReleaseBanner } from "@/components/early-release-banner";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 export const dynamic = "force-dynamic";
@@ -104,6 +105,8 @@ export default async function AtoStoreDetailsPage({
       </div>
 
       <div className="app-page-content flex-1 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
+        <EarlyReleaseBanner className="mb-6" compact />
+
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">

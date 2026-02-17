@@ -38,7 +38,7 @@ The app remains in development mode but is usable for real client testing with a
 
 1. User clicks "Join Founder's Access for $4.99" button on the landing page
 2. System creates a Stripe Checkout session with:
-   - Price ID: `price_1SpBht050iAre6ZtPyv42z6s`
+   - Price ID: use `STRIPE_FOUNDERS_PRICE_ID` (mirror to `NEXT_PUBLIC_FOUNDERS_STRIPE_PRICE_ID` if client needs to pass the ID)
    - Mode: subscription
    - Success URL: `/brooks-ai-hub?success=true`
    - Cancel URL: `/?canceled=true`
@@ -116,9 +116,15 @@ const { entitlements, loading, error, refetch } = useEntitlements(user.id);
 ### Pricing
 
 - **Price**: $4.99/month (USD)
-- **Stripe Price ID**: `price_1SpBht050iAre6ZtPyv42z6s`
+- **Stripe Price ID**: configured via `STRIPE_FOUNDERS_PRICE_ID` (and optional `NEXT_PUBLIC_FOUNDERS_STRIPE_PRICE_ID` for client checkout payloads)
 - **Billing**: Monthly recurring subscription
 - **Payment Methods**: Credit/debit cards via Stripe
+
+### Early Release phase alignment
+
+- Early Release launch is defined as **April 10, 2026 at 00:00 America/Chicago**.
+- Launch config is centralized in code and environment variables; see [`docs/launch/early-release-apr-10-2026.md`](./launch/early-release-apr-10-2026.md).
+- Pricing/UI copy must continue to show only **Free + Founders ($4.99/month)** until a future tier release is explicitly shipped.
 
 ### Perks
 
@@ -300,7 +306,7 @@ This creates:
    - Log in to Stripe Dashboard
    - Create a product for "Founders Access"
    - Create a recurring price of $4.99/month
-   - Note the price ID (should be `price_1SpBht050iAre6ZtPyv42z6s`)
+   - Note the price ID value and set it in `STRIPE_FOUNDERS_PRICE_ID`
 
 2. **Configure Webhook**:
    - Go to Stripe Dashboard → Developers → Webhooks
