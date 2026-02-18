@@ -3,6 +3,7 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -22,6 +23,8 @@ type StoreClientProps = {
 export function StoreClient({ apps, hasSession }: StoreClientProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<"official" | "all">("all");
+  const [isUnofficialShaking, setIsUnofficialShaking] = useState(false);
 
   useSwipeGesture({
     edgeZone: 56,
@@ -62,11 +65,25 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
   const filteredApps = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    const officialApps = apps.filter((app) => app.isOfficial);
+    const sourceApps = filterMode === "official" ? officialApps : apps;
+
     if (!query) {
-      return apps;
+      return sourceApps;
     }
-    return apps.filter((app) => matchesSearchQuery(app, query));
-  }, [apps, searchQuery]);
+
+    return sourceApps.filter((app) => matchesSearchQuery(app, query));
+  }, [apps, filterMode, searchQuery]);
+
+  const handleOfficialPress = () => {
+    setFilterMode("official");
+  };
+
+  const handleUnofficialPress = () => {
+    setIsUnofficialShaking(true);
+    toast("feature releasing soon");
+    window.setTimeout(() => setIsUnofficialShaking(false), 450);
+  };
 
   const hasSearchQuery = searchQuery.trim().length > 0;
   const isCatalogUnavailable = apps.length === 0;
@@ -127,6 +144,30 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
               type="search"
               value={searchQuery}
             />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+            <button
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                filterMode === "official"
+                  ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+              }`}
+              onClick={handleOfficialPress}
+              type="button"
+            >
+              Official ATOs
+            </button>
+            <button
+              className={`rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 ${
+                isUnofficialShaking
+                  ? "[animation:store-unofficial-shake_0.45s_ease-in-out]"
+                  : ""
+              }`}
+              onClick={handleUnofficialPress}
+              type="button"
+            >
+              Unofficial ATOs
+            </button>
           </div>
           {!hasSession && (
             <p className="mt-3 text-xs text-slate-500">
@@ -228,6 +269,26 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        @keyframes store-unofficial-shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          20% {
+            transform: translateX(-6px);
+          }
+          40% {
+            transform: translateX(6px);
+          }
+          60% {
+            transform: translateX(-4px);
+          }
+          80% {
+            transform: translateX(4px);
+          }
+        }
+      `}</style>
     </div>
   );
 }

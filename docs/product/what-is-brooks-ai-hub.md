@@ -33,6 +33,7 @@ Brooks AI HUB is a trust-first PWA control-center that connects official NAT ATO
 
 - Directionally, Brooks AI HUB is positioned to keep growing as a central NAT control center for official apps, media access, and trust controls.
 - Future expansion is framed in repo docs as phased evolution (for example stronger export/delete flows, broader ecosystem surfaces, and platform graduation), not as date-based promises.
+- Custom ATOs currently stay on the Brooks AI HUB home experience and are not listed in the Official ATO Store; a future approval workflow is planned so company owners can review and promote selected custom ATOs into official ATO Store apps.
 
 ## 4) How NAT, NAMC, and Brooks AI HUB relate
 
