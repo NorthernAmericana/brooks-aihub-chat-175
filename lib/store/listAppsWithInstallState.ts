@@ -33,8 +33,9 @@ export async function listAppsWithInstallState(userId?: string | null) {
   }
 
   const mapped = mapAppsWithInstallState({ apps, routeCounts, installs });
+  const officialAppsOnly = mapped.filter((app) => app.isOfficial);
 
-  return mapped.sort((a, b) => {
+  return officialAppsOnly.sort((a, b) => {
     if (a.isInstalled !== b.isInstalled) {
       return a.isInstalled ? -1 : 1;
     }
