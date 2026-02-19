@@ -28,6 +28,23 @@ export function buildDbOperationCause({
   return `${operation} failed${code ? ` (code: ${code})` : ""}${message ? `: ${message}` : ""}`;
 }
 
+export function isMissingRelationError(
+  error: unknown,
+  relationName?: string
+) {
+  const details = getDbErrorDetails(error);
+
+  if (details.code !== "42P01") {
+    return false;
+  }
+
+  if (!relationName) {
+    return true;
+  }
+
+  return details.message?.includes(relationName) ?? false;
+}
+
 export function rethrowChatSdkErrorOrWrapDbError({
   error,
   operation,

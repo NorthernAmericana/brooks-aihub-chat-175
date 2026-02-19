@@ -2,6 +2,7 @@ import "server-only";
 
 import { asc, count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { isMissingRelationError } from "@/lib/db/query-error-handling";
 import {
   atoApps,
   atoRoutes,
@@ -23,16 +24,26 @@ import {
 export type { StoreAppListItem };
 
 async function reconcileNamcInstallGateState(userId: string) {
-  const [record] = await db
-    .select({
-      openedAt: namcInstallGateState.openedAt,
-      completedAt: namcInstallGateState.completedAt,
-      verificationStatus: namcInstallGateState.verificationStatus,
-      verificationCheckedAt: namcInstallGateState.verificationCheckedAt,
-    })
-    .from(namcInstallGateState)
-    .where(eq(namcInstallGateState.userId, userId))
-    .limit(1);
+  let record;
+
+  try {
+    [record] = await db
+      .select({
+        openedAt: namcInstallGateState.openedAt,
+        completedAt: namcInstallGateState.completedAt,
+        verificationStatus: namcInstallGateState.verificationStatus,
+        verificationCheckedAt: namcInstallGateState.verificationCheckedAt,
+      })
+      .from(namcInstallGateState)
+      .where(eq(namcInstallGateState.userId, userId))
+      .limit(1);
+  } catch (error) {
+    if (isMissingRelationError(error, "namc_install_gate_state")) {
+      return null;
+    }
+
+    throw error;
+  }
 
   if (!record || !hasNamcGateActivity(record)) {
     return record ?? null;
@@ -48,25 +59,35 @@ async function reconcileNamcInstallGateState(userId: string) {
   }
 
   const downgradedCheckedAt = new Date(now - NAMC_INSTALL_VERIFICATION_MAX_AGE_MS - 1);
-  const [updatedRecord] = await db
-    .update(namcInstallGateState)
-    .set({
-      verificationStatus: "needs-recheck",
-      verificationMethod: "server-reconcile",
-      verificationCheckedAt: downgradedCheckedAt,
-      verificationDetails: {
-        reason: "verification-stale",
-        staleMs: now - (record.verificationCheckedAt?.getTime() ?? 0),
-      },
-      updatedAt: new Date(now),
-    })
-    .where(eq(namcInstallGateState.userId, userId))
-    .returning({
-      openedAt: namcInstallGateState.openedAt,
-      completedAt: namcInstallGateState.completedAt,
-      verificationStatus: namcInstallGateState.verificationStatus,
-      verificationCheckedAt: namcInstallGateState.verificationCheckedAt,
-    });
+  let updatedRecord;
+
+  try {
+    [updatedRecord] = await db
+      .update(namcInstallGateState)
+      .set({
+        verificationStatus: "needs-recheck",
+        verificationMethod: "server-reconcile",
+        verificationCheckedAt: downgradedCheckedAt,
+        verificationDetails: {
+          reason: "verification-stale",
+          staleMs: now - (record.verificationCheckedAt?.getTime() ?? 0),
+        },
+        updatedAt: new Date(now),
+      })
+      .where(eq(namcInstallGateState.userId, userId))
+      .returning({
+        openedAt: namcInstallGateState.openedAt,
+        completedAt: namcInstallGateState.completedAt,
+        verificationStatus: namcInstallGateState.verificationStatus,
+        verificationCheckedAt: namcInstallGateState.verificationCheckedAt,
+      });
+  } catch (error) {
+    if (isMissingRelationError(error, "namc_install_gate_state")) {
+      return null;
+    }
+
+    throw error;
+  }
 
   return (
     updatedRecord ?? {
