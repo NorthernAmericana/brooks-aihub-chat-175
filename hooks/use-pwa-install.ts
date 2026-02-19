@@ -7,10 +7,18 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+export type InstallMethod =
+  | "prompt"
+  | "manual-ios"
+  | "manual-android"
+  | "unavailable";
+
 export function usePwaInstall() {
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isIosSafari, setIsIosSafari] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -21,6 +29,13 @@ export function usePwaInstall() {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
+
+    const userAgent = window.navigator.userAgent;
+    const isIosDevice = /iPad|iPhone|iPod/.test(userAgent);
+    const isSafariBrowser =
+      /Safari/.test(userAgent) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(userAgent);
+    setIsIosSafari(isIosDevice && isSafariBrowser);
+    setIsAndroid(/Android/.test(userAgent));
 
     const updateStandalone = () => {
       const isStandaloneDisplay = window.matchMedia(
@@ -70,9 +85,20 @@ export function usePwaInstall() {
     return { available: true, outcome: choiceResult.outcome };
   };
 
+  const installMethod: InstallMethod = isStandalone
+    ? "unavailable"
+    : installPrompt
+      ? "prompt"
+      : isIosSafari
+        ? "manual-ios"
+        : isAndroid
+          ? "manual-android"
+          : "unavailable";
+
   return {
     isStandalone,
     hasInstallPrompt: Boolean(installPrompt),
+    installMethod,
     promptInstall,
   };
 }
