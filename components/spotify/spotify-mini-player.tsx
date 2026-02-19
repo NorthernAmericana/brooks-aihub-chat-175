@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertCircle,
   ExternalLink,
   Pause,
   Play,
@@ -24,12 +25,18 @@ export function SpotifyMiniPlayer() {
     playerState,
     isConnected,
     isPlayerReady,
+    isFallbackMode,
+    sdkUnavailableReason,
+    controlMessage,
+    dismissControlMessage,
     togglePlayback,
     skipNext,
     skipPrevious,
     seekTo,
     startRadio,
     openSpotify,
+    openSpotifyArtist,
+    openSpotifyContext,
   } = useSpotifyPlayback();
 
   const track = playerState?.item;
@@ -67,10 +74,34 @@ export function SpotifyMiniPlayer() {
             {track.artists.map((artist) => artist.name).join(", ")}
           </p>
           <p className="text-[10px] text-emerald-200/80">
-            {isConnected && isPlayerReady ? "Connected" : "Reconnecting"}
+            {isFallbackMode
+              ? "Fallback mode"
+              : isConnected && isPlayerReady
+                ? "Connected"
+                : "Reconnecting"}
           </p>
         </div>
       </div>
+
+      {sdkUnavailableReason ? (
+        <div className="mt-2 rounded-lg border border-amber-300/40 bg-amber-500/20 px-2 py-1 text-[10px] text-amber-100">
+          {sdkUnavailableReason}
+        </div>
+      ) : null}
+
+      {controlMessage ? (
+        <div className="mt-2 flex items-start gap-2 rounded-lg border border-rose-300/40 bg-rose-500/20 px-2 py-1 text-[10px] text-rose-100">
+          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
+          <div className="flex-1">{controlMessage}</div>
+          <button
+            className="rounded px-1 text-[10px] text-rose-100/80 hover:bg-rose-500/20"
+            onClick={dismissControlMessage}
+            type="button"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
 
       <div className="mt-2">
         <input
@@ -133,6 +164,23 @@ export function SpotifyMiniPlayer() {
         <button
           className="ml-auto rounded-full border border-emerald-300/40 bg-emerald-500/20 p-2 text-emerald-100"
           onClick={openSpotify}
+          title="Open track in Spotify"
+          type="button"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </button>
+        <button
+          className="rounded-full border border-cyan-300/40 bg-cyan-500/20 p-2 text-cyan-100"
+          onClick={openSpotifyArtist}
+          title="Open artist in Spotify"
+          type="button"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </button>
+        <button
+          className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/20 p-2 text-fuchsia-100"
+          onClick={openSpotifyContext}
+          title="Open playlist/context in Spotify"
           type="button"
         >
           <ExternalLink className="h-4 w-4" />

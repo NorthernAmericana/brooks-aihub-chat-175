@@ -1,7 +1,15 @@
 import { and, eq } from "drizzle-orm";
-import { ArrowLeft, Check, Download, ExternalLink, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Download,
+  ExternalLink,
+  Link2Off,
+  Trash2,
+} from "lucide-react";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -43,7 +51,7 @@ export default async function SpotifyAppDetailPage() {
           .select()
           .from(userInstalls)
           .where(
-            and(eq(userInstalls.userId, userId), eq(userInstalls.appId, appId))
+            and(eq(userInstalls.userId, userId), eq(userInstalls.appId, appId)),
           )
           .limit(1)
       : [null];
@@ -79,6 +87,35 @@ export default async function SpotifyAppDetailPage() {
     await uninstallApp(session.user.id, appId);
     revalidatePath("/spotify-app");
     revalidatePath("/store");
+  };
+
+  const disconnectAction = async () => {
+    "use server";
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    const requestHeaders = await headers();
+    const host =
+      requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+    const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
+    const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
+
+    const response = await fetch(`${baseUrl}/api/spotify/disconnect`, {
+      method: "POST",
+      headers: {
+        cookie: requestHeaders.get("cookie") ?? "",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to disconnect Spotify account");
+    }
+
+    revalidatePath("/spotify-app");
+    revalidatePath("/Spotify");
   };
 
   return (
@@ -160,6 +197,15 @@ export default async function SpotifyAppDetailPage() {
                   <ExternalLink className="h-4 w-4" />
                   Open App UI
                 </Link>
+                <form action={disconnectAction} className="w-full md:w-auto">
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/20 px-6 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/30 md:w-56"
+                    type="submit"
+                  >
+                    <Link2Off className="h-4 w-4" />
+                    Disconnect Spotify
+                  </button>
+                </form>
                 <form action={uninstallAction} className="w-full md:w-auto">
                   <button
                     className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-300/40 bg-rose-500/20 px-6 py-3 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/30 md:w-40"
@@ -210,10 +256,12 @@ export default async function SpotifyAppDetailPage() {
             Privacy note
           </h3>
           <p className="mt-2 text-sm text-white/75">
-            This integration should only request playback and listening context
-            necessary to control your Spotify session. It should not access or
-            store credentials directly; token exchange and refresh must be
-            handled by secured server-side OAuth flows.
+            This integration accesses your playback state, available devices,
+            playback-control permissions, and basic account profile scopes to
+            show what is currently playing and send play/pause/skip/transfer
+            commands. We never store your Spotify password. OAuth token exchange
+            and refresh handling run server-side, and the refresh token is
+            stored encrypted at rest.
           </p>
         </section>
       </div>

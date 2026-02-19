@@ -1,31 +1,48 @@
 "use client";
 
 import {
-  Pause,
-  Play,
+  AlertCircle,
+  ExternalLink,
+  Link2Off,
   Radio,
-  SkipBack,
-  SkipForward,
-  Volume2,
+  RefreshCw,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-
-const mockTracks = [
-  { title: "Night Drive", artist: "Synthia Lane", duration: "3:24" },
-  { title: "City Echo", artist: "Future Arcade", duration: "4:02" },
-  { title: "Aurora Static", artist: "Neon Atlas", duration: "2:58" },
-];
+import { useState } from "react";
+import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
 
 export default function SpotifyPage() {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(70);
-  const [radioStatus, setRadioStatus] = useState("Idle");
+  const {
+    playerState,
+    isConnected,
+    isPlayerReady,
+    isFallbackMode,
+    sdkUnavailableReason,
+    error,
+    controlMessage,
+    dismissControlMessage,
+    refreshState,
+    togglePlayback,
+    skipNext,
+    skipPrevious,
+    startRadio,
+    openSpotify,
+    openSpotifyArtist,
+    openSpotifyContext,
+  } = useSpotifyPlayback();
+  const [disconnecting, setDisconnecting] = useState(false);
 
-  const track = useMemo(
-    () => mockTracks[currentTrackIndex],
-    [currentTrackIndex]
-  );
+  const disconnectSpotify = async () => {
+    setDisconnecting(true);
+    try {
+      await fetch("/api/spotify/disconnect", {
+        method: "POST",
+        credentials: "include",
+      });
+      window.location.reload();
+    } finally {
+      setDisconnecting(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#050b07] px-4 py-10 text-white">
@@ -36,106 +53,134 @@ export default function SpotifyPage() {
           </p>
           <h1 className="mt-2 text-3xl font-semibold">Music Player Console</h1>
           <p className="mt-2 text-sm text-white/70">App route: /Spotify/</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-emerald-300/30 bg-emerald-500/20 px-3 py-1 text-emerald-100">
+              {isFallbackMode
+                ? "Fallback mode (server controls)"
+                : isConnected && isPlayerReady
+                  ? "SDK connected"
+                  : "Connecting SDK..."}
+            </span>
+            <button
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white/90 hover:bg-white/20"
+              onClick={() => refreshState()}
+              type="button"
+            >
+              <RefreshCw className="mr-1 inline h-3.5 w-3.5" />
+              Refresh state
+            </button>
+            <button
+              className="rounded-full border border-rose-300/40 bg-rose-500/20 px-3 py-1 text-rose-100 hover:bg-rose-500/30 disabled:opacity-60"
+              disabled={disconnecting}
+              onClick={disconnectSpotify}
+              type="button"
+            >
+              <Link2Off className="mr-1 inline h-3.5 w-3.5" />
+              {disconnecting ? "Disconnecting..." : "Disconnect Spotify"}
+            </button>
+          </div>
         </header>
+
+        {sdkUnavailableReason ? (
+          <section className="rounded-2xl border border-amber-300/40 bg-amber-500/15 p-4 text-sm text-amber-100">
+            <AlertCircle className="mr-2 inline h-4 w-4" />
+            {sdkUnavailableReason}
+          </section>
+        ) : null}
+
+        {error ? (
+          <section className="rounded-2xl border border-rose-300/40 bg-rose-500/15 p-4 text-sm text-rose-100">
+            <AlertCircle className="mr-2 inline h-4 w-4" />
+            {error}
+          </section>
+        ) : null}
+
+        {controlMessage ? (
+          <section className="rounded-2xl border border-rose-300/40 bg-rose-500/15 p-4 text-sm text-rose-100">
+            <AlertCircle className="mr-2 inline h-4 w-4" />
+            {controlMessage}
+            <button
+              className="ml-3 rounded-full border border-rose-300/40 px-2 py-0.5 text-xs"
+              onClick={dismissControlMessage}
+              type="button"
+            >
+              Dismiss
+            </button>
+          </section>
+        ) : null}
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <p className="text-sm text-emerald-200/90">Now playing</p>
-          <h2 className="mt-2 text-2xl font-semibold">{track.title}</h2>
+          <h2 className="mt-2 text-2xl font-semibold">
+            {playerState?.item?.name ?? "Nothing currently playing"}
+          </h2>
           <p className="text-sm text-white/70">
-            {track.artist} · {track.duration}
+            {playerState?.item?.artists
+              ?.map((artist) => artist.name)
+              .join(", ") || "Open Spotify on any device and start playback."}
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
-              aria-label="Previous track"
-              className="rounded-full border border-white/20 p-3 hover:bg-white/10"
-              onClick={() =>
-                setCurrentTrackIndex(
-                  (prev) => (prev - 1 + mockTracks.length) % mockTracks.length
-                )
-              }
+              className="rounded-full border border-white/20 px-4 py-2 hover:bg-white/10"
+              onClick={() => skipPrevious()}
               type="button"
             >
-              <SkipBack aria-hidden="true" className="h-4 w-4" />
+              Previous
             </button>
             <button
-              aria-label={isPlaying ? "Pause" : "Play"}
-              className="rounded-full bg-emerald-500 p-4 text-black hover:bg-emerald-400"
-              onClick={() => setIsPlaying((prev) => !prev)}
+              className="rounded-full bg-emerald-500 px-5 py-2 font-semibold text-black hover:bg-emerald-400"
+              onClick={() => togglePlayback()}
               type="button"
             >
-              {isPlaying ? (
-                <Pause aria-hidden="true" className="h-5 w-5" />
-              ) : (
-                <Play aria-hidden="true" className="h-5 w-5" />
-              )}
+              {playerState?.is_playing ? "Pause" : "Play"}
             </button>
             <button
-              aria-label="Next track"
-              className="rounded-full border border-white/20 p-3 hover:bg-white/10"
-              onClick={() =>
-                setCurrentTrackIndex((prev) => (prev + 1) % mockTracks.length)
-              }
+              className="rounded-full border border-white/20 px-4 py-2 hover:bg-white/10"
+              onClick={() => skipNext()}
               type="button"
             >
-              <SkipForward aria-hidden="true" className="h-4 w-4" />
+              Next
+            </button>
+            <button
+              className="rounded-full border border-cyan-300/40 bg-cyan-500/20 px-4 py-2 text-cyan-100 hover:bg-cyan-500/30"
+              onClick={() => startRadio()}
+              type="button"
+            >
+              <Radio className="mr-1 inline h-4 w-4" /> Start radio
             </button>
           </div>
-
-          <label className="mt-6 block text-sm text-white/80">
-            <span className="mb-2 inline-flex items-center gap-2">
-              <Volume2 className="h-4 w-4" />
-              Volume: {volume}%
-            </span>
-            <input
-              className="w-full accent-emerald-500"
-              max={100}
-              min={0}
-              onChange={(event) => setVolume(Number(event.target.value))}
-              type="range"
-              value={volume}
-            />
-          </label>
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h3 className="text-lg font-semibold">Radio actions</h3>
+          <h3 className="text-lg font-semibold">Open in Spotify</h3>
           <p className="mt-2 text-sm text-white/70">
-            Quick actions for generating stations from current listening
-            context.
+            Deep links for current track, artist, and playlist/context.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               className="rounded-full border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/30"
-              onClick={() => setRadioStatus("Artist Radio started")}
+              onClick={openSpotify}
               type="button"
             >
-              <Radio className="mr-2 inline h-4 w-4" />
-              Start Artist Radio
+              <ExternalLink className="mr-2 inline h-4 w-4" /> Open track
             </button>
             <button
               className="rounded-full border border-cyan-300/40 bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-500/30"
-              onClick={() => setRadioStatus("Track Radio started")}
+              onClick={openSpotifyArtist}
               type="button"
             >
-              <Radio className="mr-2 inline h-4 w-4" />
-              Start Track Radio
+              <ExternalLink className="mr-2 inline h-4 w-4" /> Open artist
             </button>
             <button
               className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/20 px-4 py-2 text-sm font-medium text-fuchsia-100 hover:bg-fuchsia-500/30"
-              onClick={() => setRadioStatus("Discovery Mix queued")}
+              onClick={openSpotifyContext}
               type="button"
             >
-              <Radio className="mr-2 inline h-4 w-4" />
-              Queue Discovery Mix
+              <ExternalLink className="mr-2 inline h-4 w-4" /> Open
+              playlist/context
             </button>
           </div>
-          <p className="mt-4 text-sm text-white/80">
-            Status:{" "}
-            <span className="font-semibold text-emerald-200">
-              {radioStatus}
-            </span>
-          </p>
         </section>
       </div>
     </main>
