@@ -49,6 +49,8 @@ const mappedWithData = mapAppsWithInstallState({
   namcInstallGateState: {
     openedAt: new Date("2026-01-01T00:00:00.000Z"),
     completedAt: null,
+    verificationStatus: "installed",
+    verificationCheckedAt: new Date(),
   },
 });
 
@@ -71,7 +73,15 @@ assert(
 );
 assert(
   appBySlug(mappedWithData, "namc").isInstalled === true,
-  "expected NAMC install gate state to mark app as installed"
+  "expected NAMC install gate verification to mark app as installed"
+);
+assert(
+  appBySlug(mappedWithData, "namc").namcInstallGateCompleted === true,
+  "expected NAMC install gate completed flag"
+);
+assert(
+  appBySlug(mappedWithData, "namc").namcVerificationStatus === "installed",
+  "expected NAMC verification status"
 );
 
 const mappedNamcWithoutInstallGateState = mapAppsWithInstallState({
@@ -97,6 +107,40 @@ assert(
   appBySlug(mappedNamcWithoutInstallGateState, "namc").isInstalled === false,
   "expected NAMC app to ignore generic install rows when NAMC gate state is missing"
 );
+assert(
+  appBySlug(mappedNamcWithoutInstallGateState, "namc").namcVerificationStatus ===
+    "unknown",
+  "expected NAMC app to default to unknown verification status"
+);
+
+const mappedNamcNeedsRecheck = mapAppsWithInstallState({
+  apps: [
+    {
+      id: "app-2",
+      slug: "namc",
+      name: "NAMC",
+      description: "NAMC",
+      iconUrl: "/icons/namc-appicon.png",
+      category: "Media",
+      storePath: null,
+      appPath: "/NAMC",
+      isOfficial: true,
+    },
+  ],
+  routeCounts: [{ appId: "app-2", count: 7 }],
+  installs: [],
+  namcInstallGateState: {
+    openedAt: new Date("2026-01-01T00:00:00.000Z"),
+    completedAt: null,
+    verificationStatus: "needs-recheck",
+    verificationCheckedAt: new Date(),
+  },
+});
+
+assert(
+  appBySlug(mappedNamcNeedsRecheck, "namc").isInstalled === false,
+  "expected needs-recheck to avoid guaranteed installed state"
+);
 
 const mappedFallback = mapAppsWithInstallState({
   apps: [],
@@ -118,6 +162,14 @@ for (const fallbackApp of mappedFallback) {
   assert(
     fallbackApp.isInstalled === false,
     "expected fallback apps to be uninstalled"
+  );
+  assert(
+    fallbackApp.namcInstallGateCompleted === false,
+    "expected fallback NAMC gate marker to be false"
+  );
+  assert(
+    fallbackApp.namcVerificationStatus === null,
+    "expected fallback verification marker to be null"
   );
   assert(fallbackApp.isOfficial === true, "expected fallback apps to be official");
 }
