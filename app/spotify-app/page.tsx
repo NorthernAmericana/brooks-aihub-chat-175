@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -17,6 +16,7 @@ import { db } from "@/lib/db";
 import { atoApps, userInstalls } from "@/lib/db/schema";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
+import { disconnectSpotify } from "@/lib/spotify/disconnect";
 
 export const dynamic = "force-dynamic";
 
@@ -96,23 +96,7 @@ export default async function SpotifyAppDetailPage() {
       redirect("/login");
     }
 
-    const requestHeaders = await headers();
-    const host =
-      requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-    const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-    const baseUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
-
-    const response = await fetch(`${baseUrl}/api/spotify/disconnect`, {
-      method: "POST",
-      headers: {
-        cookie: requestHeaders.get("cookie") ?? "",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to disconnect Spotify account");
-    }
+    await disconnectSpotify(session.user.id);
 
     revalidatePath("/spotify-app");
     revalidatePath("/Spotify");

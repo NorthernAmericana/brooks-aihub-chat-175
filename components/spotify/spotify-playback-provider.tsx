@@ -345,7 +345,6 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
           err instanceof Error ? err.message : "Spotify rejected this action",
         );
         setControlMessage(message);
-        throw err;
       } finally {
         await refreshState();
       }

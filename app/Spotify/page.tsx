@@ -30,14 +30,24 @@ export default function SpotifyPage() {
     openSpotifyContext,
   } = useSpotifyPlayback();
   const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
   const disconnectSpotify = async () => {
     setDisconnecting(true);
+    setDisconnectError(null);
     try {
-      await fetch("/api/spotify/disconnect", {
+      const response = await fetch("/api/spotify/disconnect", {
         method: "POST",
         credentials: "include",
       });
+
+      if (!response.ok) {
+        setDisconnectError(
+          "Unable to disconnect Spotify right now. Please try again.",
+        );
+        return;
+      }
+
       window.location.reload();
     } finally {
       setDisconnecting(false);
@@ -106,6 +116,13 @@ export default function SpotifyPage() {
             >
               Dismiss
             </button>
+          </section>
+        ) : null}
+
+        {disconnectError ? (
+          <section className="rounded-2xl border border-rose-300/40 bg-rose-500/15 p-4 text-sm text-rose-100">
+            <AlertCircle className="mr-2 inline h-4 w-4" />
+            {disconnectError}
           </section>
         ) : null}
 
