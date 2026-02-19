@@ -146,6 +146,17 @@ export const OFFICIAL_ATO_MANIFESTS: AtoManifest[] = [
     status: ACTIVE_STATUS,
   },
   {
+    id: "spotify-music-player",
+    displayName: "Spotify Music Player",
+    slashPath: "Spotify",
+    permissions: DEFAULT_PERMISSIONS,
+    memoryPolicy: DEFAULT_MEMORY_POLICY,
+    safetyProfile: DEFAULT_SAFETY_PROFILE,
+    entitlementRequirements: "none",
+    status: ACTIVE_STATUS,
+    badge: "free",
+  },
+  {
     id: "namc-lore-playground",
     displayName: "Lore Playground",
     slashPath: "NAMC/Lore-Playground",
