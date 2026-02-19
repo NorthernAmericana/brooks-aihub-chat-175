@@ -432,6 +432,14 @@ export const namcInstallGateState = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     openedAt: timestamp("opened_at"),
     completedAt: timestamp("completed_at"),
+    verificationStatus: text("verification_status")
+      .notNull()
+      .default("unknown"),
+    verificationMethod: text("verification_method"),
+    verificationCheckedAt: timestamp("verification_checked_at"),
+    verificationDetails: json("verification_details").$type<
+      Record<string, unknown>
+    >(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

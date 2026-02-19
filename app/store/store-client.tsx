@@ -24,6 +24,22 @@ const actionLabelForApp = (app: StoreAppListItem) => {
   return "View";
 };
 
+const namcStatusCopy = (app: StoreAppListItem) => {
+  if (app.slug !== "namc") {
+    return null;
+  }
+
+  if (app.isInstalled) {
+    return "Device install verified recently.";
+  }
+
+  if (app.namcInstallGateCompleted) {
+    return "Install gate completed. Device-level install could not be confirmed yet.";
+  }
+
+  return "Install gate not completed yet.";
+};
+
 type StoreClientProps = {
   apps: StoreAppListItem[];
   hasSession: boolean;
@@ -324,6 +340,18 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
                     <p className="mt-3 text-sm text-slate-600">
                       {app.description}
                     </p>
+                  )}
+
+                  {app.slug === "namc" && (
+                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      <p className="font-medium">{namcStatusCopy(app)}</p>
+                      {app.namcVerificationStatus !== "installed" && (
+                        <p className="mt-1 text-amber-800/90">
+                          Uninstall detection is approximate because browsers do not provide a
+                          universal API for checking external PWA install state on every platform.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </button>
               );

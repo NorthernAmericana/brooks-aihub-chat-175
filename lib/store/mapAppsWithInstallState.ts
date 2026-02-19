@@ -1,4 +1,10 @@
 import { OFFICIAL_APP_FALLBACK_CATALOG } from "@/lib/store/officialAppFallback";
+import {
+  hasNamcGateActivity,
+  isNamcInstallVerificationStatus,
+  isNamcVerificationFresh,
+  type NamcInstallVerificationStatus,
+} from "@/lib/store/namcInstallVerification";
 
 export type StoreAppListItem = {
   id: string;
@@ -12,6 +18,8 @@ export type StoreAppListItem = {
   isOfficial: boolean;
   routeCount: number;
   isInstalled: boolean;
+  namcInstallGateCompleted: boolean;
+  namcVerificationStatus: NamcInstallVerificationStatus | null;
 };
 
 export type StoreListMapperInput = {
@@ -31,6 +39,8 @@ export type StoreListMapperInput = {
   namcInstallGateState?: {
     openedAt: Date | null;
     completedAt: Date | null;
+    verificationStatus: string | null;
+    verificationCheckedAt: Date | null;
   } | null;
 };
 
@@ -63,6 +73,8 @@ export function mapAppsWithInstallState({
       isOfficial: true,
       routeCount: 0,
       isInstalled: false,
+      namcInstallGateCompleted: false,
+      namcVerificationStatus: null,
     }));
   }
 
@@ -70,8 +82,14 @@ export function mapAppsWithInstallState({
     routeCounts.map((record) => [record.appId, Number(record.count)])
   );
   const installedAppIds = new Set(installs.map((record) => record.appId));
-  const hasNamcInstallGateState = Boolean(
-    namcInstallGateState?.openedAt || namcInstallGateState?.completedAt
+  const hasNamcInstallGateState = hasNamcGateActivity(namcInstallGateState);
+  const namcVerificationStatus = isNamcInstallVerificationStatus(
+    namcInstallGateState?.verificationStatus
+  )
+    ? namcInstallGateState.verificationStatus
+    : "unknown";
+  const namcVerificationIsFresh = isNamcVerificationFresh(
+    namcInstallGateState?.verificationCheckedAt
   );
 
   return apps.map((app) => ({
@@ -87,7 +105,12 @@ export function mapAppsWithInstallState({
     routeCount: routeCountByApp.get(app.id) ?? 0,
     isInstalled:
       app.slug.toLowerCase() === "namc"
-        ? hasNamcInstallGateState
+        ? hasNamcInstallGateState &&
+          namcVerificationStatus === "installed" &&
+          namcVerificationIsFresh
         : installedAppIds.has(app.id),
+    namcInstallGateCompleted:
+      app.slug.toLowerCase() === "namc" ? hasNamcInstallGateState : false,
+    namcVerificationStatus: app.slug.toLowerCase() === "namc" ? namcVerificationStatus : null,
   }));
 }
