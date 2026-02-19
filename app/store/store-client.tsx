@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import {
@@ -93,15 +93,19 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
     };
   }, []);
 
-  const openNamcWebAppFromSwipe = () => {
+  const openNamcWebAppFromSwipe = useCallback(() => {
     window.location.assign("https://www.northernamericana.media");
-  };
+  }, []);
+
+  const goBackToBrooksAiHubFromSwipe = useCallback(() => {
+    router.push("/brooks-ai-hub");
+  }, [router]);
 
   useSwipeGesture({
     edgeZone: 56,
     threshold: 90,
     onSwipeLeftFromRightEdge: openNamcWebAppFromSwipe,
-    onSwipeRightFromLeftEdge: () => router.push("/brooks-ai-hub"),
+    onSwipeRightFromLeftEdge: goBackToBrooksAiHubFromSwipe,
   });
 
   const matchesSearchQuery = (app: StoreAppListItem, query: string) => {
