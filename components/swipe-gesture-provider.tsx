@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
+import { dismissBrooksHintState } from "@/lib/hint-lock";
 
 export function SwipeGestureProvider({
   children,
@@ -13,7 +14,10 @@ export function SwipeGestureProvider({
   useSwipeGesture({
     edgeZone: 50,
     enabled: true,
-    onSwipeLeftFromRightEdge: () => router.push("/store"),
+    onSwipeLeftFromRightEdge: () => {
+      dismissBrooksHintState();
+      router.push("/store");
+    },
     threshold: 100,
   });
 
