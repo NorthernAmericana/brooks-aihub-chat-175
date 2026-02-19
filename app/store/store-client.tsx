@@ -14,6 +14,10 @@ import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 const actionLabelForApp = (app: StoreAppListItem) => {
+  if (app.slug === "namc") {
+    return "Open NAMC PWA";
+  }
+
   if (app.isInstalled && app.appPath) {
     return "Open";
   }
@@ -251,9 +255,12 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {filteredApps.map((app) => {
               const actionLabel = actionLabelForApp(app);
-              const targetPath = app.isInstalled
-                ? (app.appPath ?? app.storePath)
-                : (app.storePath ?? app.appPath);
+              const isNamc = app.slug === "namc";
+              const targetPath = isNamc
+                ? (app.storePath ?? app.appPath)
+                : app.isInstalled
+                  ? (app.appPath ?? app.storePath)
+                  : (app.storePath ?? app.appPath);
 
               return (
                 <button
