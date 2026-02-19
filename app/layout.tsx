@@ -18,7 +18,6 @@ export const metadata: Metadata = {
     "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
   description:
     "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
-  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: "/icons/app-icon.png", sizes: "2048x2048", type: "image/png" },

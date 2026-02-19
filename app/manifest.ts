@@ -6,8 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Brooks AI HUB",
     description:
       "Brooks AI HUB - A Mobile AI Chat and Marketplace for apps and games and media",
-    id: "/brooks-ai-hub/?source=pwa",
-    start_url: "/brooks-ai-hub/?source=pwa",
+    id: "/brooks-ai-hub/",
+    start_url: "/brooks-ai-hub/",
     scope: "/brooks-ai-hub/",
     display: "standalone",
     background_color: "#ffffff",
