@@ -23,7 +23,6 @@ export function toSpotifyErrorResponse(error: unknown) {
     return NextResponse.json(error.toResponseBody(), { status: error.status });
   }
 
-  console.error("Unexpected Spotify proxy error", error);
   return NextResponse.json(
     {
       error: {

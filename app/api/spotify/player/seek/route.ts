@@ -11,7 +11,17 @@ export async function PUT(request: Request) {
   try {
     const userId = await requireUserId();
     const { searchParams } = new URL(request.url);
-    const positionMs = Number(searchParams.get("position_ms"));
+    const positionMsParam = searchParams.get("position_ms");
+
+    if (positionMsParam === null || positionMsParam === "") {
+      throw new SpotifyApiError({
+        status: 400,
+        code: "spotify_request_failed",
+        message: "position_ms is required.",
+      });
+    }
+
+    const positionMs = Number(positionMsParam);
 
     if (!Number.isFinite(positionMs) || positionMs < 0) {
       throw new SpotifyApiError({

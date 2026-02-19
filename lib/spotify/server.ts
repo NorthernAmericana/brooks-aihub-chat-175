@@ -145,9 +145,13 @@ async function parseJsonSafe(response: Response) {
   }
 }
 
-function normalizeSpotifyError(status: number, payload: any) {
-  const reason = payload?.error?.reason;
-  const message = payload?.error?.message || "Spotify request failed.";
+function normalizeSpotifyError(status: number, payload: unknown) {
+  const parsedPayload =
+    typeof payload === "object" && payload !== null
+      ? (payload as { error?: { reason?: string; message?: string } })
+      : null;
+  const reason = parsedPayload?.error?.reason;
+  const message = parsedPayload?.error?.message ?? "Spotify request failed.";
 
   if (status === 403) {
     if (
@@ -196,7 +200,19 @@ export async function spotifyFetch(
   init: RequestInit = {}
 ) {
   const requestUrl = path.startsWith("http")
-    ? path
+    ? (() => {
+        const url = new URL(path);
+
+        if (url.hostname !== "api.spotify.com") {
+          throw new SpotifyApiError({
+            status: 400,
+            code: "spotify_request_failed",
+            message: `spotifyFetch: unexpected host ${url.hostname}`,
+          });
+        }
+
+        return path;
+      })()
     : `${SPOTIFY_API_BASE}${path}`;
 
   const run = async (forceRefresh = false) => {
