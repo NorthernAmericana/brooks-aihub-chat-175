@@ -1,8 +1,17 @@
-const CACHE_VERSION = "v2";
+"use strict";
+
+const CACHE_VERSION = "v3";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
-const PRECACHE_URLS = ["/", "/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
+const APP_ENTRY_ROUTES = ["/", "/welcome"];
+
+const PRECACHE_URLS = [
+  ...APP_ENTRY_ROUTES,
+  "/offline",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -54,14 +63,23 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() =>
-          caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
+        .catch(async () => {
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          const { pathname } = new URL(request.url);
+          if (APP_ENTRY_ROUTES.includes(pathname)) {
+            const cachedEntry =
+              (await caches.match("/")) || (await caches.match("/welcome"));
+            if (cachedEntry) {
+              return cachedEntry;
             }
-            return caches.match("/offline");
-          })
-        )
+          }
+
+          return caches.match("/offline");
+        })
     );
     return;
   }
