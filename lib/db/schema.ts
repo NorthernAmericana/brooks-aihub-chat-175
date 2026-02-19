@@ -51,6 +51,30 @@ export const passwordResetToken = pgTable(
 
 export type PasswordResetToken = InferSelectModel<typeof passwordResetToken>;
 
+export const spotifyAccounts = pgTable(
+  "spotify_accounts",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    refreshTokenEncrypted: text("refresh_token_encrypted").notNull(),
+    accessToken: text("access_token"),
+    expiresAt: timestamp("expires_at"),
+    scope: text("scope"),
+    revokedAt: timestamp("revoked_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: uniqueIndex("spotify_accounts_active_user_idx")
+      .on(table.userId)
+      .where(sql`${table.revokedAt} is null`),
+  })
+);
+
+export type SpotifyAccount = InferSelectModel<typeof spotifyAccounts>;
+
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
