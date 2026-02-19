@@ -2,9 +2,14 @@
 
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
+import {
+  HINT_LOCK_CLAIM_EVENT,
+  hasActiveHintLock,
+  type HintLockPayload,
+} from "@/lib/hint-lock";
 import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
@@ -27,15 +32,44 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
   const [isUnofficialShaking, setIsUnofficialShaking] = useState(false);
   const [showNorthernAmericanaHint, setShowNorthernAmericanaHint] =
     useState(false);
+  const hintTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (hasActiveHintLock("store-northern-americana-hint")) {
+      return;
+    }
+
     setShowNorthernAmericanaHint(true);
-    const timer = window.setTimeout(() => {
+    hintTimerRef.current = window.setTimeout(() => {
       setShowNorthernAmericanaHint(false);
+      hintTimerRef.current = null;
     }, 2000);
 
+    const handleHintClaim = (event: Event) => {
+      const customEvent = event as CustomEvent<HintLockPayload>;
+      if (customEvent.detail?.owner === "store-northern-americana-hint") {
+        return;
+      }
+
+      setShowNorthernAmericanaHint(false);
+      if (hintTimerRef.current) {
+        window.clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+      }
+    };
+
+    window.addEventListener(HINT_LOCK_CLAIM_EVENT, handleHintClaim as EventListener);
+
     return () => {
-      window.clearTimeout(timer);
+      window.removeEventListener(
+        HINT_LOCK_CLAIM_EVENT,
+        handleHintClaim as EventListener,
+      );
+
+      if (hintTimerRef.current) {
+        window.clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -114,6 +148,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
           }`}
+          data-testid="northern-americana-hint"
         >
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/70">
             ATO Store Tip

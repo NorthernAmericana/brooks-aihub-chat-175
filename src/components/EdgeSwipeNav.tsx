@@ -6,6 +6,7 @@ import type { PointerEventHandler } from "react";
 import { SwipeEdgeHint } from "@/components/ui/swipe-edge-hint";
 import { useInactivity } from "@/hooks/use-inactivity";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
+import { claimHintLock, dismissBrooksHintState, releaseHintLock } from "@/lib/hint-lock";
 
 const SWIPE_THRESHOLD_PX = 90;
 const HUB_EDGE_ZONE_PX = 120;
@@ -49,6 +50,7 @@ export function EdgeSwipeNav() {
   const idleShownForCurrentIdlePeriodRef = useRef(false);
   const idleFlipRef = useRef<"left" | "right">("right");
   const initialSequenceRanRef = useRef(false);
+  const hasHintLockRef = useRef(false);
 
   const trackingRef = useRef<TrackingState>({
     isTracking: false,
@@ -63,7 +65,10 @@ export function EdgeSwipeNav() {
   useSwipeGesture({
     edgeZone: HUB_EDGE_ZONE_PX,
     enabled: isHubHomePath,
-    onSwipeLeftFromRightEdge: () => router.push("/store"),
+    onSwipeLeftFromRightEdge: () => {
+      dismissBrooksHintState();
+      router.push("/store");
+    },
     onSwipeRightFromLeftEdge: () => router.push("/commons"),
     threshold: HUB_SWIPE_THRESHOLD_PX,
   });
@@ -105,9 +110,15 @@ export function EdgeSwipeNav() {
       }
 
       clearHintTimer();
+      if (!hasHintLockRef.current) {
+        claimHintLock("brooks-ai-hub-edge-hint");
+        hasHintLockRef.current = true;
+      }
       setOpenHintSide(side);
       hintTimerRef.current = window.setTimeout(() => {
         setOpenHintSide(null);
+        releaseHintLock("brooks-ai-hub-edge-hint");
+        hasHintLockRef.current = false;
         if (onHidden) {
           window.setTimeout(onHidden, 400);
         }
@@ -196,6 +207,8 @@ export function EdgeSwipeNav() {
       if (document.visibilityState !== "visible" || !document.hasFocus()) {
         clearHintTimer();
         setOpenHintSide(null);
+        releaseHintLock("brooks-ai-hub-edge-hint");
+        hasHintLockRef.current = false;
       }
     };
 
@@ -209,8 +222,19 @@ export function EdgeSwipeNav() {
   }, [clearHintTimer]);
 
   useEffect(() => {
+    if (!isHubHomePath) {
+      clearHintTimer();
+      setOpenHintSide(null);
+      releaseHintLock("brooks-ai-hub-edge-hint");
+      hasHintLockRef.current = false;
+    }
+  }, [clearHintTimer, isHubHomePath]);
+
+  useEffect(() => {
     return () => {
       clearHintTimer();
+      releaseHintLock("brooks-ai-hub-edge-hint");
+      hasHintLockRef.current = false;
     };
   }, [clearHintTimer]);
 
