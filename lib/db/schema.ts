@@ -423,6 +423,27 @@ export const userInstalls = pgTable(
 
 export type UserInstall = InferSelectModel<typeof userInstalls>;
 
+export const namcInstallGateState = pgTable(
+  "namc_install_gate_state",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    openedAt: timestamp("opened_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userUnique: uniqueIndex("namc_install_gate_state_user_id_unique").on(
+      table.userId
+    ),
+  })
+);
+
+export type NamcInstallGateState = InferSelectModel<typeof namcInstallGateState>;
+
 export const atoAppReviews = pgTable(
   "ato_app_reviews",
   {

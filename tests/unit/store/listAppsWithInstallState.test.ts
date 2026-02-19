@@ -46,14 +46,57 @@ const mappedWithData = mapAppsWithInstallState({
     { appId: "app-2", count: 7 },
   ],
   installs: [{ appId: "app-2" }],
+  namcInstallGateState: {
+    openedAt: new Date("2026-01-01T00:00:00.000Z"),
+    completedAt: null,
+  },
 });
 
 assert(mappedWithData.length === 2, "expected mapped data to include db apps");
-assert(appBySlug(mappedWithData, "custom-app").storePath === "/store/ato/custom-app", "expected generic storePath fallback");
-assert(appBySlug(mappedWithData, "custom-app").routeCount === 3, "expected route count mapping");
-assert(appBySlug(mappedWithData, "custom-app").isInstalled === false, "expected non-installed app");
-assert(appBySlug(mappedWithData, "namc").storePath === "/store/namc", "expected NAMC storePath fallback");
-assert(appBySlug(mappedWithData, "namc").isInstalled === true, "expected installed app");
+assert(
+  appBySlug(mappedWithData, "custom-app").storePath === "/store/ato/custom-app",
+  "expected generic storePath fallback"
+);
+assert(
+  appBySlug(mappedWithData, "custom-app").routeCount === 3,
+  "expected route count mapping"
+);
+assert(
+  appBySlug(mappedWithData, "custom-app").isInstalled === false,
+  "expected non-installed app"
+);
+assert(
+  appBySlug(mappedWithData, "namc").storePath === "/store/namc",
+  "expected NAMC storePath fallback"
+);
+assert(
+  appBySlug(mappedWithData, "namc").isInstalled === true,
+  "expected NAMC install gate state to mark app as installed"
+);
+
+const mappedNamcWithoutInstallGateState = mapAppsWithInstallState({
+  apps: [
+    {
+      id: "app-2",
+      slug: "namc",
+      name: "NAMC",
+      description: "NAMC",
+      iconUrl: "/icons/namc-appicon.png",
+      category: "Media",
+      storePath: null,
+      appPath: "/NAMC",
+      isOfficial: true,
+    },
+  ],
+  routeCounts: [{ appId: "app-2", count: 7 }],
+  installs: [{ appId: "app-2" }],
+  namcInstallGateState: null,
+});
+
+assert(
+  appBySlug(mappedNamcWithoutInstallGateState, "namc").isInstalled === false,
+  "expected NAMC app to ignore generic install rows when NAMC gate state is missing"
+);
 
 const mappedFallback = mapAppsWithInstallState({
   apps: [],
@@ -67,9 +110,15 @@ assert(
 );
 
 for (const fallbackApp of mappedFallback) {
-  assert(fallbackApp.id.startsWith("official-fallback:"), "expected deterministic fallback ids");
+  assert(
+    fallbackApp.id.startsWith("official-fallback:"),
+    "expected deterministic fallback ids"
+  );
   assert(fallbackApp.routeCount === 0, "expected fallback routeCount to be zero");
-  assert(fallbackApp.isInstalled === false, "expected fallback apps to be uninstalled");
+  assert(
+    fallbackApp.isInstalled === false,
+    "expected fallback apps to be uninstalled"
+  );
   assert(fallbackApp.isOfficial === true, "expected fallback apps to be official");
 }
 
