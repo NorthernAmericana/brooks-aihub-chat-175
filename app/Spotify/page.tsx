@@ -47,6 +47,7 @@ export default function SpotifyPage() {
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
+              aria-label="Previous track"
               className="rounded-full border border-white/20 p-3 hover:bg-white/10"
               onClick={() =>
                 setCurrentTrackIndex(
@@ -55,27 +56,29 @@ export default function SpotifyPage() {
               }
               type="button"
             >
-              <SkipBack className="h-4 w-4" />
+              <SkipBack aria-hidden="true" className="h-4 w-4" />
             </button>
             <button
+              aria-label={isPlaying ? "Pause" : "Play"}
               className="rounded-full bg-emerald-500 p-4 text-black hover:bg-emerald-400"
               onClick={() => setIsPlaying((prev) => !prev)}
               type="button"
             >
               {isPlaying ? (
-                <Pause className="h-5 w-5" />
+                <Pause aria-hidden="true" className="h-5 w-5" />
               ) : (
-                <Play className="h-5 w-5" />
+                <Play aria-hidden="true" className="h-5 w-5" />
               )}
             </button>
             <button
+              aria-label="Next track"
               className="rounded-full border border-white/20 p-3 hover:bg-white/10"
               onClick={() =>
                 setCurrentTrackIndex((prev) => (prev + 1) % mockTracks.length)
               }
               type="button"
             >
-              <SkipForward className="h-4 w-4" />
+              <SkipForward aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
 
