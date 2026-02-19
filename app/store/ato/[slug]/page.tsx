@@ -39,6 +39,7 @@ export default async function AtoStoreDetailsPage({
   ]);
 
   const installedEntry = installedApps.find((app) => app.id === details.app.id);
+  const isNamcExternal = details.app.slug === "namc";
   const isInstalled = installedEntry?.isInstalled ?? false;
   const requiresFoundersAccess = details.requiresFoundersAccess;
   const isLocked = requiresFoundersAccess && !entitlements.foundersAccess;
@@ -139,44 +140,55 @@ export default async function AtoStoreDetailsPage({
             </div>
 
             <div className="flex w-full flex-col gap-3 md:w-auto">
-              <form action={installAction}>
-                <button
-                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
-                    isInstalled
-                      ? "bg-emerald-600/80 text-white"
-                      : "bg-pink-500 text-white hover:bg-pink-600"
-                  }`}
-                  disabled={isInstalled || isLocked || isInstallUnavailable}
-                  type="submit"
-                >
-                  {isInstalled ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Installed
-                    </>
-                  ) : isInstallUnavailable ? (
-                    <>Install unavailable</>
-                  ) : isLocked ? (
-                    <>
-                      <Lock className="h-4 w-4" />
-                      Founders required
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Install
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {isInstalled && details.app.appPath && (
+              {isNamcExternal ? (
                 <Link
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                  href={details.app.appPath}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-pink-500 py-3 text-sm font-semibold text-white transition hover:bg-pink-600 md:w-56"
+                  href="/namc/install"
                 >
-                  Go to ATO app
+                  Open NAMC PWA
                 </Link>
+              ) : (
+                <>
+                  <form action={installAction}>
+                    <button
+                      className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition md:w-56 disabled:cursor-not-allowed disabled:opacity-70 ${
+                        isInstalled
+                          ? "bg-emerald-600/80 text-white"
+                          : "bg-pink-500 text-white hover:bg-pink-600"
+                      }`}
+                      disabled={isInstalled || isLocked || isInstallUnavailable}
+                      type="submit"
+                    >
+                      {isInstalled ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Installed
+                        </>
+                      ) : isInstallUnavailable ? (
+                        <>Install unavailable</>
+                      ) : isLocked ? (
+                        <>
+                          <Lock className="h-4 w-4" />
+                          Founders required
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Install
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {isInstalled && details.app.appPath && (
+                    <Link
+                      className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
+                      href={details.app.appPath}
+                    >
+                      Go to ATO app
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </div>

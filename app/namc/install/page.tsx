@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+const NAMC_PWA_URL = "https://www.northernamericana.media";
+
 export default function NamcInstallPage() {
-  redirect("/store/ato/namc");
+  redirect(NAMC_PWA_URL);
 }

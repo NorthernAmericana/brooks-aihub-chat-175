@@ -61,7 +61,7 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     iconUrl: NAMC_APP_ICON_PATH,
     category: "Media & Entertainment",
     storePath: "/namc/install",
-    appPath: "/NAMC",
+    appPath: "/namc/install",
     isOfficial: true,
   },
   {

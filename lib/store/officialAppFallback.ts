@@ -42,7 +42,7 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
     slug: "namc",
     name: "NAMC",
     iconUrl: NAMC_APP_ICON_PATH,
-    appPath: "/NAMC",
+    appPath: "/namc/install",
     storePath: "/namc/install",
     category: "Media & Entertainment",
     description:
