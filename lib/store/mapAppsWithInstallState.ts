@@ -28,6 +28,10 @@ export type StoreListMapperInput = {
   }>;
   routeCounts: Array<{ appId: string; count: number | string | bigint }>;
   installs: Array<{ appId: string }>;
+  namcInstallGateState?: {
+    openedAt: Date | null;
+    completedAt: Date | null;
+  } | null;
 };
 
 function resolveStorePath(slug: string, storePath: string | null) {
@@ -44,6 +48,7 @@ export function mapAppsWithInstallState({
   apps,
   routeCounts,
   installs,
+  namcInstallGateState,
 }: StoreListMapperInput): StoreAppListItem[] {
   if (apps.length === 0) {
     return OFFICIAL_APP_FALLBACK_CATALOG.map((app) => ({
@@ -65,6 +70,9 @@ export function mapAppsWithInstallState({
     routeCounts.map((record) => [record.appId, Number(record.count)])
   );
   const installedAppIds = new Set(installs.map((record) => record.appId));
+  const hasNamcInstallGateState = Boolean(
+    namcInstallGateState?.openedAt || namcInstallGateState?.completedAt
+  );
 
   return apps.map((app) => ({
     id: app.id,
@@ -77,6 +85,9 @@ export function mapAppsWithInstallState({
     appPath: app.appPath,
     isOfficial: app.isOfficial,
     routeCount: routeCountByApp.get(app.id) ?? 0,
-    isInstalled: installedAppIds.has(app.id),
+    isInstalled:
+      app.slug.toLowerCase() === "namc"
+        ? hasNamcInstallGateState
+        : installedAppIds.has(app.id),
   }));
 }
