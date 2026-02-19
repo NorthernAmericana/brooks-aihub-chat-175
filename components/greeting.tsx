@@ -1,14 +1,14 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { ChevronRight, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
+import { SpotifyHomeModule } from "@/components/spotify/spotify-home-module";
 import { toast } from "@/components/toast";
-import { useEntitlements } from "@/hooks/use-entitlements";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,17 +27,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import officialEvents from "@/data/events/official-events.json";
+import { useEntitlements } from "@/hooks/use-entitlements";
 import {
   OFFICIAL_ATO_FLAT_LIST,
   OFFICIAL_ATO_TREE,
 } from "@/lib/ato/officialCatalog";
-import { formatRoutePath, sanitizeRouteSegment } from "@/lib/routes/utils";
-import { cn, fetcher } from "@/lib/utils";
 import {
   deriveEntitlementRules,
   getFoundersAccessPerks,
 } from "@/lib/entitlements/products";
-import officialEvents from "@/data/events/official-events.json";
+import { formatRoutePath, sanitizeRouteSegment } from "@/lib/routes/utils";
+import { cn, fetcher } from "@/lib/utils";
 
 type GreetingProps = {
   onSelectFolder?: (folder: string, options?: { atoId?: string }) => void;
@@ -84,7 +85,7 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
   useEffect(() => {
     setIsMounted(true);
     setNow(new Date());
-    const id = window.setInterval(() => setNow(new Date()), 1_000);
+    const id = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -93,7 +94,7 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
       return { hDeg: 0, mDeg: 0, sDeg: 0 };
     }
     const ms = now.getMilliseconds();
-    const seconds = now.getSeconds() + ms / 1_000;
+    const seconds = now.getSeconds() + ms / 1000;
     const minutes = now.getMinutes() + seconds / 60;
     const hours = (now.getHours() % 12) + minutes / 60;
 
@@ -117,23 +118,29 @@ const AnalogClock = ({ size = 160 }: AnalogClockProps) => {
         borderRadius: "9999px",
         position: "relative",
         overflow: "hidden",
-        background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(15, 23, 42, 0.28))",
+        background:
+          "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(15, 23, 42, 0.28))",
         border: "1px solid rgba(255, 255, 255, 0.32)",
         boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
       }}
     >
-      <Hand deg={hDeg} width={6} lengthPct={28} color="var(--clock-hand-hour)" />
       <Hand
-        deg={mDeg}
-        width={4}
-        lengthPct={38}
-        color="var(--clock-hand-minute)"
+        color="var(--clock-hand-hour)"
+        deg={hDeg}
+        lengthPct={28}
+        width={6}
       />
       <Hand
-        deg={sDeg}
-        width={2}
-        lengthPct={42}
+        color="var(--clock-hand-minute)"
+        deg={mDeg}
+        lengthPct={38}
+        width={4}
+      />
+      <Hand
         color="var(--clock-hand-second)"
+        deg={sDeg}
+        lengthPct={42}
+        width={2}
       />
       <div
         style={{
@@ -204,15 +211,15 @@ const TreeNodeItem = ({
       >
         {hasChildren ? (
           <button
-            type="button"
-            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-muted"
-            aria-expanded={expanded}
             aria-controls={childrenId}
+            aria-expanded={expanded}
             aria-label={`${expanded ? "Collapse" : "Expand"} ${label} subroutes`}
+            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-muted"
             onClick={(event) => {
               event.stopPropagation();
               setExpanded((value) => !value);
             }}
+            type="button"
           >
             <ChevronRight
               className={cn(
@@ -222,7 +229,7 @@ const TreeNodeItem = ({
             />
           </button>
         ) : (
-          <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span aria-hidden="true" className="h-5 w-5 shrink-0" />
         )}
         <button
           className="flex min-w-0 flex-1 flex-col items-start gap-1"
@@ -268,9 +275,9 @@ const TreeNodeItem = ({
         <ul className="space-y-2" id={childrenId}>
           {node.children.map((child) => (
             <TreeNodeItem
+              depth={depth + 1}
               key={child.path}
               node={child}
-              depth={depth + 1}
               onSelectNode={onSelectNode}
             />
           ))}
@@ -322,9 +329,7 @@ type EventWeekGroup = {
 };
 
 const groupEventsByWeek = (events: TimelineEvent[]) => {
-  const sortedEvents = [...events].sort((a, b) =>
-    a.date.localeCompare(b.date)
-  );
+  const sortedEvents = [...events].sort((a, b) => a.date.localeCompare(b.date));
   const weekMap = new Map<string, EventWeekGroup>();
 
   for (const event of sortedEvents) {
@@ -505,45 +510,47 @@ const buildMemoryEvents = ({
   const timelineEvents: TimelineEvent[] = [];
 
   for (const event of events) {
-      const eventDate = new Date(`${event.date}T00:00:00`);
-      if (Number.isNaN(eventDate.getTime())) {
-        continue;
-      }
-
-      const daysUntil = Math.floor(
-        (eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
-      );
-
-      if (daysUntil < 0 || daysUntil > 30) {
-        continue;
-      }
-
-      const weekStart = new Date(eventDate);
-      weekStart.setDate(eventDate.getDate() - eventDate.getDay());
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-
-      const caption = getEventCountdownCaption(daysUntil, event.title);
-      const dateWithTime = event.time ? `${event.date}T${event.time}:00` : event.date;
-      const timeLabel = event.time
-        ? ` at ${new Date(dateWithTime).toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          })}`
-        : "";
-
-      timelineEvents.push({
-        title: `${event.title}${timeLabel} · ${caption}`,
-        date: event.date,
-        weekStart: formatSlashDate(weekStart),
-        weekEnd: formatSlashDate(weekEnd),
-        monthLabel: eventDate.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        }),
-        source: "personal",
-      });
+    const eventDate = new Date(`${event.date}T00:00:00`);
+    if (Number.isNaN(eventDate.getTime())) {
+      continue;
     }
+
+    const daysUntil = Math.floor(
+      (eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
+    if (daysUntil < 0 || daysUntil > 30) {
+      continue;
+    }
+
+    const weekStart = new Date(eventDate);
+    weekStart.setDate(eventDate.getDate() - eventDate.getDay());
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const caption = getEventCountdownCaption(daysUntil, event.title);
+    const dateWithTime = event.time
+      ? `${event.date}T${event.time}:00`
+      : event.date;
+    const timeLabel = event.time
+      ? ` at ${new Date(dateWithTime).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })}`
+      : "";
+
+    timelineEvents.push({
+      title: `${event.title}${timeLabel} · ${caption}`,
+      date: event.date,
+      weekStart: formatSlashDate(weekStart),
+      weekEnd: formatSlashDate(weekEnd),
+      monthLabel: eventDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      }),
+      source: "personal",
+    });
+  }
 
   return timelineEvents;
 };
@@ -638,7 +645,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setNow(new Date());
-    }, 1_000);
+    }, 1000);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -711,16 +718,15 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       ),
     ];
 
-    const sorted = [...combined].sort((a, b) =>
-      a.label.localeCompare(b.label)
-    );
+    const sorted = [...combined].sort((a, b) => a.label.localeCompare(b.label));
     return sortOrder === "asc" ? sorted : sorted.reverse();
   }, [customAtoFolders, officialFolders, sortOrder]);
 
   const handleFoundersUpsell = useCallback(() => {
     toast({
       type: "error",
-      description: "Founders access is required for this route. Upgrade to unlock it.",
+      description:
+        "Founders access is required for this route. Upgrade to unlock it.",
     });
     router.push("/pricing");
   }, [router]);
@@ -903,6 +909,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.7 }}
       >
+        <SpotifyHomeModule />
         {isFoundersPerksOpen ? (
           <div className="relative mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-amber-500/10 via-background/80 to-background p-4 shadow-sm sm:p-5">
             <button
@@ -960,7 +967,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                 </div>
               ))}
             </div>
-            {!foundersAccess ? (
+            {foundersAccess ? null : (
               <div className="mt-4 text-left">
                 <Link
                   className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-500 transition hover:bg-amber-400/20"
@@ -969,7 +976,7 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
                   View pricing
                 </Link>
               </div>
-            ) : null}
+            )}
           </div>
         ) : null}
         <div className="mb-6 w-full rounded-3xl border border-border/60 bg-gradient-to-br from-foreground/5 via-background/80 to-background p-4 shadow-sm sm:p-5">
@@ -1285,9 +1292,9 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteAto}
-              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+              onClick={handleDeleteAto}
             >
               {isDeleting ? "Deleting..." : "Delete ATO"}
             </AlertDialogAction>
