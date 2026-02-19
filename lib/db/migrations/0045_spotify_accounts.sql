@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS "spotify_accounts" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "user_id" uuid NOT NULL,
   "refresh_token_encrypted" text NOT NULL,
-  "access_token" text,
+  "access_token_encrypted" text,
   "expires_at" timestamp,
   "scope" text,
   "revoked_at" timestamp,

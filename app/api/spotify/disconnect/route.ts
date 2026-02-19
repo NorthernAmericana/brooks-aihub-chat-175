@@ -18,7 +18,7 @@ export async function POST() {
     .set({
       revokedAt: new Date(),
       refreshTokenEncrypted: "revoked",
-      accessToken: null,
+      accessTokenEncrypted: null,
       expiresAt: null,
       updatedAt: new Date(),
     })

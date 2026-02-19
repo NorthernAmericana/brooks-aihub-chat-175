@@ -59,7 +59,7 @@ export const spotifyAccounts = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     refreshTokenEncrypted: text("refresh_token_encrypted").notNull(),
-    accessToken: text("access_token"),
+    accessTokenEncrypted: text("access_token_encrypted"),
     expiresAt: timestamp("expires_at"),
     scope: text("scope"),
     revokedAt: timestamp("revoked_at"),

@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       await tx.insert(spotifyAccounts).values({
         userId: session.user.id,
         refreshTokenEncrypted: encryptSpotifyToken(refreshToken),
-        accessToken: tokenResponse.access_token,
+        accessTokenEncrypted: encryptSpotifyToken(tokenResponse.access_token),
         expiresAt,
         scope: tokenResponse.scope,
       });
