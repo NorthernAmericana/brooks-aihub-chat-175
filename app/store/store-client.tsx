@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import type { StoreAppListItem } from "@/lib/store/listAppsWithInstallState";
@@ -25,11 +25,28 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"official" | "all">("all");
   const [isUnofficialShaking, setIsUnofficialShaking] = useState(false);
+  const [showNorthernAmericanaHint, setShowNorthernAmericanaHint] =
+    useState(false);
+
+  useEffect(() => {
+    setShowNorthernAmericanaHint(true);
+    const timer = window.setTimeout(() => {
+      setShowNorthernAmericanaHint(false);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const outlinkToNorthernAmericana = () => {
+    window.location.assign("https://www.northernamericana.media");
+  };
 
   useSwipeGesture({
     edgeZone: 56,
     threshold: 90,
-    onSwipeLeftFromRightEdge: () => router.push("/store/namc"),
+    onSwipeLeftFromRightEdge: outlinkToNorthernAmericana,
     onSwipeRightFromLeftEdge: () => router.push("/brooks-ai-hub"),
   });
 
@@ -90,6 +107,23 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
 
   return (
     <div className="store-overlay fixed inset-0 z-50 flex flex-col overflow-x-hidden bg-slate-50 text-slate-900">
+      <div className="pointer-events-none fixed inset-0 z-[80] overflow-hidden">
+        <div
+          className={`absolute inset-y-0 right-0 w-[30vw] min-w-[220px] max-w-[380px] border-l border-white/10 bg-black/75 px-4 py-6 text-right text-white shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-500 ease-out motion-reduce:transition-opacity ${
+            showNorthernAmericanaHint
+              ? "translate-x-0 opacity-100"
+              : "translate-x-full opacity-0"
+          }`}
+        >
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/70">
+            ATO Store Tip
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-white/95">
+            Swipe left to go to www.northernamericana.media
+          </p>
+        </div>
+      </div>
+
       <button
         aria-label="Swipe right to go back to Brooks AI HUB"
         className="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 items-center gap-1 rounded-r-full border border-l-0 border-slate-200 bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 sm:flex"
@@ -101,12 +135,12 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
       </button>
 
       <button
-        aria-label="Swipe left to go to NAMC Store"
+        aria-label="Swipe left to go to Northern Americana Media"
         className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 items-center gap-1 rounded-l-full border border-r-0 border-slate-200 bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 sm:flex"
-        onClick={() => router.push("/store/namc")}
+        onClick={outlinkToNorthernAmericana}
         type="button"
       >
-        <span className="hidden sm:inline">Go to NAMC Store</span>
+        <span className="hidden sm:inline">Go to Northern Americana Media</span>
         <ChevronRight className="h-4 w-4" />
       </button>
 
