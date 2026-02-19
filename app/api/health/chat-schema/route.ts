@@ -1,22 +1,37 @@
 import { NextResponse } from "next/server";
-import { getChatSchemaHealthSnapshot } from "@/lib/db";
+import { getChatSchemaHealthSnapshot, getStoreSchemaHealthSnapshot } from "@/lib/db";
 
 export async function GET() {
   try {
-    const { missingColumns, nullSessionTypeCount } =
-      await getChatSchemaHealthSnapshot();
+    const [{ missingColumns, nullSessionTypeCount }, storeSchema] =
+      await Promise.all([
+        getChatSchemaHealthSnapshot(),
+        getStoreSchemaHealthSnapshot(),
+      ]);
 
     const hasNullSessionType =
       typeof nullSessionTypeCount === "number" && nullSessionTypeCount > 0;
 
-    const healthy = missingColumns.length === 0 && !hasNullSessionType;
+    const hasMissingStoreTables = storeSchema.missingTables.length > 0;
+    const hasMissingNamcVerificationColumns =
+      storeSchema.missingNamcInstallGateStateColumns.length > 0;
+
+    const healthy =
+      missingColumns.length === 0 &&
+      !hasNullSessionType &&
+      !hasMissingStoreTables &&
+      !hasMissingNamcVerificationColumns;
 
     return NextResponse.json(
       {
         healthy,
-        table: "public.Chat",
-        missingColumns,
+        chatTable: "public.Chat",
+        chatMissingColumns: missingColumns,
         nullSessionTypeCount,
+        storeMissingTables: storeSchema.missingTables,
+        namcInstallGateStateTable: "public.namc_install_gate_state",
+        namcInstallGateStateMissingColumns:
+          storeSchema.missingNamcInstallGateStateColumns,
       },
       {
         status: healthy ? 200 : 503,
@@ -29,7 +44,7 @@ export async function GET() {
     return NextResponse.json(
       {
         healthy: false,
-        table: "public.Chat",
+        chatTable: "public.Chat",
         error: message,
       },
       {
