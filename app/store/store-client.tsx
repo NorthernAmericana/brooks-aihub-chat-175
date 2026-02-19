@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSwipeGesture } from "@/hooks/use-swipe-gesture";
 import {
@@ -30,14 +30,14 @@ const namcStatusCopy = (app: StoreAppListItem) => {
   }
 
   if (app.isInstalled) {
-    return "Device install verified recently.";
+    return "Device install verified recently via NAMC install gate flow.";
   }
 
   if (app.namcInstallGateCompleted) {
-    return "Install gate completed. Device-level install could not be confirmed yet.";
+    return "Install gate route used. Device-level install could not be confirmed yet.";
   }
 
-  return "Install gate not completed yet.";
+  return "Install gate route not used yet.";
 };
 
 type StoreClientProps = {
@@ -93,15 +93,19 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
     };
   }, []);
 
-  const outlinkToNorthernAmericana = () => {
+  const openNamcWebAppFromSwipe = useCallback(() => {
     window.location.assign("https://www.northernamericana.media");
-  };
+  }, []);
+
+  const goBackToBrooksAiHubFromSwipe = useCallback(() => {
+    router.push("/brooks-ai-hub");
+  }, [router]);
 
   useSwipeGesture({
     edgeZone: 56,
     threshold: 90,
-    onSwipeLeftFromRightEdge: outlinkToNorthernAmericana,
-    onSwipeRightFromLeftEdge: () => router.push("/brooks-ai-hub"),
+    onSwipeLeftFromRightEdge: openNamcWebAppFromSwipe,
+    onSwipeRightFromLeftEdge: goBackToBrooksAiHubFromSwipe,
   });
 
   const matchesSearchQuery = (app: StoreAppListItem, query: string) => {
@@ -174,7 +178,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
             ATO Store Tip
           </p>
           <p className="mt-2 text-sm leading-relaxed text-white/95">
-            Swipe left to go to www.northernamericana.media
+            Swipe left to open the NAMC web app. Install state only updates in /namc/install.
           </p>
         </div>
       </div>
@@ -192,7 +196,7 @@ export function StoreClient({ apps, hasSession }: StoreClientProps) {
       <button
         aria-label="Swipe left to go to Northern Americana Media"
         className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 items-center gap-1 rounded-l-full border border-r-0 border-slate-200 bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 sm:flex"
-        onClick={outlinkToNorthernAmericana}
+        onClick={openNamcWebAppFromSwipe}
         type="button"
       >
         <span className="hidden sm:inline">Go to Northern Americana Media</span>
