@@ -15,10 +15,12 @@ export const dynamic = "force-dynamic";
 const APP_SLUG = "spotify-music-player";
 
 const REQUESTED_SCOPES = [
+  "streaming",
+  "user-read-email",
+  "user-read-private",
   "user-read-playback-state",
   "user-modify-playback-state",
   "user-read-currently-playing",
-  "user-top-read",
 ];
 
 export default async function SpotifyAppDetailPage() {
