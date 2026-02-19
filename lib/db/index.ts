@@ -33,6 +33,20 @@ const REQUIRED_CHAT_RATE_LIMIT_MESSAGE_COLUMNS = [
   "role",
   "createdAt",
 ] as const;
+const REQUIRED_STORE_TABLES = [
+  "ato_apps",
+  "ato_routes",
+  "user_installs",
+  "namc_install_gate_state",
+] as const;
+const REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS = [
+  "id",
+  "user_id",
+  "verification_status",
+  "verification_method",
+  "verification_checked_at",
+  "verification_details",
+] as const;
 
 type ChatSchemaVerificationState = "unchecked" | "healthy" | "unhealthy";
 let chatSchemaVerificationState: ChatSchemaVerificationState = "unchecked";
@@ -120,6 +134,40 @@ export async function getChatSchemaHealthSnapshot() {
   return {
     missingColumns,
     nullSessionTypeCount,
+  };
+}
+
+export async function getStoreSchemaHealthSnapshot() {
+  const tableRows = await db.execute<{ table_name: string }>(sql`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public';
+  `);
+
+  const existingTables = new Set(tableRows.map((row) => row.table_name));
+  const missingTables = REQUIRED_STORE_TABLES.filter(
+    (tableName) => !existingTables.has(tableName)
+  );
+
+  let missingNamcInstallGateStateColumns = [...REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS];
+
+  if (existingTables.has("namc_install_gate_state")) {
+    const columnRows = await db.execute<{ column_name: string }>(sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'namc_install_gate_state';
+    `);
+
+    const existingColumns = new Set(columnRows.map((row) => row.column_name));
+    missingNamcInstallGateStateColumns =
+      REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS.filter(
+        (columnName) => !existingColumns.has(columnName)
+      );
+  }
+
+  return {
+    missingTables,
+    missingNamcInstallGateStateColumns,
   };
 }
 

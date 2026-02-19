@@ -15,12 +15,12 @@ Review the required environment variables in [`.env.example`](../../.env.example
 ## Minimal deployment checklist
 
 - **Environment variables**: Load every variable listed in `.env.example` into your hosting project.
-- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic. The Vercel build command runs `pnpm db:migrate`, so make sure `POSTGRES_URL` or `DATABASE_URL` is configured for the target environment during builds.
+- **Database**: Provision Postgres (recommended: Neon) and apply migrations before traffic. The Vercel build command (`build:vercel`) runs `pnpm db:migrate`, so make sure `POSTGRES_URL` or `DATABASE_URL` is configured for the target environment during builds.
 - **Blob storage**: Enable your blob storage provider and provide the required blob credentials.
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
-- **Chat schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Also confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production.
+- **Chat + store schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production and reports no missing store objects (including `namc_install_gate_state` verification columns). If this endpoint returns non-200, run migrations on the target database and re-check that `POSTGRES_URL`/`DATABASE_URL` point to the intended Preview/Production instance before redeploying.
 
 For a full production release checklist, see [docs/ops/release-checklist.md](./release-checklist.md).
 
