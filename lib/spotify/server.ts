@@ -44,6 +44,16 @@ export class SpotifyApiError extends Error {
   }
 }
 
+function toTokenDecodeError(details?: unknown) {
+  return new SpotifyApiError({
+    status: 401,
+    code: "spotify_unauthorized",
+    message:
+      "Spotify session is invalid. Please reconnect your Spotify account.",
+    details,
+  });
+}
+
 async function getActiveSpotifyAccount(userId: string) {
   const [account] = await db
     .select()
@@ -85,12 +95,20 @@ function refreshAccessTokenWithLock(userId: string) {
       lockedAccount.expiresAt.getTime() >
         Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS
     ) {
-      return decryptSpotifyToken(lockedAccount.accessTokenEncrypted);
+      try {
+        return decryptSpotifyToken(lockedAccount.accessTokenEncrypted);
+      } catch {
+        throw toTokenDecodeError({ source: "access_token" });
+      }
     }
 
-    const refreshToken = decryptSpotifyToken(
-      lockedAccount.refreshTokenEncrypted
-    );
+    let refreshToken: string;
+
+    try {
+      refreshToken = decryptSpotifyToken(lockedAccount.refreshTokenEncrypted);
+    } catch {
+      throw toTokenDecodeError({ source: "refresh_token" });
+    }
     const refreshed = await refreshSpotifyAccessToken(refreshToken);
     const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000);
 
@@ -131,7 +149,11 @@ export async function getAccessTokenForUser(
     account.expiresAt &&
     account.expiresAt.getTime() > Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS
   ) {
-    return decryptSpotifyToken(account.accessTokenEncrypted);
+    try {
+      return decryptSpotifyToken(account.accessTokenEncrypted);
+    } catch {
+      throw toTokenDecodeError({ source: "access_token" });
+    }
   }
 
   return refreshAccessTokenWithLock(userId);
