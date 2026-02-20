@@ -380,23 +380,32 @@ export const atoApps = pgTable("ato_apps", {
 
 export type AtoApp = InferSelectModel<typeof atoApps>;
 
-export const atoRoutes = pgTable("ato_routes", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  appId: uuid("app_id")
-    .notNull()
-    .references(() => atoApps.id),
-  slash: text("slash").notNull(),
-  label: text("label").notNull(),
-  description: text("description"),
-  agentId: text("agent_id"),
-  toolPolicy: json("tool_policy")
-    .$type<Record<string, unknown>>()
-    .notNull()
-    .default({}),
-  isFoundersOnly: boolean("is_founders_only").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const atoRoutes = pgTable(
+  "ato_routes",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    appId: uuid("app_id")
+      .notNull()
+      .references(() => atoApps.id),
+    slash: text("slash").notNull(),
+    label: text("label").notNull(),
+    description: text("description"),
+    agentId: text("agent_id"),
+    toolPolicy: json("tool_policy")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    isFoundersOnly: boolean("is_founders_only").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    appSlashUnique: uniqueIndex("ato_routes_app_id_slash_unique").on(
+      table.appId,
+      table.slash
+    ),
+  })
+);
 
 export type AtoRoute = InferSelectModel<typeof atoRoutes>;
 
@@ -450,7 +459,9 @@ export const namcInstallGateState = pgTable(
   })
 );
 
-export type NamcInstallGateState = InferSelectModel<typeof namcInstallGateState>;
+export type NamcInstallGateState = InferSelectModel<
+  typeof namcInstallGateState
+>;
 
 export const atoAppReviews = pgTable(
   "ato_app_reviews",
