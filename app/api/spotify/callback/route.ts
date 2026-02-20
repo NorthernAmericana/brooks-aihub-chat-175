@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { db } from "@/lib/db";
+import { assertSpotifyAccountsTableReady, db } from "@/lib/db";
 import { spotifyAccounts } from "@/lib/db/schema";
 import { encryptSpotifyToken } from "@/lib/spotify/crypto";
 import { getSpotifyEnv } from "@/lib/spotify/env";
@@ -63,6 +63,8 @@ export async function GET(request: NextRequest) {
     }
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000);
+
+    await assertSpotifyAccountsTableReady();
 
     await db.transaction(async (tx) => {
       await tx
