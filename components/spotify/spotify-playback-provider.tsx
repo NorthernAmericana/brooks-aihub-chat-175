@@ -119,7 +119,7 @@ function loadSpotifySdk() {
   }
 
   const existingScript = document.querySelector<HTMLScriptElement>(
-    `script[src="${SPOTIFY_SDK_URL}"]`,
+    `script[src="${SPOTIFY_SDK_URL}"]`
   );
 
   if (!existingScript) {
@@ -168,7 +168,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
   const refreshState = useCallback(async () => {
     try {
       const state = await fetchJson<PlaybackState | null>(
-        "/api/spotify/player",
+        "/api/spotify/player"
       );
       if (!mountedRef.current) {
         return;
@@ -184,6 +184,12 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       setError(mapUiError(message));
     }
   }, [mapUiError]);
+
+  const refreshStateRef = useRef(refreshState);
+
+  useEffect(() => {
+    refreshStateRef.current = refreshState;
+  }, [refreshState]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -206,15 +212,13 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let pollInterval = 0;
-
     const setup = async () => {
       try {
         await loadSpotifySdk();
         if (!window.Spotify?.Player || !mountedRef.current) {
           setIsFallbackMode(true);
           setSdkUnavailableReason(
-            "Spotify Web Playback SDK is unavailable. Using fallback controls.",
+            "Spotify Web Playback SDK is unavailable. Using fallback controls."
           );
           await refreshState();
           return;
@@ -226,14 +230,14 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
           getOAuthToken: async (callback) => {
             try {
               const token = await fetchJson<{ accessToken: string }>(
-                "/api/spotify/token",
+                "/api/spotify/token"
               );
               callback(token.accessToken);
             } catch (err) {
               setError(
                 err instanceof Error
                   ? mapUiError(err.message)
-                  : "Unable to load Spotify token",
+                  : "Unable to load Spotify token"
               );
             }
           },
@@ -264,7 +268,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
                 artists: state.track_window.current_track.artists.map(
                   (artist) => ({
                     name: artist.name,
-                  }),
+                  })
                 ),
                 album: {
                   images: state.track_window.current_track.album.images,
@@ -273,14 +277,14 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
                 duration_ms: state.duration,
               },
             });
-          },
+          }
         );
 
         player.addListener("authentication_error", ({ message }) => {
           setError(mapUiError(message));
           setIsFallbackMode(true);
           setSdkUnavailableReason(
-            "Spotify Web Playback SDK authentication failed. Using fallback controls.",
+            "Spotify Web Playback SDK authentication failed. Using fallback controls."
           );
         });
 
@@ -288,7 +292,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
           setError(mapUiError(message));
           setIsFallbackMode(true);
           setSdkUnavailableReason(
-            "Spotify denied Web Playback on this account/device. Using fallback controls.",
+            "Spotify denied Web Playback on this account/device. Using fallback controls."
           );
         });
 
@@ -305,14 +309,11 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
         setIsFallbackMode(!connected);
         if (!connected) {
           setSdkUnavailableReason(
-            "Could not connect Spotify Web Playback SDK. Using fallback controls.",
+            "Could not connect Spotify Web Playback SDK. Using fallback controls."
           );
         }
         if (connected) {
           await refreshState();
-          pollInterval = window.setInterval(() => {
-            refreshState().catch(() => undefined);
-          }, 10_000);
         }
       } catch (err) {
         setIsFallbackMode(true);
@@ -320,7 +321,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
           err instanceof Error ? err.message : "Failed to initialize Spotify";
         setError(mapUiError(message));
         setSdkUnavailableReason(
-          "Spotify Web Playback SDK failed to load. Using fallback controls.",
+          "Spotify Web Playback SDK failed to load. Using fallback controls."
         );
         await refreshState();
       } finally {
@@ -333,13 +334,38 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
     setup().catch(() => undefined);
 
     return () => {
-      if (pollInterval) {
-        window.clearInterval(pollInterval);
-      }
       playerRef.current?.disconnect();
       playerRef.current = null;
     };
   }, [isActivated, mapUiError, refreshState]);
+
+  useEffect(() => {
+    if (!isActivated) {
+      return;
+    }
+
+    let timeout = 0;
+    let cancelled = false;
+
+    const tick = async () => {
+      await refreshStateRef.current().catch(() => undefined);
+
+      if (cancelled) {
+        return;
+      }
+
+      timeout = window.setTimeout(tick, playerState?.is_playing ? 1500 : 5000);
+    };
+
+    timeout = window.setTimeout(tick, 0);
+
+    return () => {
+      cancelled = true;
+      if (timeout) {
+        window.clearTimeout(timeout);
+      }
+    };
+  }, [isActivated, playerState?.is_playing]);
 
   useEffect(() => {
     setSpotifyIsPlaying(Boolean(playerState?.is_playing));
@@ -370,14 +396,17 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
         setControlMessage(null);
       } catch (err) {
         const message = mapUiError(
-          err instanceof Error ? err.message : "Spotify rejected this action",
+          err instanceof Error ? err.message : "Spotify rejected this action"
         );
         setControlMessage(message);
       } finally {
         await refreshState();
+        window.setTimeout(() => {
+          refreshStateRef.current().catch(() => undefined);
+        }, 750);
       }
     },
-    [mapUiError, refreshState],
+    [mapUiError, refreshState]
   );
 
   const togglePlayback = useCallback(async () => {
@@ -385,7 +414,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       playerState?.is_playing
         ? "/api/spotify/player/pause"
         : "/api/spotify/player/play",
-      { method: "PUT" },
+      { method: "PUT" }
     );
   }, [playerState?.is_playing, runPlayerAction]);
 
@@ -401,10 +430,10 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
     async (positionMs: number) => {
       await runPlayerAction(
         `/api/spotify/player/seek?position_ms=${Math.max(0, Math.floor(positionMs))}`,
-        { method: "PUT" },
+        { method: "PUT" }
       );
     },
-    [runPlayerAction],
+    [runPlayerAction]
   );
 
   const startRadio = useCallback(async () => {
@@ -452,10 +481,10 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       window.open(
         contextUri.replace(
           "spotify:playlist:",
-          "https://open.spotify.com/playlist/",
+          "https://open.spotify.com/playlist/"
         ),
         "_blank",
-        "noopener,noreferrer",
+        "noopener,noreferrer"
       );
       return;
     }
@@ -513,7 +542,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       openSpotifyArtist,
       openSpotifyContext,
       dismissControlMessage,
-    ],
+    ]
   );
 
   return (
@@ -527,7 +556,7 @@ export function useSpotifyPlayback() {
   const context = useContext(SpotifyPlaybackContext);
   if (!context) {
     throw new Error(
-      "useSpotifyPlayback must be used inside SpotifyPlaybackProvider",
+      "useSpotifyPlayback must be used inside SpotifyPlaybackProvider"
     );
   }
   return context;
