@@ -14,6 +14,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(await getRecommendations(userId, searchParams));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/recommendations");
   }
 }

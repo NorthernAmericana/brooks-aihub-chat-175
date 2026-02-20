@@ -33,6 +33,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(await seekToPosition(userId, positionMs));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/player/seek");
   }
 }

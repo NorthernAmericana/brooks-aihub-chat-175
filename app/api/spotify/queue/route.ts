@@ -24,6 +24,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(await addToQueue(userId, uri, deviceId));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/queue");
   }
 }

@@ -12,6 +12,6 @@ export async function POST() {
     const userId = await requireUserId();
     return NextResponse.json(await nextTrack(userId));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/player/next");
   }
 }

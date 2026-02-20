@@ -12,6 +12,6 @@ export async function GET() {
     const userId = await requireUserId();
     return NextResponse.json(await getCurrentUserProfile(userId));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/me");
   }
 }

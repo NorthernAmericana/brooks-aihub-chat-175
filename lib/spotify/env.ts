@@ -13,9 +13,49 @@ function readOptionalEnv(name: string): string | null {
   return value ? value : null;
 }
 
-let hasValidatedSpotifyEncryptionKey = false;
+type SpotifyEnv = {
+  spotifyClientId: string;
+  spotifyClientSecret: string | null;
+  spotifyRedirectUri: string;
+  spotifyTokenEncryptionKey: string;
+  appOrigin: string;
+};
 
-export function getSpotifyEnv() {
+let cachedSpotifyEnv: SpotifyEnv | undefined;
+
+function writeSpotifyLog(level: "info" | "error", message: string) {
+  const entry = JSON.stringify({
+    level,
+    source: "spotify.env",
+    message,
+  });
+
+  if (level === "error") {
+    process.stderr.write(`${entry}\n`);
+    return;
+  }
+
+  process.stdout.write(`${entry}\n`);
+}
+
+function validateSpotifyEncryptionKey(base64Value: string) {
+  if (
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(base64Value) ||
+    base64Value.length % 4 !== 0
+  ) {
+    throw new Error("SPOTIFY_TOKEN_ENCRYPTION_KEY must be valid base64");
+  }
+
+  const keyBytes = Buffer.from(base64Value, "base64");
+
+  if (keyBytes.length !== 32) {
+    throw new Error(
+      "SPOTIFY_TOKEN_ENCRYPTION_KEY must decode to exactly 32 bytes"
+    );
+  }
+}
+
+function buildSpotifyEnv(): SpotifyEnv {
   const spotifyClientId = readRequiredEnv("SPOTIFY_CLIENT_ID");
   const spotifyRedirectUri = readRequiredEnv("SPOTIFY_REDIRECT_URI");
   const appOrigin = readRequiredEnv("APP_ORIGIN");
@@ -23,17 +63,7 @@ export function getSpotifyEnv() {
     "SPOTIFY_TOKEN_ENCRYPTION_KEY"
   );
 
-  if (!hasValidatedSpotifyEncryptionKey) {
-    const keyBytes = Buffer.from(spotifyTokenEncryptionKey, "base64");
-
-    if (keyBytes.length !== 32) {
-      throw new Error(
-        "SPOTIFY_TOKEN_ENCRYPTION_KEY must decode to exactly 32 bytes"
-      );
-    }
-
-    hasValidatedSpotifyEncryptionKey = true;
-  }
+  validateSpotifyEncryptionKey(spotifyTokenEncryptionKey);
 
   return {
     spotifyClientId,
@@ -42,4 +72,31 @@ export function getSpotifyEnv() {
     spotifyTokenEncryptionKey,
     appOrigin,
   };
+}
+
+export function validateSpotifyEnvAtBoot() {
+  if (cachedSpotifyEnv) {
+    return cachedSpotifyEnv;
+  }
+
+  try {
+    cachedSpotifyEnv = buildSpotifyEnv();
+    writeSpotifyLog("info", "Environment validation succeeded at startup.");
+    return cachedSpotifyEnv;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    writeSpotifyLog(
+      "error",
+      `Environment validation failed at startup: ${errorMessage}`
+    );
+    throw error;
+  }
+}
+
+export function getSpotifyEnv() {
+  return cachedSpotifyEnv ?? validateSpotifyEnvAtBoot();
+}
+
+if (process.env.NODE_ENV !== "test") {
+  validateSpotifyEnvAtBoot();
 }
