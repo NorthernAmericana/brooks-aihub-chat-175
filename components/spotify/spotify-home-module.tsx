@@ -4,6 +4,7 @@ import { Link2, Music2 } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
 import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { cn, fetcher } from "@/lib/utils";
 
 type SpotifyStatus = {
@@ -12,7 +13,7 @@ type SpotifyStatus = {
 
 export function SpotifyHomeModule() {
   const { data } = useSWR<SpotifyStatus>("/api/spotify/status", fetcher);
-  const { isActivated, activate, playerState, togglePlayback } = useSpotifyPlayback();
+  const { isActivated, activate, playerState, togglePlayback, skipNext } = useSpotifyPlayback();
 
   const hasTrack = Boolean(playerState?.item);
 
@@ -36,14 +37,29 @@ export function SpotifyHomeModule() {
         <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
           {isActivated ? (
             <>
-              <p className="truncate text-sm font-semibold">
-                {hasTrack ? playerState?.item?.name : "Nothing playing"}
-              </p>
-              <p className="truncate text-xs text-white/70">
-                {hasTrack
-                  ? playerState?.item?.artists.map((artist) => artist.name).join(", ")
-                  : "Open Spotify and start a track to control playback."}
-              </p>
+              <div className="flex items-center gap-3">
+                <ImageWithFallback
+                  alt={playerState?.item?.name ?? "Spotify album art"}
+                  className="h-10 w-10 rounded-md object-cover"
+                  containerClassName="h-10 w-10 shrink-0"
+                  height={40}
+                  src={
+                    playerState?.item?.album?.images?.[0]?.url ??
+                    "/icons/spotify-music-player-appicon.svg"
+                  }
+                  width={40}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {hasTrack ? playerState?.item?.name : "Nothing playing"}
+                  </p>
+                  <p className="truncate text-xs text-white/70">
+                    {hasTrack
+                      ? playerState?.item?.artists.map((artist) => artist.name).join(", ")
+                      : "Open Spotify and start a track to control playback."}
+                  </p>
+                </div>
+              </div>
               <div className="mt-3 flex gap-2">
                 <button
                   className={cn(
@@ -58,6 +74,15 @@ export function SpotifyHomeModule() {
                   type="button"
                 >
                   {playerState?.is_playing ? "Pause" : "Play"}
+                </button>
+                <button
+                  className="rounded-full border border-white/20 px-3 py-1 text-xs"
+                  onClick={() => {
+                    skipNext();
+                  }}
+                  type="button"
+                >
+                  Skip
                 </button>
                 <Link
                   className="rounded-full border border-white/20 px-3 py-1 text-xs"
