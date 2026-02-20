@@ -3,9 +3,11 @@
 import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DrawPad } from "@/components/commons/dm/DrawPad";
 import type { DmRoomForViewer } from "@/lib/db/commons-queries";
 
 type DmCampfireRoomProps = {
+  roomId: string;
   campfire: DmRoomForViewer["campfire"];
   members: DmRoomForViewer["members"];
   host: DmRoomForViewer["host"];
@@ -58,6 +60,7 @@ function parseMessage(body: string): ParsedMessage {
 }
 
 export function DmCampfireRoom({
+  roomId,
   campfire,
   members,
   host,
@@ -261,12 +264,7 @@ export function DmCampfireRoom({
                     Collapse
                   </button>
                 </div>
-                <div className="grid flex-1 place-items-center border-2 border-dashed border-[#0f2742] bg-white p-4 text-center">
-                  <p className="text-sm font-bold">Sketch area placeholder</p>
-                  <p className="mt-2 text-xs">
-                    Upload/export from your draw workflow, then paste the image URL in chat to share.
-                  </p>
-                </div>
+                <DrawPad canWrite={access.canWrite} onSent={() => router.refresh()} roomId={roomId} />
               </>
             )}
           </div>
