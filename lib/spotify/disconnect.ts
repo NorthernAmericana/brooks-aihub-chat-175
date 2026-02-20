@@ -8,7 +8,7 @@ export async function disconnectSpotify(userId: string) {
     .set({
       revokedAt: new Date(),
       refreshTokenEncrypted: "revoked",
-      accessTokenEncrypted: null,
+      accessTokenEncrypted: "revoked",
       expiresAt: null,
       updatedAt: new Date(),
     })

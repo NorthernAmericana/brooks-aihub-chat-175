@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/app/(auth)/auth";
+import {
+  requireUserId,
+  toSpotifyErrorResponse,
+} from "@/app/api/spotify/_internal/route-utils";
 import { disconnectSpotify } from "@/lib/spotify/disconnect";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const userId = await requireUserId();
+    await disconnectSpotify(userId);
+    return NextResponse.json({ disconnected: true });
+  } catch (error) {
+    return toSpotifyErrorResponse(error);
   }
-
-  await disconnectSpotify(session.user.id);
-
-  return NextResponse.json({ disconnected: true });
 }
