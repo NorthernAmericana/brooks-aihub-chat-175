@@ -108,12 +108,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <div className="flex flex-row items-center justify-between">
               <Link
                 className="flex flex-row items-center gap-3"
-                href="/brooks-ai-hub/"
+                href="/"
                 onClick={() => {
                   setOpenMobile(false);
                 }}
               >
-                <span className="sidebar-glitch group relative flex cursor-pointer items-center rounded-md px-2 py-1 font-semibold text-lg hover:bg-muted">
+                <span className="sidebar-glitch group relative flex cursor-pointer items-center rounded-md px-2 py-1 font-semibold text-lg hover:bg-muted active:underline active:decoration-2 active:underline-offset-4">
                   <span
                     aria-hidden
                     className="sidebar-rainbow-symbol absolute -left-4 top-1/2 h-6 w-6 -translate-y-1/2"
