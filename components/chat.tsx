@@ -693,12 +693,12 @@ export function Chat({
             </div>
 
             <div
-              className="sticky z-20 w-full px-2 pb-1 md:px-2"
+              className="sticky z-20 w-full pb-1"
               style={{
                 top: "var(--chat-top-nav-height)",
               }}
             >
-              <NowPlayingStrip className="rounded-3xl border-emerald-300/45 bg-emerald-950/85 px-4 py-3 shadow-lg" />
+              <NowPlayingStrip className="rounded-none border-x-0 border-emerald-300/45 bg-emerald-950/85 px-4 py-3 shadow-lg" />
             </div>
           </div>
 
