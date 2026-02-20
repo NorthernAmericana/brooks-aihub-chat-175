@@ -112,7 +112,7 @@ export default function IntroPage() {
   }, []);
 
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#0a1511] text-white">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#0a1511] pb-40 text-white sm:pb-0">
       <audio
         ref={audioRef}
         src="/audio/forest-background-sounds.mp3"
@@ -213,9 +213,9 @@ export default function IntroPage() {
 
       </div>
 
-      <div className="absolute bottom-6 right-4 z-20 flex flex-col items-end gap-3 text-[11px] sm:bottom-8 sm:right-8 sm:text-sm">
+      <div className="absolute bottom-4 right-3 z-20 flex flex-col items-end gap-4 text-[10px] sm:bottom-8 sm:right-8 sm:gap-3 sm:text-sm">
         <a
-          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          className="max-w-[86vw] rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-right text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50 sm:max-w-none sm:px-5 sm:py-2"
           href="https://www.northernamericana.media"
           rel="noopener noreferrer"
           target="_blank"
@@ -223,7 +223,7 @@ export default function IntroPage() {
           move to www.northernamericana.media
         </a>
         <a
-          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          className="max-w-[86vw] rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-right text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50 sm:max-w-none sm:px-5 sm:py-2"
           href="https://www.northernamericanatech.com"
           rel="noopener noreferrer"
           target="_blank"
@@ -231,7 +231,7 @@ export default function IntroPage() {
           move to www.northernamericanatech.com
         </a>
         <a
-          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          className="max-w-[86vw] rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-right text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50 sm:max-w-none sm:px-5 sm:py-2"
           href="https://www.linkedin.com/in/jack-brooks-9b7776275"
           rel="noopener noreferrer"
           target="_blank"
