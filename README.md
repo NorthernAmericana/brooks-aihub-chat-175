@@ -319,3 +319,12 @@ curl -I 'http://localhost:3000/sitemap.xml'
 5. Validate via API:
    - `GET /api/mycarmind/places?city=...&state=...`
    - `GET /api/mycarmind/search?q=...`
+
+## Manual QA checklist: sticky Now Playing strip
+
+- Open a chat route (for example `/brooks-ai-hub`) and confirm the top nav row (`Memories / New Chat / Themes`) stays pinned at the top while scrolling.
+- Start Spotify playback and confirm the compact Now Playing strip appears directly under the top nav.
+- Scroll a long chat/greeting page and verify both bars remain visible and content does not slide underneath them.
+- Verify compact strip interactions still work: play/pause, open in Spotify, and overflow menu actions.
+- Stop playback (or disconnect provider) and verify the compact strip hides consistently.
+- Confirm the larger Spotify player module remains in normal page content (not sticky) and still functions.

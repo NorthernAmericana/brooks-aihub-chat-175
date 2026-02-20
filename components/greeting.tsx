@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { SpotifyHomeModule } from "@/components/spotify/spotify-home-module";
-import { SpotifyTopBar } from "@/components/spotify/spotify-top-bar";
 import { toast } from "@/components/toast";
 import {
   AlertDialog,
@@ -844,15 +843,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
       className="relative mx-auto mt-2 flex size-full max-w-xl flex-col items-center justify-center gap-2.5 px-4 py-6 text-center sm:mt-4 sm:max-w-2xl sm:px-6 sm:py-8 md:mt-12 md:px-10 md:py-10"
       key="overview"
     >
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 10 }}
-        transition={{ delay: 0.45 }}
-      >
-        <SpotifyTopBar />
-      </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="text-balance font-semibold text-xl leading-tight text-foreground sm:text-2xl md:text-3xl"

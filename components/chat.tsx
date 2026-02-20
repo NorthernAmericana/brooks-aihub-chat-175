@@ -9,6 +9,7 @@ import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { useAudioFocus } from "@/components/audio-focus-provider";
 import { ChatHeader } from "@/components/chat-header";
+import { NowPlayingStrip } from "@/components/spotify/spotify-top-bar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -161,6 +162,8 @@ export function Chat({
   const audioBufferRef = useRef<{ src: string; buffer: AudioBuffer } | null>(
     null
   );
+  const chatHeaderRef = useRef<HTMLDivElement | null>(null);
+  const [chatHeaderHeight, setChatHeaderHeight] = useState(0);
 
   const {
     spotifyIsPlaying,
@@ -183,6 +186,28 @@ export function Chat({
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  useEffect(() => {
+    const headerElement = chatHeaderRef.current;
+    if (!headerElement) {
+      return;
+    }
+
+    const updateHeaderHeight = () => {
+      setChatHeaderHeight(headerElement.getBoundingClientRect().height);
+    };
+
+    updateHeaderHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    resizeObserver.observe(headerElement);
+    window.addEventListener("resize", updateHeaderHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateHeaderHeight);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isChatThemeEnabled) {
@@ -310,8 +335,7 @@ export function Chat({
         return false;
       }
 
-      const context =
-        audioContextRef.current ?? new AudioContextConstructor();
+      const context = audioContextRef.current ?? new AudioContextConstructor();
       audioContextRef.current = context;
 
       const buffer = await getAudioBuffer(context);
@@ -631,24 +655,54 @@ export function Chat({
             />
           </>
         )}
-        <div className="relative z-10 flex h-dvh min-w-0 flex-col" style={chatLayoutStyle}>
-          <ChatHeader
-            chatId={id}
-            isReadonly={isReadonly}
-            effectiveAudioOutputMode={
-              isChatThemeEnabled ? effectiveOutputMode : undefined
+        <div
+          className="relative z-10 flex h-dvh min-w-0 flex-col"
+          style={chatLayoutStyle}
+        >
+          <div
+            className="relative z-30"
+            style={
+              {
+                "--chat-top-nav-height": `${chatHeaderHeight}px`,
+              } as CSSProperties
             }
-            isThemeAudioEnabled={isChatThemeEnabled ? isThemeAudioEnabled : undefined}
-            onThemeChange={isChatThemeEnabled ? handleThemeChange : undefined}
-            onThemeAudioToggle={
-              isChatThemeEnabled ? handleThemeAudioToggle : undefined
-            }
-            routeKey={chatRouteKey}
-            selectedThemeId={isChatThemeEnabled ? chatTheme : undefined}
-            selectedVisibilityType={initialVisibilityType}
-            themeOptions={isChatThemeEnabled ? CHAT_THEME_OPTIONS : undefined}
-            showSpotifyTopBar={messages.length > 0}
-          />
+          >
+            <div ref={chatHeaderRef}>
+              <ChatHeader
+                chatId={id}
+                isReadonly={isReadonly}
+                effectiveAudioOutputMode={
+                  isChatThemeEnabled ? effectiveOutputMode : undefined
+                }
+                isThemeAudioEnabled={
+                  isChatThemeEnabled ? isThemeAudioEnabled : undefined
+                }
+                onThemeChange={
+                  isChatThemeEnabled ? handleThemeChange : undefined
+                }
+                onThemeAudioToggle={
+                  isChatThemeEnabled ? handleThemeAudioToggle : undefined
+                }
+                routeKey={chatRouteKey}
+                selectedThemeId={isChatThemeEnabled ? chatTheme : undefined}
+                selectedVisibilityType={initialVisibilityType}
+                themeOptions={
+                  isChatThemeEnabled ? CHAT_THEME_OPTIONS : undefined
+                }
+              />
+            </div>
+
+            {messages.length > 0 ? (
+              <div
+                className="sticky z-20 px-2 pb-1 md:px-2"
+                style={{
+                  top: "var(--chat-top-nav-height)",
+                }}
+              >
+                <NowPlayingStrip />
+              </div>
+            ) : null}
+          </div>
 
           <Messages
             addToolApprovalResponse={addToolApprovalResponse}

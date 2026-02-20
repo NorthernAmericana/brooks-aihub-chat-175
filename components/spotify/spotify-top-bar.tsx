@@ -2,6 +2,7 @@
 
 import { ExternalLink, MoreVertical, Pause, Play, Radio } from "lucide-react";
 import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
-export function SpotifyTopBar() {
+type NowPlayingStripProps = {
+  className?: string;
+};
+
+export function NowPlayingStrip({ className }: NowPlayingStripProps) {
   const {
     playerState,
     togglePlayback,
@@ -27,7 +32,12 @@ export function SpotifyTopBar() {
   }
 
   return (
-    <div className="w-full max-w-full overflow-hidden rounded-xl border border-emerald-300/30 bg-[#0a130f]/85 px-2 py-1.5 text-white shadow-sm backdrop-blur supports-[backdrop-filter]:bg-[#0a130f]/70 sm:px-3">
+    <div
+      className={cn(
+        "w-full max-w-full overflow-hidden rounded-xl border border-emerald-300/30 bg-[#0a130f]/85 px-2 py-1.5 text-white shadow-sm backdrop-blur supports-[backdrop-filter]:bg-[#0a130f]/70 sm:px-3",
+        className
+      )}
+    >
       <div className="flex min-h-10 items-center gap-2 sm:min-h-11">
         <ImageWithFallback
           alt={track.name}
@@ -102,4 +112,8 @@ export function SpotifyTopBar() {
       </div>
     </div>
   );
+}
+
+export function SpotifyTopBar() {
+  return <NowPlayingStrip />;
 }
