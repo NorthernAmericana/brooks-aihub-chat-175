@@ -26,7 +26,8 @@ Use this checklist before promoting a new release to production.
 
 - [ ] `GET /` loads without errors and core UI renders.
 - [ ] `GET /api/health/chat-schema` returns `200` and reports no missing store tables/columns (including `namc_install_gate_state` verification fields).
-- [ ] If `GET /api/health/chat-schema` is non-200, run `pnpm db:migrate` against the target database and verify `POSTGRES_URL`/`DATABASE_URL` point at the intended instance, then redeploy and re-check.
+- [ ] `GET /api/health/spotify-schema` returns `200` and reports `public.spotify_accounts` present (confirms migration `0045_spotify_accounts` on target DB).
+- [ ] If either schema health endpoint (`/api/health/chat-schema` or `/api/health/spotify-schema`) is non-200, run `pnpm db:migrate` against the target database and verify `POSTGRES_URL`/`DATABASE_URL` point at the intended instance, then redeploy and re-check.
 - [ ] `GET /manifest.webmanifest` returns `200` with a valid manifest.
 - [ ] `GET /sw.js` returns `200` and registers a service worker.
 - [ ] Run the PWA check: `PWA_CHECK_BASE_URL=https://www.brooksaihub.app pnpm check:pwa`.

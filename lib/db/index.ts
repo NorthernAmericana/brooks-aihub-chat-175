@@ -9,7 +9,7 @@ const databaseUrl = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error(
-    "No database URL configured. Set POSTGRES_URL or DATABASE_URL before starting the service."
+    "No database URL configured. Set POSTGRES_URL or DATABASE_URL before starting the service.",
   );
 }
 
@@ -62,15 +62,18 @@ let chatRateLimitSchemaVerificationState: ChatRateLimitSchemaVerificationState =
 let chatRateLimitSchemaVerificationPromise: Promise<void> | null = null;
 let hasLoggedChatRateLimitSchemaFailure = false;
 
+type SpotifySchemaVerificationState = "unchecked" | "healthy" | "unhealthy";
+let spotifySchemaVerificationState: SpotifySchemaVerificationState =
+  "unchecked";
+let spotifySchemaVerificationPromise: Promise<void> | null = null;
+let hasLoggedSpotifySchemaFailure = false;
+
 async function verifyChatSchemaColumns() {
   const { missingColumns } = await getChatSchemaHealthSnapshot();
 
-  if (
-    missingColumns.length === 1 &&
-    missingColumns[0] === "sessionType"
-  ) {
+  if (missingColumns.length === 1 && missingColumns[0] === "sessionType") {
     console.warn(
-      '[DB SCHEMA CHECK] Auto-remediating missing public."Chat"."sessionType" column to avoid downtime. This is a compatibility fallback; run migrations to keep schema in sync.'
+      '[DB SCHEMA CHECK] Auto-remediating missing public."Chat"."sessionType" column to avoid downtime. This is a compatibility fallback; run migrations to keep schema in sync.',
     );
 
     await db.execute(sql`
@@ -96,13 +99,13 @@ async function verifyChatSchemaColumns() {
     if (!hasLoggedChatSchemaFailure) {
       hasLoggedChatSchemaFailure = true;
       console.error(
-        `[DB SCHEMA CHECK] Missing required columns on public."Chat": ${missingColumns.join(", ")}. Run database migrations before starting the service (e.g. pnpm db:migrate).`
+        `[DB SCHEMA CHECK] Missing required columns on public."Chat": ${missingColumns.join(", ")}. Run database migrations before starting the service (e.g. pnpm db:migrate).`,
       );
     }
 
     throw new ChatSDKError(
       "offline:database",
-      `Missing required Chat columns: ${missingColumns.join(", ")}`
+      `Missing required Chat columns: ${missingColumns.join(", ")}`,
     );
   }
 }
@@ -116,7 +119,7 @@ export async function getChatSchemaHealthSnapshot() {
 
   const existingColumns = new Set(rows.map((row) => row.column_name));
   const missingColumns = REQUIRED_CHAT_COLUMNS.filter(
-    (columnName) => !existingColumns.has(columnName)
+    (columnName) => !existingColumns.has(columnName),
   );
 
   let nullSessionTypeCount: number | null = null;
@@ -146,10 +149,12 @@ export async function getStoreSchemaHealthSnapshot() {
 
   const existingTables = new Set(tableRows.map((row) => row.table_name));
   const missingTables = REQUIRED_STORE_TABLES.filter(
-    (tableName) => !existingTables.has(tableName)
+    (tableName) => !existingTables.has(tableName),
   );
 
-  let missingNamcInstallGateStateColumns = [...REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS];
+  let missingNamcInstallGateStateColumns = [
+    ...REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS,
+  ];
 
   if (existingTables.has("namc_install_gate_state")) {
     const columnRows = await db.execute<{ column_name: string }>(sql`
@@ -161,13 +166,25 @@ export async function getStoreSchemaHealthSnapshot() {
     const existingColumns = new Set(columnRows.map((row) => row.column_name));
     missingNamcInstallGateStateColumns =
       REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS.filter(
-        (columnName) => !existingColumns.has(columnName)
+        (columnName) => !existingColumns.has(columnName),
       );
   }
 
   return {
     missingTables,
     missingNamcInstallGateStateColumns,
+  };
+}
+
+export async function getSpotifySchemaHealthSnapshot() {
+  const tableRows = await db.execute<{ table_name: string }>(sql`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'spotify_accounts';
+  `);
+
+  return {
+    spotifyAccountsTableExists: tableRows.length > 0,
   };
 }
 
@@ -186,7 +203,7 @@ async function verifyTableColumns({
 
   const existingColumns = new Set(rows.map((row) => row.column_name));
   const missingColumns = requiredColumns.filter(
-    (columnName) => !existingColumns.has(columnName)
+    (columnName) => !existingColumns.has(columnName),
   );
 
   return missingColumns;
@@ -210,7 +227,7 @@ async function verifyChatRateLimitSchemaColumns() {
           missingChatColumns.join(", ") || "none"
         }; missing Message_v2 columns: ${
           missingMessageColumns.join(", ") || "none"
-        }. Run database migrations before starting the service (e.g. pnpm db:migrate).`
+        }. Run database migrations before starting the service (e.g. pnpm db:migrate).`,
       );
     }
 
@@ -220,7 +237,25 @@ async function verifyChatRateLimitSchemaColumns() {
         missingChatColumns.join(", ") || "none"
       }; missing Message_v2 columns: ${
         missingMessageColumns.join(", ") || "none"
-      }`
+      }`,
+    );
+  }
+}
+
+async function verifySpotifySchema() {
+  const { spotifyAccountsTableExists } = await getSpotifySchemaHealthSnapshot();
+
+  if (!spotifyAccountsTableExists) {
+    if (!hasLoggedSpotifySchemaFailure) {
+      hasLoggedSpotifySchemaFailure = true;
+      console.error(
+        "[DB SCHEMA CHECK] Missing required table public.spotify_accounts. Run database migrations before starting the service (e.g. pnpm db:migrate).",
+      );
+    }
+
+    throw new ChatSDKError(
+      "offline:database",
+      "Spotify schema is not ready. Missing public.spotify_accounts table.",
     );
   }
 }
@@ -233,7 +268,7 @@ export function assertChatTableColumnsReady() {
   if (chatSchemaVerificationState === "unhealthy") {
     throw new ChatSDKError(
       "offline:database",
-      "Chat table schema is not ready. Run migrations and restart the service."
+      "Chat table schema is not ready. Run migrations and restart the service.",
     );
   }
 
@@ -262,7 +297,7 @@ export function assertChatRateLimitTablesReady() {
   if (chatRateLimitSchemaVerificationState === "unhealthy") {
     throw new ChatSDKError(
       "offline:database",
-      "Chat-rate-limit tables are not ready. Run migrations and restart the service."
+      "Chat-rate-limit tables are not ready. Run migrations and restart the service.",
     );
   }
 
@@ -281,4 +316,33 @@ export function assertChatRateLimitTablesReady() {
   }
 
   return chatRateLimitSchemaVerificationPromise;
+}
+
+export function assertSpotifyAccountsTableReady() {
+  if (spotifySchemaVerificationState === "healthy") {
+    return;
+  }
+
+  if (spotifySchemaVerificationState === "unhealthy") {
+    throw new ChatSDKError(
+      "offline:database",
+      "Spotify schema is not ready. Run migrations and restart the service.",
+    );
+  }
+
+  if (!spotifySchemaVerificationPromise) {
+    spotifySchemaVerificationPromise = verifySpotifySchema()
+      .then(() => {
+        spotifySchemaVerificationState = "healthy";
+      })
+      .catch((error) => {
+        spotifySchemaVerificationState = "unhealthy";
+        throw error;
+      })
+      .finally(() => {
+        spotifySchemaVerificationPromise = null;
+      });
+  }
+
+  return spotifySchemaVerificationPromise;
 }

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
+import { assertSpotifyAccountsTableReady } from "@/lib/db";
 import { SpotifyApiError } from "@/lib/spotify/server";
 
 export const dynamic = "force-dynamic";
 
 export async function requireUserId() {
+  await assertSpotifyAccountsTableReady();
+
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -31,6 +34,6 @@ export function toSpotifyErrorResponse(error: unknown) {
         status: 500,
       },
     },
-    { status: 500 }
+    { status: 500 },
   );
 }

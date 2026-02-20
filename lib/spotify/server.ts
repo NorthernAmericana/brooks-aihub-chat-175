@@ -2,7 +2,10 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spotifyAccounts } from "@/lib/db/schema";
 import { decryptSpotifyToken, encryptSpotifyToken } from "@/lib/spotify/crypto";
-import { type SpotifyTokenResponse, refreshSpotifyAccessToken } from "@/lib/spotify/oauth";
+import {
+  type SpotifyTokenResponse,
+  refreshSpotifyAccessToken,
+} from "@/lib/spotify/oauth";
 
 const SPOTIFY_API_BASE = "https://api.spotify.com/v1";
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
@@ -55,13 +58,32 @@ function toTokenDecodeError(details?: unknown) {
 }
 
 async function getActiveSpotifyAccount(userId: string) {
-  const [account] = await db
-    .select()
-    .from(spotifyAccounts)
-    .where(
-      and(eq(spotifyAccounts.userId, userId), isNull(spotifyAccounts.revokedAt))
-    )
-    .limit(1);
+  let account;
+
+  try {
+    [account] = await db
+      .select()
+      .from(spotifyAccounts)
+      .where(
+        and(
+          eq(spotifyAccounts.userId, userId),
+          isNull(spotifyAccounts.revokedAt),
+        ),
+      )
+      .limit(1);
+  } catch (error) {
+    throw new SpotifyApiError({
+      status: 500,
+      code: "spotify_request_failed",
+      message: "Failed to load Spotify account state.",
+      details: {
+        source: "spotify_accounts_lookup",
+        operation: "select_active_account",
+        userIdLength: userId.length,
+        reason: error instanceof Error ? error.message : String(error),
+      },
+    });
+  }
 
   return account ?? null;
 }
@@ -76,8 +98,8 @@ function refreshAccessTokenWithLock(userId: string) {
       .where(
         and(
           eq(spotifyAccounts.userId, userId),
-          isNull(spotifyAccounts.revokedAt)
-        )
+          isNull(spotifyAccounts.revokedAt),
+        ),
       )
       .limit(1);
 
@@ -141,7 +163,7 @@ function refreshAccessTokenWithLock(userId: string) {
 
 export async function getAccessTokenForUser(
   userId: string,
-  forceRefresh = false
+  forceRefresh = false,
 ) {
   const account = await getActiveSpotifyAccount(userId);
 
@@ -229,7 +251,7 @@ function normalizeSpotifyError(status: number, payload: unknown) {
 export async function spotifyFetch(
   userId: string,
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ) {
   const requestUrl = path.startsWith("http")
     ? (() => {
@@ -295,25 +317,25 @@ export async function play(userId: string, body?: unknown) {
     await spotifyFetch(userId, "/me/player/play", {
       method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
-    })
+    }),
   );
 }
 
 export async function pause(userId: string) {
   return parseSpotifyBody(
-    await spotifyFetch(userId, "/me/player/pause", { method: "PUT" })
+    await spotifyFetch(userId, "/me/player/pause", { method: "PUT" }),
   );
 }
 
 export async function nextTrack(userId: string) {
   return parseSpotifyBody(
-    await spotifyFetch(userId, "/me/player/next", { method: "POST" })
+    await spotifyFetch(userId, "/me/player/next", { method: "POST" }),
   );
 }
 
 export async function previousTrack(userId: string) {
   return parseSpotifyBody(
-    await spotifyFetch(userId, "/me/player/previous", { method: "POST" })
+    await spotifyFetch(userId, "/me/player/previous", { method: "POST" }),
   );
 }
 
@@ -321,35 +343,35 @@ export async function seekToPosition(userId: string, positionMs: number) {
   return parseSpotifyBody(
     await spotifyFetch(userId, `/me/player/seek?position_ms=${positionMs}`, {
       method: "PUT",
-    })
+    }),
   );
 }
 
 export async function transferPlayback(
   userId: string,
-  body: { device_ids: string[]; play?: boolean }
+  body: { device_ids: string[]; play?: boolean },
 ) {
   return parseSpotifyBody(
     await spotifyFetch(userId, "/me/player", {
       method: "PUT",
       body: JSON.stringify(body),
-    })
+    }),
   );
 }
 
 export async function getRecommendations(
   userId: string,
-  query: URLSearchParams
+  query: URLSearchParams,
 ) {
   return parseSpotifyBody(
-    await spotifyFetch(userId, `/recommendations?${query.toString()}`)
+    await spotifyFetch(userId, `/recommendations?${query.toString()}`),
   );
 }
 
 export async function addToQueue(
   userId: string,
   uri: string,
-  deviceId?: string
+  deviceId?: string,
 ) {
   const params = new URLSearchParams({ uri });
 
@@ -360,6 +382,6 @@ export async function addToQueue(
   return parseSpotifyBody(
     await spotifyFetch(userId, `/me/player/queue?${params.toString()}`, {
       method: "POST",
-    })
+    }),
   );
 }
