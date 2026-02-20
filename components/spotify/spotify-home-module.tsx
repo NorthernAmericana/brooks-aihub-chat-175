@@ -55,7 +55,7 @@ export function SpotifyHomeModule() {
                   </p>
                   <p className="truncate text-xs text-white/70">
                     {hasTrack
-                      ? playerState?.item?.artists.map((artist) => artist.name).join(", ")
+                      ? playerState?.item?.artists?.map((artist) => artist.name).join(", ")
                       : "Open Spotify and start a track to control playback."}
                   </p>
                 </div>
