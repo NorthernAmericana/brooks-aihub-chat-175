@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import {
   ArrowLeft,
   Check,
@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { db } from "@/lib/db";
-import { atoApps, userInstalls } from "@/lib/db/schema";
+import { atoApps, spotifyAccounts, userInstalls } from "@/lib/db/schema";
 import { installApp } from "@/lib/store/installApp";
 import { uninstallApp } from "@/lib/store/uninstallApp";
 import { disconnectSpotify } from "@/lib/spotify/disconnect";
@@ -56,7 +56,21 @@ export default async function SpotifyAppDetailPage() {
           .limit(1)
       : [null];
 
+  const [connectionRecord] = userId
+    ? await db
+        .select({ id: spotifyAccounts.id })
+        .from(spotifyAccounts)
+        .where(
+          and(
+            eq(spotifyAccounts.userId, userId),
+            isNull(spotifyAccounts.revokedAt),
+          ),
+        )
+        .limit(1)
+    : [null];
+
   const isInstalled = Boolean(installRecord);
+  const isConnected = Boolean(connectionRecord);
   const isInstallDisabled = isInstalled || !appId;
 
   const installAction = async () => {
@@ -210,13 +224,30 @@ export default async function SpotifyAppDetailPage() {
           </h3>
           <p className="mt-2 text-sm text-white/75">
             Spotify account connection is required for live playback control.
-            After install, use <span className="font-mono">/Spotify/</span> in
-            chat or open the app UI to start the OAuth connect flow when
-            available.
+            {isInstalled
+              ? " Connect your account to enable playback controls in the app UI."
+              : " Install the app first, then connect your Spotify account."}
           </p>
-          <div className="mt-3 inline-flex rounded-full border border-amber-300/30 bg-amber-500/20 px-3 py-1 text-xs text-amber-100">
-            Not connected (OAuth setup pending)
+          <div
+            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs ${
+              isConnected
+                ? "border border-emerald-300/30 bg-emerald-500/20 text-emerald-100"
+                : "border border-amber-300/30 bg-amber-500/20 text-amber-100"
+            }`}
+          >
+            {isConnected ? "Connected" : "Not connected"}
           </div>
+
+          {isInstalled && !isConnected ? (
+            <div className="mt-4">
+              <Link
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400"
+                href="/api/spotify/login"
+              >
+                Connect Spotify
+              </Link>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
