@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { SpotifyHomeModule } from "@/components/spotify/spotify-home-module";
-import { NowPlayingStrip } from "@/components/spotify/spotify-top-bar";
 import { toast } from "@/components/toast";
 import {
   AlertDialog,
@@ -903,9 +902,6 @@ export const Greeting = ({ onSelectFolder }: GreetingProps) => {
           </label>
         </div>
       </motion.div>
-      <div className="sticky top-0 z-20 w-full pb-2">
-        <NowPlayingStrip className="rounded-3xl border-emerald-300/45 bg-emerald-950/85 px-4 py-3 shadow-lg" />
-      </div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="mt-3 w-full text-xs leading-relaxed sm:text-sm md:mt-5"

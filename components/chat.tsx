@@ -692,16 +692,14 @@ export function Chat({
               />
             </div>
 
-            {messages.length > 0 ? (
-              <div
-                className="sticky z-20 px-2 pb-1 md:px-2"
-                style={{
-                  top: "var(--chat-top-nav-height)",
-                }}
-              >
-                <NowPlayingStrip />
-              </div>
-            ) : null}
+            <div
+              className="sticky z-20 w-full px-2 pb-1 md:px-2"
+              style={{
+                top: "var(--chat-top-nav-height)",
+              }}
+            >
+              <NowPlayingStrip className="rounded-3xl border-emerald-300/45 bg-emerald-950/85 px-4 py-3 shadow-lg" />
+            </div>
           </div>
 
           <Messages
