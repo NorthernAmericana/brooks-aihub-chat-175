@@ -7,6 +7,7 @@ import {
   Radio,
   RefreshCw,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
 
@@ -31,6 +32,9 @@ export default function SpotifyPage() {
   } = useSpotifyPlayback();
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
+  const shouldShowConnectCta =
+    Boolean(error) &&
+    /(not connected|unauthorized|invalid|reconnect)/i.test(error ?? "");
 
   const disconnectSpotify = async () => {
     setDisconnecting(true);
@@ -102,6 +106,16 @@ export default function SpotifyPage() {
           <section className="rounded-2xl border border-rose-300/40 bg-rose-500/15 p-4 text-sm text-rose-100">
             <AlertCircle className="mr-2 inline h-4 w-4" />
             {error}
+            {shouldShowConnectCta ? (
+              <div className="mt-3">
+                <Link
+                  className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/30"
+                  href="/api/spotify/login"
+                >
+                  Connect Spotify
+                </Link>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
