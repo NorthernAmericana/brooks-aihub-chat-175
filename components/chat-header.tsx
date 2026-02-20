@@ -47,6 +47,7 @@ function PureChatHeader({
   onThemeAudioToggle,
   selectedThemeId,
   themeOptions,
+  showSpotifyTopBar = true,
 }: {
   chatId: string;
   newMemoriesCount?: number;
@@ -58,6 +59,7 @@ function PureChatHeader({
   onThemeAudioToggle?: () => void;
   selectedThemeId?: string;
   themeOptions?: ThemeOption[];
+  showSpotifyTopBar?: boolean;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -211,9 +213,11 @@ function PureChatHeader({
         variant="outline"
       />
 
-      <div className="order-6 w-full pb-0.5">
-        <SpotifyTopBar />
-      </div>
+      {showSpotifyTopBar ? (
+        <div className="order-6 w-full pb-0.5">
+          <SpotifyTopBar />
+        </div>
+      ) : null}
 
       <Dialog
         onOpenChange={(open) => {

@@ -632,6 +632,7 @@ export function Chat({
             selectedThemeId={isChatThemeEnabled ? chatTheme : undefined}
             selectedVisibilityType={initialVisibilityType}
             themeOptions={isChatThemeEnabled ? CHAT_THEME_OPTIONS : undefined}
+            showSpotifyTopBar={messages.length > 0}
           />
 
           <Messages
