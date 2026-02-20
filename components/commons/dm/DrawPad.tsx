@@ -55,13 +55,28 @@ function createEmptyDraft(): DrawPadDraft {
   };
 }
 
+function isDrawTool(value: unknown): value is DrawTool {
+  return value === "pen" || value === "eraser";
+}
+
 function isDrawPadDraft(value: unknown): value is DrawPadDraft {
   if (!value || typeof value !== "object") {
     return false;
   }
 
   const maybeDraft = value as Partial<DrawPadDraft>;
-  return Array.isArray(maybeDraft.strokes) && typeof maybeDraft.version === "number";
+  return (
+    Array.isArray(maybeDraft.strokes) &&
+    typeof maybeDraft.version === "number" &&
+    typeof maybeDraft.view === "object" &&
+    maybeDraft.view !== null &&
+    typeof maybeDraft.view.width === "number" &&
+    typeof maybeDraft.view.height === "number" &&
+    typeof maybeDraft.toolState === "object" &&
+    maybeDraft.toolState !== null &&
+    isDrawTool(maybeDraft.toolState.activeTool) &&
+    typeof maybeDraft.toolState.strokeWidth === "number"
+  );
 }
 
 function distanceToSegment(point: DrawPoint, start: DrawPoint, end: DrawPoint): number {
@@ -310,7 +325,13 @@ export function DrawPad({ roomId, canWrite, onSent }: DrawPadProps) {
 
       setDraft((current) => ({
         ...current,
-        strokes: [...current.strokes, activeStrokeRef.current as DrawStroke],
+        strokes: [
+          ...current.strokes,
+          {
+            ...activeStrokeRef.current!,
+            points: [...activeStrokeRef.current!.points],
+          },
+        ],
       }));
     },
     [activeTool, canWrite, getCanvasPoint, strokeWidth]
