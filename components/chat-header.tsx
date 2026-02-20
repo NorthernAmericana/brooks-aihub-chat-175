@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { memo, useCallback, useState } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
+import { SpotifyTopBar } from "@/components/spotify/spotify-top-bar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +47,7 @@ function PureChatHeader({
   onThemeAudioToggle,
   selectedThemeId,
   themeOptions,
+  showSpotifyTopBar = true,
 }: {
   chatId: string;
   newMemoriesCount?: number;
@@ -57,6 +59,7 @@ function PureChatHeader({
   onThemeAudioToggle?: () => void;
   selectedThemeId?: string;
   themeOptions?: ThemeOption[];
+  showSpotifyTopBar?: boolean;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -96,7 +99,7 @@ function PureChatHeader({
   );
 
   return (
-    <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
+    <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
 
       <Button
@@ -209,6 +212,12 @@ function PureChatHeader({
         size="sm"
         variant="outline"
       />
+
+      {showSpotifyTopBar ? (
+        <div className="order-6 w-full pb-0.5">
+          <SpotifyTopBar />
+        </div>
+      ) : null}
 
       <Dialog
         onOpenChange={(open) => {

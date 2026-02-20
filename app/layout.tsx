@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import { Toaster } from "sonner";
 import { PwaRegister } from "@/components/pwa-register";
-import { SpotifyMiniPlayer } from "@/components/spotify/spotify-mini-player";
 import { SpotifyPlaybackProvider } from "@/components/spotify/spotify-playback-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { EdgeSwipeNav } from "@/src/components/EdgeSwipeNav";
@@ -117,10 +116,7 @@ export default function RootLayout({
           <Toaster position="top-center" />
           <EdgeSwipeNav />
           <SessionProvider>
-            <SpotifyPlaybackProvider>
-              {children}
-              <SpotifyMiniPlayer />
-            </SpotifyPlaybackProvider>
+            <SpotifyPlaybackProvider>{children}</SpotifyPlaybackProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>
