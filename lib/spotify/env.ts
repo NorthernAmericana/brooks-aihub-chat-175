@@ -23,6 +23,21 @@ type SpotifyEnv = {
 
 let cachedSpotifyEnv: SpotifyEnv | undefined;
 
+function writeSpotifyLog(level: "info" | "error", message: string) {
+  const entry = JSON.stringify({
+    level,
+    source: "spotify.env",
+    message,
+  });
+
+  if (level === "error") {
+    process.stderr.write(`${entry}\n`);
+    return;
+  }
+
+  process.stdout.write(`${entry}\n`);
+}
+
 function validateSpotifyEncryptionKey(base64Value: string) {
   if (
     !/^[A-Za-z0-9+/]+={0,2}$/.test(base64Value) ||
@@ -66,10 +81,14 @@ export function validateSpotifyEnvAtBoot() {
 
   try {
     cachedSpotifyEnv = buildSpotifyEnv();
-    console.info("[spotify] Environment validation succeeded at startup.");
+    writeSpotifyLog("info", "Environment validation succeeded at startup.");
     return cachedSpotifyEnv;
   } catch (error) {
-    console.error("[spotify] Environment validation failed at startup.", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    writeSpotifyLog(
+      "error",
+      `Environment validation failed at startup: ${errorMessage}`
+    );
     throw error;
   }
 }
@@ -78,4 +97,6 @@ export function getSpotifyEnv() {
   return cachedSpotifyEnv ?? validateSpotifyEnvAtBoot();
 }
 
-validateSpotifyEnvAtBoot();
+if (process.env.NODE_ENV !== "test") {
+  validateSpotifyEnvAtBoot();
+}

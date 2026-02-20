@@ -28,11 +28,20 @@ export function toSpotifyErrorResponse(error: unknown, requestPath: string) {
   }
 
   const correlationId = randomUUID();
-  console.error("Unhandled Spotify API route error", {
-    correlationId,
-    requestPath,
-    error,
-  });
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorName = error instanceof Error ? error.name : typeof error;
+
+  process.stderr.write(
+    `${JSON.stringify({
+      level: "error",
+      source: "spotify.api",
+      message: "Unhandled Spotify API route error",
+      correlationId,
+      requestPath,
+      errorName,
+      errorMessage,
+    })}\n`
+  );
 
   return NextResponse.json(
     {
