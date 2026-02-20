@@ -1112,6 +1112,7 @@ export const dmMessageAttachments = pgTable("dm_message_attachments", {
     .references(() => user.id, { onDelete: "cascade" }),
   kind: varchar("kind", { enum: ["image"] }).notNull(),
   assetUrl: text("asset_url").notNull(),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -6,6 +6,7 @@ import {
   dmMessages,
   dmRoomMembers,
   dmRooms,
+  user,
 } from "@/lib/db/schema";
 
 export async function loadDmRoomByIdForMember(options: {
@@ -39,6 +40,31 @@ export async function getDmRoomMemberCount(roomId: string) {
     .where(eq(dmRoomMembers.roomId, roomId));
 
   return result?.value ?? 0;
+}
+
+export async function getDmRoomMessageCount(roomId: string) {
+  const [result] = await db
+    .select({ value: count() })
+    .from(dmMessages)
+    .where(eq(dmMessages.roomId, roomId));
+
+  return result?.value ?? 0;
+}
+
+export async function listDmRoomMembers(roomId: string) {
+  return db
+    .select({
+      membershipId: dmRoomMembers.id,
+      roomId: dmRoomMembers.roomId,
+      userId: dmRoomMembers.userId,
+      joinedAt: dmRoomMembers.createdAt,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+    })
+    .from(dmRoomMembers)
+    .innerJoin(user, eq(user.id, dmRoomMembers.userId))
+    .where(eq(dmRoomMembers.roomId, roomId))
+    .orderBy(asc(dmRoomMembers.createdAt));
 }
 
 export async function listDmMessagesWithAttachments(options: {
@@ -80,6 +106,7 @@ export async function listDmMessagesWithAttachments(options: {
       uploaderUserId: dmMessageAttachments.uploaderUserId,
       kind: dmMessageAttachments.kind,
       assetUrl: dmMessageAttachments.assetUrl,
+      metadata: dmMessageAttachments.metadata,
       createdAt: dmMessageAttachments.createdAt,
     })
     .from(dmMessageAttachments)
@@ -120,6 +147,7 @@ export async function createDmImageMessage(options: {
   roomId: string;
   senderUserId: string;
   assetUrl: string;
+  metadata?: Record<string, unknown> | null;
   body?: string | null;
 }) {
   return db.transaction(async (tx) => {
@@ -140,6 +168,7 @@ export async function createDmImageMessage(options: {
         uploaderUserId: options.senderUserId,
         kind: "image",
         assetUrl: options.assetUrl,
+        metadata: options.metadata ?? null,
       })
       .returning();
 
