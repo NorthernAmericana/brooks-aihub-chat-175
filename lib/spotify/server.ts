@@ -3,6 +3,10 @@ import { db } from "@/lib/db";
 import { spotifyAccounts } from "@/lib/db/schema";
 import { decryptSpotifyToken, encryptSpotifyToken } from "@/lib/spotify/crypto";
 import {
+  SpotifyApiError,
+  toSpotifyUpstreamUnavailableError,
+} from "@/lib/spotify/errors";
+import {
   type SpotifyTokenResponse,
   refreshSpotifyAccessToken,
 } from "@/lib/spotify/oauth";
@@ -10,42 +14,7 @@ import {
 const SPOTIFY_API_BASE = "https://api.spotify.com/v1";
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
 
-export type SpotifyUiErrorCode =
-  | "spotify_unauthorized"
-  | "spotify_premium_required"
-  | "spotify_no_active_device"
-  | "spotify_forbidden"
-  | "spotify_request_failed";
-
-export class SpotifyApiError extends Error {
-  readonly status: number;
-  readonly code: SpotifyUiErrorCode;
-  readonly details?: unknown;
-
-  constructor(input: {
-    message: string;
-    status: number;
-    code: SpotifyUiErrorCode;
-    details?: unknown;
-  }) {
-    super(input.message);
-    this.name = "SpotifyApiError";
-    this.status = input.status;
-    this.code = input.code;
-    this.details = input.details;
-  }
-
-  toResponseBody() {
-    return {
-      error: {
-        code: this.code,
-        message: this.message,
-        status: this.status,
-        details: this.details,
-      },
-    };
-  }
-}
+export { SpotifyApiError };
 
 function toTokenDecodeError(details?: unknown) {
   return new SpotifyApiError({
@@ -136,9 +105,14 @@ function refreshAccessTokenWithLock(userId: string) {
     try {
       refreshed = await refreshSpotifyAccessToken(refreshToken);
     } catch (error) {
-      throw toTokenDecodeError({
-        source: "refresh_request",
-        message: error instanceof Error ? error.message : String(error),
+      if (error instanceof SpotifyApiError) {
+        throw error;
+      }
+
+      throw toSpotifyUpstreamUnavailableError({
+        source: "spotify_accounts",
+        operation: "refresh_access_token",
+        error,
       });
     }
 
@@ -241,9 +215,13 @@ function normalizeSpotifyError(status: number, payload: unknown) {
   }
 
   return new SpotifyApiError({
-    status,
-    code: status === 401 ? "spotify_unauthorized" : "spotify_request_failed",
-    message,
+    status: status >= 500 ? 503 : status,
+    code:
+      status === 401 ? "spotify_unauthorized" : "spotify_request_failed",
+    message:
+      status >= 500
+        ? "Spotify is temporarily unavailable. Please try again in a moment."
+        : message,
     details: payload,
   });
 }
@@ -272,21 +250,57 @@ export async function spotifyFetch(
   const run = async (forceRefresh = false) => {
     const accessToken = await getAccessTokenForUser(userId, forceRefresh);
 
-    return fetch(requestUrl, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init.headers ?? {}),
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: "no-store",
-    });
+    try {
+      return await fetch(requestUrl, {
+        ...init,
+        headers: {
+          "Content-Type": "application/json",
+          ...(init.headers ?? {}),
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+      });
+    } catch (error) {
+      throw toSpotifyUpstreamUnavailableError({
+        source: "spotify_api",
+        operation: "fetch",
+        error,
+      });
+    }
   };
 
-  let response = await run(false);
+  let response: Response;
+
+  try {
+    response = await run(false);
+  } catch (error) {
+    if (error instanceof SpotifyApiError) {
+      throw error;
+    }
+
+    throw toSpotifyUpstreamUnavailableError({
+      source: "spotify_api",
+      operation: "initial_fetch",
+      error,
+    });
+  }
 
   if (response.status === 401) {
-    response = await run(true);
+    try {
+      response = await run(true);
+    } catch (error) {
+      if (error instanceof SpotifyApiError) {
+        throw error;
+      }
+
+      throw toSpotifyUpstreamUnavailableError({
+        source: "spotify_api",
+        operation: "refresh_fetch",
+        error,
+        message:
+          "Spotify is temporarily unavailable while refreshing your session. Please try again.",
+      });
+    }
   }
 
   if (!response.ok) {

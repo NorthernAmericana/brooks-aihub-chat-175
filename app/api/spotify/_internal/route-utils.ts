@@ -24,6 +24,20 @@ export async function requireUserId() {
 
 export function toSpotifyErrorResponse(error: unknown, requestPath: string) {
   if (error instanceof SpotifyApiError) {
+    if (error.details !== undefined) {
+      process.stderr.write(
+        `${JSON.stringify({
+          level: "warn",
+          source: "spotify.api",
+          message: "Spotify API error details",
+          requestPath,
+          code: error.code,
+          status: error.status,
+          details: error.details,
+        })}\n`
+      );
+    }
+
     return NextResponse.json(error.toResponseBody(), { status: error.status });
   }
 

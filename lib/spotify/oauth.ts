@@ -1,4 +1,8 @@
 import { getSpotifyEnv } from "@/lib/spotify/env";
+import {
+  SpotifyApiError,
+  toSpotifyUpstreamUnavailableError,
+} from "@/lib/spotify/errors";
 
 export const SPOTIFY_REQUIRED_SCOPES = [
   "streaming",
@@ -20,23 +24,72 @@ export type SpotifyTokenResponse = {
 async function fetchSpotifyToken(
   params: URLSearchParams
 ): Promise<SpotifyTokenResponse> {
-  const response = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params,
-    cache: "no-store",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+      cache: "no-store",
+    });
+  } catch (error) {
+    throw toSpotifyUpstreamUnavailableError({
+      source: "spotify_accounts",
+      operation: "fetch_token",
+      error,
+    });
+  }
 
   if (!response.ok) {
     const bodyText = await response.text();
-    throw new Error(
-      `Spotify token exchange failed (${response.status}): ${bodyText}`
-    );
+
+    if (response.status >= 500) {
+      throw new SpotifyApiError({
+        status: 503,
+        code: "spotify_request_failed",
+        message:
+          "Spotify is temporarily unavailable. Please try again in a moment.",
+        details: {
+          source: "spotify_accounts",
+          operation: "fetch_token",
+          upstreamStatus: response.status,
+          reason: bodyText,
+        },
+      });
+    }
+
+    throw new SpotifyApiError({
+      status: response.status,
+      code:
+        response.status === 401 ? "spotify_unauthorized" : "spotify_request_failed",
+      message: "Spotify authentication failed. Please reconnect and try again.",
+      details: {
+        source: "spotify_accounts",
+        operation: "fetch_token",
+        upstreamStatus: response.status,
+        reason: bodyText,
+      },
+    });
   }
 
-  return response.json();
+  try {
+    return await response.json();
+  } catch (error) {
+    throw new SpotifyApiError({
+      status: 502,
+      code: "spotify_request_failed",
+      message:
+        "Spotify returned an invalid authentication response. Please try again.",
+      details: {
+        source: "spotify_accounts",
+        operation: "parse_token_response",
+        reason: error instanceof Error ? error.message : String(error),
+      },
+    });
+  }
 }
 
 export function exchangeSpotifyAuthCode(input: {
