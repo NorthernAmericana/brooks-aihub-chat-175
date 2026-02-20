@@ -1,4 +1,4 @@
-import { type InferSelectModel, sql } from "drizzle-orm";
+import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -1040,3 +1040,172 @@ export const commonsReport = pgTable("commons_reports", {
 });
 
 export type CommonsReport = InferSelectModel<typeof commonsReport>;
+
+export const dmRooms = pgTable("dm_rooms", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdByUserId: uuid("created_by_user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type DmRoom = InferSelectModel<typeof dmRooms>;
+
+export const dmRoomMembers = pgTable(
+  "dm_room_members",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => dmRooms.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    roomUserUniqueIdx: uniqueIndex("dm_room_members_room_user_unique_idx").on(
+      table.roomId,
+      table.userId
+    ),
+  })
+);
+
+export type DmRoomMember = InferSelectModel<typeof dmRoomMembers>;
+
+export const dmMessages = pgTable("dm_messages", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => dmRooms.id, { onDelete: "cascade" }),
+  senderUserId: uuid("sender_user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  body: text("body"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type DmMessage = InferSelectModel<typeof dmMessages>;
+
+export const dmMessageAttachments = pgTable("dm_message_attachments", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  messageId: uuid("message_id")
+    .notNull()
+    .references(() => dmMessages.id, { onDelete: "cascade" }),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => dmRooms.id, { onDelete: "cascade" }),
+  uploaderUserId: uuid("uploader_user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  kind: varchar("kind", { enum: ["image"] }).notNull(),
+  assetUrl: text("asset_url").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type DmMessageAttachment = InferSelectModel<typeof dmMessageAttachments>;
+
+export const dmDrawpadDrafts = pgTable(
+  "dm_drawpad_drafts",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => dmRooms.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    draft: jsonb("draft").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    roomUserUniqueIdx: uniqueIndex("dm_drawpad_drafts_room_user_unique_idx").on(
+      table.roomId,
+      table.userId
+    ),
+  })
+);
+
+export type DmDrawpadDraft = InferSelectModel<typeof dmDrawpadDrafts>;
+export type DmDrawpadDraftInsert = InferInsertModel<typeof dmDrawpadDrafts>;
+
+export const dmRoomsRelations = relations(dmRooms, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [dmRooms.createdByUserId],
+    references: [user.id],
+  }),
+  members: many(dmRoomMembers),
+  messages: many(dmMessages),
+  drawpadDrafts: many(dmDrawpadDrafts),
+}));
+
+export const dmRoomMembersRelations = relations(dmRoomMembers, ({ one }) => ({
+  room: one(dmRooms, {
+    fields: [dmRoomMembers.roomId],
+    references: [dmRooms.id],
+  }),
+  member: one(user, {
+    fields: [dmRoomMembers.userId],
+    references: [user.id],
+  }),
+}));
+
+export const dmMessagesRelations = relations(dmMessages, ({ one, many }) => ({
+  room: one(dmRooms, {
+    fields: [dmMessages.roomId],
+    references: [dmRooms.id],
+  }),
+  sender: one(user, {
+    fields: [dmMessages.senderUserId],
+    references: [user.id],
+  }),
+  attachments: many(dmMessageAttachments),
+}));
+
+export const dmMessageAttachmentsRelations = relations(
+  dmMessageAttachments,
+  ({ one }) => ({
+    room: one(dmRooms, {
+      fields: [dmMessageAttachments.roomId],
+      references: [dmRooms.id],
+    }),
+    message: one(dmMessages, {
+      fields: [dmMessageAttachments.messageId],
+      references: [dmMessages.id],
+    }),
+    uploader: one(user, {
+      fields: [dmMessageAttachments.uploaderUserId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const dmDrawpadDraftsRelations = relations(dmDrawpadDrafts, ({ one }) => ({
+  room: one(dmRooms, {
+    fields: [dmDrawpadDrafts.roomId],
+    references: [dmRooms.id],
+  }),
+  user: one(user, {
+    fields: [dmDrawpadDrafts.userId],
+    references: [user.id],
+  }),
+}));
