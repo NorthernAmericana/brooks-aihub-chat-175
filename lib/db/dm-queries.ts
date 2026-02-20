@@ -4,6 +4,7 @@ import {
   dmDrawpadDrafts,
   dmMessageAttachments,
   dmMessages,
+  dmRoomInvites,
   dmRoomMembers,
   dmRooms,
   user,
@@ -25,7 +26,10 @@ export async function loadDmRoomByIdForMember(options: {
     .from(dmRooms)
     .innerJoin(
       dmRoomMembers,
-      and(eq(dmRoomMembers.roomId, dmRooms.id), eq(dmRoomMembers.userId, options.userId))
+      and(
+        eq(dmRoomMembers.roomId, dmRooms.id),
+        eq(dmRoomMembers.userId, options.userId)
+      )
     )
     .where(eq(dmRooms.id, options.roomId))
     .limit(1);
@@ -42,6 +46,92 @@ export async function getDmRoomMemberCount(roomId: string) {
   return result?.value ?? 0;
 }
 
+export async function getDmRoomCapacitySnapshot(roomId: string) {
+  const [room] = await db
+    .select({
+      roomId: dmRooms.id,
+      createdByUserId: dmRooms.createdByUserId,
+      founderAccess: user.foundersAccess,
+    })
+    .from(dmRooms)
+    .innerJoin(user, eq(user.id, dmRooms.createdByUserId))
+    .where(eq(dmRooms.id, roomId))
+    .limit(1);
+
+  if (!room) {
+    return null;
+  }
+
+  const memberCount = await getDmRoomMemberCount(roomId);
+  const memberLimit = room.founderAccess ? 12 : 4;
+
+  return {
+    roomId: room.roomId,
+    createdByUserId: room.createdByUserId,
+    memberCount,
+    memberLimit,
+  };
+}
+
+export async function createDmRoomInvite(options: {
+  roomId: string;
+  inviterUserId: string;
+  targetEmail: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  const [invite] = await db
+    .insert(dmRoomInvites)
+    .values({
+      roomId: options.roomId,
+      inviterUserId: options.inviterUserId,
+      targetEmail: options.targetEmail,
+      tokenHash: options.tokenHash,
+      expiresAt: options.expiresAt,
+    })
+    .returning();
+
+  return invite;
+}
+
+export async function getDmRoomInviteByTokenHash(tokenHash: string) {
+  const [invite] = await db
+    .select()
+    .from(dmRoomInvites)
+    .where(eq(dmRoomInvites.tokenHash, tokenHash))
+    .limit(1);
+
+  return invite ?? null;
+}
+
+export async function addDmRoomMemberIfMissing(options: {
+  roomId: string;
+  userId: string;
+}) {
+  const [member] = await db
+    .insert(dmRoomMembers)
+    .values({ roomId: options.roomId, userId: options.userId })
+    .onConflictDoNothing({
+      target: [dmRoomMembers.roomId, dmRoomMembers.userId],
+    })
+    .returning();
+
+  return member ?? null;
+}
+
+export async function acceptDmRoomInvite(options: {
+  inviteId: string;
+  acceptedByUserId: string;
+}) {
+  const [invite] = await db
+    .update(dmRoomInvites)
+    .set({ acceptedAt: new Date(), acceptedByUserId: options.acceptedByUserId })
+    .where(eq(dmRoomInvites.id, options.inviteId))
+    .returning();
+
+  return invite ?? null;
+}
+
 export async function getDmRoomMessageCount(roomId: string) {
   const [result] = await db
     .select({ value: count() })
@@ -51,7 +141,7 @@ export async function getDmRoomMessageCount(roomId: string) {
   return result?.value ?? 0;
 }
 
-export async function listDmRoomMembers(roomId: string) {
+export function listDmRoomMembers(roomId: string) {
   return db
     .select({
       membershipId: dmRoomMembers.id,
@@ -142,7 +232,7 @@ export async function createDmTextMessage(options: {
   return message;
 }
 
-export async function createDmImageMessage(options: {
+export function createDmImageMessage(options: {
   roomId: string;
   senderUserId: string;
   assetUrl: string;
