@@ -12,6 +12,6 @@ export async function PUT() {
     const userId = await requireUserId();
     return NextResponse.json(await pause(userId));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/player/pause");
   }
 }

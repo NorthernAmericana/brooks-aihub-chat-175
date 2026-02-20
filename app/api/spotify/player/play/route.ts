@@ -30,6 +30,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(await play(userId, body));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/player/play");
   }
 }

@@ -13,6 +13,6 @@ export async function POST() {
     await disconnectSpotify(userId);
     return NextResponse.json({ disconnected: true });
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/disconnect");
   }
 }

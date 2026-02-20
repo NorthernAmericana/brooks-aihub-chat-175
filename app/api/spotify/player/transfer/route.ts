@@ -22,6 +22,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(await transferPlayback(userId, body));
   } catch (error) {
-    return toSpotifyErrorResponse(error);
+    return toSpotifyErrorResponse(error, "/api/spotify/player/transfer");
   }
 }

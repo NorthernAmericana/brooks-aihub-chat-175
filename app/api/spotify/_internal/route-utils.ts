@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { assertSpotifyAccountsTableReady } from "@/lib/db";
@@ -21,10 +22,17 @@ export async function requireUserId() {
   return session.user.id;
 }
 
-export function toSpotifyErrorResponse(error: unknown) {
+export function toSpotifyErrorResponse(error: unknown, requestPath: string) {
   if (error instanceof SpotifyApiError) {
     return NextResponse.json(error.toResponseBody(), { status: error.status });
   }
+
+  const correlationId = randomUUID();
+  console.error("Unhandled Spotify API route error", {
+    correlationId,
+    requestPath,
+    error,
+  });
 
   return NextResponse.json(
     {
@@ -34,6 +42,11 @@ export function toSpotifyErrorResponse(error: unknown) {
         status: 500,
       },
     },
-    { status: 500 },
+    {
+      status: 500,
+      headers: {
+        "x-correlation-id": correlationId,
+      },
+    }
   );
 }
