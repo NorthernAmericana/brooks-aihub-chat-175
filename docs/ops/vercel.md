@@ -20,7 +20,7 @@ Review the required environment variables in [`.env.example`](../../.env.example
 - **Redis**: Configure your Redis provider and set the matching connection URL.
 - **AI gateway**: Confirm AI Gateway credentials or OIDC access so model requests resolve.
 
-- **Chat + store schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production and reports no missing store objects (including `namc_install_gate_state` verification columns). If this endpoint returns non-200, run migrations on the target database and re-check that `POSTGRES_URL`/`DATABASE_URL` point to the intended Preview/Production instance before redeploying.
+- **Chat + store schema drift guard (Preview + Production)**: Confirm `POSTGRES_URL` (or `DATABASE_URL`) is set for the target environment and points at the expected database. Run `pnpm db:migrate` against that environment, then verify `public."Chat"` includes `sessionType` with no NULLs (for example: `SELECT COUNT(*) FROM public."Chat" WHERE "sessionType" IS NULL;` should return `0`). Confirm `GET /api/health/chat-schema` returns `200` in both Preview and Production and reports no missing store objects (including `namc_install_gate_state` verification columns). Also confirm `GET /api/health/spotify-schema` returns `200` and reports `public.spotify_accounts` exists (validates migration `0045_spotify_accounts`). If either endpoint returns non-200, run migrations on the target database and re-check that `POSTGRES_URL`/`DATABASE_URL` point to the intended Preview/Production instance before redeploying.
 
 For a full production release checklist, see [docs/ops/release-checklist.md](./release-checklist.md).
 
@@ -36,23 +36,23 @@ Run these checks against the production URL **https://www.brooksaihub.app/** aft
    - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Lighthouse → select **Progressive Web App** → Analyze.
    - **Expected outcome**: PWA audit completes successfully with no critical failures (installable, service worker detected).
-2. **Service worker registration**
+1. **Service worker registration**
    - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers.
    - **Expected outcome**: A service worker is registered for the site, is active, and controls the page.
-3. **Install prompt on Android/Chrome**
+1. **Install prompt on Android/Chrome**
    - **URL**: https://www.brooksaihub.app/
    - **How**: Open the site in Chrome on Android, wait for eligibility, and check for the install banner or "Add to Home screen" from the menu.
    - **Expected outcome**: The install prompt appears and the app can be added to the home screen.
-4. **Offline fallback**
+1. **Offline fallback**
    - **URL**: https://www.brooksaihub.app/
    - **How**: Chrome DevTools → Application → Service Workers → check **Offline**, then refresh.
    - **Expected outcome**: The app serves a cached/offline experience instead of a network error.
-5. **PWA manifest/installability script**
+1. **PWA manifest/installability script**
    - **How**: Run the repo check with the production base URL to validate manifest settings and confirm `/welcome` does not redirect or fail.
    - **Command**: `PWA_CHECK_BASE_URL=https://www.brooksaihub.app pnpm check:pwa`
    - **Expected outcome**: Script exits successfully with "PWA installability checks passed."
-6. **Manifest + service worker endpoints**
+1. **Manifest + service worker endpoints**
    - **URL**: https://www.brooksaihub.app/manifest.webmanifest and https://www.brooksaihub.app/sw.js
    - **How**: Open each URL directly in a browser or use `curl -I`.
    - **Expected outcome**: Both return `200` in production with the correct `content-type` and no redirects.
