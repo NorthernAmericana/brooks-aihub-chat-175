@@ -36,6 +36,7 @@ export default async function PrivateDmCampfirePage({
       host={dmRoom.host}
       members={dmRoom.members}
       messages={dmRoom.messages}
+      roomId={dmId}
     />
   );
 }
