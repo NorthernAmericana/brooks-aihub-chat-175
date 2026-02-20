@@ -289,6 +289,10 @@ export async function spotifyFetch(
     try {
       response = await run(true);
     } catch (error) {
+      if (error instanceof SpotifyApiError) {
+        throw error;
+      }
+
       throw toSpotifyUpstreamUnavailableError({
         source: "spotify_api",
         operation: "refresh_fetch",
