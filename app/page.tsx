@@ -210,6 +210,34 @@ export default function IntroPage() {
         >
           {loading ? "Loading..." : "Join Founder's Access for $4.99/mo"}
         </button>
+
+      </div>
+
+      <div className="absolute bottom-6 right-4 z-20 flex flex-col items-end gap-3 text-[11px] sm:bottom-8 sm:right-8 sm:text-sm">
+        <a
+          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          href="https://www.northernamericana.media"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          move to www.northernamericana.media
+        </a>
+        <a
+          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          href="https://www.northernamericanatech.com"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          move to www.northernamericanatech.com
+        </a>
+        <a
+          className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/90 underline underline-offset-4 transition hover:border-white/50 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+          href="https://www.linkedin.com/in/jack-brooks-9b7776275"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Founder's LinkedIn
+        </a>
       </div>
     </main>
   );
