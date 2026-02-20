@@ -47,6 +47,17 @@ const REQUIRED_NAMC_INSTALL_GATE_STATE_COLUMNS = [
   "verification_checked_at",
   "verification_details",
 ] as const;
+const REQUIRED_SPOTIFY_ACCOUNT_COLUMNS = [
+  "id",
+  "user_id",
+  "refresh_token_encrypted",
+  "access_token_encrypted",
+  "expires_at",
+  "scope",
+  "revoked_at",
+  "created_at",
+  "updated_at",
+] as const;
 
 type ChatSchemaVerificationState = "unchecked" | "healthy" | "unhealthy";
 let chatSchemaVerificationState: ChatSchemaVerificationState = "unchecked";
@@ -183,8 +194,27 @@ export async function getSpotifySchemaHealthSnapshot() {
     WHERE table_schema = 'public' AND table_name = 'spotify_accounts';
   `);
 
+  if (tableRows.length === 0) {
+    return {
+      spotifyAccountsTableExists: false,
+      missingColumns: [...REQUIRED_SPOTIFY_ACCOUNT_COLUMNS],
+    };
+  }
+
+  const columnRows = await db.execute<{ column_name: string }>(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'spotify_accounts';
+  `);
+
+  const existingColumns = new Set(columnRows.map((row) => row.column_name));
+  const missingColumns = REQUIRED_SPOTIFY_ACCOUNT_COLUMNS.filter(
+    (columnName) => !existingColumns.has(columnName),
+  );
+
   return {
-    spotifyAccountsTableExists: tableRows.length > 0,
+    spotifyAccountsTableExists: true,
+    missingColumns,
   };
 }
 
@@ -243,7 +273,8 @@ async function verifyChatRateLimitSchemaColumns() {
 }
 
 async function verifySpotifySchema() {
-  const { spotifyAccountsTableExists } = await getSpotifySchemaHealthSnapshot();
+  const { spotifyAccountsTableExists, missingColumns } =
+    await getSpotifySchemaHealthSnapshot();
 
   if (!spotifyAccountsTableExists) {
     if (!hasLoggedSpotifySchemaFailure) {
@@ -257,6 +288,42 @@ async function verifySpotifySchema() {
       "offline:database",
       "Spotify schema is not ready. Missing public.spotify_accounts table.",
     );
+  }
+
+  const autoRemediableColumns = new Set([
+    "access_token_encrypted",
+    "expires_at",
+    "scope",
+  ]);
+  const requiredMissingColumns = missingColumns.filter(
+    (columnName) => !autoRemediableColumns.has(columnName),
+  );
+
+  if (requiredMissingColumns.length > 0) {
+    if (!hasLoggedSpotifySchemaFailure) {
+      hasLoggedSpotifySchemaFailure = true;
+      console.error(
+        `[DB SCHEMA CHECK] Missing required columns on public.spotify_accounts: ${requiredMissingColumns.join(", ")}. Run database migrations before starting the service (e.g. pnpm db:migrate).`,
+      );
+    }
+
+    throw new ChatSDKError(
+      "offline:database",
+      `Spotify schema is not ready. Missing required spotify_accounts columns: ${requiredMissingColumns.join(", ")}`,
+    );
+  }
+
+  if (missingColumns.length > 0) {
+    console.warn(
+      `[DB SCHEMA CHECK] Auto-remediating missing optional spotify_accounts columns: ${missingColumns.join(", ")}. This is a compatibility fallback; run migrations to keep schema in sync.`,
+    );
+
+    await db.execute(sql`
+      ALTER TABLE "spotify_accounts"
+      ADD COLUMN IF NOT EXISTS "access_token_encrypted" text,
+      ADD COLUMN IF NOT EXISTS "expires_at" timestamp,
+      ADD COLUMN IF NOT EXISTS "scope" text;
+    `);
   }
 }
 

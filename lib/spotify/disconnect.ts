@@ -1,8 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { assertSpotifyAccountsTableReady, db } from "@/lib/db";
 import { spotifyAccounts } from "@/lib/db/schema";
 
 export async function disconnectSpotify(userId: string) {
+  await assertSpotifyAccountsTableReady();
+
   await db
     .update(spotifyAccounts)
     .set({

@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import { getSpotifySchemaHealthSnapshot } from "@/lib/db";
+import { assertSpotifyAccountsTableReady, getSpotifySchemaHealthSnapshot } from "@/lib/db";
 
 export async function GET() {
   try {
-    const { spotifyAccountsTableExists } =
+    await assertSpotifyAccountsTableReady();
+
+    const { spotifyAccountsTableExists, missingColumns } =
       await getSpotifySchemaHealthSnapshot();
-    const healthy = spotifyAccountsTableExists;
+    const healthy = spotifyAccountsTableExists && missingColumns.length === 0;
 
     return NextResponse.json(
       {
         healthy,
         spotifyAccountsTable: "public.spotify_accounts",
         spotifyAccountsTableExists,
+        missingColumns,
       },
       { status: healthy ? 200 : 503 },
     );
