@@ -72,6 +72,7 @@ type SpotifyPlayer = {
 };
 
 type SpotifyPlaybackContextValue = {
+  isActivated: boolean;
   deviceId: string | null;
   playerState: PlaybackState | null;
   isPlayerReady: boolean;
@@ -81,6 +82,7 @@ type SpotifyPlaybackContextValue = {
   error: string | null;
   sdkUnavailableReason: string | null;
   controlMessage: string | null;
+  activate: () => void;
   refreshState: () => Promise<void>;
   togglePlayback: () => Promise<void>;
   skipNext: () => Promise<void>;
@@ -136,9 +138,10 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
   const mountedRef = useRef(true);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [playerState, setPlayerState] = useState<PlaybackState | null>(null);
+  const [isActivated, setIsActivated] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sdkUnavailableReason, setSdkUnavailableReason] = useState<
@@ -187,7 +190,20 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const activate = useCallback(() => {
+    if (isActivated) {
+      return;
+    }
+
+    setIsLoading(true);
+    setIsActivated(true);
+  }, [isActivated]);
+
   useEffect(() => {
+    if (!isActivated) {
+      return;
+    }
+
     let pollInterval = 0;
 
     const setup = async () => {
@@ -321,7 +337,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       playerRef.current?.disconnect();
       playerRef.current = null;
     };
-  }, [mapUiError, refreshState]);
+  }, [isActivated, mapUiError, refreshState]);
 
   useEffect(() => {
     if (!deviceId) {
@@ -441,6 +457,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      isActivated,
       deviceId,
       playerState,
       isPlayerReady,
@@ -450,6 +467,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       error,
       sdkUnavailableReason,
       controlMessage,
+      activate,
       refreshState,
       togglePlayback,
       skipNext,
@@ -462,6 +480,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       dismissControlMessage,
     }),
     [
+      isActivated,
       deviceId,
       playerState,
       isPlayerReady,
@@ -471,6 +490,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       error,
       sdkUnavailableReason,
       controlMessage,
+      activate,
       refreshState,
       togglePlayback,
       skipNext,

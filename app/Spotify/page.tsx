@@ -8,12 +8,14 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
 
 export default function SpotifyPage() {
   const {
     playerState,
+    isActivated,
+    activate,
     isConnected,
     isPlayerReady,
     isFallbackMode,
@@ -30,6 +32,10 @@ export default function SpotifyPage() {
     openSpotifyArtist,
     openSpotifyContext,
   } = useSpotifyPlayback();
+  useEffect(() => {
+    activate();
+  }, [activate]);
+
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const shouldShowConnectCta =
@@ -73,7 +79,9 @@ export default function SpotifyPage() {
                 ? "Fallback mode (server controls)"
                 : isConnected && isPlayerReady
                   ? "SDK connected"
-                  : "Connecting SDK..."}
+                  : isActivated
+                  ? "Preparing SDK..."
+                  : "Open Spotify controls to connect"}
             </span>
             <button
               className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white/90 hover:bg-white/20"
