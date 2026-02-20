@@ -161,7 +161,7 @@ export function DmCampfireRoom({
             <div className="space-y-3 overflow-y-auto pr-1">
               {parsedMessages.length > 0 ? (
                 parsedMessages.map((message) => {
-                  const isImage = message.parsed.type === "image";
+                  const parsed = message.parsed;
 
                   return (
                     <article className="flex gap-3" key={message.id}>
@@ -171,28 +171,28 @@ export function DmCampfireRoom({
                       <div className="flex-1 space-y-1">
                         <p className="text-xs font-bold uppercase tracking-wide">{message.authorEmail}</p>
                         <div className="space-y-2 border-2 border-[#0f2742] bg-white px-3 py-2">
-                          {isImage ? (
+                          {parsed.type === "image" ? (
                             <>
                               <button
                                 className="block w-full overflow-hidden border border-[#0f2742]"
-                                onClick={() => setLightboxImage(message.parsed.imageUrl)}
+                                onClick={() => setLightboxImage(parsed.imageUrl)}
                                 type="button"
                               >
                                 <Image
                                   alt="Draw pad attachment"
                                   className="h-auto w-full object-cover"
                                   height={320}
-                                  src={message.parsed.imageUrl}
+                                  src={parsed.imageUrl}
                                   unoptimized
                                   width={320}
                                 />
                               </button>
-                              {message.parsed.text ? (
-                                <p className="whitespace-pre-wrap text-sm">{message.parsed.text}</p>
+                              {parsed.text ? (
+                                <p className="whitespace-pre-wrap text-sm">{parsed.text}</p>
                               ) : null}
                             </>
                           ) : (
-                            <p className="whitespace-pre-wrap text-sm">{message.parsed.text}</p>
+                            <p className="whitespace-pre-wrap text-sm">{parsed.text}</p>
                           )}
                         </div>
                       </div>
