@@ -1,13 +1,13 @@
-import { inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import type { db as storeDb } from "@/lib/db";
-import { atoApps, atoRoutes } from "@/lib/db/schema";
+import { atoApps, atoRoutes, userInstalls } from "@/lib/db/schema";
 import {
   OFFICIAL_CATALOG_APP_SEEDS,
   OFFICIAL_CATALOG_ROUTE_SEEDS,
   OFFICIAL_CATALOG_TOOL_POLICIES,
 } from "@/lib/store/officialCatalog";
 
-type DatabaseClient = Pick<typeof storeDb, "insert" | "select">;
+type DatabaseClient = Pick<typeof storeDb, "insert" | "select" | "delete">;
 
 export async function bootstrapOfficialCatalog(database: DatabaseClient) {
   const now = new Date();
@@ -19,7 +19,7 @@ export async function bootstrapOfficialCatalog(database: DatabaseClient) {
         ...app,
         createdAt: now,
         updatedAt: now,
-      }))
+      })),
     )
     .onConflictDoUpdate({
       target: atoApps.slug,
@@ -35,14 +35,26 @@ export async function bootstrapOfficialCatalog(database: DatabaseClient) {
       },
     });
 
+  const [spotifyApp] = await database
+    .select({ id: atoApps.id })
+    .from(atoApps)
+    .where(eq(atoApps.slug, "spotify-music-player"))
+    .limit(1);
+
+  if (spotifyApp) {
+    await database.delete(userInstalls).where(eq(userInstalls.appId, spotifyApp.id));
+    await database.delete(atoRoutes).where(eq(atoRoutes.appId, spotifyApp.id));
+    await database.delete(atoApps).where(eq(atoApps.id, spotifyApp.id));
+  }
+
   const appRows = await database
     .select({ id: atoApps.id, slug: atoApps.slug })
     .from(atoApps)
     .where(
       inArray(
         atoApps.slug,
-        OFFICIAL_CATALOG_APP_SEEDS.map((app) => app.slug)
-      )
+        OFFICIAL_CATALOG_APP_SEEDS.map((app) => app.slug),
+      ),
     );
 
   const appIdBySlug = new Map(appRows.map((row) => [row.slug, row.id]));
@@ -69,18 +81,15 @@ export async function bootstrapOfficialCatalog(database: DatabaseClient) {
     };
   });
 
-  await database
-    .insert(atoRoutes)
-    .values(routeValues)
-    .onConflictDoUpdate({
-      target: [atoRoutes.appId, atoRoutes.slash],
-      set: {
-        label: sql`excluded.label`,
-        description: sql`excluded.description`,
-        toolPolicy: sql`excluded.tool_policy`,
-        updatedAt: sql`excluded.updated_at`,
-      },
-    });
+  await database.insert(atoRoutes).values(routeValues).onConflictDoUpdate({
+    target: [atoRoutes.appId, atoRoutes.slash],
+    set: {
+      label: sql`excluded.label`,
+      description: sql`excluded.description`,
+      toolPolicy: sql`excluded.tool_policy`,
+      updatedAt: sql`excluded.updated_at`,
+    },
+  });
 }
 
 let bootstrapPromise: Promise<void> | undefined;
