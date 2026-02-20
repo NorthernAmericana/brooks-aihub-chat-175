@@ -9,6 +9,7 @@ import {
   DM_MESSAGE_BODY_MAX_LENGTH,
   DM_MESSAGE_PAGE_LIMIT_DEFAULT,
   DM_MESSAGE_PAGE_LIMIT_MAX,
+  getDmDisplayNameForUserId,
   requireAuthUserId,
   requireRoomMembership,
 } from "@/lib/dm/http";
@@ -53,7 +54,7 @@ export async function GET(
       joinedAt: member.joinedAt,
       author: {
         id: member.userId,
-        email: member.email,
+        displayName: getDmDisplayNameForUserId(member.userId),
         avatarUrl: member.avatarUrl,
       },
     })),

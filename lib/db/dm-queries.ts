@@ -58,7 +58,6 @@ export async function listDmRoomMembers(roomId: string) {
       roomId: dmRoomMembers.roomId,
       userId: dmRoomMembers.userId,
       joinedAt: dmRoomMembers.createdAt,
-      email: user.email,
       avatarUrl: user.avatarUrl,
     })
     .from(dmRoomMembers)

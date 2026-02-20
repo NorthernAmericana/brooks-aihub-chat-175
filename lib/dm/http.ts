@@ -41,9 +41,13 @@ export async function requireRoomMembership(roomId: string, userId: string) {
 
 export type DmAuthor = {
   id: string;
-  email: string;
+  displayName: string;
   avatarUrl: string | null;
 };
+
+export function getDmDisplayNameForUserId(userId: string) {
+  return `member-${userId.slice(0, 8)}`;
+}
 
 export async function loadAuthorsById(userIds: string[]) {
   if (userIds.length === 0) {
@@ -53,13 +57,21 @@ export async function loadAuthorsById(userIds: string[]) {
   const rows = await db
     .select({
       id: user.id,
-      email: user.email,
       avatarUrl: user.avatarUrl,
     })
     .from(user)
     .where(inArray(user.id, [...new Set(userIds)]));
 
-  return new Map(rows.map((row) => [row.id, row]));
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      {
+        id: row.id,
+        displayName: getDmDisplayNameForUserId(row.id),
+        avatarUrl: row.avatarUrl,
+      },
+    ])
+  );
 }
 
 export function normalizeDmMessage(
@@ -91,7 +103,7 @@ export function normalizeDmMessage(
     updatedAt: row.updatedAt,
     author: authorsById.get(row.senderUserId) ?? {
       id: row.senderUserId,
-      email: "unknown",
+      displayName: getDmDisplayNameForUserId(row.senderUserId),
       avatarUrl: null,
     },
     attachments: row.attachments.map((attachment) => ({
