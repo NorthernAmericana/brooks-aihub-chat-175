@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useAudioFocus } from "@/components/audio-focus-provider";
 
 const SPOTIFY_SDK_URL = "https://sdk.scdn.co/spotify-player.js";
 
@@ -134,6 +135,7 @@ function loadSpotifySdk() {
 }
 
 export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
+  const { setSpotifyIsPlaying } = useAudioFocus();
   const playerRef = useRef<SpotifyPlayer | null>(null);
   const mountedRef = useRef(true);
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -338,6 +340,16 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       playerRef.current = null;
     };
   }, [isActivated, mapUiError, refreshState]);
+
+  useEffect(() => {
+    setSpotifyIsPlaying(Boolean(playerState?.is_playing));
+  }, [playerState?.is_playing, setSpotifyIsPlaying]);
+
+  useEffect(() => {
+    return () => {
+      setSpotifyIsPlaying(false);
+    };
+  }, [setSpotifyIsPlaying]);
 
   useEffect(() => {
     if (!deviceId) {
