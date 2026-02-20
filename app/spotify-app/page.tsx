@@ -1,26 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
-import {
-  ArrowLeft,
-  Check,
-  Download,
-  ExternalLink,
-  Link2Off,
-  Trash2,
-} from "lucide-react";
-import { revalidatePath } from "next/cache";
+import { ArrowLeft, ExternalLink, Link2, Link2Off } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { db } from "@/lib/db";
-import { atoApps, spotifyAccounts, userInstalls } from "@/lib/db/schema";
-import { installApp } from "@/lib/store/installApp";
-import { uninstallApp } from "@/lib/store/uninstallApp";
-import { disconnectSpotify } from "@/lib/spotify/disconnect";
+import { spotifyAccounts } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
-
-const APP_SLUG = "spotify-music-player";
 
 const REQUESTED_SCOPES = [
   "streaming",
@@ -31,30 +16,9 @@ const REQUESTED_SCOPES = [
   "user-read-currently-playing",
 ];
 
-export default async function SpotifyAppDetailPage() {
-  const [app, session] = await Promise.all([
-    db
-      .select()
-      .from(atoApps)
-      .where(eq(atoApps.slug, APP_SLUG))
-      .limit(1)
-      .then((rows) => rows[0] ?? null),
-    auth(),
-  ]);
-
+export default async function SpotifyIntegrationSettingsPage() {
+  const session = await auth();
   const userId = session?.user?.id ?? null;
-  const appId = app?.id ?? null;
-
-  const [installRecord] =
-    userId && appId
-      ? await db
-          .select()
-          .from(userInstalls)
-          .where(
-            and(eq(userInstalls.userId, userId), eq(userInstalls.appId, appId)),
-          )
-          .limit(1)
-      : [null];
 
   const [connectionRecord] = userId
     ? await db
@@ -69,217 +33,86 @@ export default async function SpotifyAppDetailPage() {
         .limit(1)
     : [null];
 
-  const isInstalled = Boolean(installRecord);
   const isConnected = Boolean(connectionRecord);
-  const isInstallDisabled = isInstalled || !appId;
-
-  const installAction = async () => {
-    "use server";
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/login");
-    }
-    if (!appId) {
-      return;
-    }
-
-    await installApp(session.user.id, appId);
-    revalidatePath("/spotify-app");
-    revalidatePath("/store");
-  };
-
-  const uninstallAction = async () => {
-    "use server";
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/login");
-    }
-    if (!appId) {
-      return;
-    }
-
-    await uninstallApp(session.user.id, appId);
-    revalidatePath("/spotify-app");
-    revalidatePath("/store");
-  };
-
-  const disconnectAction = async () => {
-    "use server";
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/login");
-    }
-
-    await disconnectSpotify(session.user.id);
-
-    revalidatePath("/spotify-app");
-    revalidatePath("/Spotify");
-  };
 
   return (
     <div className="app-page-overlay fixed inset-0 z-50 flex flex-col bg-[#08110d] text-white">
       <div className="app-page-header sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-[#0f1f17]/90 px-4 py-3 backdrop-blur-sm">
         <Link
-          aria-label="Back to store"
+          aria-label="Back to home"
           className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-          href="/store"
+          href="/"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-sm font-medium text-emerald-100">
-          Spotify Music Player
+        <h1 className="text-sm font-medium text-emerald-100/90">
+          Spotify Integration Settings
         </h1>
       </div>
 
-      <div className="app-page-content flex-1 space-y-6 overflow-y-auto px-4 py-6 -webkit-overflow-scrolling-touch touch-pan-y overscroll-behavior-contain">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-black/20">
-                <ImageWithFallback
-                  alt="Spotify Music Player icon"
-                  className="h-full w-full object-contain"
-                  containerClassName="size-full"
-                  height={64}
-                  src={
-                    app?.iconUrl ?? "/icons/spotify-music-player-appicon.svg"
-                  }
-                  width={64}
-                />
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-white">
-                  Spotify Music Player
-                </h2>
-                <p className="text-sm text-white/70">Music</p>
-                <p className="mt-1 text-xs text-emerald-200/80">
-                  Store slug: {APP_SLUG}
-                </p>
-              </div>
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+        <section className="rounded-3xl border border-emerald-300/20 bg-[#10251a]/80 p-5 shadow-[0_24px_80px_-32px_rgba(16,185,129,0.45)] sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-emerald-200/70">
+                Status
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-emerald-50">
+                {isConnected ? "Connected" : "Not connected"}
+              </h2>
+              <p className="mt-2 text-sm text-emerald-100/75">
+                Manage OAuth access for Spotify playback controls in Brooks AI HUB.
+              </p>
+            </div>
+            <div className="rounded-full border border-white/15 px-3 py-1 text-xs text-emerald-100/85">
+              Route: /Spotify
             </div>
           </div>
-        </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <form action={installAction} className="w-full md:w-auto">
-              <button
-                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 md:w-56 ${
-                  isInstalled
-                    ? "border border-emerald-400/30 bg-emerald-500/20 text-emerald-100"
-                    : "bg-emerald-500 text-black hover:bg-emerald-400"
-                }`}
-                disabled={isInstallDisabled}
-                type="submit"
-              >
-                {isInstalled ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Installed
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    Install Spotify Player
-                  </>
-                )}
-              </button>
-            </form>
-
-            {isInstalled ? (
-              <>
-                <Link
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:w-56"
-                  href="/Spotify"
+          <div className="mt-5 flex flex-wrap gap-3">
+            {isConnected ? (
+              <form action="/api/spotify/disconnect" method="post">
+                <button
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100 transition hover:bg-amber-500/30"
+                  type="submit"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  Open App UI
-                </Link>
-                <form action={disconnectAction} className="w-full md:w-auto">
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/20 px-6 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/30 md:w-56"
-                    type="submit"
-                  >
-                    <Link2Off className="h-4 w-4" />
-                    Disconnect Spotify
-                  </button>
-                </form>
-                <form action={uninstallAction} className="w-full md:w-auto">
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-rose-300/40 bg-rose-500/20 px-6 py-3 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/30 md:w-40"
-                    type="submit"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Remove
-                  </button>
-                </form>
-              </>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-100">
-            Connection status
-          </h3>
-          <p className="mt-2 text-sm text-white/75">
-            Spotify account connection is required for live playback control.
-            {isInstalled
-              ? " Connect your account to enable playback controls in the app UI."
-              : " Install the app first, then connect your Spotify account."}
-          </p>
-          <div
-            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs ${
-              isConnected
-                ? "border border-emerald-300/30 bg-emerald-500/20 text-emerald-100"
-                : "border border-amber-300/30 bg-amber-500/20 text-amber-100"
-            }`}
-          >
-            {isConnected ? "Connected" : "Not connected"}
-          </div>
-
-          {isInstalled && !isConnected ? (
-            <div className="mt-4">
-              <Link
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400"
+                  <Link2Off className="h-3.5 w-3.5" />
+                  Disconnect Spotify
+                </button>
+              </form>
+            ) : (
+              <a
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100 transition hover:bg-emerald-500/30"
                 href="/api/spotify/login"
               >
+                <Link2 className="h-3.5 w-3.5" />
                 Connect Spotify
-              </Link>
-            </div>
-          ) : null}
+              </a>
+            )}
+
+            <Link
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/90 transition hover:bg-white/10"
+              href="/Spotify"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open Player
+            </Link>
+          </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-100">
-            Requested scopes
-          </h3>
-          <ul className="mt-3 space-y-2 text-sm text-white/80">
+        <section className="rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-white/75 sm:p-5">
+          <p className="font-semibold uppercase tracking-[0.18em] text-white/70">
+            Requested Spotify scopes
+          </p>
+          <ul className="mt-3 space-y-2">
             {REQUESTED_SCOPES.map((scope) => (
-              <li
-                className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 font-mono"
-                key={scope}
-              >
+              <li className="rounded-lg border border-white/10 bg-white/5 px-3 py-2" key={scope}>
                 {scope}
               </li>
             ))}
           </ul>
         </section>
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-100">
-            Privacy note
-          </h3>
-          <p className="mt-2 text-sm text-white/75">
-            This integration accesses your playback state, available devices,
-            playback-control permissions, and basic account profile scopes to
-            show what is currently playing and send play/pause/skip/transfer
-            commands. We never store your Spotify password. OAuth token exchange
-            and refresh handling run server-side, and the refresh token is
-            stored encrypted at rest.
-          </p>
-        </section>
-      </div>
+      </main>
     </div>
   );
 }

@@ -75,17 +75,6 @@ export const OFFICIAL_CATALOG_APP_SEEDS: OfficialCatalogAppSeed[] = [
     isOfficial: true,
   },
   {
-    slug: "spotify-music-player",
-    name: "Spotify Music Player",
-    description:
-      "Install Spotify controls for quick playback commands and radio actions",
-    iconUrl: "/icons/spotify-music-player-appicon.svg",
-    category: "Music",
-    storePath: "/spotify/install",
-    appPath: "/Spotify",
-    isOfficial: true,
-  },
-  {
     slug: "lore-playground",
     name: "Lore Playground",
     description:
@@ -193,9 +182,6 @@ export const OFFICIAL_CATALOG_TOOL_POLICIES: Record<
   "NAMC/Reader": {
     tools: ["saveMemory"],
   },
-  Spotify: {
-    tools: ["requestSuggestions", "saveMemory"],
-  },
 };
 
 export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
@@ -252,12 +238,6 @@ export const OFFICIAL_CATALOG_ROUTE_SEEDS: OfficialCatalogRouteSeed[] = [
     slash: "NAMC",
     label: "NAMC AI Media Curator",
     description: "Main media curator",
-  },
-  {
-    appSlug: "spotify-music-player",
-    slash: "Spotify",
-    label: "Spotify Music Player",
-    description: "Playback controls and personalized radio actions",
   },
   {
     appSlug: "lore-playground",

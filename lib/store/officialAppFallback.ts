@@ -58,16 +58,6 @@ export const OFFICIAL_APP_FALLBACK_CATALOG: OfficialAppFallbackItem[] = [
     description: "Placeholder reader experience for NAMC content previews",
   },
   {
-    slug: "spotify-music-player",
-    name: "Spotify Music Player",
-    iconUrl: "/icons/spotify-music-player-appicon.svg",
-    appPath: "/Spotify",
-    storePath: "/spotify/install",
-    category: "Music",
-    description:
-      "Install Spotify controls for quick playback commands and radio actions",
-  },
-  {
     slug: "lore-playground",
     name: "Lore Playground",
     iconUrl: "/icons/lore-playground-appicon.svg",
