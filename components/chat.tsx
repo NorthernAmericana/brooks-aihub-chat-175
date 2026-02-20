@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { useAudioFocus } from "@/components/audio-focus-provider";
 import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
@@ -152,7 +153,6 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const [chatTheme, setChatTheme] = useState<ChatThemeId>(DEFAULT_CHAT_THEME);
-  const [isThemeAudioEnabled, setIsThemeAudioEnabled] = useState(true);
   const currentModelIdRef = useRef(currentModelId);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -161,6 +161,13 @@ export function Chat({
   const audioBufferRef = useRef<{ src: string; buffer: AudioBuffer } | null>(
     null
   );
+
+  const {
+    spotifyIsPlaying,
+    themeAudioEnabled: isThemeAudioEnabled,
+    effectiveOutputMode,
+    setThemeAudioEnabled: setIsThemeAudioEnabled,
+  } = useAudioFocus();
 
   const isBrooksAiHubThemeRoute =
     chatRouteKey === "brooks-ai-hub" ||
@@ -351,7 +358,7 @@ export function Chat({
     };
 
     const resumeThemeAudio = async () => {
-      if (!isThemeAudioEnabled) {
+      if (!isThemeAudioEnabled || spotifyIsPlaying) {
         return;
       }
 
@@ -382,7 +389,7 @@ export function Chat({
 
     const startThemeAudio = async () => {
       stopThemeAudio();
-      if (!isThemeAudioEnabled) {
+      if (!isThemeAudioEnabled || spotifyIsPlaying) {
         return;
       }
 
@@ -411,7 +418,12 @@ export function Chat({
         });
       }
     };
-  }, [activeTheme.audioSrc, isChatThemeEnabled, isThemeAudioEnabled]);
+  }, [
+    activeTheme.audioSrc,
+    isChatThemeEnabled,
+    isThemeAudioEnabled,
+    spotifyIsPlaying,
+  ]);
 
   const {
     messages,
@@ -535,8 +547,8 @@ export function Chat({
   }, []);
 
   const handleThemeAudioToggle = useCallback(() => {
-    setIsThemeAudioEnabled((previous) => !previous);
-  }, []);
+    setIsThemeAudioEnabled(!isThemeAudioEnabled);
+  }, [isThemeAudioEnabled, setIsThemeAudioEnabled]);
 
   useAutoResume({
     autoResume,
@@ -623,6 +635,9 @@ export function Chat({
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
+            effectiveAudioOutputMode={
+              isChatThemeEnabled ? effectiveOutputMode : undefined
+            }
             isThemeAudioEnabled={isChatThemeEnabled ? isThemeAudioEnabled : undefined}
             onThemeChange={isChatThemeEnabled ? handleThemeChange : undefined}
             onThemeAudioToggle={

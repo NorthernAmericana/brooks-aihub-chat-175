@@ -30,6 +30,8 @@ import { toast } from "./toast";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
+type EffectiveAudioOutputMode = "theme" | "spotify" | "muted";
+
 type ThemeOption = {
   id: string;
   label: string;
@@ -42,6 +44,7 @@ function PureChatHeader({
   routeKey,
   selectedVisibilityType,
   isReadonly,
+  effectiveAudioOutputMode,
   isThemeAudioEnabled,
   onThemeChange,
   onThemeAudioToggle,
@@ -54,6 +57,7 @@ function PureChatHeader({
   routeKey: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  effectiveAudioOutputMode?: EffectiveAudioOutputMode;
   isThemeAudioEnabled?: boolean;
   onThemeChange?: (themeId: string) => void;
   onThemeAudioToggle?: () => void;
@@ -78,6 +82,9 @@ function PureChatHeader({
     Boolean(themeOptions?.length) && Boolean(selectedThemeId);
   const shouldShowThemeAudioToggle =
     typeof isThemeAudioEnabled === "boolean" && Boolean(onThemeAudioToggle);
+
+  const isThemeAudioEffective = effectiveAudioOutputMode === "theme";
+  const isSpotifyPrioritized = effectiveAudioOutputMode === "spotify";
 
   const resetCallDialog = useCallback(() => {
     setCallStep("confirm");
@@ -164,18 +171,26 @@ function PureChatHeader({
           )}
           {shouldShowThemeAudioToggle && (
             <Button
-              aria-pressed={isThemeAudioEnabled}
+              aria-pressed={isThemeAudioEffective}
               className="h-8 px-2 md:h-fit md:px-2"
               onClick={onThemeAudioToggle}
               title={
-                isThemeAudioEnabled ? "Mute theme audio" : "Play theme audio"
+                isSpotifyPrioritized
+                  ? "Spotify is active. Theme audio will resume when Spotify pauses."
+                  : isThemeAudioEnabled
+                    ? "Mute theme audio"
+                    : "Play theme audio"
               }
               type="button"
               variant="outline"
             >
-              {isThemeAudioEnabled ? <SpeakerIcon /> : <SpeakerMutedIcon />}
+              {isThemeAudioEffective ? <SpeakerIcon /> : <SpeakerMutedIcon />}
               <span className="sr-only">
-                {isThemeAudioEnabled ? "Theme audio on" : "Theme audio off"}
+                {isSpotifyPrioritized
+                  ? "Theme audio paused while Spotify is playing"
+                  : isThemeAudioEffective
+                    ? "Theme audio on"
+                    : "Theme audio off"}
               </span>
             </Button>
           )}
