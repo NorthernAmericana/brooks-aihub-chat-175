@@ -2,7 +2,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spotifyAccounts } from "@/lib/db/schema";
 import { decryptSpotifyToken, encryptSpotifyToken } from "@/lib/spotify/crypto";
-import { refreshSpotifyAccessToken } from "@/lib/spotify/oauth";
+import { type SpotifyTokenResponse, refreshSpotifyAccessToken } from "@/lib/spotify/oauth";
 
 const SPOTIFY_API_BASE = "https://api.spotify.com/v1";
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
@@ -109,7 +109,17 @@ function refreshAccessTokenWithLock(userId: string) {
     } catch {
       throw toTokenDecodeError({ source: "refresh_token" });
     }
-    const refreshed = await refreshSpotifyAccessToken(refreshToken);
+    let refreshed: SpotifyTokenResponse;
+
+    try {
+      refreshed = await refreshSpotifyAccessToken(refreshToken);
+    } catch (error) {
+      throw toTokenDecodeError({
+        source: "refresh_request",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+
     const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000);
 
     await tx
