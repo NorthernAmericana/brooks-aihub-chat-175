@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { SessionTemplateSchema } from "./session-log-schema";
+export {
+  SessionLogSchemaV1_0,
+  type SessionLogV1_0,
+} from "./session-log-schema";
 
 /**
  * MyFlowerAI Strain Data Schema v1.1
@@ -86,10 +90,10 @@ const COASchema = z.object({
   admin_route: z.string(),
   product_name_on_coa: z.string(),
   cultivar_on_coa: z.string(),
-  completed_at: z.string().optional(),
-  received_at: z.string().optional(),
-  sample_date: z.string().optional(),
-  batch_date: z.string().optional(),
+  completed_at: z.string().nullable().optional(),
+  received_at: z.string().nullable().optional(),
+  sample_date: z.string().nullable().optional(),
+  batch_date: z.string().nullable().optional(),
   batch_unit_size_g: z.number(),
   cultivation_facility: z.string(),
   processing_facility: z.string(),
@@ -123,7 +127,7 @@ const FreshnessGuidanceSchema = z.object({
   do_not_store_in_public: z
     .array(z.string())
     .describe(
-      "Array of field names that should never be in public strain files"
+      "Array of field names that should never be in public strain files",
     ),
 });
 
@@ -142,12 +146,12 @@ const MeaningSchema = z.object({
   aroma_flavor_tags: z
     .array(z.string())
     .describe(
-      "Aroma and flavor characteristics commonly associated with the terpene profile"
+      "Aroma and flavor characteristics commonly associated with the terpene profile",
     ),
   effect_tags: z
     .array(z.string())
     .describe(
-      "Effects commonly associated with the terpene and cannabinoid profile"
+      "Effects commonly associated with the terpene and cannabinoid profile",
     ),
   dominant_terpenes: z
     .array(z.string())
@@ -158,7 +162,7 @@ const MeaningSchema = z.object({
   disclaimers: z
     .array(z.string())
     .describe(
-      "General disclaimers about the informational nature of these tags"
+      "General disclaimers about the informational nature of these tags",
     ),
 });
 
@@ -167,12 +171,12 @@ const UseCasesSchema = z.object({
   best_for_tags: z
     .array(z.string())
     .describe(
-      "Generic use case tags (non-medical): creative, social, daytime, nighttime, relaxation, focus, etc."
+      "Generic use case tags (non-medical): creative, social, daytime, nighttime, relaxation, focus, etc.",
     ),
   avoid_if_tags: z
     .array(z.string())
     .describe(
-      "Generic caution tags (non-medical): too_strong_for_newbies, intense_effects, etc."
+      "Generic caution tags (non-medical): too_strong_for_newbies, intense_effects, etc.",
     ),
 });
 
@@ -256,7 +260,7 @@ export type MyFlowerAIStrain = z.infer<typeof MyFlowerAIStrainSchema>;
  * Type guard to check if a strain is v1.1
  */
 export function isStrainV1_1(
-  strain: MyFlowerAIStrain
+  strain: MyFlowerAIStrain,
 ): strain is MyFlowerAIStrainV1_1 {
   return "schema_version" in strain && strain.schema_version === "1.1";
 }
@@ -265,7 +269,7 @@ export function isStrainV1_1(
  * Type guard to check if a strain is v1.0
  */
 export function isStrainV1_0(
-  strain: MyFlowerAIStrain
+  strain: MyFlowerAIStrain,
 ): strain is MyFlowerAIStrainV1_0 {
   return !("schema_version" in strain);
 }

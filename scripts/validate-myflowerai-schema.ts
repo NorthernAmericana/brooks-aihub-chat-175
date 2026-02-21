@@ -18,6 +18,7 @@ const STRAINS_DIR = path.join(process.cwd(), "data", "myflowerai", "strains");
 
 interface ValidationResult {
   filename: string;
+  filepath: string;
   valid: boolean;
   errors?: string[];
 }
@@ -34,64 +35,65 @@ async function validateFile(filename: string): Promise<ValidationResult> {
 
     // Check for privacy violations before proceeding with schema validation
     const privacyErrors: string[] = [];
-    
+
     // Explicitly check for session/session_log arrays (MUST NOT exist in public files)
     if ("sessions" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+        "PRIVACY VIOLATION: 'sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead.",
       );
     }
     if ("session_logs" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'session_logs' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+        "PRIVACY VIOLATION: 'session_logs' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead.",
       );
     }
     if ("user_sessions" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'user_sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead."
+        "PRIVACY VIOLATION: 'user_sessions' array found. User session logs must NEVER be stored in public strain files. Store in private per-user storage instead.",
       );
     }
-    
+
     // Check for inventory-related privacy violations
     if ("inventory" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead."
+        "PRIVACY VIOLATION: 'inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead.",
       );
     }
     if ("user_inventory" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'user_inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead."
+        "PRIVACY VIOLATION: 'user_inventory' array found. User inventory records must NEVER be stored in public strain files. Store in private per-user storage instead.",
       );
     }
     if ("opened_date" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'opened_date' field found. Exact dates must NOT be stored in public strain files."
+        "PRIVACY VIOLATION: 'opened_date' field found. Exact dates must NOT be stored in public strain files.",
       );
     }
     if ("remaining_g" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'remaining_g' field found. Exact amounts must NOT be stored in public strain files."
+        "PRIVACY VIOLATION: 'remaining_g' field found. Exact amounts must NOT be stored in public strain files.",
       );
     }
     if ("purchase_date" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'purchase_date' field found. Purchase dates must NOT be stored in public strain files."
+        "PRIVACY VIOLATION: 'purchase_date' field found. Purchase dates must NOT be stored in public strain files.",
       );
     }
     if ("purchase_location" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'purchase_location' field found. Purchase locations must NOT be stored in public strain files."
+        "PRIVACY VIOLATION: 'purchase_location' field found. Purchase locations must NOT be stored in public strain files.",
       );
     }
     if ("user_stash_amount" in data) {
       privacyErrors.push(
-        "PRIVACY VIOLATION: 'user_stash_amount' field found. User stash amounts must NOT be stored in public strain files."
+        "PRIVACY VIOLATION: 'user_stash_amount' field found. User stash amounts must NOT be stored in public strain files.",
       );
     }
 
     if (privacyErrors.length > 0) {
       return {
         filename,
+        filepath,
         valid: false,
         errors: privacyErrors,
       };
@@ -102,19 +104,24 @@ async function validateFile(filename: string): Promise<ValidationResult> {
 
     return {
       filename,
+      filepath,
       valid: true,
     };
   } catch (error) {
     if (error instanceof ZodError) {
       return {
         filename,
+        filepath,
         valid: false,
-        errors: error.issues.map((err) => `${err.path.join(".")}: ${err.message}`),
+        errors: error.issues.map(
+          (err) => `${err.path.join(".")}: ${err.message}`,
+        ),
       };
     }
 
     return {
       filename,
+      filepath,
       valid: false,
       errors: [error instanceof Error ? error.message : String(error)],
     };
@@ -132,7 +139,9 @@ async function validate() {
   let files: string[];
   try {
     const allFiles = await readdir(STRAINS_DIR);
-    files = allFiles.filter((f) => f.endsWith(".json") && !f.includes("EXAMPLE"));
+    files = allFiles.filter(
+      (f) => f.endsWith(".json") && !f.includes("EXAMPLE"),
+    );
   } catch (error) {
     console.error(`❌ Failed to read directory: ${error}`);
     process.exit(1);
@@ -157,6 +166,7 @@ async function validate() {
       console.log(`✅ ${result.filename}`);
     } else {
       console.log(`❌ ${result.filename}`);
+      console.log(`   ↳ File: ${result.filepath}`);
       if (result.errors) {
         for (const error of result.errors) {
           console.log(`   → ${error}`);
@@ -179,6 +189,10 @@ async function validate() {
 
   if (invalidCount > 0) {
     console.log("\n❌ Validation failed. Please fix the errors above.");
+    console.log("\nInvalid files:");
+    for (const result of results.filter((r) => !r.valid)) {
+      console.log(` - ${result.filename} (${result.filepath})`);
+    }
     process.exit(1);
   }
 

@@ -37,7 +37,11 @@
       "properties": {
         "storage_location": {
           "type": "string",
-          "enum": ["supabase_user_private", "local_encrypted", "private_namespace"],
+          "enum": [
+            "supabase_user_private",
+            "local_encrypted",
+            "private_namespace"
+          ],
           "description": "Where this private data is stored"
         },
         "user_consent": {
@@ -166,6 +170,149 @@
         }
       },
       "description": "Follow-up reflections"
+    },
+    "expectancy": {
+      "type": "object",
+      "properties": {
+        "expected_intensity_1to10": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Expected intensity before use from 1 (very mild) to 10 (very intense)"
+        },
+        "expected_effects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Effects the user expected before the session"
+        },
+        "confidence_1to10": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Confidence in the expectancy estimate from 1 (low) to 10 (high)"
+        }
+      },
+      "description": "Pre-use expectations for intensity and effects"
+    },
+    "state_before": {
+      "type": "object",
+      "properties": {
+        "craving_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Craving level on a normalized 0-10 scale"
+        },
+        "tension_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Physical or mental tension on a normalized 0-10 scale"
+        },
+        "anxiety_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Anxiety level on a normalized 0-10 scale"
+        },
+        "focus_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Focus level on a normalized 0-10 scale"
+        },
+        "mood_valence_-5to5": {
+          "type": "number",
+          "minimum": -5,
+          "maximum": 5,
+          "description": "Mood valence from -5 (very negative) to +5 (very positive)"
+        }
+      },
+      "description": "Normalized self-report state before consumption"
+    },
+    "state_after": {
+      "type": "object",
+      "properties": {
+        "craving_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Craving level on a normalized 0-10 scale"
+        },
+        "tension_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Physical or mental tension on a normalized 0-10 scale"
+        },
+        "anxiety_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Anxiety level on a normalized 0-10 scale"
+        },
+        "focus_0to10": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Focus level on a normalized 0-10 scale"
+        },
+        "mood_valence_-5to5": {
+          "type": "number",
+          "minimum": -5,
+          "maximum": 5,
+          "description": "Mood valence from -5 (very negative) to +5 (very positive)"
+        }
+      },
+      "description": "Normalized self-report state after consumption"
+    },
+    "planned_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tasks the user planned to do during/after the session"
+    },
+    "task_impact": {
+      "type": "object",
+      "properties": {
+        "productivity_impact": {
+          "type": "string",
+          "enum": [
+            "major_decrease",
+            "slight_decrease",
+            "no_change",
+            "slight_increase",
+            "major_increase"
+          ],
+          "description": "Perceived impact on productivity"
+        },
+        "memory_impact": {
+          "type": "string",
+          "enum": [
+            "major_worse",
+            "slight_worse",
+            "no_change",
+            "slight_better",
+            "major_better"
+          ],
+          "description": "Perceived impact on memory and recall"
+        },
+        "social_comfort_impact": {
+          "type": "string",
+          "enum": [
+            "major_decrease",
+            "slight_decrease",
+            "no_change",
+            "slight_increase",
+            "major_increase"
+          ],
+          "description": "Perceived impact on social comfort"
+        }
+      },
+      "description": "Perceived impact on planned tasks and functional outcomes"
     }
   }
 }
