@@ -13,9 +13,19 @@ type SpotifyStatus = {
 
 export function SpotifyHomeModule() {
   const { data } = useSWR<SpotifyStatus>("/api/spotify/status", fetcher);
-  const { isActivated, activate, playerState, togglePlayback, skipNext } = useSpotifyPlayback();
+  const { isActivated, activate, playerState, togglePlayback, skipNext } =
+    useSpotifyPlayback();
 
   const hasTrack = Boolean(playerState?.item);
+  const playlistLabel = (() => {
+    const contextUri = playerState?.context?.uri;
+    if (!contextUri?.startsWith("spotify:playlist:")) {
+      return null;
+    }
+
+    const playlistId = contextUri.replace("spotify:playlist:", "");
+    return playlistId ? `Playlist ${playlistId.slice(0, 8)}` : "Playlist";
+  })();
 
   return (
     <div className="mb-6 w-full rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-background to-background p-4 text-left shadow-sm sm:p-5">
@@ -55,7 +65,9 @@ export function SpotifyHomeModule() {
                   </p>
                   <p className="truncate text-xs text-white/70">
                     {hasTrack
-                      ? playerState?.item?.artists?.map((artist) => artist.name).join(", ")
+                      ? playerState?.item?.artists
+                          ?.map((artist) => artist.name)
+                          .join(", ")
                       : "Open Spotify and start a track to control playback."}
                   </p>
                 </div>
@@ -66,7 +78,7 @@ export function SpotifyHomeModule() {
                     "rounded-full px-3 py-1 text-xs font-semibold",
                     playerState?.is_playing
                       ? "bg-amber-500/30 text-amber-100"
-                      : "bg-emerald-500 text-black",
+                      : "bg-emerald-500 text-black"
                   )}
                   onClick={() => {
                     togglePlayback();
@@ -89,14 +101,15 @@ export function SpotifyHomeModule() {
                   href="/Spotify"
                   onClick={activate}
                 >
-                  Open full player
+                  Open full player{playlistLabel ? ` • ${playlistLabel}` : ""}
                 </Link>
               </div>
             </>
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-white/75">
-                Open Spotify controls when you want to start playback control in this session.
+                Open Spotify controls when you want to start playback control in
+                this session.
               </p>
               <Link
                 className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs"
