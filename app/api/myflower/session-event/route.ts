@@ -13,30 +13,19 @@ import {
 function buildSessionEventResponse(event: {
   id: string;
   occurredAt: Date;
-  schemaVersion: string;
-  exposure: SessionEventV1_0["exposure"];
-  context: SessionEventV1_0["context"];
-  outcomes: SessionEventV1_0["outcomes"];
-  notes: string | null;
   createdAt: Date;
+  payload: SessionEventV1_0;
 }) {
-  const safetyAssessment = assessSessionEventSafety({
-    schema_version: event.schemaVersion,
-    occurred_at: event.occurredAt.toISOString(),
-    exposure: event.exposure,
-    context: event.context,
-    outcomes: event.outcomes,
-    notes: event.notes ?? undefined,
-  });
+  const safetyAssessment = assessSessionEventSafety(event.payload);
 
   return {
     id: event.id,
     occurred_at: event.occurredAt.toISOString(),
-    schema_version: event.schemaVersion,
-    exposure: event.exposure,
-    context: event.context,
-    outcomes: event.outcomes,
-    notes: event.notes,
+    schema_version: event.payload.schema_version,
+    exposure: event.payload.exposure,
+    context: event.payload.context,
+    outcomes: event.payload.outcomes,
+    notes: event.payload.notes ?? null,
     created_at: event.createdAt.toISOString(),
     safety: {
       flagged: safetyAssessment.safetyFlag,
@@ -53,6 +42,7 @@ function buildSessionEventResponse(event: {
     },
   };
 }
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -103,10 +93,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         session_event: buildSessionEventResponse({
-          ...event,
-          exposure: payload.exposure,
-          context: payload.context,
-          outcomes: payload.outcomes,
+          id: event.id,
+          occurredAt: event.occurredAt,
+          createdAt: event.createdAt,
+          payload,
         }),
       },
       { status: 201 },
@@ -155,10 +145,10 @@ export async function GET() {
 
         return [
           buildSessionEventResponse({
-            ...event,
-            exposure: parsed.data.exposure,
-            context: parsed.data.context,
-            outcomes: parsed.data.outcomes,
+            id: event.id,
+            occurredAt: event.occurredAt,
+            createdAt: event.createdAt,
+            payload: parsed.data,
           }),
         ];
       }),
