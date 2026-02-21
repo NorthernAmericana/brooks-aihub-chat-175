@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DM_RECIPIENT_LIMIT_FOUNDER } from "@/lib/commons/constants";
+import { isValidDmTempRetentionHours } from "@/lib/commons/dm-retention";
 import { isValidCampfirePathValue } from "@/lib/commons/routing";
 
 const MARKDOWN_DISALLOWED_PATTERN = /<\s*\w/i;
@@ -63,24 +64,11 @@ export const createCampfireSchema = z
         });
       }
 
-      if (
-        value.retentionMode === "rolling_window" &&
-        !value.rollingWindowSize
-      ) {
+      if (value.retentionMode !== "permanent") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Rolling window size is required when retention mode is rolling window.",
-          path: ["rollingWindowSize"],
-        });
-      }
-
-      if (value.retentionMode === "timeboxed" && !value.expiresInHours) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Expiration hours are required when retention mode is timeboxed.",
-          path: ["expiresInHours"],
+          message: "Community campfires currently support permanent retention only.",
+          path: ["retentionMode"],
         });
       }
     }
@@ -99,8 +87,38 @@ export const createCampfireSchema = z
           path: ["recipientEmails"],
         });
       }
+
+      if (!["permanent", "timeboxed"].includes(value.retentionMode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "DM campfires support permanent or temporary retention.",
+          path: ["retentionMode"],
+        });
+      }
+
+      if (value.retentionMode === "timeboxed" && !value.expiresInHours) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Expiration hours are required when DM retention mode is temporary.",
+          path: ["expiresInHours"],
+        });
+      }
+
+      if (
+        value.retentionMode === "timeboxed" &&
+        !isValidDmTempRetentionHours(value.expiresInHours)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Temporary DM campfires must use an approved duration preset.",
+          path: ["expiresInHours"],
+        });
+      }
     }
   });
+
 
 export const createCommentSchema = z.object({
   body: z

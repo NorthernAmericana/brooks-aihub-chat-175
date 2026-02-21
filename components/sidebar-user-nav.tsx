@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -39,10 +39,42 @@ export function SidebarUserNav({ user }: { user: User }) {
   const { hasInstallPrompt, isStandalone, promptInstall } = usePwaInstall();
   const [showCodeDialog, setShowCodeDialog] = useState(false);
   const [showProfilePicker, setShowProfilePicker] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const { profileIcon, setProfileIcon } = useProfileIcon();
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
 
+
+  useEffect(() => {
+    if (!data?.user?.id || isGuest) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadUnreadCount = async () => {
+      const response = await fetch("/api/notifications/unread-count", {
+        cache: "no-store",
+      }).catch(() => null);
+
+      if (!response?.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { unreadCount?: number };
+      if (isMounted) {
+        setUnreadNotifications(Math.max(0, Number(payload.unreadCount ?? 0)));
+      }
+    };
+
+    void loadUnreadCount();
+    const intervalId = window.setInterval(loadUnreadCount, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [data?.user?.id, isGuest]);
   const handleInstallApp = async () => {
     const result = await promptInstall();
     if (!result.available) {
@@ -137,6 +169,15 @@ export function SidebarUserNav({ user }: { user: User }) {
                   Install app
                 </DropdownMenuItem>
               )}
+              {!isGuest ? (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  data-testid="user-nav-item-notifications"
+                  onSelect={() => router.push("/notifications")}
+                >
+                  Notifications {unreadNotifications > 0 ? `(${unreadNotifications})` : ""}
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer"

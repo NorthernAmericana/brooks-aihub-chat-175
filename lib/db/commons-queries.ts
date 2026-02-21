@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { type CampfireAccess, getCampfireAccess } from "@/lib/commons/access";
 import {
@@ -8,6 +8,7 @@ import {
   PRIVATE_MEMBER_LIMIT_DEFAULT,
   PRIVATE_MEMBER_LIMIT_FOUNDER_HOST,
 } from "@/lib/commons/constants";
+import { isValidDmTempRetentionHours } from "@/lib/commons/dm-retention";
 import { pruneCampfireToRollingWindow } from "@/lib/commons/maintenance";
 import { db } from "@/lib/db";
 import {
@@ -505,23 +506,129 @@ export async function createCampfire(options: {
     const recipientLabel = recipients
       .map((recipient) => recipient.email)
       .join(", ");
+    const dmRetentionMode =
+      options.retentionMode === "timeboxed" ? "timeboxed" : "permanent";
+    const dmExpiresInHours =
+      dmRetentionMode === "timeboxed" ? options.expiresInHours : undefined;
+
+    if (
+      dmRetentionMode === "timeboxed" &&
+      !isValidDmTempRetentionHours(dmExpiresInHours)
+    ) {
+      return {
+        error:
+          "Temporary DM campfires must use one of the supported durations.",
+      } as const;
+    }
 
     const [existingDm] = await db
-      .select({ id: commonsCampfire.id, path: commonsCampfire.path })
+      .select({
+        id: commonsCampfire.id,
+        path: commonsCampfire.path,
+        isActive: commonsCampfire.isActive,
+        isDeleted: commonsCampfire.isDeleted,
+      })
       .from(commonsCampfire)
-      .where(
-        and(
-          eq(commonsCampfire.path, dmPath),
-          eq(commonsCampfire.isDeleted, false),
-          eq(commonsCampfire.isActive, true)
-        )
-      )
+      .where(eq(commonsCampfire.path, dmPath))
       .limit(1);
 
-    if (existingDm) {
+    if (existingDm?.isActive && !existingDm.isDeleted) {
       return {
-        campfire: existingDm,
+        campfire: { id: existingDm.id, path: existingDm.path },
         isExisting: true,
+      };
+    }
+
+    if (existingDm && (!existingDm.isActive || existingDm.isDeleted)) {
+      const revivedCampfire = await db.transaction(async (tx) => {
+        await tx
+          .update(commonsPost)
+          .set({
+            isDeleted: true,
+            isVisible: false,
+            deletedAt: sql`now()`,
+            updatedAt: sql`now()`,
+          })
+          .where(eq(commonsPost.campfireId, existingDm.id));
+
+        const postIds = await tx
+          .select({ id: commonsPost.id })
+          .from(commonsPost)
+          .where(eq(commonsPost.campfireId, existingDm.id));
+
+        if (postIds.length) {
+          await tx
+            .update(commonsComment)
+            .set({
+              isDeleted: true,
+              isVisible: false,
+              deletedAt: sql`now()`,
+              updatedAt: sql`now()`,
+            })
+            .where(
+              and(
+                inArray(
+                  commonsComment.postId,
+                  postIds.map((post) => post.id)
+                ),
+                eq(commonsComment.isDeleted, false)
+              )
+            );
+        }
+
+        await tx
+          .update(commonsCampfire)
+          .set({
+            name:
+              recipients.length === 1
+                ? `DM: ${recipients[0].email}`
+                : `Group DM (${recipients.length + 1} members)`,
+            description: `Direct campfire between you and ${recipientLabel}.`,
+            createdById: options.creatorId,
+            isPrivate: true,
+            isActive: true,
+            isDeleted: false,
+            createdAt: sql`now()`,
+            lastActivityAt: sql`now()`,
+            updatedAt: sql`now()`,
+          })
+          .where(eq(commonsCampfire.id, existingDm.id));
+
+        await tx
+          .update(commonsCampfireSettings)
+          .set({
+            retentionMode: dmRetentionMode,
+            expiresInHours: dmExpiresInHours,
+            rollingWindowSize: null,
+            isTemp: dmRetentionMode === "timeboxed",
+            updatedAt: sql`now()`,
+          })
+          .where(eq(commonsCampfireSettings.campfireId, existingDm.id));
+
+        await tx
+          .delete(commonsCampfireMembers)
+          .where(eq(commonsCampfireMembers.campfireId, existingDm.id));
+
+        await tx.insert(commonsCampfireMembers).values([
+          {
+            campfireId: existingDm.id,
+            userId: options.creatorId,
+            role: "host",
+          },
+          ...recipients.map((recipient) => ({
+            campfireId: existingDm.id,
+            userId: recipient.id,
+            role: "member" as const,
+            invitedByUserId: options.creatorId,
+          })),
+        ]);
+
+        return { id: existingDm.id, path: existingDm.path };
+      });
+
+      return {
+        campfire: revivedCampfire,
+        isExisting: false,
       };
     }
 
@@ -546,7 +653,9 @@ export async function createCampfire(options: {
 
         await tx.insert(commonsCampfireSettings).values({
           campfireId: row.id,
-          retentionMode: "permanent",
+          retentionMode: dmRetentionMode,
+          expiresInHours: dmExpiresInHours,
+          isTemp: dmRetentionMode === "timeboxed",
         });
 
         await tx.insert(commonsCampfireMembers).values([
@@ -931,7 +1040,11 @@ export type DmRoomForViewer = {
     name: string;
     path: string;
     lastActivityAt: Date;
+    retentionMode: "permanent" | "rolling_window" | "timeboxed" | "burn_on_empty";
+    expiresInHours: number | null;
+    createdAt: Date;
   };
+  expiresAt: Date | null;
   access: CampfireAccess;
   members: Array<{
     userId: string;
@@ -979,8 +1092,15 @@ export async function getDmRoomForViewer(options: {
       name: commonsCampfire.name,
       path: commonsCampfire.path,
       lastActivityAt: commonsCampfire.lastActivityAt,
+      createdAt: commonsCampfire.createdAt,
+      retentionMode: commonsCampfireSettings.retentionMode,
+      expiresInHours: commonsCampfireSettings.expiresInHours,
     })
     .from(commonsCampfire)
+    .innerJoin(
+      commonsCampfireSettings,
+      eq(commonsCampfireSettings.campfireId, commonsCampfire.id)
+    )
     .where(
       and(
         eq(commonsCampfire.path, options.campfirePath),
@@ -1034,8 +1154,17 @@ export async function getDmRoomForViewer(options: {
     .orderBy(asc(commonsPost.createdAt))
     .limit(options.messageLimit ?? 100);
 
+  const expiresAt =
+    campfire.retentionMode === "timeboxed" && campfire.expiresInHours
+      ? new Date(
+          campfire.createdAt.getTime() +
+            campfire.expiresInHours * 60 * 60 * 1000
+        )
+      : null;
+
   return {
     campfire,
+    expiresAt,
     access,
     members,
     host: hostMember
@@ -1073,5 +1202,58 @@ export async function getPrivateDmCampfireForViewer(options: {
     isMember: dmCampfire.access.canRead,
     members: dmCampfire.members,
     messages: dmCampfire.messages,
+  };
+}
+
+export type DmCampfireRecoveryForViewer = {
+  campfireId: string;
+  campfirePath: string;
+  campfireName: string;
+  retentionMode: "permanent" | "rolling_window" | "timeboxed" | "burn_on_empty";
+  isBurnedOutTemporary: boolean;
+};
+
+export async function getDmCampfireRecoveryForViewer(options: {
+  dmId: string;
+  viewerId: string;
+}): Promise<DmCampfireRecoveryForViewer | null> {
+  const campfirePath = `dm/${options.dmId}`;
+
+  const [campfire] = await db
+    .select({
+      id: commonsCampfire.id,
+      path: commonsCampfire.path,
+      name: commonsCampfire.name,
+      isActive: commonsCampfire.isActive,
+      isDeleted: commonsCampfire.isDeleted,
+      retentionMode: commonsCampfireSettings.retentionMode,
+    })
+    .from(commonsCampfire)
+    .innerJoin(
+      commonsCampfireMembers,
+      and(
+        eq(commonsCampfireMembers.campfireId, commonsCampfire.id),
+        eq(commonsCampfireMembers.userId, options.viewerId)
+      )
+    )
+    .innerJoin(
+      commonsCampfireSettings,
+      eq(commonsCampfireSettings.campfireId, commonsCampfire.id)
+    )
+    .where(eq(commonsCampfire.path, campfirePath))
+    .limit(1);
+
+  if (!campfire) {
+    return null;
+  }
+
+  return {
+    campfireId: campfire.id,
+    campfirePath: campfire.path,
+    campfireName: campfire.name,
+    retentionMode: campfire.retentionMode,
+    isBurnedOutTemporary:
+      campfire.retentionMode === "timeboxed" &&
+      (campfire.isDeleted || !campfire.isActive),
   };
 }

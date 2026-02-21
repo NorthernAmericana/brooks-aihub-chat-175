@@ -1,7 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
+import { DmCampfireRecoveryPanel } from "./_components/DmCampfireRecoveryPanel";
 import { DmCampfireRoom } from "./_components/DmCampfireRoom";
-import { getDmRoomForViewer } from "@/lib/db/commons-queries";
+import {
+  getDmCampfireRecoveryForViewer,
+  getDmRoomForViewer,
+} from "@/lib/db/commons-queries";
 
 export default async function PrivateDmCampfirePage({
   params,
@@ -12,7 +16,9 @@ export default async function PrivateDmCampfirePage({
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect(`/api/auth/guest?redirectUrl=${encodeURIComponent(`/commons/dm/${dmId}`)}`);
+    redirect(
+      `/api/auth/guest?redirectUrl=${encodeURIComponent(`/commons/dm/${dmId}`)}`
+    );
   }
 
   const campfirePath = `dm/${dmId}`;
@@ -21,23 +27,33 @@ export default async function PrivateDmCampfirePage({
     viewerId: session.user.id,
   });
 
-  // Default product behavior is to hide inaccessible private DMs behind a 404.
-  // If we ever want an invite-required experience, gate it behind an explicit
-  // product decision before replacing this path.
-  if (!dmRoom || !dmRoom.access.canRead) {
-    notFound();
+  if (dmRoom?.access.canRead) {
+    return (
+      <DmCampfireRoom
+        access={dmRoom.access}
+        campfire={dmRoom.campfire}
+        campfirePath={campfirePath}
+        expiresAt={dmRoom.expiresAt ? dmRoom.expiresAt.toISOString() : null}
+        host={dmRoom.host}
+        members={dmRoom.members}
+        messages={dmRoom.messages}
+        roomId={dmId}
+        viewerUserId={session.user.id}
+      />
+    );
   }
 
-  return (
-    <DmCampfireRoom
-      access={dmRoom.access}
-      campfire={dmRoom.campfire}
-      campfirePath={campfirePath}
-      host={dmRoom.host}
-      members={dmRoom.members}
-      messages={dmRoom.messages}
-      roomId={dmId}
-      viewerUserId={session.user.id}
-    />
-  );
+  const recovery = await getDmCampfireRecoveryForViewer({
+    dmId,
+    viewerId: session.user.id,
+  });
+
+  if (recovery?.isBurnedOutTemporary) {
+    return (
+      <DmCampfireRecoveryPanel campfireName={recovery.campfireName} dmId={dmId} />
+    );
+  }
+
+  // Default product behavior is to hide inaccessible private DMs behind a 404.
+  notFound();
 }
