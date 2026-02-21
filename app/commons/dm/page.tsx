@@ -3,6 +3,7 @@ import { MessageCircle, User } from "lucide-react";
 import { auth } from "@/app/(auth)/auth";
 import { listPrivateDmCampfiresForMember } from "@/lib/db/commons-queries";
 import { getUserPublicNickname } from "@/lib/db/queries";
+import { CampfireMembershipAction } from "./_components/CampfireMembershipAction";
 import { PublicNicknameForm } from "./_components/public-nickname-form";
 
 function getDmIdFromPath(path: string): string {
@@ -70,36 +71,45 @@ export default async function PrivateDmLobbyPage() {
         {campfires.length > 0 ? (
           <section className="space-y-4">
             {campfires.map((campfire) => (
-              <Link
-                className="group flex items-center gap-3 border-2 border-sky-950/35 bg-white/90 p-3 shadow-[0_7px_16px_rgba(23,53,79,0.2)] transition hover:border-sky-900/60 hover:bg-white sm:gap-4 sm:p-4"
-                href={`/commons/dm/${encodeURIComponent(getDmIdFromPath(campfire.path))}`}
+              <article
+                className="group space-y-3 border-2 border-sky-950/35 bg-white/90 p-3 shadow-[0_7px_16px_rgba(23,53,79,0.2)] transition hover:border-sky-900/60 hover:bg-white sm:space-y-4 sm:p-4"
                 key={campfire.id}
               >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center border-2 border-sky-900/30 bg-sky-50 text-sky-900 sm:h-20 sm:w-20">
-                  <MessageCircle className="h-8 w-8" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-2xl font-medium text-slate-900 sm:text-5xl">
-                    {campfire.name}
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                    Last active {new Date(campfire.lastActivityAt).toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <div className="inline-flex items-center gap-2 border-2 border-slate-500/60 bg-slate-100 px-3 py-1 text-2xl font-semibold text-slate-900 sm:min-w-[140px] sm:justify-center sm:px-5 sm:py-2 sm:text-4xl">
-                    <User className="h-5 w-5" />
-                    <span>
-                      {campfire.invitedCount}/{campfire.invitedLimit}
-                    </span>
+                <Link
+                  className="flex items-center gap-3 sm:gap-4"
+                  href={`/commons/dm/${encodeURIComponent(getDmIdFromPath(campfire.path))}`}
+                >
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center border-2 border-sky-900/30 bg-sky-50 text-sky-900 sm:h-20 sm:w-20">
+                    <MessageCircle className="h-8 w-8" />
                   </div>
-                  <p className="mt-1 text-sm font-medium text-slate-700 sm:text-2xl">
-                    {campfire.accessLabel}
-                  </p>
-                </div>
-              </Link>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-2xl font-medium text-slate-900 sm:text-5xl">
+                      {campfire.name}
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                      Last active {new Date(campfire.lastActivityAt).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="inline-flex items-center gap-2 border-2 border-slate-500/60 bg-slate-100 px-3 py-1 text-2xl font-semibold text-slate-900 sm:min-w-[140px] sm:justify-center sm:px-5 sm:py-2 sm:text-4xl">
+                      <User className="h-5 w-5" />
+                      <span>
+                        {campfire.invitedCount}/{campfire.invitedLimit}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm font-medium text-slate-700 sm:text-2xl">
+                      {campfire.accessLabel}
+                    </p>
+                  </div>
+                </Link>
+                <CampfireMembershipAction
+                  campfirePath={campfire.path}
+                  className="rounded-md border border-slate-900/30 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
+                  viewerRole={campfire.viewerRole}
+                />
+              </article>
             ))}
           </section>
         ) : (
