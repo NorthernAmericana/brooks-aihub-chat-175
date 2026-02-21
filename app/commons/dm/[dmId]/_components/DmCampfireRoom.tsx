@@ -14,6 +14,7 @@ type DmCampfireRoomProps = {
   access: DmRoomForViewer["access"];
   messages: DmRoomForViewer["messages"];
   campfirePath: string;
+  viewerUserId: string;
 };
 
 type ParsedMessage =
@@ -27,8 +28,13 @@ type ParsedMessage =
       text: string;
     };
 
-function getInitials(email: string): string {
-  return email.slice(0, 2).toUpperCase();
+function getInitials(label: string): string {
+  const alphanumeric = label.replace(/[^a-zA-Z0-9]/g, "");
+  return (alphanumeric.slice(0, 2) || "??").toUpperCase();
+}
+
+function getDisplayName(publicNickname: string | null, email: string): string {
+  return publicNickname?.trim() || email;
 }
 
 function parseMessage(body: string): ParsedMessage {
@@ -67,6 +73,7 @@ export function DmCampfireRoom({
   access,
   messages,
   campfirePath,
+  viewerUserId,
 }: DmCampfireRoomProps) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -169,10 +176,15 @@ export function DmCampfireRoom({
                   return (
                     <article className="flex gap-3" key={message.id}>
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-[#0f2742] bg-[#e5ebf2] text-sm font-bold sm:h-14 sm:w-14 sm:text-lg">
-                        {getInitials(message.authorEmail)}
+                        {getInitials(getDisplayName(message.authorPublicNickname, message.authorEmail))}
                       </div>
                       <div className="flex-1 space-y-1">
-                        <p className="text-xs font-bold uppercase tracking-wide">{message.authorEmail}</p>
+                        <p className="text-xs font-bold uppercase tracking-wide">
+                          {getDisplayName(message.authorPublicNickname, message.authorEmail)}
+                        </p>
+                        {message.authorPublicNickname && message.authorId === viewerUserId ? (
+                          <p className="text-[10px] text-slate-600">{message.authorEmail}</p>
+                        ) : null}
                         <div className="space-y-2 border-2 border-[#0f2742] bg-white px-3 py-2">
                           {parsed.type === "image" ? (
                             <>
