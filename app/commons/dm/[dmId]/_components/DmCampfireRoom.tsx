@@ -5,6 +5,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DrawPad } from "@/components/commons/dm/DrawPad";
 import type { DmRoomForViewer } from "@/lib/db/commons-queries";
+import { CampfireMembershipAction } from "@/app/commons/dm/_components/CampfireMembershipAction";
 
 type DmCampfireRoomProps = {
   roomId: string;
@@ -86,6 +87,10 @@ export function DmCampfireRoom({
   const invitedLimit = host?.foundersAccess ? 12 : 4;
   const invitedCount = Math.max(members.length - 1, 0);
   const accessLabel = host?.foundersAccess ? "Founder\'s Access" : "Free Access";
+  const viewerRole =
+    members.find((member) => member.userId === viewerUserId)?.role === "host"
+      ? "host"
+      : "member";
 
   const parsedMessages = useMemo(
     () => messages.map((message) => ({ ...message, parsed: parseMessage(message.body) })),
@@ -152,13 +157,20 @@ export function DmCampfireRoom({
                 </p>
               </div>
             </div>
-            <button
-              className="border-2 border-[#0f2742] bg-[#123257] px-4 py-2 text-sm font-bold tracking-wide text-white"
-              onClick={() => setIsSwitched((value) => !value)}
-              type="button"
-            >
-              SWITCH
-            </button>
+            <div className="flex items-center gap-2">
+              <CampfireMembershipAction
+                campfirePath={campfirePath}
+                className="border-2 border-[#7a1313] bg-[#a31f1f] px-4 py-2 text-xs font-bold tracking-wide text-white disabled:cursor-not-allowed disabled:opacity-60"
+                viewerRole={viewerRole}
+              />
+              <button
+                className="border-2 border-[#0f2742] bg-[#123257] px-4 py-2 text-sm font-bold tracking-wide text-white"
+                onClick={() => setIsSwitched((value) => !value)}
+                type="button"
+              >
+                SWITCH
+              </button>
+            </div>
           </div>
         </header>
 

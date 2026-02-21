@@ -705,11 +705,124 @@ type DmLobbyCampfire = {
   id: string;
   name: string;
   path: string;
+  viewerRole: "host" | "member";
   invitedCount: number;
   invitedLimit: number;
   accessLabel: "Founder’s Access" | "Free Access";
   lastActivityAt: Date;
 };
+
+type CampfireMutationError =
+  | "Campfire not found."
+  | "Only the host can delete this campfire."
+  | "Only members can leave a campfire."
+  | "Hosts cannot leave their own campfire. Transfer host access first.";
+
+type CampfireMutationResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error: CampfireMutationError;
+    };
+
+export async function softDeleteCampfireAsHost(options: {
+  campfirePath: string;
+  actorId: string;
+}): Promise<CampfireMutationResult> {
+  const [membership] = await db
+    .select({
+      campfireId: commonsCampfire.id,
+      role: commonsCampfireMembers.role,
+    })
+    .from(commonsCampfire)
+    .leftJoin(
+      commonsCampfireMembers,
+      and(
+        eq(commonsCampfireMembers.campfireId, commonsCampfire.id),
+        eq(commonsCampfireMembers.userId, options.actorId)
+      )
+    )
+    .where(
+      and(
+        eq(commonsCampfire.path, options.campfirePath),
+        eq(commonsCampfire.isDeleted, false),
+        eq(commonsCampfire.isActive, true)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    return { ok: false, error: "Campfire not found." };
+  }
+
+  if (membership.role !== "host") {
+    return { ok: false, error: "Only the host can delete this campfire." };
+  }
+
+  await db
+    .update(commonsCampfire)
+    .set({
+      isDeleted: true,
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(commonsCampfire.id, membership.campfireId));
+
+  return { ok: true };
+}
+
+export async function leaveCampfireAsMember(options: {
+  campfirePath: string;
+  actorId: string;
+}): Promise<CampfireMutationResult> {
+  const [membership] = await db
+    .select({
+      campfireId: commonsCampfire.id,
+      role: commonsCampfireMembers.role,
+    })
+    .from(commonsCampfire)
+    .leftJoin(
+      commonsCampfireMembers,
+      and(
+        eq(commonsCampfireMembers.campfireId, commonsCampfire.id),
+        eq(commonsCampfireMembers.userId, options.actorId)
+      )
+    )
+    .where(
+      and(
+        eq(commonsCampfire.path, options.campfirePath),
+        eq(commonsCampfire.isDeleted, false),
+        eq(commonsCampfire.isActive, true)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    return { ok: false, error: "Campfire not found." };
+  }
+
+  if (!membership.role) {
+    return { ok: false, error: "Only members can leave a campfire." };
+  }
+
+  if (membership.role === "host") {
+    return {
+      ok: false,
+      error: "Hosts cannot leave their own campfire. Transfer host access first.",
+    };
+  }
+
+  await db
+    .delete(commonsCampfireMembers)
+    .where(
+      and(
+        eq(commonsCampfireMembers.campfireId, membership.campfireId),
+        eq(commonsCampfireMembers.userId, options.actorId)
+      )
+    );
+
+  return { ok: true };
+}
 
 export async function hasPrivateDmCampfiresForMember(
   viewerId: string
@@ -750,6 +863,7 @@ export async function listPrivateDmCampfiresForMember(
       id: commonsCampfire.id,
       name: commonsCampfire.name,
       path: commonsCampfire.path,
+      viewerRole: viewerMember.role,
       lastActivityAt: commonsCampfire.lastActivityAt,
       memberCount: count(allMembers.id),
       hostFoundersAccess: hostUser.foundersAccess,
@@ -795,6 +909,7 @@ export async function listPrivateDmCampfiresForMember(
       id: row.id,
       name: row.name,
       path: row.path,
+      viewerRole: row.viewerRole,
       invitedCount,
       invitedLimit: hasFounderAccess
         ? DM_RECIPIENT_LIMIT_FOUNDER
