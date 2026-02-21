@@ -2,6 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createCampfireSchema } from "@/lib/validation/commons-schema";
 
+
+test("createCampfireSchema allows empty community name for auto-title", () => {
+  const parsed = createCampfireSchema.safeParse({
+    mode: "community",
+    name: "",
+    description: "Autonamed campfire",
+    campfirePath: "community/autonamed-campfire",
+    retentionMode: "permanent",
+  });
+
+  assert.equal(parsed.success, true);
+});
 test("createCampfireSchema requires rollingWindowSize for rolling_window community campfires", () => {
   const parsed = createCampfireSchema.safeParse({
     mode: "community",

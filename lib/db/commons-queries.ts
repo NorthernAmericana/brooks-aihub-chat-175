@@ -23,6 +23,13 @@ const PUBLIC_ACTIVE_CAMPFIRE_FILTER = and(
   eq(commonsCampfire.isActive, true)
 );
 
+const AUTO_CAMPFIRE_NAME_PREFIX = "Campfire chat #";
+
+function formatAutoCampfireName(sequence: number): string {
+  const paddedSequence = String(sequence).padStart(2, "0");
+  return `${AUTO_CAMPFIRE_NAME_PREFIX}${paddedSequence}`;
+}
+
 export function listCampfires() {
   return db
     .select({
@@ -589,7 +596,7 @@ export async function createCampfire(options: {
     };
   }
 
-  const name = options.name?.trim();
+  const providedName = options.name?.trim();
   const campfirePath = options.campfirePath?.trim().toLowerCase();
   const retentionMode = options.retentionMode ?? "permanent";
   const rollingWindowSize =
@@ -597,8 +604,24 @@ export async function createCampfire(options: {
   const expiresInHours =
     retentionMode === "timeboxed" ? options.expiresInHours : undefined;
 
-  if (!name || !campfirePath) {
-    return { error: "Name and path are required." as const };
+  if (!campfirePath) {
+    return { error: "Path is required." as const };
+  }
+
+  let name = providedName;
+
+  if (!name?.length) {
+    const [existingCampfireCount] = await db
+      .select({ value: count(commonsCampfire.id) })
+      .from(commonsCampfire)
+      .where(
+        and(
+          eq(commonsCampfire.createdById, options.creatorId),
+          eq(commonsCampfire.isPrivate, false)
+        )
+      );
+
+    name = formatAutoCampfireName(Number(existingCampfireCount?.value ?? 0) + 1);
   }
 
   const pathSegments = campfirePath.split("/");

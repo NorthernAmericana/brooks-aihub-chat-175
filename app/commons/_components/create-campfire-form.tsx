@@ -69,11 +69,6 @@ export function CreateCampfireForm() {
               };
 
         if (mode === "community") {
-          if (name.length < 3) {
-            setError("Campfire name must be at least 3 characters.");
-            return;
-          }
-
           if (!campfirePath) {
             setError("Campfire path is required.");
             return;
@@ -177,9 +172,12 @@ export function CreateCampfireForm() {
               id="campfire-name"
               name="name"
               placeholder="Builders Circle"
-              required
               type="text"
             />
+            <p className="text-xs text-[#3b4a86] dark:text-amber-100/90">
+              Optional. Leave blank to auto-name this campfire as{" "}
+              <span className="font-semibold">Campfire chat #NN</span>.
+            </p>
           </div>
 
           <div className="space-y-1.5">
