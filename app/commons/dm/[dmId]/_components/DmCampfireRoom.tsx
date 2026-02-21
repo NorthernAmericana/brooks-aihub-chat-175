@@ -4,6 +4,11 @@ import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DrawPad } from "@/components/commons/dm/DrawPad";
+import {
+  PRIVATE_MEMBER_LIMIT_DEFAULT,
+  PRIVATE_MEMBER_LIMIT_FOUNDER_HOST,
+} from "@/lib/commons/constants";
+import { formatDmOccupancy } from "@/lib/commons/dm-occupancy";
 import type { DmRoomForViewer } from "@/lib/db/commons-queries";
 import { CampfireMembershipAction } from "@/app/commons/dm/_components/CampfireMembershipAction";
 
@@ -84,8 +89,10 @@ export function DmCampfireRoom({
   const [isDrawPadCollapsed, setIsDrawPadCollapsed] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const invitedLimit = host?.foundersAccess ? 12 : 4;
-  const invitedCount = Math.max(members.length - 1, 0);
+  const memberLimit = host?.foundersAccess
+    ? PRIVATE_MEMBER_LIMIT_FOUNDER_HOST
+    : PRIVATE_MEMBER_LIMIT_DEFAULT;
+  const memberCount = members.length;
   const accessLabel = host?.foundersAccess ? "Founder\'s Access" : "Free Access";
   const viewerRole =
     members.find((member) => member.userId === viewerUserId)?.role === "host"
@@ -153,7 +160,7 @@ export function DmCampfireRoom({
               <div>
                 <h1 className="text-2xl font-bold sm:text-3xl">{campfire.name}</h1>
                 <p className="text-base sm:text-lg">
-                  Members {invitedCount}/{invitedLimit} {accessLabel}
+                  {formatDmOccupancy(memberCount, memberLimit)} {accessLabel}
                 </p>
               </div>
             </div>
