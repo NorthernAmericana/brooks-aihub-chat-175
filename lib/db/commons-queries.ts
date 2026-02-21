@@ -5,6 +5,8 @@ import { type CampfireAccess, getCampfireAccess } from "@/lib/commons/access";
 import {
   DM_RECIPIENT_LIMIT_DEFAULT,
   DM_RECIPIENT_LIMIT_FOUNDER,
+  PRIVATE_MEMBER_LIMIT_DEFAULT,
+  PRIVATE_MEMBER_LIMIT_FOUNDER_HOST,
 } from "@/lib/commons/constants";
 import { pruneCampfireToRollingWindow } from "@/lib/commons/maintenance";
 import { db } from "@/lib/db";
@@ -706,8 +708,9 @@ type DmLobbyCampfire = {
   name: string;
   path: string;
   viewerRole: "host" | "member";
+  memberCount: number;
   invitedCount: number;
-  invitedLimit: number;
+  memberLimit: number;
   accessLabel: "Founder’s Access" | "Free Access";
   lastActivityAt: Date;
 };
@@ -903,6 +906,7 @@ export async function listPrivateDmCampfiresForMember(
     .orderBy(desc(commonsCampfire.lastActivityAt));
 
   return rows.map((row) => {
+    const memberCount = Number(row.memberCount);
     const invitedCount = Math.max(0, Number(row.memberCount) - 1);
     const hasFounderAccess = Boolean(row.hostFoundersAccess);
     return {
@@ -910,10 +914,11 @@ export async function listPrivateDmCampfiresForMember(
       name: row.name,
       path: row.path,
       viewerRole: row.viewerRole,
+      memberCount,
       invitedCount,
-      invitedLimit: hasFounderAccess
-        ? DM_RECIPIENT_LIMIT_FOUNDER
-        : DM_RECIPIENT_LIMIT_DEFAULT,
+      memberLimit: hasFounderAccess
+        ? PRIVATE_MEMBER_LIMIT_FOUNDER_HOST
+        : PRIVATE_MEMBER_LIMIT_DEFAULT,
       accessLabel: hasFounderAccess ? "Founder’s Access" : "Free Access",
       lastActivityAt: row.lastActivityAt,
     };

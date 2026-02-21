@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MessageCircle, User } from "lucide-react";
 import { auth } from "@/app/(auth)/auth";
 import { listPrivateDmCampfiresForMember } from "@/lib/db/commons-queries";
+import { formatDmOccupancy } from "@/lib/commons/dm-occupancy";
 import { getUserPublicNickname } from "@/lib/db/queries";
 import { CampfireMembershipAction } from "./_components/CampfireMembershipAction";
 import { PublicNicknameForm } from "./_components/public-nickname-form";
@@ -96,7 +97,7 @@ export default async function PrivateDmLobbyPage() {
                     <div className="inline-flex items-center gap-2 border-2 border-slate-500/60 bg-slate-100 px-3 py-1 text-2xl font-semibold text-slate-900 sm:min-w-[140px] sm:justify-center sm:px-5 sm:py-2 sm:text-4xl">
                       <User className="h-5 w-5" />
                       <span>
-                        {campfire.invitedCount}/{campfire.invitedLimit}
+                        {formatDmOccupancy(campfire.memberCount, campfire.memberLimit)}
                       </span>
                     </div>
                     <p className="mt-1 text-sm font-medium text-slate-700 sm:text-2xl">
