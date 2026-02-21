@@ -461,7 +461,6 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       window.setTimeout(() => {
         refreshStateRef.current().catch(() => undefined);
       }, 750);
-      return;
     } catch {
       // Fallback to recommendation flow below.
     }
