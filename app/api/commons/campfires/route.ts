@@ -42,7 +42,15 @@ export async function POST(request: Request) {
   try {
     result = await createCampfire({
       creatorId: session.user.id,
-      ...parsedPayload.data,
+      mode: parsedPayload.data.mode,
+      retentionMode: parsedPayload.data.retentionMode,
+      rollingWindowSize: parsedPayload.data.rollingWindowSize,
+      expiresInHours: parsedPayload.data.expiresInHours,
+      name: parsedPayload.data.name,
+      description: parsedPayload.data.description,
+      campfirePath: parsedPayload.data.campfirePath,
+      recipientEmail: parsedPayload.data.recipientEmail,
+      recipientEmails: parsedPayload.data.recipientEmails,
     });
   } catch (_error) {
     return NextResponse.json(
