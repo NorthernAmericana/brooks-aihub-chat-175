@@ -19,14 +19,15 @@ Session logging enables users to track their cannabis consumption experiences ov
 ### Data Flow
 
 ```
-User Session → AI Agent asks questions from session_template → 
-User responses → Session log created → 
+User Session → AI Agent asks questions from session_template →
+User responses → Session log created →
 Stored in PRIVATE user storage (never in public strain files)
 ```
 
 ## Session Log Schema v1.0
 
 ### Purpose
+
 The session log schema defines the structure for **private** user session data. This data captures detailed consumption experiences including method, dose, effects, and context.
 
 ### Storage Locations
@@ -60,7 +61,7 @@ Session logs MUST be stored in one of these private locations:
     storage_location: "supabase_user_private" | "local_encrypted" | "private_namespace",
     user_consent: boolean
   },
-  method: "joint" | "blunt" | "pipe" | "bong" | "vaporizer_dry_herb" | 
+  method: "joint" | "blunt" | "pipe" | "bong" | "vaporizer_dry_herb" |
           "vaporizer_concentrate" | "edible" | "tincture" | "topical" | "other",
   dose_estimate?: {
     amount_g?: number,
@@ -76,6 +77,31 @@ Session logs MUST be stored in one of these private locations:
     activity?: string,
     mood_before?: string,
     intention?: string
+  },
+  expectancy?: {
+    expected_intensity_1to10?: number,
+    expected_effects?: string[],
+    confidence_1to10?: number
+  },
+  state_before?: {
+    craving_0to10?: number,
+    tension_0to10?: number,
+    anxiety_0to10?: number,
+    focus_0to10?: number,
+    mood_valence_-5to5?: number
+  },
+  state_after?: {
+    craving_0to10?: number,
+    tension_0to10?: number,
+    anxiety_0to10?: number,
+    focus_0to10?: number,
+    mood_valence_-5to5?: number
+  },
+  planned_tasks?: string[],
+  task_impact?: {
+    productivity_impact?: "major_decrease" | "slight_decrease" | "no_change" | "slight_increase" | "major_increase",
+    memory_impact?: "major_worse" | "slight_worse" | "no_change" | "slight_better" | "major_better",
+    social_comfort_impact?: "major_decrease" | "slight_decrease" | "no_change" | "slight_increase" | "major_increase"
   },
   effects_positive?: string[],
   effects_negative?: string[],
@@ -105,6 +131,11 @@ Session logs MUST be stored in one of these private locations:
 - **dose_estimate**: Approximate amount consumed and confidence level
 - **timing**: When and how long the session lasted
 - **context**: Environmental and intentional context
+- **expectancy**: Pre-use expectations (expected intensity/effects and confidence)
+- **state_before**: Normalized pre-use state (craving/tension/anxiety/focus 0-10, mood valence -5 to +5)
+- **state_after**: Normalized post-use state (same scales as state_before)
+- **planned_tasks**: Tasks the user intended to do during/after the session
+- **task_impact**: Perceived impact on productivity, memory, and social comfort
 - **effects_positive**: Array of positive effects experienced
 - **effects_negative**: Array of negative effects or side effects
 - **intensity_1to10**: Subjective intensity rating (1-10 scale)
@@ -140,15 +171,42 @@ Session logs MUST be stored in one of these private locations:
     "mood_before": "Focused but a bit tense",
     "intention": "Stay creative but relaxed"
   },
+  "expectancy": {
+    "expected_intensity_1to10": 5,
+    "expected_effects": ["creative focus", "lighter mood", "body relaxation"],
+    "confidence_1to10": 7
+  },
+  "state_before": {
+    "craving_0to10": 6,
+    "tension_0to10": 5,
+    "anxiety_0to10": 4,
+    "focus_0to10": 6,
+    "mood_valence_-5to5": 1
+  },
+  "planned_tasks": [
+    "Draft product copy",
+    "Organize design notes",
+    "Reply to two client messages"
+  ],
   "effects_positive": [
     "Enhanced creativity",
     "Relaxed body",
     "Maintained focus",
     "Uplifted mood"
   ],
-  "effects_negative": [
-    "Slight dry mouth"
-  ],
+  "effects_negative": ["Slight dry mouth"],
+  "state_after": {
+    "craving_0to10": 2,
+    "tension_0to10": 2,
+    "anxiety_0to10": 1,
+    "focus_0to10": 7,
+    "mood_valence_-5to5": 3
+  },
+  "task_impact": {
+    "productivity_impact": "slight_increase",
+    "memory_impact": "no_change",
+    "social_comfort_impact": "slight_increase"
+  },
   "intensity_1to10": 6,
   "outcome_tags": ["productive", "creative", "balanced"],
   "notes": "Perfect for afternoon creative work. The hybrid balance kept me focused without anxiety. Would use this strain again for similar situations.",
@@ -162,9 +220,11 @@ Session logs MUST be stored in one of these private locations:
 ## Session Template (Public)
 
 ### Purpose
+
 The `session_template` field in public strain JSON files provides guidance to AI agents on:
+
 1. What consumption methods are appropriate for this strain
-2. Dosing guidance based on strain potency and characteristics  
+2. Dosing guidance based on strain potency and characteristics
 3. What questions to ask users when creating session logs
 
 ### Schema Structure
@@ -182,21 +242,18 @@ The `session_template` field in public strain JSON files provides guidance to AI
 ```json
 {
   "session_template": {
-    "suggested_methods": [
-      "joint",
-      "vaporizer_dry_herb",
-      "bong"
-    ],
+    "suggested_methods": ["joint", "vaporizer_dry_herb", "bong"],
     "suggested_dose_guidance_text": "This is a potent hybrid (27.5% THC). Start with 0.25g if inexperienced. Good for daytime energy with balanced calm.",
     "recommended_questions": [
-      "What method did you use to consume this strain?",
-      "Approximately how much did you use?",
-      "What time of day was it, and what were you doing?",
-      "How did you feel before using it?",
+      "Before use, what intensity and effects did you expect, and how confident were you (1-10)?",
+      "Before use, how were craving, tension, anxiety, focus (0-10) and mood valence (-5 to +5)?",
+      "What method did you use to consume this strain and about how much?",
+      "What tasks were you planning to do?",
+      "After use, how were craving, tension, anxiety, focus (0-10) and mood valence (-5 to +5)?",
+      "How did this affect your productivity, memory, and social comfort?",
       "What positive effects did you notice?",
       "Were there any negative effects or discomfort?",
       "On a scale of 1-10, how intense was the experience?",
-      "Did it help you achieve what you were looking for?",
       "Would you use this strain again?"
     ]
   }
@@ -220,7 +277,7 @@ When a user mentions they're using or have used a strain, the AI agent should:
 User: "I just tried White Sunshine"
 
 Agent: (Loads strain data, sees session_template)
-Agent: "Nice! White Sunshine is a potent hybrid. Would you like to log this session? 
+Agent: "Nice! White Sunshine is a potent hybrid. Would you like to log this session?
         I can help you track your experience."
 
 User: "Sure!"
@@ -235,7 +292,7 @@ Agent: "And about how much did you use? Just a rough estimate is fine."
 User: "Maybe a third of a gram, I think?"
 
 Agent: (Continues with other questions, then creates session log in PRIVATE storage)
-Agent: "Thanks! I've saved your session log privately. I can help you compare 
+Agent: "Thanks! I've saved your session log privately. I can help you compare
         this to your other sessions with different strains anytime."
 ```
 
@@ -245,12 +302,10 @@ Agent: "Thanks! I've saved your session log privately. I can help you compare
 // ✅ CORRECT: Store in private user storage
 async function saveSessionLog(userId: string, sessionData: SessionLogV1_0) {
   // Store in Supabase with RLS
-  await supabase
-    .from('user_session_logs')
-    .insert({
-      user_id: userId,
-      ...sessionData
-    });
+  await supabase.from("user_session_logs").insert({
+    user_id: userId,
+    ...sessionData,
+  });
 }
 
 // ❌ WRONG: Never do this!

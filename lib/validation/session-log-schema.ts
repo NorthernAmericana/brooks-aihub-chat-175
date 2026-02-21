@@ -56,6 +56,59 @@ const ContextSchema = z
   })
   .optional();
 
+// Pre-use expectancy details
+const ExpectancySchema = z
+  .object({
+    expected_intensity_1to10: z.number().min(1).max(10).optional(),
+    expected_effects: z.array(z.string()).optional(),
+    confidence_1to10: z.number().min(1).max(10).optional(),
+  })
+  .optional();
+
+// Normalized pre/post state metrics
+const SessionStateSchema = z
+  .object({
+    craving_0to10: z.number().min(0).max(10).optional(),
+    tension_0to10: z.number().min(0).max(10).optional(),
+    anxiety_0to10: z.number().min(0).max(10).optional(),
+    focus_0to10: z.number().min(0).max(10).optional(),
+    "mood_valence_-5to5": z.number().min(-5).max(5).optional(),
+  })
+  .optional();
+
+// Task impact after use
+const TaskImpactSchema = z
+  .object({
+    productivity_impact: z
+      .enum([
+        "major_decrease",
+        "slight_decrease",
+        "no_change",
+        "slight_increase",
+        "major_increase",
+      ])
+      .optional(),
+    memory_impact: z
+      .enum([
+        "major_worse",
+        "slight_worse",
+        "no_change",
+        "slight_better",
+        "major_better",
+      ])
+      .optional(),
+    social_comfort_impact: z
+      .enum([
+        "major_decrease",
+        "slight_decrease",
+        "no_change",
+        "slight_increase",
+        "major_increase",
+      ])
+      .optional(),
+  })
+  .optional();
+
 // Follow-up reflections
 const FollowUpSchema = z
   .object({
@@ -95,6 +148,11 @@ export const SessionLogSchemaV1_0 = z.object({
   dose_estimate: DoseEstimateSchema,
   timing: TimingSchema,
   context: ContextSchema,
+  expectancy: ExpectancySchema,
+  state_before: SessionStateSchema,
+  state_after: SessionStateSchema,
+  planned_tasks: z.array(z.string()).optional(),
+  task_impact: TaskImpactSchema,
   effects_positive: z.array(z.string()).optional(),
   effects_negative: z.array(z.string()).optional(),
   intensity_1to10: z.number().min(1).max(10).optional(),
@@ -126,7 +184,7 @@ export const SessionTemplateSchema = z.object({
         "tincture",
         "topical",
         "other",
-      ])
+      ]),
     )
     .optional(),
   suggested_dose_guidance_text: z.string().optional(),
@@ -141,7 +199,7 @@ export type SessionTemplate = z.infer<typeof SessionTemplateSchema>;
 export function createSessionTemplate(
   methods?: SessionTemplate["suggested_methods"],
   doseGuidance?: string,
-  questions?: string[]
+  questions?: string[],
 ): SessionTemplate {
   return {
     suggested_methods: methods,
@@ -154,11 +212,16 @@ export function createSessionTemplate(
  * Default recommended questions for session logging
  */
 export const DEFAULT_SESSION_QUESTIONS = [
+  "Before you used, what intensity and effects did you expect, and how confident were you (1-10)?",
+  "Before you used, how would you rate craving, tension, anxiety, and focus (0-10), and mood valence (-5 to +5)?",
   "What method did you use to consume this strain?",
   "Approximately how much did you use?",
   "What time of day was it?",
   "What were you doing or planning to do?",
+  "What tasks were you planning to do while/after using?",
   "What was your mood or intention going in?",
+  "After use, how would you rate craving, tension, anxiety, and focus (0-10), and mood valence (-5 to +5)?",
+  "How did use impact your productivity, memory, and social comfort?",
   "What positive effects did you notice?",
   "Were there any negative effects or side effects?",
   "On a scale of 1-10, how intense was the experience?",

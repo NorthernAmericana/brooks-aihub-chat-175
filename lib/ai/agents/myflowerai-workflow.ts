@@ -20,13 +20,13 @@ const STRAINS_FILE_PATH_V1_0 = path.join(
   process.cwd(),
   "data",
   "myflowerai",
-  "strains.ndjson"
+  "strains.ndjson",
 );
 const STRAINS_DIR_V1_1 = path.join(
   process.cwd(),
   "data",
   "myflowerai",
-  "strains"
+  "strains",
 );
 
 // Tool definitions
@@ -114,7 +114,7 @@ const BASE_INSTRUCTIONS =
 
 // Session logging instructions (privacy-focused)
 const SESSION_LOGGING_INSTRUCTIONS =
-  "\n\nSESSION LOGGING: When users want to log a session, use the session_template from the strain data (if available) to ask recommended_questions through natural conversation. The session_template also provides suggested_methods and suggested_dose_guidance_text to help guide users. CRITICAL: Session logs are PRIVATE user data and must be stored in private per-user storage (Supabase, local encrypted, or private namespace) - NEVER write session logs back into public strain JSON files. When logging sessions, collect: method, dose_estimate, timing, context, effects_positive, effects_negative, intensity (1-10), outcome_tags, and notes. Always get user consent before storing session data.";
+  "\n\nSESSION LOGGING: When users want to log a session, use the session_template from the strain data (if available) to ask recommended_questions through natural conversation. Ask PRE-USE questions first (expectancy with expected_intensity_1to10, expected_effects, confidence_1to10; plus state_before on normalized scales: craving_0to10, tension_0to10, anxiety_0to10, focus_0to10, mood_valence_-5to5; and planned_tasks). Then ask POST-USE questions (state_after with the same normalized scales, effects_positive/effects_negative, intensity_1to10, task_impact for productivity/memory/social comfort, outcome_tags, and notes). The session_template also provides suggested_methods and suggested_dose_guidance_text to help guide users. CRITICAL: Session logs are PRIVATE user data and must be stored in private per-user storage (Supabase, local encrypted, or private namespace) - NEVER write session logs back into public strain JSON files. Always get user consent before storing session data.";
 
 // Personal fit tracking instructions (privacy-focused)
 const PERSONAL_FIT_INSTRUCTIONS =
@@ -122,7 +122,10 @@ const PERSONAL_FIT_INSTRUCTIONS =
 
 const myflowerai = new Agent({
   name: "MyFlowerAI",
-  instructions: BASE_INSTRUCTIONS + SESSION_LOGGING_INSTRUCTIONS + PERSONAL_FIT_INSTRUCTIONS,
+  instructions:
+    BASE_INSTRUCTIONS +
+    SESSION_LOGGING_INSTRUCTIONS +
+    PERSONAL_FIT_INSTRUCTIONS,
   model: "gpt-5.2",
   tools: [fileSearch, webSearchPreview],
   modelSettings: {
@@ -327,7 +330,7 @@ const buildStrainSummary = (strains: StrainRecord[], label: string) => {
 };
 
 const buildVectorStoreSummary = (
-  results: Array<{ id: string; filename: string; score?: number }>
+  results: Array<{ id: string; filename: string; score?: number }>,
 ) => {
   if (results.length === 0) {
     return "Vector Store Context: No matching vector store results.";
@@ -378,14 +381,14 @@ export const runMyFlowerAIWorkflow = async ({
 
     const strainSelection = selectMatchingStrains(
       strains,
-      workflow.input_as_text
+      workflow.input_as_text,
     );
     const strainContext = strainSelection.usedFallback
       ? buildStrainSummary(
           strainSelection.fallback,
           strainSelection.isGenericQuery
             ? "sample list for generic request"
-            : "sample list; no direct matches"
+            : "sample list; no direct matches",
         )
       : buildStrainSummary(strainSelection.matching, "matching strains");
 
@@ -394,7 +397,7 @@ export const runMyFlowerAIWorkflow = async ({
         id: result.file_id,
         filename: result.filename,
         score: result.score,
-      }))
+      })),
     );
 
     const conversationHistory = buildConversationHistory(messages);
@@ -451,7 +454,7 @@ export const runMyFlowerAIWorkflow = async ({
         ...conversationHistory,
       ]);
       conversationHistory.push(
-        ...myfloweraiResultTemp.newItems.map((item) => item.rawItem)
+        ...myfloweraiResultTemp.newItems.map((item) => item.rawItem),
       );
 
       if (!myfloweraiResultTemp.finalOutput) {
@@ -467,7 +470,7 @@ export const runMyFlowerAIWorkflow = async ({
       ...conversationHistory,
     ]);
     conversationHistory.push(
-      ...myfloweraiResultTemp.newItems.map((item) => item.rawItem)
+      ...myfloweraiResultTemp.newItems.map((item) => item.rawItem),
     );
 
     if (!myfloweraiResultTemp.finalOutput) {
