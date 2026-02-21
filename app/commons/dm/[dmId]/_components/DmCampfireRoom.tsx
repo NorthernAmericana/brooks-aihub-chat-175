@@ -14,6 +14,7 @@ type DmCampfireRoomProps = {
   access: DmRoomForViewer["access"];
   messages: DmRoomForViewer["messages"];
   campfirePath: string;
+  viewerUserId: string;
 };
 
 type ParsedMessage =
@@ -72,6 +73,7 @@ export function DmCampfireRoom({
   access,
   messages,
   campfirePath,
+  viewerUserId,
 }: DmCampfireRoomProps) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -180,7 +182,7 @@ export function DmCampfireRoom({
                         <p className="text-xs font-bold uppercase tracking-wide">
                           {getDisplayName(message.authorPublicNickname, message.authorEmail)}
                         </p>
-                        {message.authorPublicNickname ? (
+                        {message.authorPublicNickname && message.authorId === viewerUserId ? (
                           <p className="text-[10px] text-slate-600">{message.authorEmail}</p>
                         ) : null}
                         <div className="space-y-2 border-2 border-[#0f2742] bg-white px-3 py-2">

@@ -37,6 +37,7 @@ export default async function PrivateDmCampfirePage({
       members={dmRoom.members}
       messages={dmRoom.messages}
       roomId={dmId}
+      viewerUserId={session.user.id}
     />
   );
 }

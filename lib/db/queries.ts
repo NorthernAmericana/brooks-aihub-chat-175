@@ -2908,7 +2908,13 @@ export async function updateUserPublicNickname({
       .returning({ publicNickname: user.publicNickname });
 
     return updatedUser?.publicNickname ?? null;
-  } catch (_error) {
+  } catch (error) {
+    const details = getDbErrorDetails(error);
+
+    if (details.code === "23505") {
+      throw error;
+    }
+
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update user public nickname"
