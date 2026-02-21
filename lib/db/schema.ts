@@ -20,18 +20,27 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const user = pgTable("User", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  email: varchar("email", { length: 64 }).notNull(),
-  password: varchar("password", { length: 64 }),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
-  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
-  birthday: varchar("birthday", { length: 10 }),
-  messageColor: text("messageColor"),
-  avatarUrl: text("avatarUrl"),
-  foundersAccess: boolean("foundersAccess").default(false),
-  foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
-});
+export const user = pgTable(
+  "User",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    email: varchar("email", { length: 64 }).notNull(),
+    password: varchar("password", { length: 64 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+    stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+    birthday: varchar("birthday", { length: 10 }),
+    messageColor: text("messageColor"),
+    avatarUrl: text("avatarUrl"),
+    publicNickname: varchar("publicNickname", { length: 24 }),
+    foundersAccess: boolean("foundersAccess").default(false),
+    foundersAccessGrantedAt: timestamp("foundersAccessGrantedAt"),
+  },
+  (table) => ({
+    publicNicknameUniqueIdx: uniqueIndex("User_publicNickname_unique_idx")
+      .on(sql`lower(${table.publicNickname})`)
+      .where(sql`${table.publicNickname} is not null`),
+  })
+);
 
 export type User = InferSelectModel<typeof user>;
 

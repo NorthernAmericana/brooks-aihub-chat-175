@@ -2,6 +2,8 @@ import Link from "next/link";
 import { MessageCircle, User } from "lucide-react";
 import { auth } from "@/app/(auth)/auth";
 import { listPrivateDmCampfiresForMember } from "@/lib/db/commons-queries";
+import { getUserPublicNickname } from "@/lib/db/queries";
+import { PublicNicknameForm } from "./_components/public-nickname-form";
 
 function getDmIdFromPath(path: string): string {
   if (!path.startsWith("dm/")) {
@@ -44,7 +46,10 @@ export default async function PrivateDmLobbyPage() {
     );
   }
 
-  const campfires = await listPrivateDmCampfiresForMember(session.user.id);
+  const [campfires, publicNickname] = await Promise.all([
+    listPrivateDmCampfiresForMember(session.user.id),
+    getUserPublicNickname({ userId: session.user.id }),
+  ]);
 
   return (
     <main className="min-h-dvh bg-transparent px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
@@ -56,6 +61,11 @@ export default async function PrivateDmLobbyPage() {
           </div>
           <h1 className="text-3xl font-semibold sm:text-5xl">Choose a Campfire to join.</h1>
         </header>
+
+
+        <section className="rounded-xl border border-sky-950/25 bg-white/85 p-4 sm:p-5">
+          <PublicNicknameForm initialPublicNickname={publicNickname} />
+        </section>
 
         {campfires.length > 0 ? (
           <section className="space-y-4">

@@ -86,6 +86,10 @@ type UserAvatarUrlColumnState = "unchecked" | "ready" | "failed";
 let userAvatarUrlColumnState: UserAvatarUrlColumnState = "unchecked";
 let userAvatarUrlColumnPromise: Promise<void> | null = null;
 
+type UserPublicNicknameColumnState = "unchecked" | "ready" | "failed";
+let userPublicNicknameColumnState: UserPublicNicknameColumnState = "unchecked";
+let userPublicNicknameColumnPromise: Promise<void> | null = null;
+
 type MemoryVersioningColumnsState = "unchecked" | "ready" | "failed";
 let memoryVersioningColumnsState: MemoryVersioningColumnsState = "unchecked";
 let memoryVersioningColumnsPromise: Promise<void> | null = null;
@@ -223,6 +227,57 @@ async function ensureUserAvatarUrlColumnReady() {
   }
 
   await userAvatarUrlColumnPromise;
+}
+
+async function ensureUserPublicNicknameColumnReady() {
+  if (userPublicNicknameColumnState === "ready") {
+    return;
+  }
+
+  if (userPublicNicknameColumnState === "failed") {
+    throw new ChatSDKError(
+      "offline:database",
+      'User table schema is missing "publicNickname". Run migrations and restart the service.'
+    );
+  }
+
+  if (!userPublicNicknameColumnPromise) {
+    userPublicNicknameColumnPromise = (async () => {
+      const rows = await db.execute<{ column_name: string }>(sql`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'User';
+      `);
+
+      const hasPublicNicknameColumn = rows.some(
+        (row) => row.column_name === "publicNickname"
+      );
+
+      if (!hasPublicNicknameColumn) {
+        console.warn(
+          '[DB SCHEMA CHECK] Auto-remediating missing public."User"."publicNickname" column. Run migrations to keep schema in sync.'
+        );
+        await db.execute(sql`
+          ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "publicNickname" varchar(24);
+        `);
+      }
+
+      await db.execute(sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS "User_publicNickname_unique_idx"
+        ON "User" (lower("publicNickname"))
+        WHERE "publicNickname" IS NOT NULL;
+      `);
+    })()
+      .then(() => {
+        userPublicNicknameColumnState = "ready";
+      })
+      .catch((error) => {
+        userPublicNicknameColumnState = "failed";
+        throw error;
+      });
+  }
+
+  await userPublicNicknameColumnPromise;
 }
 
 async function ensureMemoryVersioningColumnsReady() {
@@ -2794,6 +2849,69 @@ export async function updateUserAvatarUrl({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update user avatar url"
+    );
+  }
+}
+
+export async function getUserPublicNickname({ userId }: { userId: string }) {
+  try {
+    await ensureUserPublicNicknameColumnReady();
+    const [selectedUser] = await db
+      .select({ publicNickname: user.publicNickname })
+      .from(user)
+      .where(eq(user.id, userId));
+
+    return selectedUser?.publicNickname ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user public nickname"
+    );
+  }
+}
+
+export async function findUserByPublicNickname({
+  publicNickname,
+}: {
+  publicNickname: string;
+}) {
+  try {
+    await ensureUserPublicNicknameColumnReady();
+    const [selectedUser] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(sql`lower(${user.publicNickname}) = lower(${publicNickname})`)
+      .limit(1);
+
+    return selectedUser ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user by public nickname"
+    );
+  }
+}
+
+export async function updateUserPublicNickname({
+  userId,
+  publicNickname,
+}: {
+  userId: string;
+  publicNickname: string | null;
+}) {
+  try {
+    await ensureUserPublicNicknameColumnReady();
+    const [updatedUser] = await db
+      .update(user)
+      .set({ publicNickname })
+      .where(eq(user.id, userId))
+      .returning({ publicNickname: user.publicNickname });
+
+    return updatedUser?.publicNickname ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user public nickname"
     );
   }
 }

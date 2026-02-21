@@ -816,6 +816,7 @@ export type DmRoomForViewer = {
   members: Array<{
     userId: string;
     email: string;
+    publicNickname: string | null;
     avatarUrl: string | null;
     messageColor: string | null;
     role: string;
@@ -823,6 +824,7 @@ export type DmRoomForViewer = {
   host: {
     userId: string;
     email: string;
+    publicNickname: string | null;
     foundersAccess: boolean;
   } | null;
   messages: Array<{
@@ -831,6 +833,7 @@ export type DmRoomForViewer = {
     createdAt: Date;
     authorId: string;
     authorEmail: string;
+    authorPublicNickname: string | null;
     authorAvatarUrl: string | null;
     authorMessageColor: string | null;
   }>;
@@ -875,6 +878,7 @@ export async function getDmRoomForViewer(options: {
     .select({
       userId: user.id,
       email: user.email,
+      publicNickname: user.publicNickname,
       avatarUrl: user.avatarUrl,
       messageColor: user.messageColor,
       role: commonsCampfireMembers.role,
@@ -894,6 +898,7 @@ export async function getDmRoomForViewer(options: {
       createdAt: commonsPost.createdAt,
       authorId: commonsPost.authorId,
       authorEmail: user.email,
+      authorPublicNickname: user.publicNickname,
       authorAvatarUrl: user.avatarUrl,
       authorMessageColor: user.messageColor,
     })
@@ -917,6 +922,7 @@ export async function getDmRoomForViewer(options: {
       ? {
           userId: hostMember.userId,
           email: hostMember.email,
+          publicNickname: hostMember.publicNickname,
           foundersAccess: Boolean(hostMember.foundersAccess),
         }
       : null,
