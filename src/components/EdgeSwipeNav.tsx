@@ -239,17 +239,7 @@ export function EdgeSwipeNav() {
   }, [clearHintTimer]);
 
   const handleConfig = useMemo<HandleConfig | null>(() => {
-    if (pathname === "/" || pathname === "/welcome") {
-      return {
-        side: "left",
-        href: "/commons",
-        ariaLabel: "Open NAT: Commons",
-        previewTitle: "NAT: Commons",
-        previewSubtitle: "Swipe right to enter",
-      };
-    }
-
-    if (pathname?.startsWith("/brooks-ai-hub")) {
+    if (isHubHomePath) {
       return {
         side: "left",
         href: "/commons",
@@ -262,7 +252,7 @@ export function EdgeSwipeNav() {
     if (pathname?.startsWith("/commons")) {
       return {
         side: "right",
-        href: "/",
+        href: "/brooks-ai-hub",
         ariaLabel: "Return to Brooks AI HUB",
         previewTitle: "Brooks AI HUB",
         previewSubtitle: "Swipe left to return",
@@ -270,7 +260,7 @@ export function EdgeSwipeNav() {
     }
 
     return null;
-  }, [pathname]);
+  }, [isHubHomePath, pathname]);
 
   const startCooldown = useCallback(() => {
     navigatedRef.current = true;
