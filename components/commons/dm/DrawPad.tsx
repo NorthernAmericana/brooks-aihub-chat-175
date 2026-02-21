@@ -199,7 +199,7 @@ export function DrawPad({ roomId, canWrite, onSent }: DrawPadProps) {
 
     void (async () => {
       try {
-        const response = await fetch(`/api/dm/rooms/${encodeURIComponent(roomId)}/drawpad-draft`, {
+        const response = await fetch(`/api/commons/dm/${encodeURIComponent(roomId)}/drawpad-draft`, {
           method: "GET",
           cache: "no-store",
         });
@@ -271,7 +271,7 @@ export function DrawPad({ roomId, canWrite, onSent }: DrawPadProps) {
     }
 
     debounceRef.current = setTimeout(() => {
-      void fetch(`/api/dm/rooms/${encodeURIComponent(roomId)}/drawpad-draft`, {
+      void fetch(`/api/commons/dm/${encodeURIComponent(roomId)}/drawpad-draft`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -407,7 +407,7 @@ export function DrawPad({ roomId, canWrite, onSent }: DrawPadProps) {
       formData.append("file", blob, `drawpad-${Date.now()}.png`);
 
       const uploadResponse = await fetch(
-        `/api/dm/rooms/${encodeURIComponent(roomId)}/drawpad-upload`,
+        `/api/commons/dm/${encodeURIComponent(roomId)}/drawpad-upload`,
         {
           method: "POST",
           body: formData,
@@ -424,7 +424,7 @@ export function DrawPad({ roomId, canWrite, onSent }: DrawPadProps) {
       }
 
       const sendResponse = await fetch(
-        `/api/dm/rooms/${encodeURIComponent(roomId)}/messages/drawpad`,
+        `/api/commons/dm/${encodeURIComponent(roomId)}/messages/drawpad`,
         {
           method: "POST",
           headers: {
