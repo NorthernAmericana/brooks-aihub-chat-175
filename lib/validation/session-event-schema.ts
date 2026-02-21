@@ -73,6 +73,8 @@ export const SessionEventSchemaV1_0 = z.object({
       uncertainty: z.object({
         dose_ci_low: UnknownNumber,
         dose_ci_high: UnknownNumber,
+        dose_ci_low_missing: z.boolean().optional(),
+        dose_ci_high_missing: z.boolean().optional(),
         notes: z.string().max(2000).optional(),
       }),
     }),
