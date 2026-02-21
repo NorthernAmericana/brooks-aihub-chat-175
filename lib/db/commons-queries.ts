@@ -1009,6 +1009,7 @@ export async function listPrivateDmCampfiresForMember(
       commonsCampfire.id,
       commonsCampfire.name,
       commonsCampfire.path,
+      viewerMember.role,
       commonsCampfire.lastActivityAt,
       hostUser.foundersAccess
     )
