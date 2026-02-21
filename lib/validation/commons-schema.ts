@@ -39,6 +39,11 @@ export const createPostSchema = z.object({
 export const createCampfireSchema = z
   .object({
     mode: z.enum(["community", "dm"]).default("community"),
+    retentionMode: z
+      .enum(["permanent", "rolling_window", "timeboxed", "burn_on_empty"])
+      .default("permanent"),
+    rollingWindowSize: z.coerce.number().int().min(1).max(5000).optional(),
+    expiresInHours: z.coerce.number().int().min(1).max(8760).optional(),
     name: z.string().trim().min(3).max(120).optional(),
     description: z.string().trim().max(300).default(""),
     campfirePath: campfirePathSchema.optional(),
@@ -63,6 +68,27 @@ export const createCampfireSchema = z
           code: z.ZodIssueCode.custom,
           message: "Path is required for community campfires.",
           path: ["campfirePath"],
+        });
+      }
+
+      if (
+        value.retentionMode === "rolling_window" &&
+        !value.rollingWindowSize
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Rolling window size is required when retention mode is rolling window.",
+          path: ["rollingWindowSize"],
+        });
+      }
+
+      if (value.retentionMode === "timeboxed" && !value.expiresInHours) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Expiration hours are required when retention mode is timeboxed.",
+          path: ["expiresInHours"],
         });
       }
     }

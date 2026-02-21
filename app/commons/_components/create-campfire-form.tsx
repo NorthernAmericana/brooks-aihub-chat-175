@@ -8,10 +8,17 @@ import {
 } from "@/lib/commons/constants";
 
 type CampfireMode = "community" | "dm";
+type RetentionMode =
+  | "permanent"
+  | "rolling_window"
+  | "timeboxed"
+  | "burn_on_empty";
 
 export function CreateCampfireForm() {
   const router = useRouter();
   const [mode, setMode] = useState<CampfireMode>("community");
+  const [retentionMode, setRetentionMode] =
+    useState<RetentionMode>("permanent");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -32,6 +39,18 @@ export function CreateCampfireForm() {
           .split(/[\n,]/)
           .map((value) => value.trim().toLowerCase())
           .filter((value) => value.length > 0);
+        const rollingWindowSizeValue = String(
+          formData.get("rollingWindowSize") ?? ""
+        ).trim();
+        const expiresInHoursValue = String(
+          formData.get("expiresInHours") ?? ""
+        ).trim();
+        const rollingWindowSize = rollingWindowSizeValue
+          ? Number.parseInt(rollingWindowSizeValue, 10)
+          : undefined;
+        const expiresInHours = expiresInHoursValue
+          ? Number.parseInt(expiresInHoursValue, 10)
+          : undefined;
 
         const payload =
           mode === "community"
@@ -40,6 +59,9 @@ export function CreateCampfireForm() {
                 name,
                 description,
                 campfirePath,
+                retentionMode,
+                rollingWindowSize,
+                expiresInHours,
               }
             : {
                 mode,
@@ -54,6 +76,18 @@ export function CreateCampfireForm() {
 
           if (!campfirePath) {
             setError("Campfire path is required.");
+            return;
+          }
+
+          if (retentionMode === "rolling_window" && !rollingWindowSize) {
+            setError(
+              "Rolling window size is required for rolling window retention."
+            );
+            return;
+          }
+
+          if (retentionMode === "timeboxed" && !expiresInHours) {
+            setError("Expiration hours are required for timeboxed retention.");
             return;
           }
         }
@@ -185,6 +219,67 @@ export function CreateCampfireForm() {
               subcampfire is supported.
             </p>
           </div>
+
+          <div className="space-y-1.5">
+            <label
+              className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
+              htmlFor="campfire-retention-mode"
+            >
+              Retention mode
+            </label>
+            <select
+              className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:focus-visible:ring-amber-200"
+              id="campfire-retention-mode"
+              name="retentionMode"
+              onChange={(event) =>
+                setRetentionMode(event.target.value as RetentionMode)
+              }
+              value={retentionMode}
+            >
+              <option value="permanent">Permanent</option>
+              <option value="rolling_window">Rolling window</option>
+              <option value="timeboxed">Timeboxed</option>
+              <option value="burn_on_empty">Burn on empty</option>
+            </select>
+          </div>
+
+          {retentionMode === "rolling_window" ? (
+            <div className="space-y-1.5">
+              <label
+                className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
+                htmlFor="campfire-rolling-window-size"
+              >
+                Rolling window size (posts)
+              </label>
+              <input
+                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
+                id="campfire-rolling-window-size"
+                min={1}
+                name="rollingWindowSize"
+                required
+                type="number"
+              />
+            </div>
+          ) : null}
+
+          {retentionMode === "timeboxed" ? (
+            <div className="space-y-1.5">
+              <label
+                className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
+                htmlFor="campfire-expires-in-hours"
+              >
+                Expiration (hours)
+              </label>
+              <input
+                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
+                id="campfire-expires-in-hours"
+                min={1}
+                name="expiresInHours"
+                required
+                type="number"
+              />
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="space-y-1.5">

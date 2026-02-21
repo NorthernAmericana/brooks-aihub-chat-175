@@ -403,6 +403,13 @@ function isUniqueConstraintError(error: unknown): boolean {
 export async function createCampfire(options: {
   creatorId: string;
   mode: "community" | "dm";
+  retentionMode?:
+    | "permanent"
+    | "rolling_window"
+    | "timeboxed"
+    | "burn_on_empty";
+  rollingWindowSize?: number;
+  expiresInHours?: number;
   name?: string;
   description?: string;
   campfirePath?: string;
@@ -584,6 +591,11 @@ export async function createCampfire(options: {
 
   const name = options.name?.trim();
   const campfirePath = options.campfirePath?.trim().toLowerCase();
+  const retentionMode = options.retentionMode ?? "permanent";
+  const rollingWindowSize =
+    retentionMode === "rolling_window" ? options.rollingWindowSize : undefined;
+  const expiresInHours =
+    retentionMode === "timeboxed" ? options.expiresInHours : undefined;
 
   if (!name || !campfirePath) {
     return { error: "Name and path are required." as const };
@@ -631,7 +643,10 @@ export async function createCampfire(options: {
 
       await tx.insert(commonsCampfireSettings).values({
         campfireId: row.id,
-        retentionMode: "permanent",
+        retentionMode,
+        rollingWindowSize,
+        expiresInHours,
+        isTemp: retentionMode !== "permanent",
       });
 
       return row;
