@@ -1,8 +1,14 @@
 "use client";
 
-import { ExternalLink, MoreVertical, Pause, Play, Radio } from "lucide-react";
+import {
+  ExternalLink,
+  MoreVertical,
+  Pause,
+  Play,
+  Radio,
+  SkipForward,
+} from "lucide-react";
 import { useSpotifyPlayback } from "@/components/spotify/spotify-playback-provider";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { cn } from "@/lib/utils";
 
 type NowPlayingStripProps = {
   className?: string;
@@ -19,6 +26,7 @@ export function NowPlayingStrip({ className }: NowPlayingStripProps) {
   const {
     playerState,
     togglePlayback,
+    skipNext,
     startRadio,
     openSpotify,
     openSpotifyArtist,
@@ -61,6 +69,17 @@ export function NowPlayingStrip({ className }: NowPlayingStripProps) {
         </div>
 
         <button
+          aria-label="Skip to next track"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-white/90 transition hover:bg-white/10"
+          onClick={() => {
+            skipNext();
+          }}
+          type="button"
+        >
+          <SkipForward className="h-4 w-4" />
+        </button>
+
+        <button
           aria-label={playerState?.is_playing ? "Pause" : "Play"}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-black transition hover:bg-emerald-400"
           onClick={() => {
@@ -95,7 +114,11 @@ export function NowPlayingStrip({ className }: NowPlayingStripProps) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => startRadio()}>
+            <DropdownMenuItem
+              onClick={() => {
+                startRadio();
+              }}
+            >
               <Radio className="mr-2 h-4 w-4" />
               Start track radio
             </DropdownMenuItem>
