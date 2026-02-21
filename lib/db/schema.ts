@@ -822,6 +822,24 @@ export const myflowerLogs = pgTable("myflower_logs", {
 
 export type MyflowerLog = InferSelectModel<typeof myflowerLogs>;
 
+export const myflowerSessionEvents = pgTable("myflower_session_events", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  schemaVersion: varchar("schema_version", { length: 16 }).notNull(),
+  exposure: jsonb("exposure").notNull(),
+  context: jsonb("context").notNull(),
+  outcomes: jsonb("outcomes").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type MyflowerSessionEvent = InferSelectModel<typeof myflowerSessionEvents>;
+
 export const myflowerPosts = pgTable("myflower_posts", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   userId: uuid("user_id")
