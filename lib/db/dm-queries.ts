@@ -1,9 +1,10 @@
-import { and, asc, count, desc, eq, inArray, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   dmDrawpadDrafts,
   dmMessageAttachments,
   dmMessages,
+  dmRoomInvites,
   dmRoomMembers,
   dmRooms,
   user,
@@ -25,7 +26,10 @@ export async function loadDmRoomByIdForMember(options: {
     .from(dmRooms)
     .innerJoin(
       dmRoomMembers,
-      and(eq(dmRoomMembers.roomId, dmRooms.id), eq(dmRoomMembers.userId, options.userId))
+      and(
+        eq(dmRoomMembers.roomId, dmRooms.id),
+        eq(dmRoomMembers.userId, options.userId)
+      )
     )
     .where(eq(dmRooms.id, options.roomId))
     .limit(1);
@@ -42,6 +46,141 @@ export async function getDmRoomMemberCount(roomId: string) {
   return result?.value ?? 0;
 }
 
+export async function getDmRoomCapacitySnapshot(roomId: string) {
+  const [room] = await db
+    .select({
+      roomId: dmRooms.id,
+      createdByUserId: dmRooms.createdByUserId,
+      founderAccess: user.foundersAccess,
+    })
+    .from(dmRooms)
+    .innerJoin(user, eq(user.id, dmRooms.createdByUserId))
+    .where(eq(dmRooms.id, roomId))
+    .limit(1);
+
+  if (!room) {
+    return null;
+  }
+
+  const memberCount = await getDmRoomMemberCount(roomId);
+  const memberLimit = room.founderAccess ? 12 : 4;
+
+  return {
+    roomId: room.roomId,
+    createdByUserId: room.createdByUserId,
+    memberCount,
+    memberLimit,
+  };
+}
+
+export async function createDmRoomInvite(options: {
+  roomId: string;
+  inviterUserId: string;
+  targetEmail: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  const [invite] = await db
+    .insert(dmRoomInvites)
+    .values({
+      roomId: options.roomId,
+      inviterUserId: options.inviterUserId,
+      targetEmail: options.targetEmail,
+      tokenHash: options.tokenHash,
+      expiresAt: options.expiresAt,
+    })
+    .returning();
+
+  return invite;
+}
+
+export async function getDmRoomInviteByTokenHash(tokenHash: string) {
+  const [invite] = await db
+    .select()
+    .from(dmRoomInvites)
+    .where(eq(dmRoomInvites.tokenHash, tokenHash))
+    .limit(1);
+
+  return invite ?? null;
+}
+
+export function acceptDmInviteMembershipAtomically(options: {
+  inviteId: string;
+  roomId: string;
+  userId: string;
+}) {
+  return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select ${dmRooms.id} from ${dmRooms} where ${dmRooms.id} = ${options.roomId} for update`
+    );
+
+    const [membership] = await tx
+      .select({ id: dmRoomMembers.id })
+      .from(dmRoomMembers)
+      .where(
+        and(
+          eq(dmRoomMembers.roomId, options.roomId),
+          eq(dmRoomMembers.userId, options.userId)
+        )
+      )
+      .limit(1);
+
+    if (!membership) {
+      const [owner] = await tx
+        .select({ founderAccess: user.foundersAccess })
+        .from(dmRooms)
+        .innerJoin(user, eq(user.id, dmRooms.createdByUserId))
+        .where(eq(dmRooms.id, options.roomId))
+        .limit(1);
+
+      if (!owner) {
+        return { ok: false as const, reason: "room_not_found" as const };
+      }
+
+      const [memberCountResult] = await tx
+        .select({ value: count() })
+        .from(dmRoomMembers)
+        .where(eq(dmRoomMembers.roomId, options.roomId));
+
+      const memberCount = Number(memberCountResult?.value ?? 0);
+      const memberLimit = owner.founderAccess ? 12 : 4;
+
+      if (memberCount >= memberLimit) {
+        return {
+          ok: false as const,
+          reason: "at_capacity" as const,
+          memberCount,
+          memberLimit,
+        };
+      }
+
+      await tx
+        .insert(dmRoomMembers)
+        .values({ roomId: options.roomId, userId: options.userId })
+        .onConflictDoNothing({
+          target: [dmRoomMembers.roomId, dmRoomMembers.userId],
+        });
+    }
+
+    const [invite] = await tx
+      .update(dmRoomInvites)
+      .set({ acceptedAt: new Date(), acceptedByUserId: options.userId })
+      .where(
+        and(
+          eq(dmRoomInvites.id, options.inviteId),
+          sql`(${dmRoomInvites.acceptedByUserId} is null or ${dmRoomInvites.acceptedByUserId} = ${options.userId})`
+        )
+      )
+      .returning({ id: dmRoomInvites.id });
+
+    if (!invite) {
+      return { ok: false as const, reason: "invite_claimed" as const };
+    }
+
+    return { ok: true as const };
+  });
+}
+
 export async function getDmRoomMessageCount(roomId: string) {
   const [result] = await db
     .select({ value: count() })
@@ -51,7 +190,7 @@ export async function getDmRoomMessageCount(roomId: string) {
   return result?.value ?? 0;
 }
 
-export async function listDmRoomMembers(roomId: string) {
+export function listDmRoomMembers(roomId: string) {
   return db
     .select({
       membershipId: dmRoomMembers.id,
@@ -142,7 +281,7 @@ export async function createDmTextMessage(options: {
   return message;
 }
 
-export async function createDmImageMessage(options: {
+export function createDmImageMessage(options: {
   roomId: string;
   senderUserId: string;
   assetUrl: string;

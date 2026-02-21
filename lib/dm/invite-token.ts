@@ -1,30 +1,24 @@
-import { createHmac, randomUUID } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
-const DM_INVITE_TOKEN_VERSION = "v1";
 const DM_INVITE_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 
-const getDmInviteTokenSecret = () =>
-  process.env.DM_INVITE_TOKEN_SECRET || process.env.AUTH_SECRET || "dev-secret";
+export const hashDmInviteToken = (token: string) =>
+  createHash("sha256").update(token).digest("hex");
 
-const signPayload = (payload: string) =>
-  createHmac("sha256", getDmInviteTokenSecret()).update(payload).digest("hex");
-
-export function issueDmInviteToken(options: {
-  roomId: string;
-  inviterUserId: string;
-  expiresInSeconds?: number;
-}) {
+export function issueDmInviteToken(options: { expiresInSeconds?: number }) {
   const expiresInSeconds = Math.max(
     60,
-    Math.min(options.expiresInSeconds ?? DM_INVITE_TOKEN_TTL_SECONDS, 60 * 60 * 24 * 7)
+    Math.min(
+      options.expiresInSeconds ?? DM_INVITE_TOKEN_TTL_SECONDS,
+      60 * 60 * 24 * 7
+    )
   );
-  const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
-  const nonce = randomUUID();
-  const payload = `${DM_INVITE_TOKEN_VERSION}.${options.roomId}.${options.inviterUserId}.${expiresAt}.${nonce}`;
-  const signature = signPayload(payload);
+  const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+  const token = randomBytes(32).toString("hex");
 
   return {
-    token: `${payload}.${signature}`,
+    token,
+    tokenHash: hashDmInviteToken(token),
     expiresInSeconds,
     expiresAt,
   };

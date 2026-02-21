@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  getDmRoomCapacitySnapshot,
   getDmRoomMemberCount,
   getDmRoomMessageCount,
   listDmRoomMembers,
@@ -30,16 +31,20 @@ export async function GET(
     return memberResult.response;
   }
 
-  const [room, members, memberCount, messageCount] = await Promise.all([
-    loadDmRoomByIdForMember({ roomId, userId: authResult.userId }),
-    listDmRoomMembers(roomId),
-    getDmRoomMemberCount(roomId),
-    getDmRoomMessageCount(roomId),
-  ]);
+  const [room, members, memberCount, messageCount, capacity] =
+    await Promise.all([
+      loadDmRoomByIdForMember({ roomId, userId: authResult.userId }),
+      listDmRoomMembers(roomId),
+      getDmRoomMemberCount(roomId),
+      getDmRoomMessageCount(roomId),
+      getDmRoomCapacitySnapshot(roomId),
+    ]);
 
   if (!room) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  const roomMemberLimit = capacity?.memberLimit ?? 4;
 
   return NextResponse.json({
     room: {
@@ -63,6 +68,7 @@ export async function GET(
       messages: messageCount,
     },
     limits: {
+      members: roomMemberLimit,
       messageBodyMaxLength: DM_MESSAGE_BODY_MAX_LENGTH,
       messagePageDefaultLimit: DM_MESSAGE_PAGE_LIMIT_DEFAULT,
       messagePageMaxLimit: DM_MESSAGE_PAGE_LIMIT_MAX,

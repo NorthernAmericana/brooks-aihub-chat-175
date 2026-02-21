@@ -1,4 +1,9 @@
-import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm";
+import {
+  type InferInsertModel,
+  type InferSelectModel,
+  relations,
+  sql,
+} from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -1149,6 +1154,36 @@ export const dmDrawpadDrafts = pgTable(
 export type DmDrawpadDraft = InferSelectModel<typeof dmDrawpadDrafts>;
 export type DmDrawpadDraftInsert = InferInsertModel<typeof dmDrawpadDrafts>;
 
+export const dmRoomInvites = pgTable(
+  "dm_room_invites",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => dmRooms.id, { onDelete: "cascade" }),
+    inviterUserId: uuid("inviter_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    targetEmail: varchar("target_email", { length: 64 }).notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedByUserId: uuid("accepted_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    tokenHashUniqueIdx: uniqueIndex("dm_room_invites_token_hash_unique_idx").on(
+      table.tokenHash
+    ),
+  })
+);
+
+export type DmRoomInvite = InferSelectModel<typeof dmRoomInvites>;
+
 export const dmRoomsRelations = relations(dmRooms, ({ one, many }) => ({
   creator: one(user, {
     fields: [dmRooms.createdByUserId],
@@ -1157,6 +1192,7 @@ export const dmRoomsRelations = relations(dmRooms, ({ one, many }) => ({
   members: many(dmRoomMembers),
   messages: many(dmMessages),
   drawpadDrafts: many(dmDrawpadDrafts),
+  invites: many(dmRoomInvites),
 }));
 
 export const dmRoomMembersRelations = relations(dmRoomMembers, ({ one }) => ({
@@ -1200,13 +1236,31 @@ export const dmMessageAttachmentsRelations = relations(
   })
 );
 
-export const dmDrawpadDraftsRelations = relations(dmDrawpadDrafts, ({ one }) => ({
+export const dmDrawpadDraftsRelations = relations(
+  dmDrawpadDrafts,
+  ({ one }) => ({
+    room: one(dmRooms, {
+      fields: [dmDrawpadDrafts.roomId],
+      references: [dmRooms.id],
+    }),
+    user: one(user, {
+      fields: [dmDrawpadDrafts.userId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const dmRoomInvitesRelations = relations(dmRoomInvites, ({ one }) => ({
   room: one(dmRooms, {
-    fields: [dmDrawpadDrafts.roomId],
+    fields: [dmRoomInvites.roomId],
     references: [dmRooms.id],
   }),
-  user: one(user, {
-    fields: [dmDrawpadDrafts.userId],
+  inviter: one(user, {
+    fields: [dmRoomInvites.inviterUserId],
+    references: [user.id],
+  }),
+  acceptedBy: one(user, {
+    fields: [dmRoomInvites.acceptedByUserId],
     references: [user.id],
   }),
 }));
