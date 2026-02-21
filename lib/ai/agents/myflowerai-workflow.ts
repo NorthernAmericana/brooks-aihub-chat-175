@@ -110,7 +110,7 @@ Category: Conversate`,
 
 // Base agent instructions
 const BASE_INSTRUCTIONS =
-  "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. Keep summaries brief, non-judgmental, and harm-reduction focused when asked to summarize. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. You are a client-facing assistant; never assume the user is the founder. Ground answers in this order: 1) Strain Data context, 2) Vector Store Context, 3) shared memory context. If sources conflict, say so and prioritize earlier sources. Review shared memory context provided by the system before responding; use it only when relevant. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. When discussing a strain, use this mini-structure: Known profile → likely effects → user's prior notes (if any). Keep the tone warm, woodsy, and supportive.";
+  "You are MyFlowerAI, a slash route option in Brooks AI HUB mobile app owned by the Northern Americana Tech ecosystem that assists users with their cannabis use using AI Data Analysis and deep conversations before, during, and after use to help harm reduction and personal discovery and opt in public research in a fun, cool, woodsy, indie kind of tech AI way that feels warm and cool and not sterile and mean and weird. You track insights using dates and compare between different sessions. Allow users to remember strains that are being smoked and their effects. Keep summaries brief, non-judgmental, and harm-reduction focused when asked to summarize. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. You are a client-facing assistant; never assume the user is the founder. Ground answers in this order: 1) Strain Data context, 2) Vector Store Context, 3) shared memory context. If sources conflict, say so and prioritize earlier sources. Review shared memory context provided by the system before responding; use it only when relevant. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. When discussing a strain, use this mini-structure: Known profile → likely effects → user's prior notes (if any). For any claim tied to product chemistry, COA details, label reliability, or dose guidance, explicitly include uncertainty annotations (confidence_score_0_1 when present, dose_ci_low/dose_ci_high when present, and whether bounds are missing). Keep the tone warm, woodsy, and supportive.";
 
 // Session logging instructions (privacy-focused)
 const SESSION_LOGGING_INSTRUCTIONS =
@@ -173,6 +173,13 @@ const normalizeQueryValue = (value: string) =>
 
 type StrainRecord = {
   id?: string;
+  product?: {
+    confidence_score_0_1?: number | null;
+    dose_ci_low?: number | null;
+    dose_ci_high?: number | null;
+    dose_ci_low_missing?: boolean;
+    dose_ci_high_missing?: boolean;
+  };
   strain?: {
     name?: string;
     type?: string;
@@ -185,6 +192,13 @@ type StrainRecord = {
   description?: {
     dispensary_bio?: string;
     vibes_like?: string[];
+  };
+  coa?: {
+    lab?: string;
+    provenance_lab?: string | null;
+    provenance_method?: string | null;
+    provenance_batch?: string | null;
+    provenance_test_date?: string | null;
   };
 };
 
@@ -205,9 +219,11 @@ const loadStrains = async (): Promise<StrainRecord[]> => {
         // Convert to StrainRecord format (compatible with both v1.0 and v1.1)
         strains.push({
           id: strain.id,
+          product: strain.product,
           strain: strain.strain,
           stats: strain.stats,
           description: strain.description,
+          coa: strain.coa,
         });
       }
 
@@ -313,10 +329,31 @@ const buildStrainSummary = (strains: StrainRecord[], label: string) => {
       (strain.description?.dispensary_bio
         ? truncateText(strain.description.dispensary_bio, 120)
         : null);
+    const confidenceScore = strain.product?.confidence_score_0_1;
+    const confidenceLabel =
+      typeof confidenceScore === "number" && Number.isFinite(confidenceScore)
+        ? confidenceScore.toFixed(2)
+        : "n/a";
+    const doseCiLow = strain.product?.dose_ci_low;
+    const doseCiHigh = strain.product?.dose_ci_high;
+    const doseCiLowMissing = strain.product?.dose_ci_low_missing === true;
+    const doseCiHighMissing = strain.product?.dose_ci_high_missing === true;
+    const doseCiLabel =
+      typeof doseCiLow === "number" && typeof doseCiHigh === "number"
+        ? `${doseCiLow.toFixed(2)} - ${doseCiHigh.toFixed(2)}`
+        : "n/a";
+    const coaProvenanceLab =
+      strain.coa?.provenance_lab ?? strain.coa?.lab ?? "n/a";
+    const coaMethod = strain.coa?.provenance_method ?? "n/a";
+    const coaBatch = strain.coa?.provenance_batch ?? "n/a";
+    const coaTestDate = strain.coa?.provenance_test_date ?? "n/a";
 
     const details = [
       `THC ${thc}`,
       `Total terps ${terps}`,
+      `COA provenance: lab=${coaProvenanceLab}, method=${coaMethod}, batch=${coaBatch}, test_date=${coaTestDate}`,
+      `Label reliability confidence_score_0_1=${confidenceLabel}`,
+      `Dose CI=${doseCiLabel} (low_missing=${doseCiLowMissing}, high_missing=${doseCiHighMissing})`,
       topTerpenes ? `Top terps: ${topTerpenes}` : null,
       vibes ? `Vibes: ${vibes}` : null,
     ]

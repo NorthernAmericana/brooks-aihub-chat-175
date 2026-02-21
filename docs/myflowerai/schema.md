@@ -77,6 +77,11 @@ The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to
   - `size_g`: Size in grams
   - `sku`: Product SKU
   - `in_stock`: Boolean availability status
+  - `confidence_score_0_1`: Label reliability confidence score (0 to 1)
+  - `dose_ci_low`: Lower bound for dose confidence interval
+  - `dose_ci_high`: Upper bound for dose confidence interval
+  - `dose_ci_low_missing`: Explicit missingness flag for lower bound
+  - `dose_ci_high_missing`: Explicit missingness flag for upper bound
 - **Removed from v1.0**:
   - `location`: Exact store address (privacy concern)
   - `price_current_usd`: Current price (purchase metadata)
@@ -109,6 +114,10 @@ The MyFlowerAI strain data schema v1.1 is a **client-facing** format designed to
 - Fields retained:
   - `status`: Test result status (e.g., "passed")
   - `lab`: Laboratory name
+  - `provenance_lab`: Explicit COA provenance lab value
+  - `provenance_method`: Test method used by the lab (e.g., HPLC)
+  - `provenance_batch`: Batch identifier used for testing
+  - `provenance_test_date`: Test date for the COA sample
   - `laboratory_id`: Lab report ID
   - `sample_matrix`: Sample type
   - `admin_route`: Administration route

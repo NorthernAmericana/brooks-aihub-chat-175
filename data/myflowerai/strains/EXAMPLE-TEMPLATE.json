@@ -28,7 +28,12 @@
     "form": "3.5g Whole Flower",
     "size_g": 3.5,
     "sku": "SKU123",
-    "in_stock": true
+    "in_stock": true,
+    "confidence_score_0_1": 0.82,
+    "dose_ci_low": 6.5,
+    "dose_ci_high": 11.0,
+    "dose_ci_low_missing": false,
+    "dose_ci_high_missing": false
   },
   "normalized": {
     "canonical_strain_name": "example strain",
@@ -109,7 +114,11 @@
     "qa_sample_id": "QA123456",
     "batch_size_g": 10000,
     "units_sampled": 10,
-    "total_amt_sampled_g": 35
+    "total_amt_sampled_g": 35,
+    "provenance_lab": "Example Testing Lab",
+    "provenance_method": "HPLC",
+    "provenance_batch": "BATCH-2026-01-09-A",
+    "provenance_test_date": "2026-01-15"
   },
   "tags": [
     "hybrid",

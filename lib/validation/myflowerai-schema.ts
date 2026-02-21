@@ -60,6 +60,11 @@ const ProductSchema = z.object({
   size_g: z.number(),
   sku: z.string().nullable().optional(),
   in_stock: z.boolean().nullable().optional(),
+  confidence_score_0_1: z.number().min(0).max(1).nullable().optional(),
+  dose_ci_low: z.number().nullable().optional(),
+  dose_ci_high: z.number().nullable().optional(),
+  dose_ci_low_missing: z.boolean().optional(),
+  dose_ci_high_missing: z.boolean().optional(),
 });
 
 // Stats (cannabinoids and terpenes)
@@ -85,6 +90,10 @@ const DescriptionSchema = z.object({
 const COASchema = z.object({
   status: z.string(),
   lab: z.string(),
+  provenance_lab: z.string().nullable().optional(),
+  provenance_method: z.string().nullable().optional(),
+  provenance_batch: z.string().nullable().optional(),
+  provenance_test_date: z.string().nullable().optional(),
   laboratory_id: z.string(),
   sample_matrix: z.string(),
   admin_route: z.string(),
