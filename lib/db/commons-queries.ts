@@ -23,6 +23,13 @@ const PUBLIC_ACTIVE_CAMPFIRE_FILTER = and(
   eq(commonsCampfire.isActive, true)
 );
 
+const AUTO_CAMPFIRE_NAME_PREFIX = "Campfire chat #";
+
+function formatAutoCampfireName(sequence: number): string {
+  const paddedSequence = String(sequence).padStart(2, "0");
+  return `${AUTO_CAMPFIRE_NAME_PREFIX}${paddedSequence}`;
+}
+
 export function listCampfires() {
   return db
     .select({
@@ -589,7 +596,7 @@ export async function createCampfire(options: {
     };
   }
 
-  const name = options.name?.trim();
+  const providedName = options.name?.trim();
   const campfirePath = options.campfirePath?.trim().toLowerCase();
   const retentionMode = options.retentionMode ?? "permanent";
   const rollingWindowSize =
@@ -597,12 +604,12 @@ export async function createCampfire(options: {
   const expiresInHours =
     retentionMode === "timeboxed" ? options.expiresInHours : undefined;
 
-  if (!name || !campfirePath) {
-    return { error: "Name and path are required." as const };
+  if (!campfirePath) {
+    return { error: "Path is required." as const };
   }
 
   const pathSegments = campfirePath.split("/");
-  const slugBase = slugifyCampfireValue(pathSegments.join("-") || name);
+  const slugBase = slugifyCampfireValue(pathSegments.join("-"));
   const slug = slugBase || `campfire-${crypto.randomUUID().slice(0, 8)}`;
 
   const [existingPathCampfire] = await db
@@ -629,12 +636,31 @@ export async function createCampfire(options: {
 
   try {
     campfire = await db.transaction(async (tx) => {
+      let resolvedName = providedName;
+
+      if (!resolvedName?.length) {
+        const [existingCampfireCount] = await tx
+          .select({ value: count(commonsCampfire.id) })
+          .from(commonsCampfire)
+          .where(
+            and(
+              eq(commonsCampfire.createdById, options.creatorId),
+              eq(commonsCampfire.isPrivate, false),
+              eq(commonsCampfire.isDeleted, false)
+            )
+          );
+
+        resolvedName = formatAutoCampfireName(
+          Number(existingCampfireCount?.value ?? 0) + 1
+        );
+      }
+
       const [row] = await tx
         .insert(commonsCampfire)
         .values({
           slug: finalSlug,
           path: campfirePath,
-          name,
+          name: resolvedName,
           description: options.description?.trim() ?? "",
           createdById: options.creatorId,
           isPrivate: false,

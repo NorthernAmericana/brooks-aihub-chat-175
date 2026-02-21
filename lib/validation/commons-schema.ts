@@ -44,7 +44,7 @@ export const createCampfireSchema = z
       .default("permanent"),
     rollingWindowSize: z.coerce.number().int().min(1).max(5000).optional(),
     expiresInHours: z.coerce.number().int().min(1).max(8760).optional(),
-    name: z.string().trim().min(3).max(120).optional(),
+    name: z.string().trim().min(3).max(120).or(z.literal("")).optional(),
     description: z.string().trim().max(300).default(""),
     campfirePath: campfirePathSchema.optional(),
     recipientEmail: z.string().trim().toLowerCase().email().optional(),
@@ -55,14 +55,6 @@ export const createCampfireSchema = z
   })
   .superRefine((value, ctx) => {
     if (value.mode === "community") {
-      if (!value.name) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Name is required for community campfires.",
-          path: ["name"],
-        });
-      }
-
       if (!value.campfirePath) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
