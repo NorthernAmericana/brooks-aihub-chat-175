@@ -1,4 +1,13 @@
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  lt,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   commonsCampfire,
@@ -18,7 +27,56 @@ export type NotificationItem = {
   createdAt: Date;
 };
 
-function mapNotification(row: typeof notification.$inferSelect): NotificationItem {
+type NotificationCursor = {
+  createdAt: string;
+  id: string;
+};
+
+function encodeCursor(cursor: NotificationCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString("base64url");
+}
+
+function decodeCursor(cursor: string): NotificationCursor | null {
+  try {
+    const value = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8")
+    ) as Partial<NotificationCursor>;
+
+    if (
+      !value ||
+      typeof value.createdAt !== "string" ||
+      typeof value.id !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      createdAt: value.createdAt,
+      id: value.id,
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function mapNotification(
+  row: typeof notification.$inferSelect,
+  options?: { requesterLabel?: string }
+): NotificationItem {
+  const requesterLabel = options?.requesterLabel?.trim() || "A campfire member";
+
+  if (row.type === "dm_host_request") {
+    return {
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      body: `${requesterLabel} requested that you create a private campfire DM chatroom with them inside, /NAT: Commons/.`,
+      isRead: row.isRead,
+      readAt: row.readAt,
+      createdAt: row.createdAt,
+    };
+  }
+
   return {
     id: row.id,
     type: row.type,
@@ -45,29 +103,85 @@ export async function listNotificationsForUser(options: {
   limit?: number;
 }) {
   const limit = Math.min(Math.max(options.limit ?? 6, 1), 25);
+  const parsedCursor = options.cursor ? decodeCursor(options.cursor) : null;
+
+  let cursorClause: SQL | undefined;
+
+  if (parsedCursor) {
+    const cursorCreatedAt = new Date(parsedCursor.createdAt);
+
+    if (!Number.isNaN(cursorCreatedAt.getTime())) {
+      cursorClause = or(
+        lt(notification.createdAt, cursorCreatedAt),
+        and(
+          eq(notification.createdAt, cursorCreatedAt),
+          lt(notification.id, parsedCursor.id)
+        )
+      );
+    }
+  }
 
   const rows = await db
     .select()
     .from(notification)
-    .where(
-      and(
-        eq(notification.userId, options.userId),
-        options.cursor
-          ? lt(notification.createdAt, new Date(options.cursor))
-          : undefined
-      )
-    )
-    .orderBy(desc(notification.createdAt))
+    .where(and(eq(notification.userId, options.userId), cursorClause))
+    .orderBy(desc(notification.createdAt), desc(notification.id))
     .limit(limit + 1);
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
+  const requesterIds = Array.from(
+    new Set(
+      pageRows
+        .filter((row) => row.type === "dm_host_request")
+        .map((row) => {
+          const requesterUserId = row.data?.requesterUserId;
+          return typeof requesterUserId === "string" ? requesterUserId : null;
+        })
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+
+  const requesterLabels = new Map<string, string>();
+
+  if (requesterIds.length > 0) {
+    const requesters = await db
+      .select({ id: user.id, nickname: user.publicNickname })
+      .from(user)
+      .where(inArray(user.id, requesterIds));
+
+    for (const requester of requesters) {
+      requesterLabels.set(
+        requester.id,
+        requester.nickname?.trim() || "A campfire member"
+      );
+    }
+  }
+
+  const notifications = pageRows.map((row) => {
+    const requesterUserId =
+      typeof row.data?.requesterUserId === "string"
+        ? row.data.requesterUserId
+        : undefined;
+
+    return mapNotification(row, {
+      requesterLabel: requesterUserId
+        ? requesterLabels.get(requesterUserId)
+        : undefined,
+    });
+  });
+
+  const nextCursor = hasMore
+    ? encodeCursor({
+        createdAt: pageRows[pageRows.length - 1]?.createdAt.toISOString() ?? "",
+        id: pageRows[pageRows.length - 1]?.id ?? "",
+      })
+    : null;
+
   return {
-    notifications: pageRows.map(mapNotification),
-    nextCursor: hasMore
-      ? pageRows[pageRows.length - 1]?.createdAt.toISOString() ?? null
-      : null,
+    notifications,
+    nextCursor,
     hasMore,
   };
 }
@@ -100,7 +214,7 @@ export async function createHostRequestNotification(options: {
   const campfirePath = `dm/${options.dmId}`;
 
   const [requester] = await db
-    .select({ email: user.email, nickname: user.publicNickname })
+    .select({ id: user.id })
     .from(user)
     .where(eq(user.id, options.requesterUserId))
     .limit(1);
@@ -141,7 +255,23 @@ export async function createHostRequestNotification(options: {
     return { ok: false as const, error: "Host not available for request." as const };
   }
 
-  const requesterLabel = requester.nickname?.trim() || requester.email;
+  const [existing] = await db
+    .select()
+    .from(notification)
+    .where(
+      and(
+        eq(notification.userId, hostMember.hostUserId),
+        eq(notification.type, "dm_host_request"),
+        sql`${notification.data} ->> 'requesterUserId' = ${options.requesterUserId}`,
+        sql`${notification.data} ->> 'campfireId' = ${campfire.id}`,
+        eq(notification.isRead, false)
+      )
+    )
+    .limit(1);
+
+  if (existing) {
+    return { ok: true as const, notification: mapNotification(existing) };
+  }
 
   const [created] = await db
     .insert(notification)
@@ -149,7 +279,7 @@ export async function createHostRequestNotification(options: {
       userId: hostMember.hostUserId,
       type: "dm_host_request",
       title: "New DM campfire request",
-      body: `${requesterLabel} requests for you to create a private campfire DM chatroom with them inside, /NAT: Commons/.`,
+      body: "A campfire member requested a new private DM campfire in /NAT: Commons/.",
       data: {
         campfireId: campfire.id,
         campfireName: campfire.name,
@@ -175,43 +305,56 @@ export async function createMemoryReminderNotifications(userId: string): Promise
     .orderBy(desc(memory.createdAt))
     .limit(25);
 
-  let createdCount = 0;
+  const candidates = recentMemories
+    .map((item) => ({
+      ...item,
+      normalizedText: item.rawText.toLowerCase(),
+    }))
+    .filter(
+      (item) =>
+        item.normalizedText.includes("court") ||
+        item.normalizedText.includes("birthday")
+    );
 
-  for (const item of recentMemories) {
-    const text = item.rawText.toLowerCase();
-    if (!text.includes("court") && !text.includes("birthday")) {
-      continue;
-    }
+  if (!candidates.length) {
+    return 0;
+  }
 
-    const alreadyExists = await db
-      .select({ id: notification.id })
-      .from(notification)
-      .where(
-        and(
-          eq(notification.userId, userId),
-          eq(notification.type, "memory_event_preview"),
-          sql`${notification.data} ->> 'memoryId' = ${item.id}`
-        )
+  const candidateIds = candidates.map((item) => item.id);
+
+  const existingRows = await db
+    .select({ memoryId: sql<string>`${notification.data} ->> 'memoryId'` })
+    .from(notification)
+    .where(
+      and(
+        eq(notification.userId, userId),
+        eq(notification.type, "memory_event_preview"),
+        inArray(sql<string>`${notification.data} ->> 'memoryId'`, candidateIds)
       )
-      .limit(1);
+    );
 
-    if (alreadyExists.length > 0) {
-      continue;
-    }
+  const existingIds = new Set(
+    existingRows
+      .map((row) => row.memoryId)
+      .filter((value): value is string => typeof value === "string")
+  );
 
-    const summary = text.includes("court")
-      ? "You mentioned a court date in memory. AI reminder preview is active (early prototype)."
-      : "You mentioned a birthday in memory. AI reminder preview is active (early prototype).";
-
-    await db.insert(notification).values({
+  const pendingInsert = candidates
+    .filter((item) => !existingIds.has(item.id))
+    .map((item) => ({
       userId,
       type: "memory_event_preview",
       title: "AI reminder preview",
-      body: summary,
+      body: item.normalizedText.includes("court")
+        ? "You mentioned a court date in memory. AI reminder preview is active (early prototype)."
+        : "You mentioned a birthday in memory. AI reminder preview is active (early prototype).",
       data: { memoryId: item.id },
-    });
-    createdCount += 1;
+    }));
+
+  if (!pendingInsert.length) {
+    return 0;
   }
 
-  return createdCount;
+  await db.insert(notification).values(pendingInsert);
+  return pendingInsert.length;
 }
