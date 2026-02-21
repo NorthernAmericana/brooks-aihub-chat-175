@@ -1,24 +1,33 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import {
   DM_RECIPIENT_LIMIT_DEFAULT,
   DM_RECIPIENT_LIMIT_FOUNDER,
 } from "@/lib/commons/constants";
+import {
+  DM_TEMP_RETENTION_HOURS,
+  getDmTempRetentionLabel,
+} from "@/lib/commons/dm-retention";
 
 type CampfireMode = "community" | "dm";
-type RetentionMode =
-  | "permanent"
-  | "rolling_window"
-  | "timeboxed"
-  | "burn_on_empty";
+type DmRetentionMode = "permanent" | "timeboxed";
 
 export function CreateCampfireForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<CampfireMode>("community");
-  const [retentionMode, setRetentionMode] =
-    useState<RetentionMode>("permanent");
+  const [dmRetentionMode, setDmRetentionMode] =
+    useState<DmRetentionMode>("permanent");
+
+  useEffect(() => {
+    const queryMode = searchParams.get("mode");
+
+    if (queryMode === "dm" || queryMode === "community") {
+      setMode(queryMode);
+    }
+  }, [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -39,15 +48,9 @@ export function CreateCampfireForm() {
           .split(/[\n,]/)
           .map((value) => value.trim().toLowerCase())
           .filter((value) => value.length > 0);
-        const rollingWindowSizeValue = String(
-          formData.get("rollingWindowSize") ?? ""
-        ).trim();
         const expiresInHoursValue = String(
           formData.get("expiresInHours") ?? ""
         ).trim();
-        const rollingWindowSize = rollingWindowSizeValue
-          ? Number.parseInt(rollingWindowSizeValue, 10)
-          : undefined;
         const expiresInHours = expiresInHoursValue
           ? Number.parseInt(expiresInHoursValue, 10)
           : undefined;
@@ -59,30 +62,19 @@ export function CreateCampfireForm() {
                 name,
                 description,
                 campfirePath,
-                retentionMode,
-                rollingWindowSize,
-                expiresInHours,
+                retentionMode: "permanent" as const,
               }
             : {
                 mode,
                 recipientEmails,
+                retentionMode: dmRetentionMode,
+                expiresInHours:
+                  dmRetentionMode === "timeboxed" ? expiresInHours : undefined,
               };
 
         if (mode === "community") {
           if (!campfirePath) {
             setError("Campfire path is required.");
-            return;
-          }
-
-          if (retentionMode === "rolling_window" && !rollingWindowSize) {
-            setError(
-              "Rolling window size is required for rolling window retention."
-            );
-            return;
-          }
-
-          if (retentionMode === "timeboxed" && !expiresInHours) {
-            setError("Expiration hours are required for timeboxed retention.");
             return;
           }
         }
@@ -99,6 +91,11 @@ export function CreateCampfireForm() {
             setError(
               `Direct campfires support up to ${DM_RECIPIENT_LIMIT_FOUNDER} recipient emails.`
             );
+            return;
+          }
+
+          if (dmRetentionMode === "timeboxed" && !expiresInHours) {
+            setError("Expiration hours are required for temporary DM campfires.");
             return;
           }
         }
@@ -218,88 +215,78 @@ export function CreateCampfireForm() {
             </p>
           </div>
 
+          <p className="text-xs text-[#3b4a86] dark:text-amber-100/90">
+            Public community campfires are always permanent.
+          </p>
+        </>
+      ) : (
+        <>
           <div className="space-y-1.5">
             <label
               className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
-              htmlFor="campfire-retention-mode"
+              htmlFor="dm-retention-mode"
             >
-              Retention mode
+              DM campfire type
             </label>
             <select
               className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:focus-visible:ring-amber-200"
-              id="campfire-retention-mode"
+              id="dm-retention-mode"
               name="retentionMode"
               onChange={(event) =>
-                setRetentionMode(event.target.value as RetentionMode)
+                setDmRetentionMode(event.target.value as DmRetentionMode)
               }
-              value={retentionMode}
+              value={dmRetentionMode}
             >
               <option value="permanent">Permanent</option>
-              <option value="rolling_window">Rolling window</option>
-              <option value="timeboxed">Timeboxed</option>
-              <option value="burn_on_empty">Burn on empty</option>
+              <option value="timeboxed">Temporary</option>
             </select>
           </div>
 
-          {retentionMode === "rolling_window" ? (
-            <div className="space-y-1.5">
-              <label
-                className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
-                htmlFor="campfire-rolling-window-size"
-              >
-                Rolling window size (posts)
-              </label>
-              <input
-                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
-                id="campfire-rolling-window-size"
-                min={1}
-                name="rollingWindowSize"
-                required
-                type="number"
-              />
-            </div>
-          ) : null}
-
-          {retentionMode === "timeboxed" ? (
+          {dmRetentionMode === "timeboxed" ? (
             <div className="space-y-1.5">
               <label
                 className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
                 htmlFor="campfire-expires-in-hours"
               >
-                Expiration (hours)
+                Temporary duration
               </label>
-              <input
-                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
+              <select
+                className="w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:focus-visible:ring-amber-200"
+                defaultValue="24"
                 id="campfire-expires-in-hours"
-                min={1}
                 name="expiresInHours"
                 required
-                type="number"
-              />
+              >
+                {DM_TEMP_RETENTION_HOURS.map((hours) => (
+                  <option key={hours} value={String(hours)}>
+                    {getDmTempRetentionLabel(hours)}
+                  </option>
+                ))}
+              </select>
             </div>
           ) : null}
+
+          <div className="space-y-1.5">
+            <label
+              className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
+              htmlFor="recipient-emails"
+            >
+              Recipient emails
+            </label>
+            <textarea
+              className="min-h-24 w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
+              id="recipient-emails"
+              name="recipientEmails"
+              placeholder="friend@brooksaihub.app, teammate@brooksaihub.app"
+              required
+            />
+            <p className="text-xs text-[#3b4a86] dark:text-amber-100/90">
+              Add emails separated by commas or new lines. Free accounts support
+              up to {DM_RECIPIENT_LIMIT_DEFAULT} recipient emails; founders
+              support up to {DM_RECIPIENT_LIMIT_FOUNDER}.
+            </p>
+          </div>
         </>
-      ) : (
-        <div className="space-y-1.5">
-          <label
-            className="text-xs font-bold uppercase tracking-[0.12em] text-[#24326b] dark:text-amber-100"
-            htmlFor="recipient-emails"
-          >
-            Recipient emails
-          </label>
-          <textarea
-            className="min-h-24 w-full border-[3px] border-[#16224d] bg-[#fffdf2] px-3 py-2 text-sm text-[#16224d] placeholder:text-[#6671a4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b4a92] dark:border-[#f6e8b4] dark:bg-[#0b1336] dark:text-amber-50 dark:placeholder:text-amber-200/70 dark:focus-visible:ring-amber-200"
-            id="recipient-emails"
-            name="recipientEmails"
-            placeholder="friend@brooksaihub.app, teammate@brooksaihub.app"
-            required
-          />
-          <p className="text-xs text-[#3b4a86] dark:text-amber-100/90">
-            Add emails separated by commas or new lines. Free accounts support
-            up to {DM_RECIPIENT_LIMIT_DEFAULT} recipient emails; founders
-            support up to {DM_RECIPIENT_LIMIT_FOUNDER}.
-          </p>
-        </div>
       )}
 
       {error ? (

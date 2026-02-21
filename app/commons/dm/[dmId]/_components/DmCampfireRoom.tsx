@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DrawPad } from "@/components/commons/dm/DrawPad";
 import {
@@ -21,6 +21,7 @@ type DmCampfireRoomProps = {
   messages: DmRoomForViewer["messages"];
   campfirePath: string;
   viewerUserId: string;
+  expiresAt: string | null;
 };
 
 type ParsedMessage =
@@ -71,6 +72,28 @@ function parseMessage(body: string): ParsedMessage {
   };
 }
 
+function formatCountdown(millisecondsRemaining: number): string {
+  if (millisecondsRemaining <= 0) {
+    return "00:00:00";
+  }
+
+  const totalSeconds = Math.floor(millisecondsRemaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(seconds).padStart(2, "0");
+
+  if (days > 0) {
+    return `${days}d ${hh}:${mm}:${ss}`;
+  }
+
+  return `${hh}:${mm}:${ss}`;
+}
+
 export function DmCampfireRoom({
   roomId,
   campfire,
@@ -80,6 +103,7 @@ export function DmCampfireRoom({
   messages,
   campfirePath,
   viewerUserId,
+  expiresAt,
 }: DmCampfireRoomProps) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -88,6 +112,19 @@ export function DmCampfireRoom({
   const [isSwitched, setIsSwitched] = useState(false);
   const [isDrawPadCollapsed, setIsDrawPadCollapsed] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!expiresAt) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [expiresAt]);
 
   const memberLimit = host?.foundersAccess
     ? PRIVATE_MEMBER_LIMIT_FOUNDER_HOST
@@ -162,6 +199,11 @@ export function DmCampfireRoom({
                 <p className="text-base sm:text-lg">
                   {formatDmOccupancy(memberCount, memberLimit)} {accessLabel}
                 </p>
+                {expiresAt ? (
+                  <p className="mt-1 text-sm font-bold text-[#7a1313] sm:text-base">
+                    Temporary campfire ends in {formatCountdown(new Date(expiresAt).getTime() - now)}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="flex items-center gap-2">

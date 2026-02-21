@@ -876,6 +876,25 @@ export const commonsCampfire = pgTable(
 
 export type CommonsCampfire = InferSelectModel<typeof commonsCampfire>;
 
+
+export const notification = pgTable("notifications", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Notification = InferSelectModel<typeof notification>;
+
 export const commonsCampfireSettings = pgTable("commons_campfire_settings", {
   campfireId: uuid("campfire_id")
     .primaryKey()
