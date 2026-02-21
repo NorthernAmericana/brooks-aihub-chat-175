@@ -436,35 +436,10 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
     [runPlayerAction]
   );
 
-  const trackId = playerState?.item?.id;
-  const trackUri = playerState?.item?.uri;
-
   const startRadio = useCallback(async () => {
-    if (!trackId || !trackUri) {
+    const trackId = playerState?.item?.id;
+    if (!trackId) {
       return;
-    }
-
-    const progressMs = Math.max(0, Math.floor(playerState?.progress_ms ?? 0));
-
-    try {
-      await fetchJson("/api/spotify/player/play", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          context_uri: `spotify:station:track:${trackId}`,
-          offset: { uri: trackUri },
-          position_ms: progressMs,
-        }),
-      });
-
-      setControlMessage(null);
-      await refreshState();
-      window.setTimeout(() => {
-        refreshStateRef.current().catch(() => undefined);
-      }, 750);
-      return;
-    } catch {
-      // Fallback to recommendation flow below.
     }
 
     const recommendations = await fetchJson<{
@@ -481,13 +456,7 @@ export function SpotifyPlaybackProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uris: [uri] }),
     });
-  }, [
-    playerState?.progress_ms,
-    refreshState,
-    runPlayerAction,
-    trackId,
-    trackUri,
-  ]);
+  }, [playerState?.item?.id, runPlayerAction]);
 
   const openSpotify = useCallback(() => {
     const trackUri = playerState?.item?.uri;
