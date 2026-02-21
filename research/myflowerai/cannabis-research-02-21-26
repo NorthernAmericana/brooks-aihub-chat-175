@@ -1,0 +1,453 @@
+# Daily Cannabis Use, Dose, Mood, Context, and Functioning: Evidence Review and MyFlower AI Integration Blueprint
+
+## Executive summary
+
+Daily cannabis use in young adults is best understood as an interaction between (a) **reinforcement processes** (acute reward, relief of tension/craving, and learned cue–habit loops), (b) **individual factors** (tolerance, mental health vulnerability, motives/expectancies), (c) **product chemistry** (THC dose and delivery efficiency; cannabinoid/terpene profiles with major measurement limits), and (d) **context** (set/setting, social environment, planned tasks). Real-world data show that cannabis use episodes often coincide with **momentary changes** like reduced tension/craving and increased stimulation/sedation/high—effects that can be stronger in people with more Cannabis Use Disorder (CUD) symptoms and can feel “diminished” in emerging adults in some samples. citeturn23search3
+
+For inhaled Δ9-THC, the science is clear on **rapid onset and rapid peak**: effects begin within minutes, blood THC and heart rate can peak within ~30 minutes, and many measurable effects generally decline over 3–4 hours—though cognitive/psychomotor effects can last longer (e.g., up to ~6 hours in a controlled trial). Delivery differs meaningfully by device: in an RCT, **vaporized cannabis produced higher blood THC and stronger acute effects than smoked cannabis at the same labeled THC dose**. citeturn11search1
+
+Daily use increases the likelihood of **tolerance** and **withdrawal**. Human PET evidence shows **downregulation of brain CB1 receptor availability in chronic daily smokers** that is largely reversible after abstinence (with some region-specific nuances). citeturn11search3 Cannabis withdrawal is common (often reported in ~half of regular/dependent users), with typical onset ~24–48 hours after stopping, peaks around days 2–6, and improvement over ~2–3 weeks (sleep can persist longer). citeturn16search0turn16search1
+
+On population metrics, U.S. national survey data estimate **marijuana use disorder** prevalence of **6.8% among ages 12+** and **16.6% among ages 18–25** (2023). citeturn13search1 Public health agencies summarize that **~3 in 10 people who use cannabis develop cannabis use disorder**, and risk is higher with earlier onset and more frequent use. citeturn14search0
+
+Cognitive effects are dose- and timing-dependent: acute intoxication reliably impairs **verbal learning/memory and working memory** and can also affect attention/executive function and psychomotor performance; evidence for persistent (non-acute) deficits is mixed and confounded, but heavy/frequent use is more consistently associated with residual effects in some meta-analytic work. citeturn18search1turn11search1
+
+Mental health interactions are not “one-directional.” THC can be anxiolytic at some doses and anxiogenic/paranoia-inducing at others (biphasic/dose-dependent). CBD shows clearer short-term anxiolytic signals in some human work (e.g., public speaking SAD paradigm). Meanwhile, higher-frequency and higher-potency use are associated with increased psychosis risk in epidemiology; a large EU-GEI case–control study reported substantially higher odds for daily use, especially daily high-potency use. citeturn19search6turn19search5turn21search4
+
+For “strain science,” two realities matter for product-inference systems: (1) **commercial labels often misrepresent chemical and genetic diversity**, and (2) **testing variability and market incentives distort the THC number**. Multiple peer-reviewed analyses show misalignment between strain labels and measured chemotypes/chemovars, and one study found retail flower THC often lower than labeled. citeturn26search0turn26search3turn28search1
+
+For medicinal benefits, the strongest evidence base (per the National Academies review) supports cannabinoids/cannabis for **chronic pain**, **chemotherapy-induced nausea/vomiting** (oral cannabinoids), and **MS spasticity (patient-reported) with oral cannabinoids**, while many other claims remain limited/insufficient. RCTs of smoked/vaporized cannabis show analgesic benefit for neuropathic pain in specific clinical populations, but these data do not automatically generalize to daily recreational use, high-potency products, or long-term safety. citeturn12search4turn30search1turn30search5
+
+For MyFlower AI, the product opportunity is to model cannabis use as **event-level exposure + context + person-level adaptation**, while explicitly tracking **uncertainty** (dose estimation error, label reliability, and context measurement noise). This report proposes a concrete data model, feature set, prompt library (8–12 templates), and an integration checklist aligned to the evidence constraints (especially around dosage and “strain” inference).
+
+## Repo context, assumptions, and limitations
+
+The provided repository is a mobile/web conversational AI app (“Brooks AI HUB”) with a modern chat UI and multi-provider model access, per the repository README. citeturn3view3 The top-level file tree shows folders including `research` and `schemas/myflowerai`, consistent with your request to use those as MyFlower AI context. citeturn1view0
+
+However, in this environment, GitHub directory browsing for `schemas/myflowerai` and `research` was not reliably readable (the tool output returned a “You can’t perform that action at this time” constraint rather than the file list/content). citeturn3view0turn3view1 As a result:
+
+- Specific existing schema filenames, research notes, and implementation details inside those folders are treated as **unknown** (not invented).
+- The MyFlower AI integration recommendations below are designed to be **drop-in additions** (new schema files, new prompt files, and clear interfaces) that you can map onto your actual repo conventions once you share or expose those files.
+
+One additional concrete repo signal: the root tree shows `drizzle.config.ts`, suggesting a TypeScript + database schema workflow consistent with using entity["company","Drizzle ORM","typescript sql orm"] or similar patterns (while the actual DB type is unknown from the accessible materials). citeturn1view0
+
+## Inhaled Δ9-THC pharmacology and dose–response
+
+### Delivery and timing for inhalation
+
+Across clinical sources, inhalation is characterized by **rapid absorption and high variability** driven by puff topography (depth, duration, breath hold), device settings, and product potency. A clinical pharmacokinetics review summarises inhaled THC bioavailability commonly in the **~10%–35%** range (with oral lower), reflecting this variability. citeturn17search0
+
+A controlled crossover trial of smoked vs vaporized cannabis (THC 0, 10 mg, 25 mg) found:
+
+- **Blood THC and heart rate peaked within 30 minutes**, returning to baseline within ~3–4 hours.
+- **Subjective and cognitive/psychomotor effects** could persist longer (up to ~6 hours on average for several measures).
+- **Vaporization produced higher blood THC and stronger effects** than smoking at the same labeled dose. citeturn11search1
+
+This “fast-on, then taper” profile is why inhalation supports rapid self-titration (and also why it can overshoot easily with higher-potency products or efficient devices).
+
+### Smoke vs vapor: dose equivalence is not guaranteed
+
+In the same RCT, equal THC amounts delivered by vaporization vs smoking were not equivalent in effect:
+
+- Peak blood THC at 25 mg THC: **smoked ~10.2 ng/mL vs vaporized ~14.4 ng/mL** (in infrequent users).
+- Subjective “drug effect” ratings at 10 mg THC: **smoked ~46/100 vs vaporized ~69/100** (visual analog rating).
+- At 25 mg THC: **smoked ~66/100 vs vaporized ~78/100**. citeturn11search1
+
+This matters for MyFlower AI: “mg THC” is not a sufficient exposure metric unless the system also tracks **route/device efficiency and inhalation pattern**.
+
+### Research standardization: the “standard THC unit”
+
+To improve comparability across studies, NIH/NIDA established a **standard THC unit of 5 mg Δ9-THC** for applicable human subjects research reporting (not as a “safe dose,” but as a reporting unit). citeturn13search0turn13search2
+
+MyFlower AI can mirror this by storing exposures in both (a) **mg THC**, and (b) **standard THC units** (= mg THC / 5), with a separate “delivery efficiency” uncertainty.
+
+### Simple dose–effect chart from controlled vapor vs smoke data
+
+Below is a compact representation of the controlled RCT’s key dose–effect signals (in infrequent users), showing stronger acute effects for vaporized cannabis at equal THC dose. citeturn11search1
+
+| Condition | THC dose | Peak blood THC (ng/mL) | Peak “drug effect” rating (0–100) |
+|---|---:|---:|---:|
+| Smoked flower | 10 mg | (reported; lower than vapor) | ~46 |
+| Vaporized flower | 10 mg | (reported; higher than smoke) | ~69 |
+| Smoked flower | 25 mg | ~10.2 | ~66 |
+| Vaporized flower | 25 mg | ~14.4 | ~78 |
+
+A quick visual of the “drug effect” ratings:
+
+- 10 mg smoked:  ████████████████████ (46)  
+- 10 mg vaped:   ██████████████████████████████ (69)  
+- 25 mg smoked:  ███████████████████████████ (66)  
+- 25 mg vaped:   ████████████████████████████████ (78)  
+
+## Tolerance, CB1 downregulation, withdrawal, and Cannabis Use Disorder
+
+### Tolerance mechanisms and CB1 receptor downregulation
+
+Tolerance from repeated THC exposure is typically conceptualized as **CB1 receptor desensitization/internalization** and downstream adaptation in endocannabinoid signaling (with behavioral tolerance varying by domain and user). Human PET imaging provides direct evidence: chronic daily cannabis smokers showed **reduced CB1 receptor availability** in multiple brain regions, described as **reversible and regionally selective** after abstinence. citeturn11search3turn11search2
+
+Design implication: a daily user’s “how high will this feel?” depends not just on product THC but on a latent tolerance state that changes with **recent exposure history**. MyFlower AI should treat tolerance as an inferred, time-varying variable (e.g., exponential decay with abstinence windows) rather than a static “daily user” flag.
+
+### Withdrawal course and typical symptom timeline
+
+A major clinical review characterizes cannabis withdrawal as common after abrupt cessation or large reductions, affecting **~half of regular/dependent users**, and outlines a typical course and symptom set. citeturn16search0 Another review summarizes the typical timeline as:
+
+- **Onset:** ~24–48 hours after cessation  
+- **Peak:** ~2–5 (or 2–6) days post-cessation  
+- **Resolution:** typically ~2–3 weeks (sleep disturbance can persist longer) citeturn16search1turn16search0
+
+Mermaid view of the typical withdrawal arc:
+
+```mermaid
+flowchart LR
+  A[Last THC exposure] --> B[24-48h: onset]
+  B --> C[Days 2-6: peak symptoms]
+  C --> D[~2-3 weeks: most symptoms remit]
+  D --> E[Sleep issues may persist longer in some]
+```
+
+citeturn16search1turn16search0
+
+For a daily user, withdrawal-like states can function as a **negative reinforcement driver** (using to stop feeling irritable, anxious, or dysphoric), shaping “why I smoke” even when the “high” feels weaker.
+
+### Defining and quantifying CUD at the population level
+
+The DSM-5 definition used clinically is “clinically significant impairment or distress” over 12 months with **≥2** criteria (e.g., unsuccessful cut-down attempts, time spent, craving, role impairment, continued use despite problems, tolerance, withdrawal). citeturn14search9
+
+Population prevalence (U.S.) from entity["organization","SAMHSA","us health agency"]’s 2023 NSDUH key indicators: **19.2 million people (6.8%)** aged 12+ had past-year marijuana use disorder, with **16.6% among ages 18–25**. citeturn13search1
+
+Public health summaries from entity["organization","CDC","us public health agency"] state that approximately **3 in 10** people who use cannabis have cannabis use disorder, and risk is higher with earlier initiation and more frequent use. citeturn14search0
+
+## Cognition, motivation, productivity, and memory
+
+### Acute cognitive effects (minutes to hours) and residual effects (hours to days)
+
+Meta-analytic evidence supports that acute cannabis/THC intoxication produces small-to-moderate impairments across cognitive domains, with **verbal learning/memory and working memory** showing some of the most robust deficits; executive functioning and psychomotor performance can also be impaired. citeturn18search1turn18search5 The smoked/vaporized RCT described earlier directly observed dose-orderly cognitive and psychomotor impairment, persisting for hours after dosing. citeturn11search1
+
+Public health guidance also reflects the persistence issue: CDC notes heavy daily/near-daily use can damage memory/attention/learning and that this can last for **a week or more** after last use (summary-level statement; causal specificity remains complex). citeturn14search2
+
+For MyFlower AI, this suggests a key modelling distinction:
+
+- **Acute impairment window**: track time-since-use and estimated exposure.
+- **Residual window**: particularly relevant for daily users, where sessions overlap and recovery time is limited.
+
+### Brain development and age considerations
+
+CDC notes the brain continues developing until around age 25, and cannabis can affect brain regions involved in memory, attention, decision-making, and emotion. citeturn12search0 This is relevant to a 21-year-old daily user because age may moderate both cognitive vulnerability and recovery trajectories.
+
+### Motivation: what is supported, what is mixed, and what is most actionable for an app
+
+The “amotivational syndrome” idea is often oversimplified. A systematic review of non-acute effects of cannabis use on motivation/reward sensitivity concludes cross-sectional evidence is equivocal but that some longitudinal evidence supports a possible causal link in certain contexts, and that motivation and reward sensitivity are distinct constructs. citeturn35search3
+
+A systematic review on reward processing likewise suggests cannabis exposure is associated with specific alterations in reward/motivation measure domains, but findings vary by method and design. citeturn35search5
+
+Most actionable for MyFlower AI: user-reported **motives** predict frequency and problems better than generic “lazy vs motivated” stereotypes. A meta-analysis found motives (especially coping) relate to both use frequency and marijuana-related problems; when adjusting across motives, coping remains strongly linked to problems. citeturn29search0 This allows MyFlower AI to frame “why someone smokes daily” as testable, trackable constructs (coping, enhancement, social, expansion, conformity) rather than moral narratives.
+
+## Mood/anxiety interactions, psychosis risk, expectancy effects, and contextual moderators
+
+### Mood and anxiety: dose-dependence, user vulnerability, and THC/CBD/terpene modulation
+
+A critical review of cannabis and anxiety emphasizes **dose-dependent and biphasic effects** of THC (anxiolytic at some doses/conditions; anxiogenic at others), and finds more consistent short-term anxiolytic signals for CBD in humans. citeturn19search6
+
+A well-known RCT in treatment-naïve social anxiety disorder used a simulated public speaking test and found a single dose of CBD reduced anxiety and related subjective measures vs placebo. citeturn19search5
+
+Evidence that terpenes can modulate THC effects in humans is emerging but still sparse. A 2024 randomized crossover trial reported that vaporized d-limonene **selectively mitigated acute THC-induced anxiety** in healthy adults who intermittently used cannabis. citeturn27search4turn27search1
+
+These results fit a “component interaction” model, but they do not automatically validate broad retail marketing claims that “this strain will make you focused because it has terpene X.” The key is to encode the uncertainty: terpene effects may exist, but product labels and complex mixtures make inference hard.
+
+### Psychosis risk: frequency, potency, and population-level associations
+
+Epidemiology consistently links heavier use with higher risk of psychotic outcomes (dose–response). A meta-analysis of level of cannabis use and psychosis outcomes reported higher risk among the heaviest users vs non-users (OR ~3.9 in the authors’ model), supporting a dose–response relationship (while causality remains difficult to prove definitively). citeturn20search0
+
+The EU-GEI multicenter case–control study (11 sites across Europe and Brazil) reported that:
+
+- Daily use was associated with higher odds of psychotic disorder vs never use.
+- Daily **high-potency** use showed still higher odds than daily low-potency. citeturn21search4
+
+entity["organization","NIDA","nih institute"] also highlights evidence linking cannabis use disorder with increased schizophrenia risk, especially among young men, based on large registry analyses. citeturn14search7
+
+Design implication for MyFlower AI: treat “anxiety/paranoia/psychosis-like” effects as high-salience safety outcomes, and model them as arising from a combination of dose/potency, vulnerability history, and context (e.g., stressful environments). Avoid deterministic predictions; use calibrated risk flags.
+
+### Expectancy/placebo and ritual mechanisms
+
+Expectancy influences subjective experience and behavior. In a balanced-placebo expectation experiment with smoked hashish cigarettes, “positive expectancy” could induce stronger subjective effects even without active THC and appeared to influence smoking behavior and cannabinoid exposure. citeturn22search2
+
+A larger balanced-placebo design in regular users found both active THC and expectancy independently increased subjective intoxication; expectancy sometimes shifted deliberate decision-making, while pharmacologic THC impaired inhibition tasks. citeturn22search3
+
+For MyFlower AI, this motivates capturing an explicit “expectancy” field (e.g., “how strong do you think it is?” “what do you expect to feel?”), because expectancy can be a measurable moderator.
+
+### Context (“set/setting”) and planned tasks
+
+A 2024 systematic review/meta-analysis on contextual factors (environment, social group, expectancy, time/day) found no significant overall association between contextual conditions and subjective effects—but emphasized that the literature is methodologically weak and conclusions may be premature. citeturn23search0
+
+EMA data, however, show reliable within-person pre/post patterns around use. One EMA study of frequent users (ages 15–24) found use associated with decreased craving and tension and increased stimulation/sedation/high, with stronger “relief” patterns in participants with more CUD symptoms. citeturn23search3
+
+Planned activities moderate functional outcomes primarily through **task demands**. If a task requires working memory, attention, or psychomotor precision, acute THC effects are more likely to interfere. The inhale RCT and cognitive meta-analytic work make these domain effects measurable. citeturn11search1turn18search1
+
+## Product chemistry, terpene/chemovar measurement limits, and testing variability
+
+### “Strains” vs chemovars/chemotypes: measurement limits and mislabeling
+
+Multiple lines of evidence show that common commercial cannabis categories (e.g., “strain name,” “sativa/indica”) often fail as scientific predictors:
+
+- A genetic analysis (PLOS ONE) found that marijuana and hemp are differentiated genome-wide, but “strain names often do not reflect a meaningful genetic identity,” and reported sativa/indica ancestry only moderately correlates with genetic structure. citeturn25search9
+- A Nevada medical cannabis survey showed that breeder-reported names implied a false sense of diversity: ~396 names mapped onto a small number of chemovars, and genetic markers did not cleanly align with chemotypes. citeturn26search0
+- A multi-state analysis of commercial cannabis phytochemical profiles found distinct chemotypes, but commercial labels did not consistently align with chemical diversity (though some labels showed biased associations). citeturn26search3
+
+MyFlower AI implication: prefer **chemotype features** (THC/CBD ratios + dominant terpene vectors + batch COA confidence) over “strain name” as the core representation, and treat strain labels as weak priors.
+
+### Entourage effect: evidence for/against in 2026 terms
+
+The “entourage effect” is often used as a broad marketing claim, but the clinical evidence is uneven.
+
+- A 2024 systematic review on entourage effects of terpenes concludes that while exploratory data suggest terpene bioactivity, **synergistic or additive enhancement of cannabinoid efficacy by terpenes remains unproven** overall and more clinical trials are needed. citeturn24search4turn24search5
+- Counterbalancing that cautious stance, a 2024 randomized crossover trial showed one concrete human example: d-limonene reduced THC-induced anxiety without broadly changing other THC effects. citeturn27search4
+- Earlier mechanistic arguments (e.g., Russo 2011) outline plausible synergy pathways, but these are primarily hypothesis-generating reviews rather than definitive retail product validators. citeturn27search2
+
+Operational takeaway: MyFlower AI should not claim “terpene X causes effect Y” as a rule. It can instead learn **empirical user-specific associations** while surfacing an evidence grade and uncertainty.
+
+### Lab testing variability and THC label reliability
+
+Testing inconsistency is a major constraint for any “dose-aware” cannabis app:
+
+- A PLOS ONE study comparing purchased retail flower to label THC found observed THC potency was substantially lower than label claims; ~70% of samples were >15% lower than labeled THC, underscoring incentives and variability. citeturn28search1
+- A Journal of Cannabis Research analysis found “bunching” around a 20% THC threshold in NV and WA labeled flower products, consistent with market incentives to report just over key potency thresholds. citeturn24search7
+- A Reuters analysis describes a patchwork of state-specific testing protocols and the absence of unified national standards, enabling inconsistent methods and “lab shopping.” citeturn28news56
+- State contaminant regulation also varies widely (orders-of-magnitude differences in action levels), which matters for “gritty/gross” experiences potentially related to combustion irritation, harshness, or contaminants (not uniquely identifiable by subjective feel). citeturn28search0
+
+image_group{"layout":"carousel","aspect_ratio":"16:9","query":["cannabis certificate of analysis COA example","cannabis testing laboratory HPLC THC potency testing","cannabis terpene profile lab report example"],"num_per_query":1}
+
+## MyFlower AI blueprint: measurement table, schemas, prompts, and integration checklist
+
+### Measurement methods table with design implications
+
+| Measurement method | What it captures | Pros | Cons / failure modes | Design implications for MyFlower AI |
+|---|---|---|---|---|
+| Self-report + EMA (in-the-moment surveys) | Motives, mood, context, perceived dose, subjective effects, task performance | High psychological validity; low cost; can capture set/setting and planned tasks; enables within-person causal-ish inference | Recall bias if not momentary; inconsistent rating scales; missingness | Make EMA the core. Use short, repeated prompts + optional rich journaling. Calibrate each user’s rating scale over time using anchoring vignettes and within-person baselines. (EMA evidence for tension/craving/high changes supports the approach.) citeturn23search3 |
+| Breath THC (experimental/limited deployment) | Recent inhalation exposure; short detection window (~hours) | Detects near-term use; correlates with blood kinetics shortly after smoking | Limited accessibility; short window; not a validated impairment proxy | Store as optional “objective recent exposure” feature with timestamps; avoid labeling as “impairment.” (THC detected through ~3h; peaks ~15 min post-smoking.) citeturn33search8 |
+| Oral fluid / saliva cannabinoids | Recent-ish exposure and/or oral contamination | Easier collection than blood; can capture recent smoking markers | Detection windows vary; contamination issues; correlation with impairment is weak; cutoff choice changes meaning | If supported, store cutoffs and collection device; treat as a probabilistic “recent use marker,” not “how high.” (Controlled smoking shows THC-positive OF up to ~13.5h; combined cutoffs can shorten window.) citeturn34search0turn34search1 |
+| Urine THC-COOH (metabolites) | History of use (days–weeks+) | Widely available; detects longer-term exposure | Poor for timing/intoxication; long detectability; influenced by chronic use and physiology | Use only for user-consented “long-term exposure baseline” or research validation; never treat as intoxication. (Reviews note urine’s long detection window vs OF/blood.) citeturn34search2 |
+| Lab potency testing / COA (certificate of analysis) | Cannabinoid %; terpene %; contaminant panels (varies by state/lab) | Best available product metadata when accurate; supports dose estimation | COA availability uneven; lab variability; incentives distort THC; different labs/test protocols | Store COA provenance (lab, method, date, batch), and maintain a “COA confidence score” using known market distortions (e.g., threshold bunching, systematic inflation signals). citeturn28search1turn24search7turn28news56 |
+| Wearables (HR, sleep proxies, activity) | Physiologic correlates (sleep timing, HR changes), not THC directly | Passive collection; good for longitudinal patterns (sleep debt ↔ use) | Non-specific; confounded by caffeine, nicotine, exercise, stress | Use as context + outcome correlates (e.g., sleep quality next day) rather than as “dose.” Tie acute windows to known timing of HR/PK peaks post-inhalation. citeturn11search1 |
+
+### Proposed data schema for MyFlower AI
+
+Below is a minimal but extensible schema you can implement either as JSON Schema/Zod types and/or as relational tables (Drizzle-compatible). It is designed to cleanly separate **Exposure → Context → Outcomes → Labels** and to support uncertainty.
+
+```json
+{
+  "user_id": "uuid",
+  "user_profile": {
+    "birth_year": 2004,
+    "sex_at_birth": "unknown|female|male|intersex",
+    "gender": "string",
+    "baseline_risk_flags": {
+      "personal_history_psychosis_like": false,
+      "family_history_psychosis_like": "unknown|yes|no",
+      "baseline_anxiety": "0-10",
+      "baseline_depression": "0-10"
+    },
+    "use_pattern": {
+      "typical_frequency": "daily|near_daily|weekly|rare",
+      "preferred_route": "smoke|vape_flower|vape_concentrate|edible|tincture|other",
+      "tolerance_self_rating": "0-10"
+    }
+  },
+  "product": {
+    "product_id": "uuid",
+    "label_name": "string",
+    "form": "flower|pre_roll|concentrate|cartridge|edible|tincture",
+    "claimed_thc_percent": 0,
+    "claimed_cbd_percent": 0,
+    "claimed_terpenes_percent_total": 0,
+    "coa": {
+      "has_coa": false,
+      "batch_id": "string",
+      "lab_name": "string",
+      "test_date": "YYYY-MM-DD",
+      "thc_percent_total": 0,
+      "cbd_percent_total": 0,
+      "terpene_vector": {
+        "myrcene": 0,
+        "limonene": 0,
+        "pinene_alpha": 0,
+        "linalool": 0,
+        "caryophyllene": 0
+      },
+      "contaminant_panel": {
+        "pesticides_pass": "unknown|pass|fail",
+        "microbials_pass": "unknown|pass|fail",
+        "heavy_metals_pass": "unknown|pass|fail",
+        "solvents_pass": "unknown|pass|fail"
+      },
+      "confidence_score_0_1": 0.5
+    }
+  },
+  "session_event": {
+    "session_id": "uuid",
+    "timestamp_start": "ISO-8601",
+    "route": "smoke|vape_flower|vape_concentrate|edible|other",
+    "device": {
+      "device_type": "joint|pipe|bong|dry_herb_vape|cart_vape|dab_rig|unknown",
+      "temperature_celsius": null,
+      "puff_count": null,
+      "puff_duration_sec": null,
+      "breath_hold_sec": null
+    },
+    "dose_estimate": {
+      "mg_thc_ingested_or_inhaled": null,
+      "mg_thc_systemic_estimate": null,
+      "standard_thc_units_5mg": null,
+      "uncertainty": {
+        "dose_ci_low": null,
+        "dose_ci_high": null,
+        "notes": "string"
+      }
+    },
+    "context": {
+      "location_type": "home|friend_home|outdoors|party|car|other",
+      "social_context": "alone|with_friends|with_partner|mixed",
+      "planned_activity_next_2h": ["work","creative","gaming","exercise","sleep","social","errands"],
+      "baseline_mood": { "valence_0_10": 0, "anxiety_0_10": 0, "stress_0_10": 0, "energy_0_10": 0 },
+      "expectancy": { "expected_strength_0_10": 0, "expected_effect_tags": ["relax","focus","sleep","euphoria"] }
+    },
+    "outcomes": {
+      "timepoints_min": [15, 60, 180],
+      "subjective": {
+        "high_0_10": { "15": 0, "60": 0, "180": 0 },
+        "anxiety_0_10": { "15": 0, "60": 0, "180": 0 },
+        "paranoia_0_10": { "15": 0, "60": 0, "180": 0 },
+        "relaxation_0_10": { "15": 0, "60": 0, "180": 0 },
+        "focus_0_10": { "15": 0, "60": 0, "180": 0 },
+        "body_load_grossness_0_10": { "15": 0, "60": 0, "180": 0 },
+        "satisfaction_0_10": { "final": 0 },
+        "craving_relief_0_10": { "final": 0 }
+      },
+      "functioning": {
+        "memory_slip_events_count": 0,
+        "task_completion": { "planned_task_done": true, "friction_0_10": 0 },
+        "time_distortion_0_10": 0
+      },
+      "adverse_events": ["none|panic|vomiting|chest_pain|fall|other"]
+    }
+  }
+}
+```
+
+### ER diagram for a relational implementation
+
+```mermaid
+erDiagram
+  USER ||--o{ SESSION : logs
+  USER ||--o{ USER_BASELINE : has
+  PRODUCT ||--o{ BATCH_COA : has
+  PRODUCT ||--o{ SESSION : used_in
+  SESSION ||--|| CONTEXT : includes
+  SESSION ||--o{ OUTCOME_TIMEPOINT : produces
+  SESSION ||--o{ TASK_INTENT : plans
+  OUTCOME_TIMEPOINT }o--|| SCALE_DEFINITION : uses
+  BATCH_COA ||--o{ LAB_METHOD : measured_by
+```
+
+This structure supports: (a) multiple sessions per user, (b) multiple COAs per product, (c) timepoint outcomes for curve learning (onset/peak/comedown), and (d) standardized scales.
+
+### Codex prompt templates for smarter MyFlower AI agents
+
+These are designed as “prompt files” you can store under something like `prompts/myflowerai/` and call from the app. Each template assumes your agent can read/write to your schema layer and run validations/tests.
+
+**Template A: Free-text session → structured event extractor**  
+Goal: Convert a user journal entry into `session_event` JSON with uncertainty bounds.
+- Input: raw text + user_id + recent sessions context  
+- Output: validated JSON + missing-fields questions
+- Prompt:
+  - “Extract route, product, device, session time, baseline mood, expectancy, planned activity, and outcomes at 15/60/180 min. If mg THC cannot be estimated, store nulls and explain uncertainty. Never invent COA values.”
+
+**Template B: Dose estimator with uncertainty propagation**  
+Goal: Estimate mg THC and exposure confidence from product potency, amount used, route, and device.
+- Prompt:
+  - “Given claimed THC%, optional COA THC%, grams used, and route/device efficiency priors, estimate mg THC inhaled and a plausible systemic range. Output `{mg_thc, standard_units, ci_low, ci_high, assumptions}`.”
+
+**Template C: Tolerance state updater**  
+Goal: Maintain a latent tolerance index from session history.
+- Prompt:
+  - “Update `tolerance_index` using an exponential decay model from recent THC exposure (units/day). Output updated index and an explanation string. Treat abstinence as recovery evidence (CB1 availability partly normalizes).” citeturn11search3
+
+**Template D: “Why did I smoke?” motive classifier (MMM-compatible)**  
+Goal: Classify motives (coping/enhancement/social/expansion/conformity) from context + baseline mood + user text.
+- Prompt:
+  - “Infer motive probabilities from session context and text. Output a vector across the five motives and cite the text snippets used. If ambiguous, return ‘mixed motives’ rather than forcing.” citeturn29search0
+
+**Template E: Expectancy-adjusted effect predictor**  
+Goal: Predict subjective outcomes using both dose and expectancy.
+- Prompt:
+  - “Predict `high`, `anxiety`, `focus`, and `body_load` given dose estimate and expectancy fields. Include an ‘expectancy contribution’ term and keep predictions probabilistic.” citeturn22search3turn22search2
+
+**Template F: Context/task interference risk annotator**  
+Goal: Estimate whether planned tasks are likely to be impacted (memory, psychomotor, attention).
+- Prompt:
+  - “Given planned tasks and estimated intoxication window, output `task_risk` labels: low/medium/high for memory load, attention, coordination. Base on evidence that acute THC impairs working memory/psychomotor performance.” citeturn18search1turn11search1
+
+**Template G: “Gritty/grossness” differential hypothesis generator**  
+Goal: Non-diagnostic explanation hypotheses for unpleasant sessions (combustion irritation, high dose, anxiety spiral, contaminants/harshness, sleep debt).
+- Prompt:
+  - “Generate 3–5 hypotheses ranked by plausibility from the logged data. Explicitly label what cannot be inferred (e.g., contaminants without COA). Suggest what data to collect next time to disambiguate.”
+
+**Template H: Label-reliability scorer for product claims**  
+Goal: Compute a “label trust” score from COA provenance + market-level distortion patterns.
+- Prompt:
+  - “Score label reliability using COA availability, lab metadata, and red flags (e.g., THC near discontinuity thresholds; known inflation patterns). Output `confidence_score_0_1` and explanation.” citeturn24search7turn28search1turn28news56
+
+**Template I: Personalized harm-reduction briefing generator (non-medical)**  
+Goal: Produce research-grounded risk notes and safer-use options for daily users without giving medical advice.
+- Prompt:
+  - “Summarize relevant risks and evidence-based lower-risk practices, tailored to the user’s route/frequency and flagged outcomes (e.g., anxiety episodes). Do not provide treatment instructions. Include a ‘seek professional help’ suggestion only as general guidance.” citeturn11search5turn14search0turn33search6
+
+**Template J: CUD screening signal summarizer (non-diagnostic)**  
+Goal: Track DSM-like criteria signals without diagnosing.
+- Prompt:
+  - “From logs, summarize whether patterns resemble DSM-5 criteria (e.g., failed cutdowns, time cost, craving, tolerance, withdrawal). Output a neutral ‘signals’ summary and recommend validated resources, not diagnosis.” citeturn14search9turn16search0turn13search1
+
+**Template K: Research-mode cohort discovery**  
+Goal: Find clusters of “similar sessions” across users for research.
+- Prompt:
+  - “Cluster sessions by route, estimated exposure, baseline mood, motive probabilities, and outcome curves. Return cluster definitions and key differentiators, emphasizing uncertainty and label reliability constraints.”
+
+**Template L: Evaluation harness generator**  
+Goal: Create synthetic test cases and unit tests for extraction/prediction robustness.
+- Prompt:
+  - “Generate 20 synthetic session narratives with adversarial omissions and slang. Provide expected JSON outputs and unit test assertions. Ensure the extractor never invents missing potency/COA numbers.”
+
+### Model-integration checklist
+
+1. **Separate extraction from prediction**: use an LLM for structured extraction and explanation; use a calibrated statistical/ML model for effect prediction to reduce hallucinated certainty.
+2. **Explicit uncertainty everywhere**: dose CI, COA confidence, missingness flags, and “unknown” as a first-class value (especially for product chemistry). citeturn28news56turn28search1
+3. **Time matters**: store outcomes at fixed post-use timepoints (e.g., 15/60/180 min) to learn onset/peak/comedown curves. citeturn11search1
+4. **User-specific baselines**: normalize mood and cognition relative to individual baselines; daily users have different dose–effect curves than intermittent users because of tolerance. citeturn11search3turn16search0
+5. **Safety outcomes as high-priority labels**: anxiety/paranoia spikes, panic-like events, vomiting episodes, and psychosis-like experiences should be treated as “hard stop” outcomes in analytics and recommendation logic. citeturn21search4turn14search7
+6. **Do not infer impairment from THC concentrations**: store biomarker data as “recent exposure signals,” not impairment metrics. citeturn33search6turn34search0
+7. **Causal humility**: show users correlations and within-person patterns, but avoid claiming causal effects beyond what the design supports (EMA vs experimental differences are real). citeturn23search0turn23search3
+8. **Evidence grading UI**: attach an evidence grade (RCT, systematic review, observational, anecdotal) to any “why this might happen” explanation.
+9. **Privacy and consent**: cannabis data can be sensitive; keep biospecimen and mental health fields opt-in and clearly separated.
+
+### Recommended primary/official sources to anchor your in-repo research folder
+
+These are high-value “ground truth” anchors for MyFlower AI docs, prompts, and guardrails:
+
+- entity["book","The Health Effects of Cannabis and Cannabinoids","national academies 2017"] (therapeutic evidence categories; harms framing). citeturn12search4  
+- entity["organization","CDC","us public health agency"] cannabis health effects and CUD risk summaries. citeturn12search0turn14search0  
+- entity["organization","NIDA","nih institute"] cannabis overview, potency trends, and related research notices (including standard THC unit). citeturn15search5turn15search3turn13search0  
+- entity["organization","SAMHSA","us health agency"] NSDUH key indicators for prevalence baselines. citeturn13search1  
+- PET evidence on CB1 downregulation and reversibility. citeturn11search3  
+- Controlled smoked vs vaporized THC dose–response trial for acute effects and timing. citeturn11search1  
+- EU-GEI psychosis potency/frequency signal. citeturn21search4  
+- Chemovar/labeling mismatch and retail THC label inflation. citeturn26search0turn28search1  
+- Lower-Risk Cannabis Use Guidelines as a harm-reduction backbone. citeturn11search5  
+
+### Note on medicinal benefits (research framing, not advice)
+
+When MyFlower AI discusses “medicinal” effects, it should differentiate:
+
+- **Evidence-backed indications** (National Academies: chronic pain, CINV antiemesis with oral cannabinoids, MS spasticity patient-reported) citeturn12search4  
+- **Route/product specificity** (many RCTs used standardized products or controlled smoked/vaporized protocols; example RCTs show neuropathic pain reductions with smoked or vaporized cannabis) citeturn30search1turn30search5turn30search2  
+- **Regulatory status** (FDA-approved cannabinoid medicines exist, e.g., cannabidiol oral solution for certain epilepsies; synthetic THC/dronabinol and nabilone for specific indications), which should not be conflated with retail flower safety profiles. citeturn31search47turn32search47turn32search46  
+
+This is a research framing point, not a recommendation for use.
