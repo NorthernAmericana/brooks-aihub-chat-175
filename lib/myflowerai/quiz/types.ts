@@ -125,6 +125,7 @@ export interface QuizResult {
     id: string;
     name: string;
     brand: string;
+    type?: string;
     match_score: number; // 0-1 based on tag overlap
     matching_tags: string[];
   }[];
