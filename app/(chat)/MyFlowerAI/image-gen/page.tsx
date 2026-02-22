@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +61,8 @@ export default function ImageGenPage() {
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingData, setLoadingData] = useState<boolean>(true);
+  const [strainsError, setStrainsError] = useState<string | null>(null);
+  const [personasError, setPersonasError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imageTitle, setImageTitle] = useState<string | null>(null);
@@ -73,94 +75,56 @@ export default function ImageGenPage() {
   const [uploadingReference, setUploadingReference] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load strains and personas on mount
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoadingData(true);
+  const loadData = useCallback(async () => {
+    try {
+      setLoadingData(true);
+      setStrainsError(null);
+      setPersonasError(null);
 
-        // Load strains
-        const strainsRes = await fetch("/data/myflowerai/strains.json");
-        if (strainsRes.ok) {
-          const strainsData = await strainsRes.json();
-          setStrains(strainsData);
-        } else {
-          // Fallback to static list if endpoint doesn't exist
-          setStrains([
-            {
-              id: "trulieve-modern-flower-seed-junky-juicy-jane-3p5g",
-              name: "Juicy Jane",
-              type: "hybrid",
-              brand: "Modern Flower x Seed Junky",
-            },
-            {
-              id: "trulieve-sunshine-cannabis-white-sunshine-3p5g",
-              name: "White Sunshine",
-              type: "sativa",
-              brand: "Sunshine Cannabis",
-            },
-            {
-              id: "planet-13-margalope-tier-3-3p5g",
-              name: "Margalope",
-              type: "hybrid",
-              brand: "Planet 13",
-            },
-          ]);
-        }
+      const [strainsRes, personasRes, presetsRes] = await Promise.all([
+        fetch("/api/myflowerai/strains"),
+        fetch("/api/myflowerai/personas"),
+        fetch("/api/myflowerai/presets"),
+      ]);
 
-        // Load personas
-        const personasRes = await fetch("/data/myflowerai/personas.json");
-        if (personasRes.ok) {
-          const personasData = await personasRes.json();
-          setPersonas(personasData);
-        } else {
-          // Fallback to static list
-          setPersonas([
-            {
-              persona_id: "balanced-harmonizer",
-              display_name: "Balanced Harmonizer",
-            },
-            { persona_id: "creative-fire", display_name: "Creative Fire" },
-            { persona_id: "forest-wanderer", display_name: "Forest Wanderer" },
-            {
-              persona_id: "neon-arcade-brain",
-              display_name: "Neon Arcade Brain",
-            },
-            {
-              persona_id: "night-owl-dreamer",
-              display_name: "Night Owl Dreamer",
-            },
-          ]);
-        }
-
-        // Load presets
-        try {
-          const presetsRes = await fetch("/api/myflowerai/presets");
-          if (presetsRes.ok) {
-            const presetsData = await presetsRes.json();
-            if (presetsData?.presets && Array.isArray(presetsData.presets)) {
-              setPresets(presetsData.presets);
-            } else {
-              console.warn("Invalid presets data structure");
-            }
-          } else {
-            console.warn("Failed to load presets, continuing without them");
-          }
-        } catch (presetErr) {
-          console.warn("Error loading presets:", presetErr);
-          // Continue without presets - this is not critical
-        }
-
-        setLoadingData(false);
-      } catch (err) {
-        console.error("Error loading data:", err);
-        setError("Failed to load strain and persona data");
-        setLoadingData(false);
+      if (strainsRes.ok) {
+        const strainsData = await strainsRes.json();
+        setStrains(Array.isArray(strainsData?.strains) ? strainsData.strains : []);
+      } else {
+        setStrains([]);
+        setStrainsError("Could not load strain options.");
       }
-    }
 
-    loadData();
+      if (personasRes.ok) {
+        const personasData = await personasRes.json();
+        setPersonas(
+          Array.isArray(personasData?.personas) ? personasData.personas : []
+        );
+      } else {
+        setPersonas([]);
+        setPersonasError("Could not load persona options.");
+      }
+
+      if (presetsRes.ok) {
+        const presetsData = await presetsRes.json();
+        if (presetsData?.presets && Array.isArray(presetsData.presets)) {
+          setPresets(presetsData.presets);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setStrains([]);
+      setPersonas([]);
+      setStrainsError("Could not load strain options.");
+      setPersonasError("Could not load persona options.");
+    } finally {
+      setLoadingData(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSliderChange = (key: keyof VibeSettings, value: number) => {
     setVibeSettings((prev) => ({ ...prev, [key]: value }));
@@ -256,7 +220,12 @@ export default function ImageGenPage() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedStrain) {
+    const normalizedStrainId = strains.find((strain) => strain.id === selectedStrain)?.id;
+    const normalizedPersonaId =
+      personas.find((persona) => persona.persona_id === selectedPersona)
+        ?.persona_id ?? "";
+
+    if (!normalizedStrainId) {
       setError("Please select a strain");
       return;
     }
@@ -280,12 +249,12 @@ export default function ImageGenPage() {
         user_vibe_text?: string;
         storage_key?: string;
       } = {
-        strain_id: selectedStrain,
+        strain_id: normalizedStrainId,
         vibe_settings: vibeSettings,
       };
 
-      if (selectedPersona) {
-        requestBody.persona_id = selectedPersona;
+      if (normalizedPersonaId) {
+        requestBody.persona_id = normalizedPersonaId;
       }
       if (selectedPreset) {
         requestBody.preset_id = selectedPreset;
@@ -362,6 +331,7 @@ export default function ImageGenPage() {
             <Label htmlFor="strain">Strain</Label>
             <select
               className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              disabled={!!strainsError || strains.length === 0}
               id="strain"
               onChange={(e) => setSelectedStrain(e.target.value)}
               value={selectedStrain}
@@ -374,6 +344,16 @@ export default function ImageGenPage() {
                 </option>
               ))}
             </select>
+            {strainsError ? (
+              <p className="text-xs text-destructive">
+                Strain data unavailable due to a loading failure. Please retry.
+              </p>
+            ) : null}
+            {!strainsError && strains.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Strain data unavailable: no strains were returned by the backend.
+              </p>
+            ) : null}
           </div>
 
           {/* Trip Mode Preset Selector */}
@@ -403,6 +383,7 @@ export default function ImageGenPage() {
             <Label htmlFor="persona">Persona Style (Optional)</Label>
             <select
               className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              disabled={!!personasError || personas.length === 0}
               id="persona"
               onChange={(e) => setSelectedPersona(e.target.value)}
               value={selectedPersona}
@@ -414,7 +395,23 @@ export default function ImageGenPage() {
                 </option>
               ))}
             </select>
+            {personasError ? (
+              <p className="text-xs text-destructive">
+                Persona data unavailable due to a loading failure. Please retry.
+              </p>
+            ) : null}
+            {!personasError && personas.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Persona data unavailable: no personas were returned by the backend.
+              </p>
+            ) : null}
           </div>
+
+          {(strainsError || personasError) && (
+            <Button onClick={loadData} type="button" variant="outline">
+              Retry loading data
+            </Button>
+          )}
 
           {/* Vibe Sliders */}
           <div className="space-y-4">
