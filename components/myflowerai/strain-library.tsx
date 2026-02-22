@@ -180,12 +180,16 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
     });
   }, [normalizedQuery, selectedThcRange, selectedType, strains]);
 
-  const selectedStrainEvidenceGrade = selectedStrain
+  const selectedStrainEvidenceGrade: EvidenceGrade | null = selectedStrain
     ? inferEvidenceGrade(selectedStrain.sources)
     : null;
-  const selectedStrainConfidence = selectedStrain
-    ? inferConfidenceLevel(selectedStrainEvidenceGrade, selectedStrain.sources)
-    : null;
+  const selectedStrainConfidence: ClaimConfidence | null =
+    selectedStrain && selectedStrainEvidenceGrade
+      ? inferConfidenceLevel(
+          selectedStrainEvidenceGrade,
+          selectedStrain.sources
+        )
+      : null;
 
   return (
     <>
