@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
 import { myflowerSessionEvents } from "@/lib/db/schema";
+import { assessSessionEventSafety } from "@/lib/myflowerai/session-event-safety";
 import {
   SessionEventSchemaV1_0,
   type SessionEventV1_0,
@@ -12,24 +13,36 @@ import {
 function buildSessionEventResponse(event: {
   id: string;
   occurredAt: Date;
-  schemaVersion: string;
-  exposure: unknown;
-  context: unknown;
-  outcomes: unknown;
-  notes: string | null;
   createdAt: Date;
+  payload: SessionEventV1_0;
 }) {
+  const safetyAssessment = assessSessionEventSafety(event.payload);
+
   return {
     id: event.id,
     occurred_at: event.occurredAt.toISOString(),
-    schema_version: event.schemaVersion,
-    exposure: event.exposure,
-    context: event.context,
-    outcomes: event.outcomes,
-    notes: event.notes,
+    schema_version: event.payload.schema_version,
+    exposure: event.payload.exposure,
+    context: event.payload.context,
+    outcomes: event.payload.outcomes,
+    notes: event.payload.notes ?? null,
     created_at: event.createdAt.toISOString(),
+    safety: {
+      flagged: safetyAssessment.safetyFlag,
+      reasons: safetyAssessment.reasons,
+      response_policy: safetyAssessment.selectedPolicy,
+      guidance: safetyAssessment.guidance,
+      audit: {
+        safety_flag_fired: safetyAssessment.audit.safetyFlagFired,
+        trigger_reason_codes: safetyAssessment.audit.triggerReasonCodes,
+        selected_policy: safetyAssessment.audit.selectedPolicy,
+        suppressed_advice_category:
+          safetyAssessment.audit.suppressedAdviceCategory,
+      },
+    },
   };
 }
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,7 +91,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { session_event: buildSessionEventResponse(event) },
+      {
+        session_event: buildSessionEventResponse({
+          id: event.id,
+          occurredAt: event.occurredAt,
+          createdAt: event.createdAt,
+          payload,
+        }),
+      },
       { status: 201 },
     );
   } catch (error) {
@@ -109,7 +129,29 @@ export async function GET() {
       .limit(50);
 
     return NextResponse.json({
-      session_events: events.map((event) => buildSessionEventResponse(event)),
+      session_events: events.flatMap((event) => {
+        const parsed = SessionEventSchemaV1_0.safeParse({
+          schema_version: event.schemaVersion,
+          occurred_at: event.occurredAt.toISOString(),
+          exposure: event.exposure,
+          context: event.context,
+          outcomes: event.outcomes,
+          notes: event.notes ?? undefined,
+        });
+
+        if (!parsed.success) {
+          return [];
+        }
+
+        return [
+          buildSessionEventResponse({
+            id: event.id,
+            occurredAt: event.occurredAt,
+            createdAt: event.createdAt,
+            payload: parsed.data,
+          }),
+        ];
+      }),
     });
   } catch (error) {
     console.error("Failed to load myflower session_events", error);
