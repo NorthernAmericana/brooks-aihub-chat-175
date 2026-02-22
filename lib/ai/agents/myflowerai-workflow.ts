@@ -186,6 +186,7 @@ type StrainRecord = {
   };
   stats?: {
     total_thc_percent?: number;
+    total_cbd_percent?: number;
     total_terpenes_percent?: number;
     top_terpenes?: Array<{ name?: string; percent?: number }>;
   };
@@ -315,6 +316,22 @@ const buildStrainSummary = (strains: StrainRecord[], label: string) => {
     const name = strain.strain?.name ?? strain.id ?? "Unknown strain";
     const type = strain.strain?.type;
     const thc = formatPercent(strain.stats?.total_thc_percent, 1);
+    const cbd = formatPercent(strain.stats?.total_cbd_percent, 1);
+    const thcCbdRatio =
+      typeof strain.stats?.total_thc_percent === "number" &&
+      Number.isFinite(strain.stats.total_thc_percent) &&
+      typeof strain.stats?.total_cbd_percent === "number" &&
+      Number.isFinite(strain.stats.total_cbd_percent)
+        ? strain.stats.total_cbd_percent <= 0
+          ? `${(Math.round(strain.stats.total_thc_percent * 10) / 10).toFixed(1)}:0`
+          : `${(
+              Math.round(
+                (strain.stats.total_thc_percent /
+                  strain.stats.total_cbd_percent) *
+                  10
+              ) / 10
+            ).toFixed(1)}:1`
+        : "n/a";
     const terps = formatPercent(strain.stats?.total_terpenes_percent, 2);
     const topTerpenes = (strain.stats?.top_terpenes ?? [])
       .slice(0, 3)
@@ -349,7 +366,8 @@ const buildStrainSummary = (strains: StrainRecord[], label: string) => {
     const coaTestDate = strain.coa?.provenance_test_date ?? "n/a";
 
     const details = [
-      `THC ${thc}`,
+      `THC ${thc} / CBD ${cbd}`,
+      `THC:CBD ratio ${thcCbdRatio}`,
       `Total terps ${terps}`,
       `COA provenance: lab=${coaProvenanceLab}, method=${coaMethod}, batch=${coaBatch}, test_date=${coaTestDate}`,
       `Label reliability confidence_score_0_1=${confidenceLabel}`,

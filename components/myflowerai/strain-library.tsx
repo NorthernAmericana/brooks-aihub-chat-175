@@ -180,6 +180,13 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
     });
   }, [normalizedQuery, selectedThcRange, selectedType, strains]);
 
+  const selectedStrainEvidenceGrade = selectedStrain
+    ? inferEvidenceGrade(selectedStrain.sources)
+    : null;
+  const selectedStrainConfidence = selectedStrain
+    ? inferConfidenceLevel(selectedStrainEvidenceGrade, selectedStrain.sources)
+    : null;
+
   return (
     <>
       <AgeGate onVerified={() => setAgeVerified(true)} />
@@ -429,27 +436,21 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                     Effects
                   </h3>
                   {selectedStrain.effects?.length ? (
-                    <ul className="mt-2 space-y-2 text-sm text-black/70">
-                      {selectedStrain.effects.map((effect) => {
-                        const evidenceGrade = inferEvidenceGrade(
-                          selectedStrain.sources
-                        );
-                        const confidenceLevel = inferConfidenceLevel(
-                          evidenceGrade,
-                          selectedStrain.sources
-                        );
-
-                        return (
-                          <li key={effect}>
-                            <p>{effect}</p>
-                            <p className="text-xs text-black/55">
-                              Evidence grade: {evidenceGrade} • Confidence:{" "}
-                              {confidenceLevel}
-                            </p>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <>
+                      <ul className="mt-2 space-y-1 text-sm text-black/70">
+                        {selectedStrain.effects.map((effect) => (
+                          <li key={effect}>{effect}</li>
+                        ))}
+                      </ul>
+                      {selectedStrainEvidenceGrade &&
+                      selectedStrainConfidence ? (
+                        <p className="mt-2 text-xs text-black/55">
+                          Evidence grade (strain-level):{" "}
+                          {selectedStrainEvidenceGrade} • Confidence:{" "}
+                          {selectedStrainConfidence}
+                        </p>
+                      ) : null}
+                    </>
                   ) : (
                     <p className="mt-2 text-sm text-black/70">
                       Effects not listed yet.
