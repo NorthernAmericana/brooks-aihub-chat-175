@@ -1,7 +1,13 @@
 "use client";
 
 import type { QuizResult } from "@/lib/myflowerai/quiz/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface StrainRecommendationsProps {
@@ -15,7 +21,8 @@ export function StrainRecommendations({ result }: StrainRecommendationsProps) {
         <CardHeader>
           <CardTitle>Strain Recommendations</CardTitle>
           <CardDescription>
-            No matching strains found in the database. Try adjusting your preferences.
+            No matching strains found in the database. Try adjusting your
+            preferences.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -27,7 +34,8 @@ export function StrainRecommendations({ result }: StrainRecommendationsProps) {
       <CardHeader>
         <CardTitle>Recommended Strains</CardTitle>
         <CardDescription>
-          Based on your personality profile, here are strains that might be a good fit
+          Based on your personality profile, here are strains that might be a
+          good fit
         </CardDescription>
       </CardHeader>
 
@@ -41,7 +49,10 @@ export function StrainRecommendations({ result }: StrainRecommendationsProps) {
               <div className="space-y-2 flex-1">
                 <div className="space-y-1">
                   <h4 className="font-semibold">{strain.name}</h4>
-                  <p className="text-sm text-muted-foreground">{strain.brand}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {strain.brand}
+                    {strain.type ? ` • ${strain.type}` : ""}
+                  </p>
                 </div>
 
                 {strain.matching_tags.length > 0 && (

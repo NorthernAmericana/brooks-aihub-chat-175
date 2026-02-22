@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MultipleChoiceQuestion } from "@/components/myflowerai/quiz/multiple-choice-question";
 import { SliderQuestion } from "@/components/myflowerai/quiz/slider-question";
@@ -11,18 +18,35 @@ import { StrainRecommendations } from "@/components/myflowerai/quiz/strain-recom
 import { QuizProgress } from "@/components/myflowerai/quiz/quiz-progress";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
 import { AuraGeneratorPanel } from "@/components/myflowerai/aura/aura-generator-panel";
-import { loadQuiz, processQuizResponses, generateStrainRecommendations } from "@/lib/myflowerai/quiz/engine";
+import {
+  loadQuiz,
+  processQuizResponses,
+  generateStrainRecommendations,
+} from "@/lib/myflowerai/quiz/engine";
 import type { Quiz, QuizResult } from "@/lib/myflowerai/quiz/types";
 import { Sparkles } from "lucide-react";
+
+type QuizStrainRecord = {
+  id: string;
+  strain: {
+    name: string;
+    brand: string;
+    type: string;
+  };
+  tags: string[];
+};
 
 export default function QuizPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<Record<string, string | number>>({});
+  const [responses, setResponses] = useState<Record<string, string | number>>(
+    {}
+  );
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [strainDatabase, setStrainDatabase] = useState<any[]>([]);
+  const [strainDatabase, setStrainDatabase] = useState<QuizStrainRecord[]>([]);
+  const [strainDataError, setStrainDataError] = useState<string | null>(null);
   const [ageVerified, setAgeVerified] = useState(false);
   const [showAuraGenerator, setShowAuraGenerator] = useState(false);
 
@@ -33,27 +57,62 @@ export default function QuizPage() {
         const loadedQuiz = await loadQuiz("strain-personality-v1");
         setQuiz(loadedQuiz);
 
-        // Load strain database
-        // In a real implementation, this would load from the actual strain files
-        // For now, we'll use a mock database
-        const mockStrains = [
-          {
-            id: "example-1",
-            strain: { name: "Blue Dream", brand: "Example Brand" },
-            tags: ["uplifting", "creative", "daytime", "mood-enhancing"],
-          },
-          {
-            id: "example-2",
-            strain: { name: "Northern Lights", brand: "Example Brand" },
-            tags: ["relaxing", "cozy", "night", "calming"],
-          },
-          {
-            id: "example-3",
-            strain: { name: "Sour Diesel", brand: "Example Brand" },
-            tags: ["energizing", "uplifting", "focus", "daytime"],
-          },
-        ];
-        setStrainDatabase(mockStrains);
+        try {
+          const strainResponse = await fetch("/api/myflowerai/strains", {
+            cache: "no-store",
+          });
+
+          if (!strainResponse.ok) {
+            throw new Error(
+              "Unable to load strain dataset for recommendations"
+            );
+          }
+
+          const payload = (await strainResponse.json()) as {
+            strains?: Array<{
+              id?: string;
+              name?: string;
+              brand?: string;
+              type?: string;
+              effects?: string[];
+            }>;
+          };
+
+          const mappedStrains = (payload.strains ?? [])
+            .map((strain) => {
+              const id = strain.id?.trim();
+              const name = strain.name?.trim();
+
+              if (!id || !name) {
+                return null;
+              }
+
+              return {
+                id,
+                strain: {
+                  name,
+                  brand: strain.brand?.trim() || "Unknown brand",
+                  type: strain.type?.trim() || "Unknown type",
+                },
+                tags: (strain.effects ?? []).filter((tag): tag is string =>
+                  Boolean(tag?.trim())
+                ),
+              };
+            })
+            .filter((strain): strain is QuizStrainRecord => strain !== null);
+
+          if (mappedStrains.length === 0) {
+            throw new Error("Strain dataset is empty");
+          }
+
+          setStrainDatabase(mappedStrains);
+          setStrainDataError(null);
+        } catch {
+          setStrainDatabase([]);
+          setStrainDataError(
+            "Strain recommendations are currently unavailable."
+          );
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load quiz");
       } finally {
@@ -90,10 +149,9 @@ export default function QuizPage() {
       // Process quiz results
       try {
         const quizResult = processQuizResponses(quiz, responses);
-        const resultWithStrains = generateStrainRecommendations(
-          quizResult,
-          strainDatabase
-        );
+        const resultWithStrains = strainDatabase.length
+          ? generateStrainRecommendations(quizResult, strainDatabase)
+          : { ...quizResult, suggested_strains: [] };
         setResult(resultWithStrains);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to process quiz");
@@ -152,7 +210,8 @@ export default function QuizPage() {
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">Your Results</h1>
                 <p className="text-muted-foreground">
-                  Based on your answers, here's your cannabis personality profile
+                  Based on your answers, here's your cannabis personality
+                  profile
                 </p>
               </div>
 
@@ -178,6 +237,12 @@ export default function QuizPage() {
                   personaId={result.profile.id}
                   personaProfile={result.profile}
                 />
+              )}
+
+              {strainDataError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{strainDataError}</AlertDescription>
+                </Alert>
               )}
 
               <StrainRecommendations result={result} />
@@ -235,13 +300,17 @@ export default function QuizPage() {
                   <MultipleChoiceQuestion
                     question={currentQuestion}
                     value={responses[currentQuestion.id] as string}
-                    onChange={(value) => handleResponse(currentQuestion.id, value)}
+                    onChange={(value) =>
+                      handleResponse(currentQuestion.id, value)
+                    }
                   />
                 ) : (
                   <SliderQuestion
                     question={currentQuestion}
                     value={responses[currentQuestion.id] as number}
-                    onChange={(value) => handleResponse(currentQuestion.id, value)}
+                    onChange={(value) =>
+                      handleResponse(currentQuestion.id, value)
+                    }
                   />
                 )}
               </CardContent>
@@ -271,8 +340,8 @@ export default function QuizPage() {
             {/* Quiz Disclaimers at Bottom */}
             <Alert>
               <AlertDescription className="text-xs text-muted-foreground">
-                This quiz provides general informational recommendations only and is NOT
-                medical advice. Cannabis effects vary by individual.
+                This quiz provides general informational recommendations only
+                and is NOT medical advice. Cannabis effects vary by individual.
               </AlertDescription>
             </Alert>
           </div>

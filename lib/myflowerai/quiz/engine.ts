@@ -8,7 +8,12 @@
  * Quiz responses are ephemeral or stored privately per user.
  */
 
-import type { Quiz, QuizResponse, QuizResult, QuizResultProfile } from "./types";
+import type {
+  Quiz,
+  QuizResponse,
+  QuizResult,
+  QuizResultProfile,
+} from "./types";
 import {
   calculateRawTraitScores,
   matchResultProfile,
@@ -26,9 +31,7 @@ import { calculateTagMatchScore, mapTraitsToTags } from "./mapper";
 export async function loadQuiz(quizId: string): Promise<Quiz> {
   // In production, this would load from the data directory
   // For now, we'll use dynamic import
-  const quizModule = await import(
-    `@/data/myflowerai/quizzes/${quizId}.json`
-  );
+  const quizModule = await import(`@/data/myflowerai/quizzes/${quizId}.json`);
   return quizModule.default as Quiz;
 }
 
@@ -90,7 +93,11 @@ export function processQuizResponses(
  * @returns Quiz result with suggested strains
  */
 export function generateStrainRecommendations<
-  T extends { id: string; strain: { name: string; brand: string }; tags: string[] }
+  T extends {
+    id: string;
+    strain: { name: string; brand: string; type?: string };
+    tags: string[];
+  },
 >(
   result: Omit<QuizResult, "suggested_strains">,
   strainDatabase: T[]
@@ -111,6 +118,7 @@ export function generateStrainRecommendations<
       id: strain.id,
       name: strain.strain.name,
       brand: strain.strain.brand,
+      type: strain.strain.type,
       match_score: matchScore,
       matching_tags: strain.tags.filter((tag) => recommendedTags.includes(tag)),
     };
