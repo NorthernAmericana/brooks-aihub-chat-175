@@ -118,6 +118,82 @@ const formatTime = (value: string) => {
   });
 };
 
+
+const buildDefaultSessionEventPayload = () => ({
+  schema_version: "1.1" as const,
+  occurred_at: new Date().toISOString(),
+  exposure: {
+    route: "smoke" as const,
+    device: {
+      device_type: "joint" as const,
+      temperature_celsius: "unknown" as const,
+      puff_count: "unknown" as const,
+      puff_duration_sec: "unknown" as const,
+      breath_hold_sec: "unknown" as const,
+    },
+    dose_estimate: {
+      mg_thc_ingested_or_inhaled: "unknown" as const,
+      mg_thc_systemic_estimate: "unknown" as const,
+      standard_thc_units_5mg: "unknown" as const,
+      uncertainty: {
+        dose_ci_low: "unknown" as const,
+        dose_ci_high: "unknown" as const,
+      },
+    },
+  },
+  context: {
+    location_type: "home" as const,
+    social_context: "alone" as const,
+    planned_activity_next_2h: ["creative"] as const,
+    baseline_mood: {
+      valence_0_10: "unknown" as const,
+      anxiety_0_10: "unknown" as const,
+      stress_0_10: "unknown" as const,
+      energy_0_10: "unknown" as const,
+    },
+  },
+  outcomes: {
+    timepoints_min: [15, 60, 180] as const,
+    checkpoints: {
+      "15": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+      "60": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+      "180": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+    },
+    final: {
+      satisfaction_0_10: "unknown" as const,
+      craving_relief_0_10: "unknown" as const,
+    },
+  },
+  notes: "Quick event capture from dashboard",
+});
+
 export function MyFlowerAiDashboard({
   date,
   initialDay,
@@ -245,6 +321,8 @@ export function MyFlowerAiDashboard({
 
       setSessionEvents(data.session_events ?? []);
       setTrendSummary(data.trend_summary ?? null);
+    } catch {
+      setSessionEventsError("Unable to load session events.");
     } finally {
       setIsSessionEventsLoading(false);
     }
@@ -262,80 +340,7 @@ export function MyFlowerAiDashboard({
       const response = await fetch("/api/myflower/session-event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schema_version: "1.1",
-          occurred_at: new Date().toISOString(),
-          exposure: {
-            route: "smoke",
-            device: {
-              device_type: "joint",
-              temperature_celsius: "unknown",
-              puff_count: "unknown",
-              puff_duration_sec: "unknown",
-              breath_hold_sec: "unknown",
-            },
-            dose_estimate: {
-              mg_thc_ingested_or_inhaled: "unknown",
-              mg_thc_systemic_estimate: "unknown",
-              standard_thc_units_5mg: "unknown",
-              uncertainty: {
-                dose_ci_low: "unknown",
-                dose_ci_high: "unknown",
-              },
-            },
-          },
-          context: {
-            location_type: "home",
-            social_context: "alone",
-            planned_activity_next_2h: ["creative"],
-            baseline_mood: {
-              valence_0_10: "unknown",
-              anxiety_0_10: "unknown",
-              stress_0_10: "unknown",
-              energy_0_10: "unknown",
-            },
-          },
-          outcomes: {
-            timepoints_min: [15, 60, 180],
-            checkpoints: {
-              "15": {
-                high_0_10: "unknown",
-                anxiety_0_10: "unknown",
-                paranoia_0_10: "unknown",
-                relaxation_0_10: "unknown",
-                focus_0_10: "unknown",
-                body_load_0_10: "unknown",
-                friction_0_10: "unknown",
-                adverse_event: "none",
-              },
-              "60": {
-                high_0_10: "unknown",
-                anxiety_0_10: "unknown",
-                paranoia_0_10: "unknown",
-                relaxation_0_10: "unknown",
-                focus_0_10: "unknown",
-                body_load_0_10: "unknown",
-                friction_0_10: "unknown",
-                adverse_event: "none",
-              },
-              "180": {
-                high_0_10: "unknown",
-                anxiety_0_10: "unknown",
-                paranoia_0_10: "unknown",
-                relaxation_0_10: "unknown",
-                focus_0_10: "unknown",
-                body_load_0_10: "unknown",
-                friction_0_10: "unknown",
-                adverse_event: "none",
-              },
-            },
-            final: {
-              satisfaction_0_10: "unknown",
-              craving_relief_0_10: "unknown",
-            },
-          },
-          notes: "Quick event capture from dashboard",
-        }),
+        body: JSON.stringify(buildDefaultSessionEventPayload()),
       });
 
       if (response.status === 401) {
@@ -350,6 +355,8 @@ export function MyFlowerAiDashboard({
       }
 
       await refreshSessionEvents();
+    } catch {
+      setActionError("We couldn't save that session event. Try again.");
     } finally {
       setIsSubmitting(false);
     }
