@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
 
 export type StrainListItem = {
@@ -191,11 +191,27 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
         )
       : null;
 
+  useEffect(() => {
+    if (!selectedStrain) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedStrain]);
+
   return (
     <>
       <AgeGate onVerified={() => setAgeVerified(true)} />
       {ageVerified && (
-        <div className="h-dvh overflow-y-auto overscroll-behavior-contain -webkit-overflow-scrolling-touch">
+        <div
+          className="h-dvh overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <div className="mx-auto w-full max-w-5xl px-4 py-6">
             <header className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-black/5 bg-white/70 p-4 backdrop-blur-sm">
               <div>
@@ -361,7 +377,7 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
         </div>
       )}
       {ageVerified && selectedStrain && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:items-center">
           <div className="w-full max-w-2xl rounded-3xl bg-white shadow-xl">
             <div className="flex items-start justify-between gap-4 border-b border-black/5 px-6 py-5">
               <div>
@@ -383,7 +399,10 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                 Close
               </button>
             </div>
-            <div className="max-h-[70vh] space-y-5 overflow-y-auto px-6 py-5 text-sm text-black/70">
+            <div
+              className="max-h-[70vh] space-y-5 overflow-y-auto overscroll-contain px-6 py-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] text-sm text-black/70"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black/60">
                   {formatTypeLabel(selectedStrain.type)}
