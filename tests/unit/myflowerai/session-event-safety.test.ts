@@ -2,7 +2,7 @@ import { assessSessionEventSafety } from "@/lib/myflowerai/session-event-safety"
 import type { SessionEventV1_0 } from "@/lib/validation/session-event-schema";
 
 const baseEvent: SessionEventV1_0 = {
-  schema_version: "1.0",
+  schema_version: "1.1",
   occurred_at: new Date().toISOString(),
   exposure: {
     route: "smoke",
@@ -33,6 +33,24 @@ const baseEvent: SessionEventV1_0 = {
       stress_0_10: 3,
       energy_0_10: 5,
     },
+    user_factors: {
+      tolerance_self_rating_0to10: 4,
+      use_history: {
+        days_used_30d: 8,
+        sessions_30d: 10,
+      },
+      motive_probabilities: {
+        relief: 0.4,
+        enhancement: 0.3,
+        social: 0.2,
+        sleep: 0.1,
+        coping: 0.3,
+      },
+    },
+  },
+  expectancy: {
+    expected_strength_0to10: 6,
+    confidence_0to10: 7,
   },
   outcomes: {
     timepoints_min: [15, 60, 180],
