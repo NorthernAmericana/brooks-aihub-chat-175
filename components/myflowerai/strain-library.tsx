@@ -14,6 +14,9 @@ export type StrainListItem = {
   thcRange?: string | null;
   cbdRange?: string | null;
   thcPercent?: number | null;
+  cbdPercent?: number | null;
+  thcCbdRatio?: string | null;
+  coaQuality?: string;
   terpenes?: string[];
   effects?: string[];
   sources?: Array<{
@@ -22,6 +25,14 @@ export type StrainListItem = {
     url?: string | null;
   }>;
 };
+
+type EvidenceGrade =
+  | "RCT"
+  | "Systematic review"
+  | "Observational"
+  | "Anecdotal";
+
+type ClaimConfidence = "High" | "Medium" | "Low";
 
 type StrainLibraryProps = {
   strains: StrainListItem[];
@@ -50,7 +61,11 @@ const formatTypeLabel = (type?: string) => {
 };
 
 const normalizeSearchText = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const getThcBucket = (value?: number | null) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -63,6 +78,44 @@ const getThcBucket = (value?: number | null) => {
     return "mid";
   }
   return "high";
+};
+
+const inferEvidenceGrade = (
+  sources?: StrainListItem["sources"]
+): EvidenceGrade => {
+  const sourceText = (sources ?? [])
+    .map((source) => `${source.type ?? ""} ${source.where ?? ""}`.toLowerCase())
+    .join(" ");
+
+  if (
+    sourceText.includes("systematic") ||
+    sourceText.includes("meta-analysis")
+  ) {
+    return "Systematic review";
+  }
+  if (sourceText.includes("rct") || sourceText.includes("randomized")) {
+    return "RCT";
+  }
+  if (sourceText.includes("observational") || sourceText.includes("cohort")) {
+    return "Observational";
+  }
+
+  return "Anecdotal";
+};
+
+const inferConfidenceLevel = (
+  grade: EvidenceGrade,
+  sources?: StrainListItem["sources"]
+): ClaimConfidence => {
+  const sourceCount = sources?.length ?? 0;
+  if (grade === "RCT" || grade === "Systematic review") {
+    return sourceCount >= 2 ? "High" : "Medium";
+  }
+  if (grade === "Observational") {
+    return sourceCount >= 2 ? "Medium" : "Low";
+  }
+
+  return "Low";
 };
 
 export function StrainLibrary({ strains }: StrainLibraryProps) {
@@ -117,8 +170,7 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
           queryTokens.every((token) => normalizedSearch.includes(token)));
 
       const matchesType =
-        selectedType === "all" ||
-        strain.type?.toLowerCase() === selectedType;
+        selectedType === "all" || strain.type?.toLowerCase() === selectedType;
 
       const matchesThc =
         selectedThcRange === "all" ||
@@ -213,7 +265,9 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                   <select
                     className="mt-1 w-full rounded-2xl border border-black/10 bg-white px-3 py-3 text-sm text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black/40"
                     id="strain-thc-filter"
-                    onChange={(event) => setSelectedThcRange(event.target.value)}
+                    onChange={(event) =>
+                      setSelectedThcRange(event.target.value)
+                    }
                     value={selectedThcRange}
                   >
                     {THC_RANGE_OPTIONS.map((option) => (
@@ -271,6 +325,10 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                                 THC{" "}
                                 {strain.thcRange ?? "range not available yet"}
                               </span>
+                              <span className="text-black/30">•</span>
+                              <span>
+                                Ratio {strain.thcCbdRatio ?? "THC/CBD pending"}
+                              </span>
                             </div>
                             <p className="text-xs text-black/70">{preview}</p>
                             <button
@@ -325,7 +383,19 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                 <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black/60">
                   CBD {selectedStrain.cbdRange ?? "N/A"}
                 </span>
+                <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black/60">
+                  THC:CBD {selectedStrain.thcCbdRatio ?? "N/A"}
+                </span>
+                <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black/60">
+                  {selectedStrain.coaQuality ?? "COA quality: unavailable"}
+                </span>
               </div>
+
+              <p className="text-xs text-black/60">
+                Product matching is weighted toward THC/CBD ratios, terpene
+                vector, and batch-linked COA quality. Strain name is used only
+                as a low-weight prior.
+              </p>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-black/40">
@@ -348,16 +418,43 @@ export function StrainLibrary({ strains }: StrainLibraryProps) {
                       ? selectedStrain.terpenes.join(", ")
                       : "Terpene details coming soon."}
                   </p>
+                  <p className="mt-2 text-xs text-black/55">
+                    Terpene effect language here reflects user-specific
+                    associations unless a high-grade evidence source is
+                    provided.
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-black/40">
                     Effects
                   </h3>
-                  <p className="mt-2 text-sm text-black/70">
-                    {selectedStrain.effects?.length
-                      ? selectedStrain.effects.join(", ")
-                      : "Effects not listed yet."}
-                  </p>
+                  {selectedStrain.effects?.length ? (
+                    <ul className="mt-2 space-y-2 text-sm text-black/70">
+                      {selectedStrain.effects.map((effect) => {
+                        const evidenceGrade = inferEvidenceGrade(
+                          selectedStrain.sources
+                        );
+                        const confidenceLevel = inferConfidenceLevel(
+                          evidenceGrade,
+                          selectedStrain.sources
+                        );
+
+                        return (
+                          <li key={effect}>
+                            <p>{effect}</p>
+                            <p className="text-xs text-black/55">
+                              Evidence grade: {evidenceGrade} • Confidence:{" "}
+                              {confidenceLevel}
+                            </p>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm text-black/70">
+                      Effects not listed yet.
+                    </p>
+                  )}
                 </div>
               </div>
 
