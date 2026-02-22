@@ -1,7 +1,7 @@
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { readFile, readdir } from "node:fs/promises";
-import { StrainLibrary } from "@/components/myflowerai/strain-library";
 import type { StrainListItem } from "@/components/myflowerai/strain-library";
+import { StrainLibrary } from "@/components/myflowerai/strain-library";
 
 type StrainRecord = {
   id?: string;
@@ -21,6 +21,14 @@ type StrainRecord = {
     top_terpenes?: Array<{
       name?: string | null;
     }>;
+  };
+  coa?: {
+    status?: string;
+    provenance_lab?: string | null;
+    provenance_method?: string | null;
+    provenance_batch?: string | null;
+    provenance_test_date?: string | null;
+    completed_at?: string | null;
   };
   meaning?: {
     effect_tags?: string[];
@@ -74,6 +82,57 @@ const formatPercent = (value?: number | null): string | null => {
 
   const rounded = Math.round(value * 10) / 10;
   return `${rounded}%`;
+};
+
+const calculateThcCbdRatio = (
+  thcPercent?: number | null,
+  cbdPercent?: number | null
+): string | null => {
+  if (
+    thcPercent === null ||
+    thcPercent === undefined ||
+    cbdPercent === null ||
+    cbdPercent === undefined ||
+    Number.isNaN(thcPercent) ||
+    Number.isNaN(cbdPercent)
+  ) {
+    return null;
+  }
+
+  if (cbdPercent <= 0) {
+    return `${Math.round(thcPercent * 10) / 10}:0`;
+  }
+
+  const ratio = thcPercent / cbdPercent;
+  return `${Math.round(ratio * 10) / 10}:1`;
+};
+
+const buildCoaQualityLabel = (record: StrainRecord): string => {
+  const coa = record.coa;
+  if (!coa) {
+    return "COA quality: unavailable";
+  }
+
+  const qualitySignals = [
+    coa.provenance_lab,
+    coa.provenance_method,
+    coa.provenance_batch,
+    coa.provenance_test_date,
+    coa.completed_at,
+  ].filter(
+    (value) => typeof value === "string" && value.trim().length > 0
+  ).length;
+
+  if (qualitySignals >= 4) {
+    return "COA quality: high (batch-linked)";
+  }
+  if (qualitySignals >= 2) {
+    return "COA quality: moderate";
+  }
+
+  return coa.status?.trim()
+    ? `COA quality: limited (${coa.status.trim()})`
+    : "COA quality: limited";
 };
 
 const uniqueList = (values: Array<string | null | undefined>): string[] => {
@@ -132,6 +191,12 @@ const toListItem = (record: StrainRecord): StrainListItem | null => {
     thcRange: formatPercent(record.stats?.total_thc_percent),
     cbdRange: formatPercent(record.stats?.total_cbd_percent),
     thcPercent: record.stats?.total_thc_percent ?? null,
+    cbdPercent: record.stats?.total_cbd_percent ?? null,
+    thcCbdRatio: calculateThcCbdRatio(
+      record.stats?.total_thc_percent,
+      record.stats?.total_cbd_percent
+    ),
+    coaQuality: buildCoaQualityLabel(record),
     terpenes: uniqueList([
       ...(record.stats?.top_terpenes ?? []).map((terpene) => terpene.name),
       ...(record.meaning?.dominant_terpenes ?? []),

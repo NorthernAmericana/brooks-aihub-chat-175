@@ -258,7 +258,7 @@ When a user explicitly approves saving their vehicle, use the saveVehicle tool t
 const myFlowerAiPrompt = `You are the /MyFlowerAI/ journaling and harm-reduction agent.
 ${clientFacingSharedMemoryClause}
 
-Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental. When summarizing, keep summaries non-judgmental, brief, and harm-reduction focused. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. For strain answers, use a short structure: Known profile → likely effects → user's prior notes (if any). Keep the tone warm and woodsy.
+Focus on cannabis journaling, wellness tracking, and harm-reduction guidance. Keep it supportive, privacy-first, and non-judgmental. When summarizing, keep summaries non-judgmental, brief, and harm-reduction focused. You are allowed to discuss specific strains using the provided strain dataset. Always analyze strain data (from data/myflowerai/strains.ndjson) alongside user session notes/shared memory. For product representation and matching, prioritize in this order: THC/CBD ratios, terpene vector, then batch/COA quality; treat strain name as a low-weight prior only. Do not create documents for normal Q&A; answer directly unless the user asks to save a log. For strain answers, use a short structure: Known profile → likely effects → user's prior notes (if any). For each claim, include an evidence grade (RCT/systematic review/observational/anecdotal) and a confidence level (high/medium/low). Use explicit wording that terpene effects are user-specific associations unless high-grade evidence exists. Keep the tone warm and woodsy.
 
 Personality Quiz Feature:
 - When the user asks to take a quiz, do a quiz, or mentions "strain quiz" or "personality quiz", direct them to the quiz page.
@@ -567,14 +567,24 @@ const agentRegistry: AgentConfig[] = [
     id: "namc-lore-playground",
     label: "NAMC Lore Playground",
     slash: "NAMC/Lore-Playground",
-    tools: ["createDocument", "updateDocument", "requestSuggestions", "saveMemory"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: namcLorePlaygroundPrompt,
   },
   {
     id: "namc-lore-playground-standalone",
     label: "NAMC Lore Playground (Standalone)",
     slash: "NAMC/Lore-Playground/App",
-    tools: ["createDocument", "updateDocument", "requestSuggestions", "saveMemory"],
+    tools: [
+      "createDocument",
+      "updateDocument",
+      "requestSuggestions",
+      "saveMemory",
+    ],
     systemPromptOverride: namcLorePlaygroundStandalonePrompt,
   },
   {
@@ -627,23 +637,19 @@ export const getAgentConfigBySlash = cache(
   async (slash: string): Promise<AgentConfig | undefined> => {
     const normalized = normalizeSlash(slash);
     const configs = await listAgentConfigs();
-    return configs.find(
-      (agent) => normalizeSlash(agent.slash) === normalized
-    );
+    return configs.find((agent) => normalizeSlash(agent.slash) === normalized);
   }
 );
 
-export const getDefaultAgentConfig = cache(
-  async (): Promise<AgentConfig> => {
-    const configs = await listAgentConfigs();
-    return (
-      configs.find((agent) => agent.id === defaultAgentId) ??
-      configs[0] ?? {
-        id: defaultAgentId,
-        label: "Default",
-        slash: "default",
-        tools: [],
-      }
-    );
-  }
-);
+export const getDefaultAgentConfig = cache(async (): Promise<AgentConfig> => {
+  const configs = await listAgentConfigs();
+  return (
+    configs.find((agent) => agent.id === defaultAgentId) ??
+    configs[0] ?? {
+      id: defaultAgentId,
+      label: "Default",
+      slash: "default",
+      tools: [],
+    }
+  );
+});
