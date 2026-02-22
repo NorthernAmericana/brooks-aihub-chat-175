@@ -27,7 +27,7 @@ export type SessionEventTrendReport = {
   caveats: string[];
 };
 
-function isKnown(value: NumericOrUnknown): value is number {
+function isKnown(value: NumericOrUnknown | undefined): value is number {
   return typeof value === "number";
 }
 
