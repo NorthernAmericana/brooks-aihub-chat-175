@@ -6,6 +6,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { SpotifyPlaybackProvider } from "@/components/spotify/spotify-playback-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { EdgeSwipeNav } from "@/src/components/EdgeSwipeNav";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
@@ -121,6 +122,7 @@ export default function RootLayout({
               <SpotifyPlaybackProvider>{children}</SpotifyPlaybackProvider>
             </AudioFocusProvider>
           </SessionProvider>
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
