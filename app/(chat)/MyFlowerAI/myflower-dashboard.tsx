@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AgeGate } from "@/components/myflowerai/aura/age-gate";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import type { MyFlowerDaySummary } from "./types";
@@ -26,6 +26,36 @@ type MyFlowerAiDashboardProps = {
   authRequired: boolean;
   errorMessage: string | null;
   chatHref: string;
+};
+
+type SessionEvent = {
+  id: string;
+  occurred_at: string;
+  outcomes: {
+    final: {
+      satisfaction_0_10: number | "unknown";
+      craving_relief_0_10: number | "unknown";
+    };
+  };
+  notes: string | null;
+  safety: {
+    flagged: boolean;
+    response_policy: string;
+  };
+};
+
+type SessionEventTrendSummary = {
+  sample_size: number;
+  baseline_profile: {
+    average_satisfaction_0to10: number | null;
+    average_peak_high_0to10: number | null;
+    average_peak_anxiety_0to10: number | null;
+  };
+  within_person_associations: Array<{
+    label: string;
+    detail: string;
+  }>;
+  caveats: string[];
 };
 
 const moodEffects: MoodEffect[] = [
@@ -88,6 +118,82 @@ const formatTime = (value: string) => {
   });
 };
 
+
+const buildDefaultSessionEventPayload = () => ({
+  schema_version: "1.1" as const,
+  occurred_at: new Date().toISOString(),
+  exposure: {
+    route: "smoke" as const,
+    device: {
+      device_type: "joint" as const,
+      temperature_celsius: "unknown" as const,
+      puff_count: "unknown" as const,
+      puff_duration_sec: "unknown" as const,
+      breath_hold_sec: "unknown" as const,
+    },
+    dose_estimate: {
+      mg_thc_ingested_or_inhaled: "unknown" as const,
+      mg_thc_systemic_estimate: "unknown" as const,
+      standard_thc_units_5mg: "unknown" as const,
+      uncertainty: {
+        dose_ci_low: "unknown" as const,
+        dose_ci_high: "unknown" as const,
+      },
+    },
+  },
+  context: {
+    location_type: "home" as const,
+    social_context: "alone" as const,
+    planned_activity_next_2h: ["creative"] as const,
+    baseline_mood: {
+      valence_0_10: "unknown" as const,
+      anxiety_0_10: "unknown" as const,
+      stress_0_10: "unknown" as const,
+      energy_0_10: "unknown" as const,
+    },
+  },
+  outcomes: {
+    timepoints_min: [15, 60, 180] as const,
+    checkpoints: {
+      "15": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+      "60": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+      "180": {
+        high_0_10: "unknown" as const,
+        anxiety_0_10: "unknown" as const,
+        paranoia_0_10: "unknown" as const,
+        relaxation_0_10: "unknown" as const,
+        focus_0_10: "unknown" as const,
+        body_load_0_10: "unknown" as const,
+        friction_0_10: "unknown" as const,
+        adverse_event: "none" as const,
+      },
+    },
+    final: {
+      satisfaction_0_10: "unknown" as const,
+      craving_relief_0_10: "unknown" as const,
+    },
+  },
+  notes: "Quick event capture from dashboard",
+});
+
 export function MyFlowerAiDashboard({
   date,
   initialDay,
@@ -116,6 +222,13 @@ export function MyFlowerAiDashboard({
   const [errorState, setErrorState] = useState(errorMessage);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [sessionEvents, setSessionEvents] = useState<SessionEvent[]>([]);
+  const [trendSummary, setTrendSummary] =
+    useState<SessionEventTrendSummary | null>(null);
+  const [isSessionEventsLoading, setIsSessionEventsLoading] = useState(false);
+  const [sessionEventsError, setSessionEventsError] = useState<string | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCount = selectedMoodEffects.size;
@@ -183,6 +296,80 @@ export function MyFlowerAiDashboard({
     setErrorState(null);
   };
 
+  const refreshSessionEvents = async () => {
+    setIsSessionEventsLoading(true);
+    setSessionEventsError(null);
+
+    try {
+      const response = await fetch("/api/myflower/session-event");
+      if (response.status === 401) {
+        setAuthRequiredState(true);
+        setSessionEvents([]);
+        setTrendSummary(null);
+        return;
+      }
+
+      if (!response.ok) {
+        setSessionEventsError("Unable to load session events.");
+        return;
+      }
+
+      const data = (await response.json()) as {
+        session_events?: SessionEvent[];
+        trend_summary?: SessionEventTrendSummary;
+      };
+
+      setSessionEvents(data.session_events ?? []);
+      setTrendSummary(data.trend_summary ?? null);
+    } catch {
+      setSessionEventsError("Unable to load session events.");
+    } finally {
+      setIsSessionEventsLoading(false);
+    }
+  };
+
+  const handleAddSessionEvent = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setActionError(null);
+
+    try {
+      const response = await fetch("/api/myflower/session-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildDefaultSessionEventPayload()),
+      });
+
+      if (response.status === 401) {
+        setAuthRequiredState(true);
+        setActionError("Please sign in to add session events.");
+        return;
+      }
+
+      if (!response.ok) {
+        setActionError("We couldn't save that session event. Try again.");
+        return;
+      }
+
+      await refreshSessionEvents();
+    } catch {
+      setActionError("We couldn't save that session event. Try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!ageVerified || authRequiredState) {
+      return;
+    }
+
+    void refreshSessionEvents();
+  }, [ageVerified, authRequiredState]);
+
   const handleQuickAdd = async (option: QuickAddOption) => {
     setIsSubmitting(true);
     setActionError(null);
@@ -209,7 +396,7 @@ export function MyFlowerAiDashboard({
         return;
       }
 
-      await refreshDaySummary();
+      await Promise.all([refreshDaySummary(), refreshSessionEvents()]);
     } finally {
       setIsSubmitting(false);
     }
@@ -300,7 +487,7 @@ export function MyFlowerAiDashboard({
       resetEntryForm();
       setIsAddEntryOpen(false);
 
-      await refreshDaySummary();
+      await Promise.all([refreshDaySummary(), refreshSessionEvents()]);
     } finally {
       setIsSubmitting(false);
     }
@@ -585,14 +772,110 @@ export function MyFlowerAiDashboard({
             <h2 className="text-base font-semibold text-black">
               AI insights & feedback
             </h2>
-            <p className="mt-2 text-sm text-black/70">
-              Agentic feedback placeholder: Your daytime sativa sessions
-              correlate with higher “creative” tags. Consider a lighter dose
-              later in the day if sleep quality dips.
-            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                className="rounded-full bg-pink-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSubmitting || showAuthMessage}
+                onClick={handleAddSessionEvent}
+                type="button"
+              >
+                Add session event
+              </button>
+            </div>
+
+            {showAuthMessage && (
+              <p className="mt-3 text-sm text-black/60">
+                Sign in to view your session-event insights.
+              </p>
+            )}
+            {sessionEventsError && !showAuthMessage && (
+              <p className="mt-3 text-sm text-red-600">{sessionEventsError}</p>
+            )}
+            {isSessionEventsLoading && !showAuthMessage && (
+              <p className="mt-3 text-sm text-black/60">Loading session events…</p>
+            )}
+
+            {!showAuthMessage && sessionEvents.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {sessionEvents.slice(0, 5).map((event) => (
+                  <div
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3"
+                    key={event.id}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs text-black/60">
+                        {formatTime(event.occurred_at)}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                            event.safety.flagged
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {event.safety.flagged ? "Safety flagged" : "Safety ok"}
+                        </span>
+                        <span className="rounded-full bg-black/5 px-2 py-1 text-[11px] font-semibold text-black/70">
+                          Policy: {event.safety.response_policy}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-black/80">
+                      Satisfaction: {String(event.outcomes.final.satisfaction_0_10)} ·
+                      Craving relief: {String(event.outcomes.final.craving_relief_0_10)}
+                    </p>
+                    <p className="mt-1 text-xs text-black/60">
+                      {event.notes ?? "No notes added."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!showAuthMessage && trendSummary && (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl bg-black/5 p-3 text-sm text-black/80">
+                  <div className="text-xs text-black/50">Sample size</div>
+                  <div className="mt-1 font-semibold">{trendSummary.sample_size}</div>
+                </div>
+                <div className="rounded-2xl bg-black/5 p-3 text-sm text-black/80">
+                  <div className="text-xs text-black/50">Avg satisfaction</div>
+                  <div className="mt-1 font-semibold">
+                    {trendSummary.baseline_profile.average_satisfaction_0to10 ?? "--"}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-black/5 p-3 text-sm text-black/80">
+                  <div className="text-xs text-black/50">Peak anxiety</div>
+                  <div className="mt-1 font-semibold">
+                    {trendSummary.baseline_profile.average_peak_anxiety_0to10 ?? "--"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!showAuthMessage && trendSummary?.within_person_associations?.length ? (
+              <div className="mt-4 space-y-2">
+                {trendSummary.within_person_associations.map((summary) => (
+                  <div className="rounded-2xl bg-black/5 px-3 py-2" key={summary.label}>
+                    <p className="text-xs font-semibold text-black/70">{summary.label}</p>
+                    <p className="text-xs text-black/60">{summary.detail}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
             <p className="mt-3 text-xs text-black/50">
-              Informational only. Not medical advice.
+              Informational only. Not medical advice. Safety guidance is for
+              harm reduction and does not replace care from a licensed
+              professional.
             </p>
+            {!showAuthMessage && sessionEvents.length === 0 && !isSessionEventsLoading && (
+              <p className="mt-2 text-xs text-black/60">
+                No session events yet. Add one to start safety and trend
+                tracking.
+              </p>
+            )}
           </section>
         </div>
       )}
