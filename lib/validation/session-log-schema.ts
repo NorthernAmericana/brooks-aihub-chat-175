@@ -44,6 +44,24 @@ const TimingSchema = z
   })
   .optional();
 
+const MotiveProbabilitiesSchema = z
+  .object({
+    relief: z.number().min(0).max(1).optional(),
+    enhancement: z.number().min(0).max(1).optional(),
+    social: z.number().min(0).max(1).optional(),
+    sleep: z.number().min(0).max(1).optional(),
+    coping: z.number().min(0).max(1).optional(),
+  })
+  .optional();
+
+const UseHistorySchema = z
+  .object({
+    days_used_30d: z.number().min(0).max(30).optional(),
+    sessions_30d: z.number().min(0).optional(),
+    last_use_at: z.string().datetime().optional(),
+  })
+  .optional();
+
 // Context information
 const ContextSchema = z
   .object({
@@ -53,6 +71,9 @@ const ContextSchema = z
     activity: z.string().optional(),
     mood_before: z.string().optional(),
     intention: z.string().optional(),
+    tolerance_self_rating_0to10: z.number().min(0).max(10).optional(),
+    use_history: UseHistorySchema,
+    motive_probabilities: MotiveProbabilitiesSchema,
   })
   .optional();
 
@@ -60,6 +81,7 @@ const ContextSchema = z
 const ExpectancySchema = z
   .object({
     expected_intensity_1to10: z.number().min(1).max(10).optional(),
+    expected_strength_0to10: z.number().min(0).max(10).optional(),
     expected_effects: z.array(z.string()).optional(),
     confidence_1to10: z.number().min(1).max(10).optional(),
   })
@@ -212,7 +234,9 @@ export function createSessionTemplate(
  * Default recommended questions for session logging
  */
 export const DEFAULT_SESSION_QUESTIONS = [
-  "Before you used, what intensity and effects did you expect, and how confident were you (1-10)?",
+  "Before you used, what intensity/strength did you expect (0-10), what effects did you expect, and how confident were you (1-10)?",
+  "How would you rate your current tolerance (0-10), and what has your recent use pattern looked like (days/sessions in the last 30 days)?",
+  "If helpful, estimate motive probabilities (0-1) for relief, enhancement, social, sleep, and coping for this session.",
   "Before you used, how would you rate craving, tension, anxiety, and focus (0-10), and mood valence (-5 to +5)?",
   "What method did you use to consume this strain?",
   "Approximately how much did you use?",

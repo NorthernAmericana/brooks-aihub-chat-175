@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * MyFlowerAI Session Event Schema v1.0
+ * MyFlowerAI Session Event Schema v1.1
  *
  * Research anchors used when shaping this model:
  * - "Exposure → Context → Outcomes"
@@ -9,11 +9,15 @@ import { z } from "zod";
  * - "15/60/180 min"
  */
 
-export const SESSION_EVENT_SCHEMA_VERSION = "1.0";
+export const SESSION_EVENT_SCHEMA_VERSION = "1.1";
 
 const UnknownNumber = z.union([z.number(), z.literal("unknown")]);
 const UnknownScale0to10 = z.union([
   z.number().min(0).max(10),
+  z.literal("unknown"),
+]);
+const UnknownProbability = z.union([
+  z.number().min(0).max(1),
   z.literal("unknown"),
 ]);
 
@@ -118,7 +122,31 @@ export const SessionEventSchemaV1_0 = z.object({
       stress_0_10: UnknownScale0to10,
       energy_0_10: UnknownScale0to10,
     }),
+    user_factors: z
+      .object({
+        tolerance_self_rating_0to10: UnknownScale0to10,
+        use_history: z.object({
+          days_used_30d: UnknownScale0to10,
+          sessions_30d: UnknownNumber,
+          last_use_at: z.string().datetime().optional(),
+        }),
+        motive_probabilities: z.object({
+          relief: UnknownProbability,
+          enhancement: UnknownProbability,
+          social: UnknownProbability,
+          sleep: UnknownProbability,
+          coping: UnknownProbability,
+        }),
+      })
+      .optional(),
   }),
+  expectancy: z
+    .object({
+      expected_strength_0to10: UnknownScale0to10.optional(),
+      expected_effects: z.array(z.string()).optional(),
+      confidence_0to10: UnknownScale0to10.optional(),
+    })
+    .optional(),
   outcomes: z.object({
     timepoints_min: z.tuple([z.literal(15), z.literal(60), z.literal(180)]),
     checkpoints: z.object({

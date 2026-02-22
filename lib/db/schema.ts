@@ -831,6 +831,7 @@ export const myflowerSessionEvents = pgTable("myflower_session_events", {
   schemaVersion: varchar("schema_version", { length: 16 }).notNull(),
   exposure: jsonb("exposure").notNull(),
   context: jsonb("context").notNull(),
+  expectancy: jsonb("expectancy").notNull().default({}),
   outcomes: jsonb("outcomes").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })

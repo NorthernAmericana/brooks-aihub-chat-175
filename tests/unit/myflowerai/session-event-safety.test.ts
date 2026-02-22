@@ -1,8 +1,10 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { assessSessionEventSafety } from "@/lib/myflowerai/session-event-safety";
 import type { SessionEventV1_0 } from "@/lib/validation/session-event-schema";
 
 const baseEvent: SessionEventV1_0 = {
-  schema_version: "1.0",
+  schema_version: "1.1",
   occurred_at: new Date().toISOString(),
   exposure: {
     route: "smoke",
@@ -33,6 +35,24 @@ const baseEvent: SessionEventV1_0 = {
       stress_0_10: 3,
       energy_0_10: 5,
     },
+    user_factors: {
+      tolerance_self_rating_0to10: 4,
+      use_history: {
+        days_used_30d: 8,
+        sessions_30d: 10,
+      },
+      motive_probabilities: {
+        relief: 0.4,
+        enhancement: 0.3,
+        social: 0.2,
+        sleep: 0.1,
+        coping: 0.3,
+      },
+    },
+  },
+  expectancy: {
+    expected_strength_0to10: 6,
+    confidence_0to10: 7,
   },
   outcomes: {
     timepoints_min: [15, 60, 180],
@@ -75,85 +95,78 @@ const baseEvent: SessionEventV1_0 = {
   },
 };
 
-console.log("Test 1: should keep standard policy when no severe signals");
-const standard = assessSessionEventSafety(baseEvent);
-console.assert(standard.safetyFlag === false, "safetyFlag should be false");
-console.assert(
-  standard.selectedPolicy === "standard_optimization_guidance",
-  "should select standard optimization guidance",
-);
-console.assert(
-  standard.audit.suppressedAdviceCategory === null,
-  "should not suppress casual optimization advice",
-);
-console.log("✓ Test 1 passed");
+describe("assessSessionEventSafety", () => {
+  it("keeps standard policy when no severe signals", () => {
+    const standard = assessSessionEventSafety(baseEvent);
 
-console.log("\nTest 2: should flag acute anxiety/paranoia escalation");
-const anxietyEscalation = assessSessionEventSafety({
-  ...baseEvent,
-  outcomes: {
-    ...baseEvent.outcomes,
-    checkpoints: {
-      ...baseEvent.outcomes.checkpoints,
-      "60": {
-        ...baseEvent.outcomes.checkpoints["60"],
-        anxiety_0_10: 8,
-        paranoia_0_10: 8,
+    assert.equal(standard.safetyFlag, false);
+    assert.equal(standard.selectedPolicy, "standard_optimization_guidance");
+    assert.equal(standard.audit.suppressedAdviceCategory, null);
+  });
+
+  it("flags acute anxiety/paranoia escalation", () => {
+    const anxietyEscalation = assessSessionEventSafety({
+      ...baseEvent,
+      outcomes: {
+        ...baseEvent.outcomes,
+        checkpoints: {
+          ...baseEvent.outcomes.checkpoints,
+          "60": {
+            ...baseEvent.outcomes.checkpoints["60"],
+            anxiety_0_10: 8,
+            paranoia_0_10: 8,
+          },
+        },
       },
-    },
-  },
-});
-console.assert(anxietyEscalation.safetyFlag, "safetyFlag should be true");
-console.assert(
-  anxietyEscalation.audit.triggerReasonCodes.includes(
-    "acute_anxiety_paranoia_escalation",
-  ),
-  "should include anxiety/paranoia escalation reason",
-);
-console.log("✓ Test 2 passed");
+    });
 
-console.log("\nTest 3: should flag panic-like symptoms");
-const panicSignal = assessSessionEventSafety({
-  ...baseEvent,
-  outcomes: {
-    ...baseEvent.outcomes,
-    checkpoints: {
-      ...baseEvent.outcomes.checkpoints,
-      "15": {
-        ...baseEvent.outcomes.checkpoints["15"],
-        adverse_event: "panic",
+    assert.equal(anxietyEscalation.safetyFlag, true);
+    assert.ok(
+      anxietyEscalation.audit.triggerReasonCodes.includes(
+        "acute_anxiety_paranoia_escalation",
+      ),
+    );
+  });
+
+  it("flags panic-like symptoms", () => {
+    const panicSignal = assessSessionEventSafety({
+      ...baseEvent,
+      outcomes: {
+        ...baseEvent.outcomes,
+        checkpoints: {
+          ...baseEvent.outcomes.checkpoints,
+          "15": {
+            ...baseEvent.outcomes.checkpoints["15"],
+            adverse_event: "panic",
+          },
+        },
       },
-    },
-  },
-});
-console.assert(
-  panicSignal.audit.triggerReasonCodes.includes("panic_like_symptoms"),
-  "should include panic-like reason",
-);
-console.log("✓ Test 3 passed");
+    });
 
-console.log("\nTest 4: should flag psychosis-like and vomiting pattern by notes");
-const severeNotes = assessSessionEventSafety({
-  ...baseEvent,
-  notes:
-    "I was hearing voices, felt detached from reality, and kept throwing up repeatedly.",
-});
-console.assert(
-  severeNotes.audit.triggerReasonCodes.includes("psychosis_like_experience"),
-  "should include psychosis-like reason",
-);
-console.assert(
-  severeNotes.audit.triggerReasonCodes.includes("severe_nausea_vomiting_pattern"),
-  "should include vomiting reason",
-);
-console.assert(
-  severeNotes.selectedPolicy === "safety_support_guidance",
-  "should switch to safety support guidance",
-);
-console.assert(
-  severeNotes.audit.suppressedAdviceCategory === "casual_optimization_advice",
-  "should suppress casual optimization advice",
-);
-console.log("✓ Test 4 passed");
+    assert.ok(
+      panicSignal.audit.triggerReasonCodes.includes("panic_like_symptoms"),
+    );
+  });
 
-console.log("\n✅ All session-event safety tests passed!");
+  it("flags psychosis-like and vomiting pattern by notes", () => {
+    const severeNotes = assessSessionEventSafety({
+      ...baseEvent,
+      notes:
+        "I was hearing voices, felt detached from reality, and kept throwing up repeatedly.",
+    });
+
+    assert.ok(
+      severeNotes.audit.triggerReasonCodes.includes("psychosis_like_experience"),
+    );
+    assert.ok(
+      severeNotes.audit.triggerReasonCodes.includes(
+        "severe_nausea_vomiting_pattern",
+      ),
+    );
+    assert.equal(severeNotes.selectedPolicy, "safety_support_guidance");
+    assert.equal(
+      severeNotes.audit.suppressedAdviceCategory,
+      "casual_optimization_advice",
+    );
+  });
+});

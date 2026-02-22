@@ -76,10 +76,14 @@ Session logs MUST be stored in one of these private locations:
     setting?: "home" | "outdoors" | "social" | "work" | "travel" | "other",
     activity?: string,
     mood_before?: string,
-    intention?: string
+    intention?: string,
+    tolerance_self_rating_0to10?: number,
+    use_history?: { days_used_30d?: number, sessions_30d?: number, last_use_at?: string },
+    motive_probabilities?: { relief?: number, enhancement?: number, social?: number, sleep?: number, coping?: number }
   },
   expectancy?: {
     expected_intensity_1to10?: number,
+    expected_strength_0to10?: number,
     expected_effects?: string[],
     confidence_1to10?: number
   },
@@ -130,8 +134,8 @@ Session logs MUST be stored in one of these private locations:
 
 - **dose_estimate**: Approximate amount consumed and confidence level
 - **timing**: When and how long the session lasted
-- **context**: Environmental and intentional context
-- **expectancy**: Pre-use expectations (expected intensity/effects and confidence)
+- **context**: Environmental and intentional context, including tolerance and recency/frequency history
+- **expectancy**: Pre-use expectations (including expected strength: "how strong did you expect this to be?")
 - **state_before**: Normalized pre-use state (craving/tension/anxiety/focus 0-10, mood valence -5 to +5)
 - **state_after**: Normalized post-use state (same scales as state_before)
 - **planned_tasks**: Tasks the user intended to do during/after the session
@@ -169,10 +173,24 @@ Session logs MUST be stored in one of these private locations:
     "setting": "home",
     "activity": "Working on creative project",
     "mood_before": "Focused but a bit tense",
-    "intention": "Stay creative but relaxed"
+    "intention": "Stay creative but relaxed",
+    "tolerance_self_rating_0to10": 4,
+    "use_history": {
+      "days_used_30d": 7,
+      "sessions_30d": 9,
+      "last_use_at": "2026-01-26T22:00:00Z"
+    },
+    "motive_probabilities": {
+      "relief": 0.35,
+      "enhancement": 0.4,
+      "social": 0.1,
+      "sleep": 0.05,
+      "coping": 0.25
+    }
   },
   "expectancy": {
     "expected_intensity_1to10": 5,
+    "expected_strength_0to10": 6,
     "expected_effects": ["creative focus", "lighter mood", "body relaxation"],
     "confidence_1to10": 7
   },
@@ -395,3 +413,8 @@ Potential future additions to session logging:
 - Session Log TypeScript Schema: `/lib/validation/session-log-schema.ts`
 - Strain Schema Documentation: `/docs/myflowerai/schema.md`
 - Example Strain with Template: `/data/myflowerai/strains/EXAMPLE-TEMPLATE.json`
+
+
+### Trend Interpretation Guidance
+
+When deriving trends from private session logs, score outcomes relative to each user's own historical baseline (not population averages). Surface findings as **within-person associations** and avoid deterministic causal language (e.g., use "coincided with" instead of "caused").

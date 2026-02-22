@@ -5,6 +5,7 @@ import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db";
 import { myflowerSessionEvents } from "@/lib/db/schema";
 import { assessSessionEventSafety } from "@/lib/myflowerai/session-event-safety";
+import { buildSessionEventTrendReport } from "@/lib/myflowerai/session-event-trends";
 import {
   SessionEventSchemaV1_0,
   type SessionEventV1_0,
@@ -24,6 +25,7 @@ function buildSessionEventResponse(event: {
     schema_version: event.payload.schema_version,
     exposure: event.payload.exposure,
     context: event.payload.context,
+    expectancy: event.payload.expectancy ?? null,
     outcomes: event.payload.outcomes,
     notes: event.payload.notes ?? null,
     created_at: event.createdAt.toISOString(),
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
         schemaVersion: payload.schema_version,
         exposure: payload.exposure,
         context: payload.context,
+        expectancy: payload.expectancy ?? {},
         outcomes: payload.outcomes,
         notes: payload.notes ?? null,
       })
@@ -128,30 +131,48 @@ export async function GET() {
       .orderBy(desc(myflowerSessionEvents.occurredAt))
       .limit(50);
 
+    const parsedEvents = events.flatMap((event) => {
+      const parsed = SessionEventSchemaV1_0.safeParse({
+        schema_version: event.schemaVersion,
+        occurred_at: event.occurredAt.toISOString(),
+        exposure: event.exposure,
+        context: event.context,
+        expectancy:
+          event.expectancy &&
+          Object.keys(event.expectancy as Record<string, unknown>).length > 0
+            ? event.expectancy
+            : undefined,
+        outcomes: event.outcomes,
+        notes: event.notes ?? undefined,
+      });
+
+      if (!parsed.success) {
+        return [];
+      }
+
+      return [
+        buildSessionEventResponse({
+          id: event.id,
+          occurredAt: event.occurredAt,
+          createdAt: event.createdAt,
+          payload: parsed.data,
+        }),
+      ];
+    });
+
     return NextResponse.json({
-      session_events: events.flatMap((event) => {
-        const parsed = SessionEventSchemaV1_0.safeParse({
-          schema_version: event.schemaVersion,
-          occurred_at: event.occurredAt.toISOString(),
+      session_events: parsedEvents,
+      trend_summary: buildSessionEventTrendReport(
+        parsedEvents.map((event) => ({
+          schema_version: event.schema_version,
+          occurred_at: event.occurred_at,
           exposure: event.exposure,
           context: event.context,
+          expectancy: event.expectancy ?? undefined,
           outcomes: event.outcomes,
           notes: event.notes ?? undefined,
-        });
-
-        if (!parsed.success) {
-          return [];
-        }
-
-        return [
-          buildSessionEventResponse({
-            id: event.id,
-            occurredAt: event.occurredAt,
-            createdAt: event.createdAt,
-            payload: parsed.data,
-          }),
-        ];
-      }),
+        })),
+      ),
     });
   } catch (error) {
     console.error("Failed to load myflower session_events", error);
