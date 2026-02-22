@@ -236,6 +236,19 @@ export function MyFlowerAiDashboard({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!isAddEntryOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isAddEntryOpen]);
+
   const selectedCount = selectedMoodEffects.size;
   const usedGrams = daySummary?.totals.total_g ?? 0;
   const targetGrams = daySummary?.goal?.target_g ?? 0;
@@ -1043,8 +1056,11 @@ export function MyFlowerAiDashboard({
       )}
 
       {isAddEntryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:items-center">
+          <div
+            className="max-h-[85dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl bg-white p-6 shadow-xl"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-black">
