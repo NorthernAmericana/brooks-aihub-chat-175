@@ -1,3 +1,5 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { buildSessionEventTrendReport } from "@/lib/myflowerai/session-event-trends";
 import type { SessionEventV1_0 } from "@/lib/validation/session-event-schema";
 
@@ -96,25 +98,18 @@ function buildEvent(index: number): SessionEventV1_0 {
   };
 }
 
-const report = buildSessionEventTrendReport([
-  buildEvent(0),
-  buildEvent(1),
-  buildEvent(2),
-  buildEvent(3),
-]);
+describe("buildSessionEventTrendReport", () => {
+  it("produces expected shape for 4 events", () => {
+    const report = buildSessionEventTrendReport([
+      buildEvent(0),
+      buildEvent(1),
+      buildEvent(2),
+      buildEvent(3),
+    ]);
 
-console.assert(report.sample_size === 4, "sample_size should be 4");
-console.assert(
-  report.baseline_profile.tolerance_self_rating_0to10 !== null,
-  "baseline tolerance should be computed",
-);
-console.assert(
-  report.within_person_associations.length > 0,
-  "within-person associations should be returned for sufficient samples",
-);
-console.assert(
-  report.caveats[0]?.includes("within-person associations"),
-  "report should include non-causal caveat language",
-);
-
-console.log("✅ Session event trend report tests passed");
+    assert.equal(report.sample_size, 4);
+    assert.notEqual(report.baseline_profile.tolerance_self_rating_0to10, null);
+    assert.ok(report.within_person_associations.length > 0);
+    assert.match(report.caveats[0] ?? "", /within-person associations/i);
+  });
+});
