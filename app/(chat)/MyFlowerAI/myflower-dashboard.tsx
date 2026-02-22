@@ -222,6 +222,11 @@ export function MyFlowerAiDashboard({
   const [errorState, setErrorState] = useState(errorMessage);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [goalTargetG, setGoalTargetG] = useState("");
+  const [goalTargetMgThc, setGoalTargetMgThc] = useState("");
+  const [goalError, setGoalError] = useState<string | null>(null);
+  const [goalSuccess, setGoalSuccess] = useState<string | null>(null);
+  const [isGoalSubmitting, setIsGoalSubmitting] = useState(false);
   const [sessionEvents, setSessionEvents] = useState<SessionEvent[]>([]);
   const [trendSummary, setTrendSummary] =
     useState<SessionEventTrendSummary | null>(null);
@@ -369,6 +374,104 @@ export function MyFlowerAiDashboard({
 
     void refreshSessionEvents();
   }, [ageVerified, authRequiredState]);
+
+  useEffect(() => {
+    setGoalTargetG(
+      daySummary?.goal?.target_g !== null && daySummary?.goal?.target_g !== undefined
+        ? String(daySummary.goal.target_g)
+        : ""
+    );
+    setGoalTargetMgThc(
+      daySummary?.goal?.target_mg_thc !== null &&
+        daySummary?.goal?.target_mg_thc !== undefined
+        ? String(daySummary.goal.target_mg_thc)
+        : ""
+    );
+  }, [daySummary?.goal?.target_g, daySummary?.goal?.target_mg_thc]);
+
+  const parseGoalValue = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : Number.NaN;
+  };
+
+  const handleSaveGoal = async () => {
+    if (isGoalSubmitting) {
+      return;
+    }
+
+    const parsedTargetG = parseGoalValue(goalTargetG);
+    const parsedTargetMgThc = parseGoalValue(goalTargetMgThc);
+
+    if (Number.isNaN(parsedTargetG)) {
+      setGoalSuccess(null);
+      setGoalError("target_g must be a number.");
+      return;
+    }
+
+    if (Number.isNaN(parsedTargetMgThc)) {
+      setGoalSuccess(null);
+      setGoalError("target_mg_thc must be a number.");
+      return;
+    }
+
+    if (parsedTargetG === null && parsedTargetMgThc === null) {
+      setGoalSuccess(null);
+      setGoalError("Provide at least one target value.");
+      return;
+    }
+
+    if (parsedTargetG !== null && parsedTargetG < 0) {
+      setGoalSuccess(null);
+      setGoalError("target_g must be greater than or equal to 0.");
+      return;
+    }
+
+    if (parsedTargetMgThc !== null && parsedTargetMgThc < 0) {
+      setGoalSuccess(null);
+      setGoalError("target_mg_thc must be greater than or equal to 0.");
+      return;
+    }
+
+    setIsGoalSubmitting(true);
+    setGoalError(null);
+    setGoalSuccess(null);
+
+    try {
+      const response = await fetch("/api/myflower/goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_g: parsedTargetG,
+          target_mg_thc: parsedTargetMgThc,
+        }),
+      });
+
+      if (response.status === 401) {
+        setAuthRequiredState(true);
+        setGoalError("Please sign in to update daily goals.");
+        return;
+      }
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setGoalError(data?.error ?? "We couldn't save that goal. Try again.");
+        return;
+      }
+
+      setGoalSuccess("Daily goal saved.");
+      await refreshDaySummary();
+    } catch {
+      setGoalError("We couldn't save that goal. Try again.");
+    } finally {
+      setIsGoalSubmitting(false);
+    }
+  };
 
   const handleQuickAdd = async (option: QuickAddOption) => {
     setIsSubmitting(true);
@@ -594,6 +697,65 @@ export function MyFlowerAiDashboard({
               </div>
 
               <div className="mt-4 space-y-2">
+                <div className="rounded-2xl bg-black/5 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-black/50">
+                    Goal management
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="text-xs text-black/70">
+                      target_g
+                      <input
+                        className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isGoalSubmitting || showAuthMessage}
+                        inputMode="decimal"
+                        min={0}
+                        onChange={(event) => {
+                          setGoalTargetG(event.target.value);
+                          setGoalError(null);
+                          setGoalSuccess(null);
+                        }}
+                        placeholder="e.g. 1.5"
+                        type="number"
+                        value={goalTargetG}
+                      />
+                    </label>
+                    <label className="text-xs text-black/70">
+                      target_mg_thc
+                      <input
+                        className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isGoalSubmitting || showAuthMessage}
+                        inputMode="decimal"
+                        min={0}
+                        onChange={(event) => {
+                          setGoalTargetMgThc(event.target.value);
+                          setGoalError(null);
+                          setGoalSuccess(null);
+                        }}
+                        placeholder="e.g. 25"
+                        type="number"
+                        value={goalTargetMgThc}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      className="rounded-full bg-pink-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isGoalSubmitting || showAuthMessage}
+                      onClick={handleSaveGoal}
+                      type="button"
+                    >
+                      {isGoalSubmitting ? "Saving…" : "Save goal"}
+                    </button>
+                    <p className="text-xs text-black/50">
+                      Set at least one target value.
+                    </p>
+                  </div>
+                  {goalError && <p className="mt-2 text-xs text-red-600">{goalError}</p>}
+                  {goalSuccess && (
+                    <p className="mt-2 text-xs text-emerald-700">{goalSuccess}</p>
+                  )}
+                </div>
+
                 <div className="text-xs font-semibold uppercase tracking-wide text-black/50">
                   Quick add
                 </div>
